@@ -1,97 +1,452 @@
-:root{
-	--bg:#0f1720;
-	--card:#0f1728aa; /* translucent card */
-	--surface:#0b1220;
-	--muted:#9aa6b2;
-	--accent:#7c4dff; /* purple accent */
-	--accent-2:#00b5ad; /* teal secondary */
-	--glass: rgba(255,255,255,0.04);
-	--glass-border: rgba(255,255,255,0.06);
-	--radius:12px;
+:root {
+	--bg: #0f1720;
+	--card: #0f1728aa;
+	/* translucent card */
+	--surface: #0b1220;
+	--muted: #9aa6b2;
+	--accent: #7c4dff;
+	/* purple accent */
+	--accent-2: #00b5ad;
+	/* teal secondary */
+	--glass: rgba(255, 255, 255, 0.04);
+	--glass-border: rgba(255, 255, 255, 0.06);
+	--radius: 12px;
 	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, system-ui;
 	color-scheme: dark;
 }
-.container{ max-width:1100px; margin:28px auto; padding:20px; display:grid; grid-template-columns: 220px 1fr; gap:20px; align-items:start }
-body{
-	margin:0;
-	background: linear-gradient(180deg,#071123 0%, #07111a 60%);
-	color: #e6eef6;
-	-webkit-font-smoothing:antialiased;
+
+.container {
+	max-width: 1100px;
+	margin: 28px auto 36px;
+	padding: 20px;
+	display: grid;
+	grid-template-columns: 220px 1fr;
+	gap: 20px;
+	align-items: start;
 }
-.app-header{ grid-column:1 / -1; display:flex; gap:12px; align-items:center; margin-bottom:6px }
-.logo{ width:64px; height:64px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.2rem; background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff; box-shadow:0 8px 30px rgba(7,12,20,0.6) }
-.title-block h1{ margin:0; font-size:1.6rem }
-.subtitle{ color:var(--muted); font-size:0.9rem; margin-top:4px }
-.controls{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:18px }
-.feature-nav{ display:flex; gap:8px; flex-direction:column; margin:0 }
-.feature-btn{ padding:10px 12px; border-radius:10px; border:1px solid transparent; background:transparent; color:var(--muted); cursor:pointer; transition:all .18s ease; font-weight:700; text-align:left }
-.feature-btn:hover{ transform:translateY(-2px); color:var(--accent-2) }
-.feature-btn.active{ background: linear-gradient(135deg, rgba(124,77,255,0.14), rgba(0,181,173,0.08)); color:var(--accent); box-shadow: 0 6px 18px rgba(10,12,20,0.45); border:1px solid var(--glass-border) }
-.panels{ display:grid; grid-template-columns:1fr; gap:14px; grid-column:2 / 3 }
-.panel{ background:var(--card); border-radius:var(--radius); padding:0; backdrop-filter: blur(6px) saturate(120%); border:1px solid var(--glass-border); box-shadow: 0 8px 30px rgba(2,6,23,0.6); display:none }
-.panel-header{ display:flex; gap:12px; align-items:center; padding:14px; border-bottom:1px solid rgba(255,255,255,0.02) }
-.panel-header label{ color:var(--muted); font-weight:500 }
-.panel-header input{ background:transparent; border:1px solid rgba(255,255,255,0.06); padding:8px 10px; border-radius:8px; color:var(--muted) }
-.panel-header button{ margin-left:6px; padding:8px 12px; border-radius:8px; border:none; background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#fff; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,0.4) }
-.panel-body{ padding:16px }
-.panel-action{ background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#fff; border:none; padding:8px 12px; border-radius:8px }
-.panel-action.active{ box-shadow: 0 8px 24px rgba(29,20,64,0.6); transform: translateY(-2px); outline: 2px solid rgba(124,77,255,0.18) }
-.result-card{ background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.04); padding:12px; border-radius:10px; margin-bottom:10px }
-.card-title{ font-weight:700; color:#fff; margin-bottom:6px }
-.brightness-label{ margin-left:8px; font-size:0.85rem; color:var(--muted) }
-.spice-badge{ float:right; background: rgba(255,255,255,0.04); color:var(--muted); padding:4px 8px; border-radius:999px; font-size:0.82rem; border:1px solid rgba(255,255,255,0.03); }
-.lcc-meta{ font-size:0.85rem; color:var(--muted); margin-top:4px; display:inline-block }
-.cst-info{ margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.02) }
-.small-muted{ color:var(--muted); font-size:0.9rem; margin-bottom:8px }
-.card-body{ color:var(--muted); margin-top:6px }
-.note-grid{ display:flex; gap:10px; margin:10px 0; flex-wrap:wrap }
-.note-cell{ background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.04); padding:8px 12px; border-radius:10px; text-align:center; min-width:56px }
-.note-cell.tension-note{ background: linear-gradient(180deg, rgba(152, 129, 255, 0.2), rgba(135, 71, 255, 0.15)); border:1px solid rgba(255, 107, 255, 0.18); box-shadow: 0 4px 12px rgba(255, 71, 246, 0.1) }
-.note-cell.avoid-note{ background: linear-gradient(180deg, rgba(255, 107, 107, 0.25), rgba(255, 71, 87, 0.18)); border:1px solid rgba(255, 107, 107, 0.22); box-shadow: 0 4px 12px rgba(255, 107, 107, 0.15) }
-.note{ font-weight:700; font-size:1.05rem; color:#fff }
-.mini-keyboard{ display:flex; gap:6px; margin-top:12px; flex-wrap:wrap }
-.key{ width:36px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:6px; background:transparent; border:1px solid rgba(255,255,255,0.03); font-size:0.85rem; color:var(--muted) }
-.active-key{ background: linear-gradient(90deg,var(--accent),var(--accent-2)); color:#fff; border-color:rgba(255,255,255,0.06); box-shadow:0 6px 18px rgba(27,20,45,0.6) }
-input[type="text"]{ padding:8px 10px; border:1px solid rgba(255,255,255,0.04); border-radius:8px; background:transparent; color:#e6eef6 }
-pre{ margin:0; font-family: monospace; font-size:0.92rem; overflow:auto; color:var(--muted) }
+
+/* subtle inner fade to avoid hard separation when panels end */
+.container::after{
+	content: "";
+	display:block;
+	height:18px;
+	margin-top:8px;
+	background: linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,0.06));
+	pointer-events:none;
+}
+
+html, body { height: 100%; }
+body {
+	margin: 0;
+	/* make gradient cover full viewport to avoid visible color band */
+	background: linear-gradient(180deg, #071123 0%, #07111a 100%);
+	background-attachment: fixed;
+	background-repeat: no-repeat;
+	color: #e6eef6;
+	-webkit-font-smoothing: antialiased;
+	min-height: 100vh;
+}
+
+.app-header {
+	grid-column: 1 / -1;
+	display: flex;
+	gap: 12px;
+	align-items: center;
+	margin-bottom: 6px
+}
+
+.logo {
+	width: 64px;
+	height: 64px;
+	border-radius: 12px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 800;
+	font-size: 1.2rem;
+	background: linear-gradient(135deg, var(--accent), var(--accent-2));
+	color: #fff;
+	box-shadow: 0 8px 30px rgba(7, 12, 20, 0.6)
+}
+
+.title-block h1 {
+	margin: 0;
+	font-size: 1.6rem
+}
+
+.subtitle {
+	color: var(--muted);
+	font-size: 0.9rem;
+	margin-top: 4px
+}
+
+.controls {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex-wrap: wrap;
+	margin-bottom: 18px
+}
+
+.feature-nav {
+	display: flex;
+	gap: 8px;
+	flex-direction: column;
+	margin: 0
+}
+
+.feature-btn {
+	padding: 10px 12px;
+	border-radius: 10px;
+	border: 1px solid transparent;
+	background: transparent;
+	color: var(--muted);
+	cursor: pointer;
+	transition: all .18s ease;
+	font-weight: 700;
+	text-align: left
+}
+
+.feature-btn:hover {
+	transform: translateY(-2px);
+	color: var(--accent-2)
+}
+
+.feature-btn.active {
+	background: linear-gradient(135deg, rgba(124, 77, 255, 0.14), rgba(0, 181, 173, 0.08));
+	color: var(--accent);
+	box-shadow: 0 6px 18px rgba(10, 12, 20, 0.45);
+	border: 1px solid var(--glass-border)
+}
+
+.panels {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 14px;
+	grid-column: 2 / 3
+}
+
+.panel {
+	background: var(--card);
+	border-radius: var(--radius);
+	padding: 0;
+	backdrop-filter: blur(6px) saturate(120%);
+	border: 1px solid var(--glass-border);
+	box-shadow: 0 8px 30px rgba(2, 6, 23, 0.6);
+	display: none
+}
+
+.panel-header {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+	padding: 14px;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.02)
+}
+
+.panel-header label {
+	color: var(--muted);
+	font-weight: 500
+}
+
+.panel-header input {
+	background: transparent;
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	padding: 8px 10px;
+	border-radius: 8px;
+	color: var(--muted)
+}
+
+.panel-header button {
+	margin-left: 6px;
+	padding: 8px 12px;
+	border-radius: 8px;
+	border: none;
+	background: linear-gradient(90deg, var(--accent), var(--accent-2));
+	color: #fff;
+	cursor: pointer;
+	box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4)
+}
+
+.panel-body {
+	padding: 16px
+}
+
+/* shared action-row styling for the "other" tool buttons */
+.panel-action-row {
+	display: flex;
+	gap: 16px;          /* a bit more gap between items */
+	flex-wrap: wrap;
+	justify-content: center;
+	padding: 20px;      /* add breathing room around the row */
+	border-radius: 8px; /* subtle rounded background container */
+	background: rgba(255,255,255,0.0);
+}
+.panel-action-row button {
+	flex: 1 1 auto;
+	min-width: 120px;
+	margin: 6px 0;      /* vertical margin so rows aren’t flush */
+	padding: 10px 14px; /* slightly larger tap area */
+}
+
+.panel-action {
+	background: linear-gradient(90deg, var(--accent), var(--accent-2));
+	color: #fff;
+	border: none;
+	padding: 8px 12px;
+	border-radius: 8px
+}
+
+.panel-action.active {
+	box-shadow: 0 8px 24px rgba(29, 20, 64, 0.6);
+	transform: translateY(-2px);
+	outline: 2px solid rgba(124, 77, 255, 0.18)
+}
+
+.result-card {
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+	border: 1px solid rgba(255, 255, 255, 0.04);
+	padding: 12px;
+	border-radius: 10px;
+	margin-bottom: 10px
+}
+
+.card-title {
+	font-weight: 700;
+	color: #fff;
+	margin-bottom: 6px
+}
+
+.brightness-label {
+	margin-left: 8px;
+	font-size: 0.85rem;
+	color: var(--muted)
+}
+
+.spice-badge {
+	float: right;
+	background: rgba(255, 255, 255, 0.04);
+	color: var(--muted);
+	padding: 4px 8px;
+	border-radius: 999px;
+	font-size: 0.82rem;
+	border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.lcc-meta {
+	font-size: 0.85rem;
+	color: var(--muted);
+	margin-top: 4px;
+	display: inline-block
+}
+
+.cst-info {
+	margin-top: 8px;
+	padding-top: 8px;
+	border-top: 1px solid rgba(255, 255, 255, 0.02)
+}
+
+.small-muted {
+	color: var(--muted);
+	font-size: 0.9rem;
+	margin-bottom: 8px
+}
+
+.card-body {
+	color: var(--muted);
+	margin-top: 6px
+}
+
+.note-grid {
+	display: flex;
+	gap: 10px;
+	margin: 10px 0;
+	flex-wrap: wrap
+}
+
+.note-cell {
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+	border: 1px solid rgba(255, 255, 255, 0.04);
+	padding: 8px 12px;
+	border-radius: 10px;
+	text-align: center;
+	min-width: 56px
+}
+
+.note-cell.tension-note {
+	background: linear-gradient(180deg, rgba(152, 129, 255, 0.2), rgba(135, 71, 255, 0.15));
+	border: 1px solid rgba(255, 107, 255, 0.18);
+	box-shadow: 0 4px 12px rgba(255, 71, 246, 0.1)
+}
+
+.note-cell.avoid-note {
+	background: linear-gradient(180deg, rgba(255, 107, 107, 0.25), rgba(255, 71, 87, 0.18));
+	border: 1px solid rgba(255, 107, 107, 0.22);
+	box-shadow: 0 4px 12px rgba(255, 107, 107, 0.15)
+}
+
+.note {
+	font-weight: 700;
+	font-size: 1.05rem;
+	color: #fff
+}
+
+.mini-keyboard {
+	display: flex;
+	gap: 6px;
+	margin-top: 12px;
+	flex-wrap: wrap
+}
+
+.key {
+	width: 36px;
+	height: 32px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 6px;
+	background: transparent;
+	border: 1px solid rgba(255, 255, 255, 0.03);
+	font-size: 0.85rem;
+	color: var(--muted)
+}
+
+.active-key {
+	background: linear-gradient(90deg, var(--accent), var(--accent-2));
+	color: #fff;
+	border-color: rgba(255, 255, 255, 0.06);
+	box-shadow: 0 6px 18px rgba(27, 20, 45, 0.6)
+}
+
+input[type="text"] {
+	padding: 8px 10px;
+	border: 1px solid rgba(255, 255, 255, 0.04);
+	border-radius: 8px;
+	background: transparent;
+	color: #e6eef6
+}
+
+pre {
+	margin: 0;
+	font-family: monospace;
+	font-size: 0.92rem;
+	overflow: auto;
+	color: var(--muted)
+}
 
 /* small screens */
-@media (max-width:720px){
+@media (max-width:720px) {
+
 	/* container -> single column for narrow screens */
-	.container{ grid-template-columns: 1fr; padding:12px; max-width:100%; margin:12px auto }
+	.container {
+		grid-template-columns: 1fr;
+		padding: 12px;
+		max-width: 100%;
+		margin: 12px auto
+	}
 
 	/* header spacing */
-	.app-header{ gap:10px }
-	.logo{ width:52px; height:52px; font-size:1rem }
-	.title-block h1{ font-size:1.2rem }
+	.app-header {
+		gap: 10px
+	}
+
+	.logo {
+		width: 52px;
+		height: 52px;
+		font-size: 1rem
+	}
+
+	.title-block h1 {
+		font-size: 1.2rem
+	}
 
 	/* panels full width */
-	.panels{ grid-column:1 / -1 }
-	.panel{ margin:0; border-radius:10px }
+	.panels {
+		grid-column: 1 / -1
+	}
+
+	.panel {
+		margin: 0;
+		border-radius: 10px
+	}
 
 	/* stack inputs vertically */
-	.panel-header{ flex-direction:column; align-items:flex-start; gap:8px }
+	.panel-header {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 8px
+	}
 
 	/* navigation becomes horizontal scrollable bar */
-	.feature-nav{ display:flex; flex-direction:row; gap:8px; overflow-x:auto; padding-bottom:6px }
-	.feature-btn{ flex:0 0 auto; padding:8px 10px; font-size:0.92rem; white-space:nowrap }
+	.feature-nav {
+		display: flex;
+		flex-direction: row;
+		gap: 8px;
+		overflow-x: auto;
+		padding-bottom: 6px
+	}
+
+	.feature-btn {
+		flex: 0 0 auto;
+		padding: 8px 10px;
+		font-size: 0.92rem;
+		white-space: nowrap
+	}
 
 	/* action row wrap */
-	.panel-action-row{ display:flex; gap:8px; flex-wrap:wrap }
+	.panel-action-row {
+		display: flex;
+		gap: 8px;
+		flex-wrap: wrap;
+		justify-content: center;
+	}
+	/* make each button take roughly half width so five can wrap nicely */
+	.panel-action-row button {
+		flex: 1 1 40%;
+		min-width: 120px;
+	}
+
 
 	/* cards and note cells compact */
-	.result-card{ padding:10px }
-	.note-grid{ gap:8px }
-	.note-cell{ min-width:44px; padding:6px 8px; font-size:0.95rem }
+	.result-card {
+		padding: 10px
+	}
+
+	.note-grid {
+		gap: 8px
+	}
+
+	.note-cell {
+		min-width: 44px;
+		padding: 6px 8px;
+		font-size: 0.95rem
+	}
 
 	/* mini keyboard compact */
-	.mini-keyboard{ gap:6px }
-	.key{ width:30px; height:26px; font-size:0.78rem }
+	.mini-keyboard {
+		gap: 6px
+	}
+
+	.key {
+		width: 30px;
+		height: 26px;
+		font-size: 0.78rem
+	}
 
 	/* inputs and buttons slightly larger tap targets */
-	.panel-header input{ padding:10px; font-size:0.95rem }
-	.panel-header button, .panel-action, .panel-header button{ padding:10px 12px }
+	.panel-header input {
+		padding: 10px;
+		font-size: 0.95rem
+	}
+
+	.panel-header button,
+	.panel-action,
+	.panel-header button {
+		padding: 10px 12px
+	}
 
 	/* ensure pre blocks wrap well */
-	pre{ font-size:0.88rem }
+	pre {
+		font-size: 0.88rem
+	}
 }
