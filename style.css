@@ -36,9 +36,6 @@ body{
 .panel-body{ padding:16px }
 .panel-action{ background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#fff; border:none; padding:8px 12px; border-radius:8px }
 .panel-action.active{ box-shadow: 0 8px 24px rgba(29,20,64,0.6); transform: translateY(-2px); outline: 2px solid rgba(124,77,255,0.18) }
-
-/* generic container for rows of action buttons */
-.panel-action-row{ display:flex; gap:8px; flex-wrap:wrap; padding:8px 12px }
 .result-card{ background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.04); padding:12px; border-radius:10px; margin-bottom:10px }
 .card-title{ font-weight:700; color:#fff; margin-bottom:6px }
 .brightness-label{ margin-left:8px; font-size:0.85rem; color:var(--muted) }
@@ -48,9 +45,6 @@ body{
 .small-muted{ color:var(--muted); font-size:0.9rem; margin-bottom:8px }
 .card-body{ color:var(--muted); margin-top:6px }
 .note-grid{ display:flex; gap:10px; margin:10px 0; flex-wrap:wrap }
-
-/* specific tweak for key-center results to add clarity */
-.key-center-result .note-grid { margin-top:6px; }
 .note-cell{ background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.04); padding:8px 12px; border-radius:10px; text-align:center; min-width:56px }
 .note-cell.tension-note{ background: linear-gradient(180deg, rgba(152, 129, 255, 0.2), rgba(135, 71, 255, 0.15)); border:1px solid rgba(255, 107, 255, 0.18); box-shadow: 0 4px 12px rgba(255, 71, 246, 0.1) }
 .note-cell.avoid-note{ background: linear-gradient(180deg, rgba(255, 107, 107, 0.25), rgba(255, 71, 87, 0.18)); border:1px solid rgba(255, 107, 107, 0.22); box-shadow: 0 4px 12px rgba(255, 107, 107, 0.15) }
@@ -63,6 +57,41 @@ pre{ margin:0; font-family: monospace; font-size:0.92rem; overflow:auto; color:v
 
 /* small screens */
 @media (max-width:720px){
+	/* container -> single column for narrow screens */
+	.container{ grid-template-columns: 1fr; padding:12px; max-width:100%; margin:12px auto }
+
+	/* header spacing */
+	.app-header{ gap:10px }
+	.logo{ width:52px; height:52px; font-size:1rem }
+	.title-block h1{ font-size:1.2rem }
+
+	/* panels full width */
+	.panels{ grid-column:1 / -1 }
+	.panel{ margin:0; border-radius:10px }
+
+	/* stack inputs vertically */
 	.panel-header{ flex-direction:column; align-items:flex-start; gap:8px }
-	.feature-nav{ overflow:auto }
+
+	/* navigation becomes horizontal scrollable bar */
+	.feature-nav{ display:flex; flex-direction:row; gap:8px; overflow-x:auto; padding-bottom:6px }
+	.feature-btn{ flex:0 0 auto; padding:8px 10px; font-size:0.92rem; white-space:nowrap }
+
+	/* action row wrap */
+	.panel-action-row{ display:flex; gap:8px; flex-wrap:wrap }
+
+	/* cards and note cells compact */
+	.result-card{ padding:10px }
+	.note-grid{ gap:8px }
+	.note-cell{ min-width:44px; padding:6px 8px; font-size:0.95rem }
+
+	/* mini keyboard compact */
+	.mini-keyboard{ gap:6px }
+	.key{ width:30px; height:26px; font-size:0.78rem }
+
+	/* inputs and buttons slightly larger tap targets */
+	.panel-header input{ padding:10px; font-size:0.95rem }
+	.panel-header button, .panel-action, .panel-header button{ padding:10px 12px }
+
+	/* ensure pre blocks wrap well */
+	pre{ font-size:0.88rem }
 }
