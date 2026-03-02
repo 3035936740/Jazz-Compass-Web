@@ -7,6 +7,7 @@ const i18n = {
     nav_lcc: { zh: "LCC调性分析", ja: "LCCリディアン解析", en: "LCC Analysis" },
     nav_cst: { zh: "CST旋律关联", ja: "CSTスケール対応", en: "CST Analysis" },
     nav_other: { zh: "其他工具", ja: "その他ツール", en: "Other Tools" },
+    nav_about: { zh: "关于", ja: "について", en: "About" },
 
     label_chord_example: { zh: "示例和弦（单独）：", ja: "サンプルコード(個別)：", en: "Example chord (single):" },
     label_blues_example: { zh: "示例和弦（布鲁斯）：", ja: "サンプルコード(ブルース)：", en: "Example chord (blues):" },
@@ -24,8 +25,8 @@ const i18n = {
     other_run_btn: { zh: "分析", ja: "解析", en: "Analyze" },
 
     // Blues panel buttons
-    blues_basic: { zh: "建议音阶 (Basic)", ja: "提案スケール (Basic)", en: "Suggest Scales (Basic)" },
-    blues_advanced: { zh: "高级建议 (Advanced)", ja: "高度な提案 (Advanced)", en: "Advanced Suggestions (Advanced)" },
+    blues_basic: { zh: "标准推荐", ja: "標準提案", en: "Standard Suggestions" },
+    blues_advanced: { zh: "替代推荐", ja: "代替提案", en: "Alternative Suggestions" },
     blues_feel: { zh: "听感分析 (Improv Feel)", ja: "フィール分析 (Improv Feel)", en: "Improv Feel" },
 
     // common messages
@@ -33,8 +34,8 @@ const i18n = {
     cannot_parse_chord: { zh: "无法解析和弦", ja: "コードを解析できません", en: "Unable to parse chord" },
 
     // result headers with placeholders {count}
-    header_basic: { zh: "当前操作：建议音阶 (Basic) — {count} 个建议", ja: "操作：提案スケール (Basic) — {count} 件", en: "Action: Suggest Scales (Basic) — {count} results" },
-    header_advanced: { zh: "当前操作：高级建议 (Advanced) — {count} 个建议", ja: "操作：高度な提案 (Advanced) — {count} 件", en: "Action: Advanced Suggestions (Advanced) — {count} results" },
+    header_basic: { zh: "当前操作：标准推荐 — {count} 个建议", ja: "操作：標準提案 — {count} 件", en: "Action: Standard Suggestions — {count} results" },
+    header_advanced: { zh: "当前操作：替代推荐 — {count} 个建议", ja: "操作：代替提案 — {count} 件", en: "Action: Alternative Suggestions — {count} results" },
     header_improv: { zh: "当前操作：听感分析 (Improv Feel) — {count} 个音阶", ja: "操作：フィール分析 (Improv Feel) — {count} スケール", en: "Action: Improv Feel — {count} scales" },
     header_cst: { zh: "当前操作：CST — {count} 个匹配音阶", ja: "操作：CST — {count} マッチ", en: "Action: CST — {count} matches" },
     header_lcc: { zh: "当前操作：LCC — {count} 个建议", ja: "操作：LCC — {count} 件", en: "Action: LCC — {count} results" },
@@ -136,16 +137,15 @@ const i18n = {
     lcc_gravity_prefix: { zh: "引力：", ja: "重力：", en: "Gravity:" },
 
     // reasons used in blues suggestions and fallbacks
-    reason_parallel_classic: { zh: "平行：经典爵士布鲁斯音色", ja: "パラレル：クラシックジャズブルースサウンド", en: "Parallel: Classic jazz-blues sound" },
-    reason_blue_tension: { zh: "平行：大调和弦上的“布鲁斯”张力", ja: "パラレル：メジャーコード上の“ブルース”テンション", en: "Parallel: 'Blue' tension over major chord" },
-    reason_relative_country: { zh: "关系：甜美乡村布鲁斯色彩", ja: "リレート：甘いカントリーブルースカラー", en: "Relative: Sweet country-blues color" },
-    reason_parallel_standard_minor: { zh: "平行：标准小调布鲁斯", ja: "パラレル：標準的なマイナーブルース", en: "Parallel: Standard minor blues" },
-    reason_neutral_bright: { zh: "中性：明亮而开阔", ja: "ニュートラル：明るく開放的", en: "Neutral: Bright and open" },
-    reason_sub_lydian11: { zh: "替代：提供利迪亚(#11)色彩", ja: "サブスティテューション：リディアン(#11)カラー", en: "Substitution: Provides Lydian (#11) color" },
-    reason_sub_aeolian: { zh: "替代：平滑的爱奥利亚质感", ja: "サブスティテューション：スムーズなアイオリアンテクスチャ", en: "Substitution: Smooth Aeolian texture" },
-    reason_classic_major_blues: { zh: "经典大调布鲁斯", ja: "クラシックメジャーブルース", en: "Classic major blues" },
-    reason_sharp11_dominant: { zh: "#11主和弦色彩", ja: "シャープ11ドミナントカラー", en: "Sharp 11 dominant color" },
-    reason_common_pentatonic: { zh: "常见五声音阶风味", ja: "一般的ペンタトニックフレーバー", en: "Common pentatonic flavor" },
+    reason_0: { zh: "平行：标准小调布鲁斯", ja: "パラレル：標準的なマイナーブルース", en: "Parallel: Standard minor blues" },
+    reason_1: { zh: "平行：纯净小调音色", ja: "パラレル：純粋なマイナーサウンド", en: "Parallel: Pure minor sound" },
+    reason_2: { zh: "中性：明亮而开阔", ja: "ニュートラル：明るく開放的", en: "Neutral: Bright and open" },
+    reason_3: { zh: "关系：甜美乡村布鲁斯色彩", ja: "リレート：甘いカントリーブルースカラー", en: "Relative: Sweet country-blues color" },
+    reason_4: { zh: "平行：大调和弦上的“布鲁斯”张力", ja: "パラレル：メジャーコード上の“ブルース”テンション", en: "Parallel: 'Blue' tension over major chord" },
+    reason_5: { zh: "平行：经典爵士布鲁斯音色", ja: "パラレル：クラシックジャズブルースサウンド", en: "Parallel: Classic jazz-blues sound" },
+    reason_6: { zh: "替代：提供利迪亚(#11)色彩", ja: "サブスティテューション：リディアン(#11)カラー", en: "Substitution: Provides Lydian (#11) color" },
+    reason_7: { zh: "替代：平滑的爱奥利亚质感", ja: "サブスティテューション：スムーズなアイオリアンテクスチャ", en: "Substitution: Smooth Aeolian texture" },
+    
     // Improv Feel names and descriptions (localized)
     improv_feel_name_1: { zh: "平和/甜美", ja: "安全でスイート", en: "Safe & Sweet" },
     improv_feel_desc_1: { zh: "协和的听感，非常适合流行和民谣蓝调。", ja: "協和的でスイート — ポップやフォークブルースに適しています。", en: "Consonant and sweet — well suited for pop and folk-blues." },
@@ -155,6 +155,19 @@ const i18n = {
     improv_feel_desc_3: { zh: "较高张力，带有波普与现代爵士蓝调特征。", ja: "高めのテンション — ビバップやモダンジャズブルースの特徴を持つ。", en: "Higher tension — evokes bebop and modern jazz-blues characteristics." },
     improv_feel_name_4: { zh: "实验/Outside", ja: "実験的 / アウトサイド", en: "Experimental / Outside" },
     improv_feel_desc_4: { zh: "强烈不协和，适合创造激烈的离调色彩。", ja: "非常に不協和でエッジが効いている — 強いアウトサイドの色彩を作る。", en: "Highly dissonant and edgy — creates strong outside colors and tension." },
+    
+    // About page
+    about_title: { zh: "关于爵士指南", ja: "ジャズコンパスについて", en: "About Jazz Compass" },
+    about_desc: { zh: "爵士指南是一个现代爵士音乐理论和即兴工具集合，为音乐家提供快速的乐理查询和实用的即兴建议。", ja: "ジャズコンパスはモダンジャズ音楽理論と即興ツールのコレクションで、ミュージシャンに即座の理論クエリと実用的な即興提案を提供します。", en: "Jazz Compass is a collection of modern jazz music theory and improvisation tools designed to provide musicians with quick theoretical insights and practical approach suggestions." },
+    about_features: { zh: "主要功能", ja: "主な機能", en: "Key Features" },
+    about_feature_chord: { zh: "和弦转换：立即识别和弦名称、音符和声部", ja: "コード変換：コード名、ノート、ボイシングを即座に識別", en: "Chord Converter: Instantly identify chord names, notes, and voicings" },
+    about_feature_blues: { zh: "布鲁斯工具箱：蓝调进行分析和即兴音阶建议", ja: "ブルース・ツール：ブルースの進行分析と即興スケール提案", en: "Blues Toolkit: Blues progression analysis and improvisation scale suggestions" },
+    about_feature_lcc: { zh: "LCC分析：基于重力和张力的调性分析", ja: "LCC解析：重力と張力に基づく調性分析", en: "LCC Analysis: Tonality analysis based on gravity and tension" },
+    about_feature_cst: { zh: "CST分析：基于亮度和张力的音阶推荐", ja: "CST解析：明るさと張力に基づくスケール推奨", en: "CST Analysis: Scale recommendations based on brightness and tension" },
+    about_github: { zh: "GitHub仓库", ja: "GitHubリポジトリ", en: "GitHub Repositories" },
+    about_github_web: { zh: "Web版本（JavaScript）", ja: "Web版（JavaScript）", en: "Web Version (JavaScript)" },
+    about_github_py: { zh: "Python版本", ja: "Python版", en: "Python Version" },
+    about_footer: { zh: "© 2026 Jazz Compass 项目。所有内容仅供教育和音乐学习之用。", ja: "© 2024 Jazz Compass プロジェクト。すべてのコンテンツは教育と音楽学習目的でのみ使用されます。", en: "© 2024 Jazz Compass Project. All content is for educational and musical learning purposes." },
 };
 
 // determine language: zh (中文), ja (日本語), otherwise en

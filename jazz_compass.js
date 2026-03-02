@@ -348,25 +348,26 @@ export class BluesToolkit {
 
         if (hasMajor3rd && hasB7) {
             // 属七和弦的情况 (Dominant 7th)
-            rawSuggestions.push([root, "Mixolydian Blues", "Parallel: Classic jazz-blues sound"]);
-            rawSuggestions.push([root, "Minor Blues", "Parallel: 'Blue' tension over major chord"]);
-            rawSuggestions.push([relMinorRoot, "Minor Pentatonic", "Relative: Sweet country-blues color"]);
+            rawSuggestions.push([root, "Mixolydian Blues", "Parallel: Classic jazz-blues sound", 5]);
+            rawSuggestions.push([root, "Minor Blues", "Parallel: 'Blue' tension over major chord", 4]);
+            rawSuggestions.push([relMinorRoot, "Minor Pentatonic", "Relative: Sweet country-blues color", 3]);
         } else if (hasMinor3rd) {
             // 小调和弦的情况 (Minor chord)
-            rawSuggestions.push([root, "Minor Blues", "Parallel: Standard minor blues"]);
-            rawSuggestions.push([root, "Minor Pentatonic", "Parallel: Pure minor sound"]);
+            rawSuggestions.push([root, "Minor Blues", "Parallel: Standard minor blues", 0]);
+            rawSuggestions.push([root, "Minor Pentatonic", "Parallel: Pure minor sound", 1]);
         } else {
             // 其他情况 (默认大调/中性)
-            rawSuggestions.push([root, "Major Pentatonic", "Neutral: Bright and open"]);
+            rawSuggestions.push([root, "Major Pentatonic", "Neutral: Bright and open", 2]);
         }
 
         // 封装最终结果,包含音符预览
-        return rawSuggestions.map(([sRoot, sType, reason]) => {
+        return rawSuggestions.map(([sRoot, sType, reason, reasonId]) => {
             const scaleNotes = this._calculateScaleNotes(sRoot, sType);
             return {
                 "name": `${sRoot} ${sType}`,
                 "reason": reason,
-                "notes": scaleNotes
+                "notes": scaleNotes,
+                "reasonId": reasonId
             };
         });
     }
@@ -399,7 +400,8 @@ export class BluesToolkit {
             recommendations.push({
                 "name": `${gRoot} Major Pentatonic`,
                 "reason": "Substitution: Provides Lydian (#11) color",
-                "notes": this._calculateScaleNotes(gRoot, "Major Pentatonic")
+                "notes": this._calculateScaleNotes(gRoot, "Major Pentatonic"),
+                "reasonId": 6
             });
         }
 
@@ -411,7 +413,8 @@ export class BluesToolkit {
             recommendations.push({
                 "name": `${b3Root} Major Pentatonic`,
                 "reason": "Substitution: Smooth Aeolian texture",
-                "notes": this._calculateScaleNotes(b3Root, "Major Pentatonic")
+                "notes": this._calculateScaleNotes(b3Root, "Major Pentatonic"),
+                "reasonId": 7
             });
         }
 

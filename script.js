@@ -24,6 +24,47 @@ document.addEventListener("DOMContentLoaded", () => {
         p.setAttribute("aria-hidden", "true");
       }
     });
+    // special handling for about panel
+    if (feature === "about") {
+      showAbout();
+    }
+  }
+
+  function showAbout() {
+    const aboutBody = document.getElementById("panel-about-body");
+    if (!aboutBody) return;
+    
+    const html = `
+      <h3>${window.__("about_title")}</h3>
+      <p>${window.__("about_desc")}</p>
+      
+      <h4 style="margin-top:20px">${window.__("about_features")}</h4>
+      <ul style="margin-left:20px">
+        <li>${window.__("about_feature_chord")}</li>
+        <li>${window.__("about_feature_blues")}</li>
+        <li>${window.__("about_feature_lcc")}</li>
+        <li>${window.__("about_feature_cst")}</li>
+      </ul>
+      
+      <h4 style="margin-top:20px">${window.__("about_github")}</h4>
+      <div style="margin: 12px 0;">
+        <p>
+          <a href="https://github.com/3035936740/Jazz-Compass-Web" target="_blank" style="color:#0066cc">
+            ${window.__("about_github_web")}
+          </a>
+        </p>
+        <p>
+          <a href="https://github.com/3035936740/JazzCompassPy" target="_blank" style="color:#0066cc">
+            ${window.__("about_github_py")}
+          </a>
+        </p>
+      </div>
+      
+      <hr style="margin-top:30px">
+      <p style="font-size:0.9em; color:#999">${window.__("about_footer")}</p>
+    `;
+    
+    aboutBody.innerHTML = html;
   }
 
   function prettyChordRender(targetEl, inputValue) {
@@ -86,18 +127,13 @@ document.addEventListener("DOMContentLoaded", () => {
     title.className = "card-title";
     title.textContent = scale.name;
     card.appendChild(title);
-    if (scale.reason) {
+    if (scale.reasonId != null) {
       const reason = document.createElement("div");
       reason.className = "small-muted";
-      reason.textContent = scale.reason;
+      reason.textContent = window.__("reason_" + scale.reasonId);
       card.appendChild(reason);
     }
     if (scale.notes && scale.notes.length) {
-      // textual list first
-      const textList = document.createElement("div");
-      textList.className = "small-muted";
-      textList.textContent = scale.notes.join(" ");
-      card.appendChild(textList);
       // grid view
       const noteRow = document.createElement("div");
       noteRow.className = "note-grid";
@@ -259,78 +295,7 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         suggestions = brain.blt.suggestForChord(v);
       } catch (e) {
-        // fallback: simple rules
-        const root = notes[0];
-        const rootIdx = conv.noteToIdx[root];
-        const offsets = new Set(
-          notes.map((n) => (conv.noteToIdx[n] - rootIdx + 12) % 12),
-        );
-        if (offsets.has(4) && offsets.has(10)) {
-          suggestions.push({
-            name: `${root} Mixolydian Blues`,
-            reason: window.__("reason_parallel_classic"),
-            notes: brain.blt._calculateScaleNotes(root, "Mixolydian Blues"),
-          });
-          suggestions.push({
-            name: `${root} Minor Blues`,
-            reason: window.__("reason_blue_tension"),
-            notes: brain.blt._calculateScaleNotes(root, "Minor Blues"),
-          });
-          const rel = conv.idxToNote[(rootIdx - 3 + 12) % 12];
-          suggestions.push({
-            name: `${rel} Minor Pentatonic`,
-            reason: window.__("reason_relative_country"),
-            notes: brain.blt._calculateScaleNotes(rel, "Minor Pentatonic"),
-          });
-        } else if (offsets.has(3)) {
-          suggestions.push({
-            name: `${notes[0]} Minor Blues`,
-            reason: window.__("reason_parallel_standard_minor"),
-            notes: brain.blt._calculateScaleNotes(notes[0], "Minor Blues"),
-          });
-        } else {
-          suggestions.push({
-            name: `${notes[0]} Major Pentatonic`,
-            reason: window.__("reason_neutral_bright"),
-            notes: brain.blt._calculateScaleNotes(notes[0], "Major Pentatonic"),
-          });
-        }
-        // always include a few other useful scales
-        [
-          {
-            name: `${root} Mixolydian Blues`,
-            reason: window.__("reason_parallel_classic"),
-            scale: "Mixolydian Blues",
-          },
-          {
-            name: `${root} Minor Blues`,
-            reason: window.__("reason_blue_tension"),
-            scale: "Minor Blues",
-          },
-          {
-            name: `${root} Major Blues`,
-            reason: window.__("reason_classic_major_blues"),
-            scale: "Major Blues",
-          },
-          {
-            name: `${root} Lydian Dominant`,
-            reason: window.__("reason_sharp11_dominant"),
-            scale: "Lydian Dominant",
-          },
-          {
-            name: `${root} Minor Pentatonic`,
-            reason: window.__("reason_common_pentatonic"),
-            scale: "Minor Pentatonic",
-          },
-        ].forEach((e) => {
-          if (!suggestions.some((s) => s.name === e.name)) {
-            suggestions.push({
-              name: e.name,
-              reason: e.reason,
-              notes: brain.blt._calculateScaleNotes(root, e.scale),
-            });
-          }
-        });
+		console.error("Error getting basic suggestions:", e);
       }
 
       // normalize suggestions to array
@@ -386,7 +351,7 @@ document.addEventListener("DOMContentLoaded", () => {
         title.textContent = s.name;
         const reason = document.createElement("div");
         reason.className = "small-muted";
-        reason.textContent = s.reason || "";
+        reason.textContent = window.__("reason_" + s.reasonId) || "";
         const noteRow = document.createElement("div");
         noteRow.className = "note-grid";
         (s.notes || []).forEach((n) => {
@@ -414,69 +379,7 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         adv = brain.blt.suggestAdvanced(v);
       } catch (e) {
-        // fallback: if major7 present recommend V pentatonic etc.
-        const root = notes[0];
-        const rootIdx = conv.noteToIdx[root];
-        const offsets = new Set(
-          notes.map((n) => (conv.noteToIdx[n] - rootIdx + 12) % 12),
-        );
-        if (offsets.has(11)) {
-          const gRoot = conv.idxToNote[(rootIdx + 7) % 12];
-          adv.push({
-            name: `${gRoot} Major Pentatonic`,
-            reason: window.__("reason_sub_lydian11"),
-            notes: brain.blt._calculateScaleNotes(gRoot, "Major Pentatonic"),
-          });
-        } else if (offsets.has(3) && offsets.has(10)) {
-          const b3Root = conv.idxToNote[(rootIdx + 3) % 12];
-          adv.push({
-            name: `${b3Root} Major Pentatonic`,
-            reason: window.__("reason_sub_aeolian"),
-            notes: brain.blt._calculateScaleNotes(b3Root, "Major Pentatonic"),
-          });
-        } else {
-          adv.push({
-            name: `${notes[0]} Major Pentatonic`,
-            reason: window.__("reason_neutral_bright"),
-            notes: brain.blt._calculateScaleNotes(notes[0], "Major Pentatonic"),
-          });
-        }
-        // add some additional scales for completeness
-        [
-          {
-            name: `${root} Mixolydian Blues`,
-            reason: window.__("reason_parallel_classic"),
-            scale: "Mixolydian Blues",
-          },
-          {
-            name: `${root} Minor Blues`,
-            reason: window.__("reason_blue_tension"),
-            scale: "Minor Blues",
-          },
-          {
-            name: `${root} Major Blues`,
-            reason: window.__("reason_classic_major_blues"),
-            scale: "Major Blues",
-          },
-          {
-            name: `${root} Lydian Dominant`,
-            reason: window.__("reason_sharp11_dominant"),
-            scale: "Lydian Dominant",
-          },
-          {
-            name: `${root} Minor Pentatonic`,
-            reason: window.__("reason_common_pentatonic"),
-            scale: "Minor Pentatonic",
-          },
-        ].forEach((e) => {
-          if (!adv.some((a) => a.name === e.name)) {
-            adv.push({
-              name: e.name,
-              reason: e.reason,
-              notes: brain.blt._calculateScaleNotes(root, e.scale),
-            });
-          }
-        });
+		console.error("Error getting advanced suggestions:", e);
       }
 
       if (!Array.isArray(adv)) {
@@ -507,14 +410,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       // candidate scales to analyze: Major Pentatonic, Minor Blues, Lydian Dominant
       const root = chordNotes[0];
-      const candidates = [
-        "Major Pentatonic",
-        "Minor Pentatonic",
-        "Minor Blues",
-        "Major Blues",
-        "Mixolydian Blues",
-        "Lydian Dominant",
-      ];
+      const candidates = Object.keys(brain.blt.scaleMetadata);
       results.innerHTML = "";
       const headerFeel = document.createElement("div");
       headerFeel.className = "small-muted";
