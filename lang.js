@@ -27,7 +27,7 @@ const i18n = {
     // Blues panel buttons
     blues_basic: { zh: "标准推荐", ja: "標準提案", en: "Standard Suggestions" },
     blues_advanced: { zh: "替代推荐", ja: "代替提案", en: "Alternative Suggestions" },
-    blues_feel: { zh: "听感分析 (Improv Feel)", ja: "フィール分析 (Improv Feel)", en: "Improv Feel" },
+    blues_feel: { zh: "听感分析", ja: "フィール分析", en: "Improv Feel" },
 
     // common messages
     cannot_parse_input: { zh: "无法解析输入", ja: "入力を解析できません", en: "Unable to parse input" },
@@ -36,7 +36,7 @@ const i18n = {
     // result headers with placeholders {count}
     header_basic: { zh: "当前操作：标准推荐 — {count} 个建议", ja: "操作：標準提案 — {count} 件", en: "Action: Standard Suggestions — {count} results" },
     header_advanced: { zh: "当前操作：替代推荐 — {count} 个建议", ja: "操作：代替提案 — {count} 件", en: "Action: Alternative Suggestions — {count} results" },
-    header_improv: { zh: "当前操作：听感分析 (Improv Feel) — {count} 个音阶", ja: "操作：フィール分析 (Improv Feel) — {count} スケール", en: "Action: Improv Feel — {count} scales" },
+    header_improv: { zh: "当前操作：听感分析 — {count} 个音阶", ja: "操作：フィール分析 — {count} スケール", en: "Action: Improv Feel — {count} scales" },
     header_cst: { zh: "当前操作：CST — {count} 个匹配音阶", ja: "操作：CST — {count} マッチ", en: "Action: CST — {count} matches" },
     header_lcc: { zh: "当前操作：LCC — {count} 个建议", ja: "操作：LCC — {count} 件", en: "Action: LCC — {count} results" },
 
