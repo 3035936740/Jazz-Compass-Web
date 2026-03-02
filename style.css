@@ -1,0 +1,68 @@
+:root{
+	--bg:#0f1720;
+	--card:#0f1728aa; /* translucent card */
+	--surface:#0b1220;
+	--muted:#9aa6b2;
+	--accent:#7c4dff; /* purple accent */
+	--accent-2:#00b5ad; /* teal secondary */
+	--glass: rgba(255,255,255,0.04);
+	--glass-border: rgba(255,255,255,0.06);
+	--radius:12px;
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, system-ui;
+	color-scheme: dark;
+}
+.container{ max-width:1100px; margin:28px auto; padding:20px; display:grid; grid-template-columns: 220px 1fr; gap:20px; align-items:start }
+body{
+	margin:0;
+	background: linear-gradient(180deg,#071123 0%, #07111a 60%);
+	color: #e6eef6;
+	-webkit-font-smoothing:antialiased;
+}
+.app-header{ grid-column:1 / -1; display:flex; gap:12px; align-items:center; margin-bottom:6px }
+.logo{ width:64px; height:64px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.2rem; background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff; box-shadow:0 8px 30px rgba(7,12,20,0.6) }
+.title-block h1{ margin:0; font-size:1.6rem }
+.subtitle{ color:var(--muted); font-size:0.9rem; margin-top:4px }
+.controls{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:18px }
+.feature-nav{ display:flex; gap:8px; flex-direction:column; margin:0 }
+.feature-btn{ padding:10px 12px; border-radius:10px; border:1px solid transparent; background:transparent; color:var(--muted); cursor:pointer; transition:all .18s ease; font-weight:700; text-align:left }
+.feature-btn:hover{ transform:translateY(-2px); color:var(--accent-2) }
+.feature-btn.active{ background: linear-gradient(135deg, rgba(124,77,255,0.14), rgba(0,181,173,0.08)); color:var(--accent); box-shadow: 0 6px 18px rgba(10,12,20,0.45); border:1px solid var(--glass-border) }
+.panels{ display:grid; grid-template-columns:1fr; gap:14px; grid-column:2 / 3 }
+.panel{ background:var(--card); border-radius:var(--radius); padding:0; backdrop-filter: blur(6px) saturate(120%); border:1px solid var(--glass-border); box-shadow: 0 8px 30px rgba(2,6,23,0.6); display:none }
+.panel-header{ display:flex; gap:12px; align-items:center; padding:14px; border-bottom:1px solid rgba(255,255,255,0.02) }
+.panel-header label{ color:var(--muted); font-weight:500 }
+.panel-header input{ background:transparent; border:1px solid rgba(255,255,255,0.06); padding:8px 10px; border-radius:8px; color:var(--muted) }
+.panel-header button{ margin-left:6px; padding:8px 12px; border-radius:8px; border:none; background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#fff; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,0.4) }
+.panel-body{ padding:16px }
+.panel-action{ background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#fff; border:none; padding:8px 12px; border-radius:8px }
+.panel-action.active{ box-shadow: 0 8px 24px rgba(29,20,64,0.6); transform: translateY(-2px); outline: 2px solid rgba(124,77,255,0.18) }
+
+/* generic container for rows of action buttons */
+.panel-action-row{ display:flex; gap:8px; flex-wrap:wrap; padding:8px 12px }
+.result-card{ background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.04); padding:12px; border-radius:10px; margin-bottom:10px }
+.card-title{ font-weight:700; color:#fff; margin-bottom:6px }
+.brightness-label{ margin-left:8px; font-size:0.85rem; color:var(--muted) }
+.spice-badge{ float:right; background: rgba(255,255,255,0.04); color:var(--muted); padding:4px 8px; border-radius:999px; font-size:0.82rem; border:1px solid rgba(255,255,255,0.03); }
+.lcc-meta{ font-size:0.85rem; color:var(--muted); margin-top:4px; display:inline-block }
+.cst-info{ margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.02) }
+.small-muted{ color:var(--muted); font-size:0.9rem; margin-bottom:8px }
+.card-body{ color:var(--muted); margin-top:6px }
+.note-grid{ display:flex; gap:10px; margin:10px 0; flex-wrap:wrap }
+
+/* specific tweak for key-center results to add clarity */
+.key-center-result .note-grid { margin-top:6px; }
+.note-cell{ background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.04); padding:8px 12px; border-radius:10px; text-align:center; min-width:56px }
+.note-cell.tension-note{ background: linear-gradient(180deg, rgba(152, 129, 255, 0.2), rgba(135, 71, 255, 0.15)); border:1px solid rgba(255, 107, 255, 0.18); box-shadow: 0 4px 12px rgba(255, 71, 246, 0.1) }
+.note-cell.avoid-note{ background: linear-gradient(180deg, rgba(255, 107, 107, 0.25), rgba(255, 71, 87, 0.18)); border:1px solid rgba(255, 107, 107, 0.22); box-shadow: 0 4px 12px rgba(255, 107, 107, 0.15) }
+.note{ font-weight:700; font-size:1.05rem; color:#fff }
+.mini-keyboard{ display:flex; gap:6px; margin-top:12px; flex-wrap:wrap }
+.key{ width:36px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:6px; background:transparent; border:1px solid rgba(255,255,255,0.03); font-size:0.85rem; color:var(--muted) }
+.active-key{ background: linear-gradient(90deg,var(--accent),var(--accent-2)); color:#fff; border-color:rgba(255,255,255,0.06); box-shadow:0 6px 18px rgba(27,20,45,0.6) }
+input[type="text"]{ padding:8px 10px; border:1px solid rgba(255,255,255,0.04); border-radius:8px; background:transparent; color:#e6eef6 }
+pre{ margin:0; font-family: monospace; font-size:0.92rem; overflow:auto; color:var(--muted) }
+
+/* small screens */
+@media (max-width:720px){
+	.panel-header{ flex-direction:column; align-items:flex-start; gap:8px }
+	.feature-nav{ overflow:auto }
+}

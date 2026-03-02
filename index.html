@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <script type="module" src="./script.js">
+    </script>
+    <title>Jazz Compass</title>
+    <style>
+        @import url('./style.css');
+    </style>
+</head>
+
+<body>
+    <main class="container">
+        <header class="app-header">
+            <div class="logo" aria-hidden="true">JC</div>
+            <div class="title-block">
+                <h1 id="header_h1">Jazz Compass</h1>
+                <div id="subtitle" class="subtitle">Modern Jazz Tools · 即时乐理与即兴建议</div>
+            </div>
+        </header>
+
+        <nav class="feature-nav" role="tablist">
+            <button class="feature-btn active" data-feature="chord"><span id="nav_chord">和弦转换处理</span></button>
+            <button class="feature-btn" data-feature="blues"><span id="nav_blues">布鲁斯工具处理</span></button>
+            <button class="feature-btn" data-feature="lcc"><span id="nav_lcc">LCC理论处理</span></button>
+            <button class="feature-btn" data-feature="cst"><span id="nav_cst">CST理论处理</span></button>
+            <button class="feature-btn" data-feature="other"><span id="nav_other">其他工具</span></button>
+        </nav>
+
+        <section class="panels">
+            <div id="panel-chord" class="panel" data-feature="chord" role="tabpanel">
+                <div class="panel-header">
+                    <label><span id="label_chord_example">示例和弦（单独）：</span> <input id="chord-input" type="text" value="C, E, G, B" /></label>
+                    <button id="chord-run"><span id="chord_run_btn">解析</span></button>
+                </div>
+                <div class="panel-body" id="panel-chord-body"></div>
+            </div>
+
+            <div id="panel-blues" class="panel" data-feature="blues" role="tabpanel">
+                <div class="panel-header">
+                    <label><span id="label_blues_example">示例和弦（布鲁斯）：</span> <input id="blues-input" type="text" value="C#m7b5" /></label>
+                    <button id="blues-run"><span id="blues_run_btn">分析</span></button>
+                </div>
+                <div class="panel-body" id="panel-blues-body"></div>
+            </div>
+
+            <div id="panel-lcc" class="panel" data-feature="lcc" role="tabpanel">
+                <div class="panel-header">
+                    <label><span id="label_lcc_example">示例和弦（LCC）：</span> <input id="lcc-input" type="text" value="Cmaj7" /></label>
+                    <button id="lcc-run"><span id="lcc_run_btn">分析</span></button>
+                </div>
+                <div class="panel-body" id="panel-lcc-body"></div>
+            </div>
+
+            <div id="panel-cst" class="panel" data-feature="cst" role="tabpanel">
+                <div class="panel-header">
+                    <label><span id="label_cst_example">示例和弦（CST）：</span> <input id="cst-input" type="text" value="Dbm9/E" /></label>
+                    <button id="cst-run"><span id="cst_run_btn">分析</span></button>
+                </div>
+                <div class="panel-body" id="panel-cst-body"></div>
+            </div>
+
+            <div id="panel-other" class="panel" data-feature="other" role="tabpanel">
+                <div class="panel-header">
+                    <label><span id="label_other_example">示例和弦（其他）：</span> <input id="other-input" type="text" value="Cmaj7" /></label>
+                    <button id="other-run"><span id="other_run_btn">分析</span></button>
+                </div>
+                <!-- action buttons will be injected here -->
+                <div id="other-action-row" class="panel-action-row"></div>
+                <div class="panel-body" id="panel-other-body"></div>
+            </div>
+        </section>
+    </main>
+</body>
+
+</html>
