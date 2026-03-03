@@ -1,14 +1,20 @@
-import { ChordConverter, JazzBrain } from "./jazz_compass.js";
+import { EnhancedChordConverter, JazzBrain } from "./jazz_compass.js";
 import * as lang from "./lang.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   const navButtons = Array.from(document.querySelectorAll(".feature-btn"));
   const panels = Array.from(document.querySelectorAll(".panel"));
 
-  const conv = new ChordConverter();
+  const conv = new EnhancedChordConverter();
   const brain = new JazzBrain();
   // state for "other" panel mode
   let currentOtherMode = "report";
+
+  // 本地化负和声轴标签
+  const axisLabelEl = document.getElementById("label_other_axis");
+  if (axisLabelEl && window.__) {
+    axisLabelEl.textContent = window.__("neg_axis");
+  }
 
   function showOnlyFeature(feature) {
     navButtons.forEach((b) =>
@@ -69,15 +75,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function prettyChordRender(targetEl, inputValue) {
     const v = inputValue.trim();
-    const notes = conv._ensureNotes(v);
+    const data = conv._ensureNotesAndRoot(v, true);
+    const notes = data.notes
+    const chord = data.chord
+
     if (notes && Array.isArray(notes) && notes.length > 0) {
       const offsets = notes.map((n) => conv.noteToIdx[n]);
       // 美化输出：根 / 链接 和 列表 + 偏移 + 小键盘视图
       const root = notes[0];
       const isSlash = v.includes("/");
       const htmlParts = [];
+      // 更紧凑的标题间距
       htmlParts.push(
-        `<h3>${window.__f("chord_parse_heading", { input: v })}</h3>`,
+        `<h2 style="margin: -4px 0 2px; font-size: 1.25rem;">${window.__f("chord_label")}: ${chord}</h2>`,
+      );
+      htmlParts.push(
+        `<h3 style="margin: 0 0 8px; font-size: 1rem; font-weight: 500; color: var(--muted);">${window.__f(
+          "chord_parse_heading",
+          { input: v },
+        )}</h3>`,
       );
 	  /*
       htmlParts.push(
@@ -276,7 +292,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // helper: parse chord notes
     function getNotesSafe(val) {
       try {
-        return conv._ensureNotes(val) || [];
+        return conv._ensureNotesAndRoot(val) || [];
       } catch (e) {
         return [];
       }
@@ -494,7 +510,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function updateCST(targetEl, inputValue) {
     const v = inputValue.trim();
-    const notes = conv._ensureNotes(v);
+    const notes = conv._ensureNotesAndRoot(v);
     if (!notes) {
       targetEl.innerHTML = `<p>${window.__("cannot_parse_chord")}</p>`;
       return;
@@ -571,7 +587,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function updateLCC(targetEl, inputValue) {
     const v = inputValue.trim();
-    const notes = conv._ensureNotes(v);
+    const notes = conv._ensureNotesAndRoot(v);
     if (!notes) {
       targetEl.innerHTML = `<p>${window.__("cannot_parse_chord")}</p>`;
       return;
@@ -617,6 +633,130 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (e) {
         // skip on error
       }
+    });
+  }
+
+  function updateRec(targetEl, inputValue) {
+    const v = inputValue.trim();
+    if (!v) {
+      targetEl.innerHTML = `<div class="result-card">${window.__("cannot_parse_input") || "无法解析输入，请输入有效和弦（如 C7、Am9）"}</div>`;
+      return;
+    }
+
+    // 调用 JazzBrain 的和弦推荐方法
+    let recommendations = [];
+    try {
+      recommendations = brain.getChordRecommendations(v);
+    } catch (e) {
+      console.error("获取和弦衔接推荐失败：", e);
+      targetEl.innerHTML = `<div class="result-card">${window.__("parse_error") || "解析失败："}${e.message}</div>`;
+      return;
+    }
+
+    // 清空目标容器并渲染结果
+    targetEl.innerHTML = "";
+    
+    // 结果头部统计
+    const headerRec = document.createElement("div");
+    headerRec.className = "small-muted";
+    headerRec.textContent = window.__f("header_rec", {
+      count: recommendations.length,
+      input: v
+    }) || window.__f("rec_count", {
+        input1: v,
+        input2: recommendations.length
+      });
+    targetEl.appendChild(headerRec);
+
+    // 遍历推荐结果渲染卡片
+    recommendations.forEach((item, idx) => {
+      const card = document.createElement("div");
+      card.className = "result-card rec-card";
+      
+      // 按评分线性渐变（从高分蓝绿 → 低分浅红，连续过渡）
+      // 按评分线性渐变（高分：深青绿 → 低分：暗赤红，高级暗调风格）
+      const scoreNorm = item.score / 15; // 归一化到 0-1
+
+      // 1. 色相（Hue）线性过渡：175(深青绿) → 25(暗赤红)（更贴合参考界面的色调）
+      const hueMin = 25;     // 低分：暗赤红（替代原浅红，更暗更高级）
+      const hueMax = 175;    // 高分：深青绿（匹配参考界面的主色调）
+      const hue = hueMin + (hueMax - hueMin) * scoreNorm;
+
+      // 2. 饱和度（Saturation）：整体低饱和（高级感核心），高分略低、低分略高
+      const satStartMin = 28;  // 低分起始饱和度（低饱和）
+      const satStartMax = 22;  // 高分起始饱和度（更低饱和）
+      const satStart = satStartMin + (satStartMax - satStartMin) * scoreNorm;
+
+      const satEndMin = 18;    // 低分结束饱和度
+      const satEndMax = 12;    // 高分结束饱和度
+      const satEnd = satEndMin + (satEndMax - satEndMin) * scoreNorm;
+
+      // 3. 亮度（Lightness）：极致暗调，整体下调到 15-22 区间（核心暗调调整）
+      const lightStartMin = 10;  // 低分起始亮度（暗）
+      const lightStartMax = 6;  // 高分起始亮度（更暗，匹配参考界面）
+      const lightStart = lightStartMin + (lightStartMax - lightStartMin) * scoreNorm;
+
+      const lightMidMin = 18;    // 低分中间亮度
+      const lightMidMax = 16;    // 高分中间亮度
+      const lightMid = lightMidMin + (lightMidMax - lightMidMin) * scoreNorm;
+
+      const lightEndMin = 15;    // 低分结束亮度（极暗）
+      const lightEndMax = 13;    // 高分结束亮度（极致暗）
+      const lightEnd = lightEndMin + (lightEndMax - lightEndMin) * scoreNorm;
+      // 多色阶线性渐变（从左上到右下，3个色阶过渡，渐变更自然）
+      card.style.background = `linear-gradient(135deg, 
+        hsl(${hue}, ${satStart}%, ${lightStart}%), 
+        hsl(${hue + 5}, ${(satStart + satEnd)/2}%, ${lightMid}%) 50%, 
+        hsl(${hue + 8}, ${satEnd}%, ${lightEnd}%)
+      )`;
+
+      // 卡片标题（和弦名 + 综合评分）
+      const title = document.createElement("div");
+      title.className = "card-title";
+      title.innerHTML = `${item.chord} 
+        <span class="score-badge">${window.__("sort_score") || "Score"}: ${item.score}</span>`;
+      card.appendChild(title);
+
+      // 核心指标行
+      const metricsRow = document.createElement("div");
+      metricsRow.style.display = "flex";
+      metricsRow.style.gap = "12px";
+      metricsRow.style.margin = "8px 0";
+      metricsRow.style.fontSize = "0.9em";
+      
+      // 稳定性
+      const stabilitySpan = document.createElement("span");
+      stabilitySpan.textContent = `${window.__("sort_stability") || "Stability"}: ${item.stability.toFixed(1)}`;
+      // 紧张度
+      const tensionSpan = document.createElement("span");
+      tensionSpan.textContent = `${window.__("sort_tension") || "Tension"}: ${item.tension.toFixed(1)}`;
+      // 明亮度
+      const brightnessSpan = document.createElement("span");
+      brightnessSpan.textContent = `${window.__("brightness_label") || "Brightness"}: ${item.brightness.toFixed(1)}`;
+      
+      metricsRow.appendChild(stabilitySpan);
+      metricsRow.appendChild(tensionSpan);
+      metricsRow.appendChild(brightnessSpan);
+      card.appendChild(metricsRow);
+
+      // 来源标注（Formula/Creative）
+      const sourceSpan = document.createElement("div");
+      sourceSpan.className = "small-muted";
+      sourceSpan.textContent = `${window.__("source_label") || "来源"}: ${item.source}`;
+      card.appendChild(sourceSpan);
+
+      // 和弦音符网格（复用现有 note-grid 样式）
+      const noteRow = document.createElement("div");
+      noteRow.className = "note-grid";
+      item.notes.forEach((n) => {
+        const nc = document.createElement("div");
+        nc.className = "note-cell";
+        nc.innerHTML = `<div class="note">${n}</div>`;
+        noteRow.appendChild(nc);
+      });
+      card.appendChild(noteRow);
+
+      targetEl.appendChild(card);
     });
   }
 
@@ -807,12 +947,14 @@ document.addEventListener("DOMContentLoaded", () => {
 			break;
 		}
 		case 'negative': {
-			const parts = v.split(',').map(s => s.trim());
-			const chord = parts[0] || '';
-			const axis = parts[1] || 'C';
+			// 负和声：使用两个输入框，一个是和弦 (other-input)，一个是轴 (other-axis-input)
+			const chord = v;
+			const axisInput = document.getElementById('other-axis-input');
+			const axisRaw = axisInput ? axisInput.value : '';
+			const axis = (axisRaw && axisRaw.trim()) || 'C';
 			
 			// 1. 数据准备
-			const chord_keys = brain.converter._ensureNotes(chord);
+			const chord_keys = brain.converter._ensureNotesAndRoot(chord);
 			const negResult = brain.toNegative(chord, axis); 
 			// 注意：假设 negResult 返回的是 ['F', 'D', 'Bb', 'G'] 或包含 notes 属性的对象
 			const neg_notes = Array.isArray(negResult) ? negResult : (negResult.notes || []);
@@ -975,9 +1117,56 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (e) {}
     }
     return t
-      .split(",")
+      .split(";")
       .map((s) => s.trim())
       .filter((s) => s);
+  }
+
+  // helpers for key-center dynamic inputs
+  function createKeyCenterEntry(value = "") {
+    const div = document.createElement("div");
+    div.className = "kc-chord-entry";
+    div.style.display = "flex";
+    div.style.alignItems = "center";
+    div.style.marginBottom = "4px";
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "kc-chord";
+    input.value = value;
+    input.style.flex = "1";
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = "-";
+    btn.title = "移除和弦";
+    btn.style.marginLeft = "6px";
+    btn.addEventListener("click", () => {
+      div.remove();
+    });
+
+    div.appendChild(input);
+    div.appendChild(btn);
+    return div;
+  }
+
+  function setKeyCenterChords(arr) {
+    const container = document.getElementById("keycenter-inputs");
+    // remove existing entries (but keep the add button as last child)
+    Array.from(container.querySelectorAll(".kc-chord-entry")).forEach((e) => e.remove());
+    arr.forEach((v) => {
+      const entry = createKeyCenterEntry(v);
+      container.insertBefore(entry, document.getElementById("add-keycenter-chord"));
+    });
+  }
+
+  function getKeyCenterValue() {
+    const container = document.getElementById("keycenter-inputs");
+    const chords = Array.from(container.querySelectorAll(".kc-chord"))
+      .map((i) => i.value.trim())
+      .filter((s) => s);
+
+    return chords.join(";");
   }
 
   // Navigation binding: show only selected feature
@@ -1006,7 +1195,8 @@ document.addEventListener("DOMContentLoaded", () => {
       key_center: "Cmaj7,Ebdim7,Dm7,G7",
       report: "C7",
       progression: "Cmaj7,Fmaj7,G7,Cmaj7",
-      negative: "Dm7 add b13 omit 5/C,C",
+      // 负和声：和弦与轴拆成两个输入框，这里只保留和弦示例
+      negative: "Dm7 add b13 omit 5/C",
       guide: "Dm7,G7,Cmaj7",
     };
 
@@ -1018,8 +1208,42 @@ document.addEventListener("DOMContentLoaded", () => {
         window.__(`label_other_example_${mode}`) ||
         window.__("label_other_example");
       labelEl.textContent = newText;
+
       const inputEl = document.getElementById("other-input");
-      if (sampleInputs[mode] !== undefined) inputEl.value = sampleInputs[mode];
+      const kcContainer = document.getElementById("keycenter-inputs");
+      const axisRow = document.getElementById("negative-axis-row");
+      const axisInput = document.getElementById("other-axis-input");
+
+      // key_center / progression / guide 三种模式用“可增删”的和弦列表排版
+      const useChordList =
+        mode === "key_center" || mode === "progression" || mode === "guide";
+
+      // 负和声模式：使用两个输入框（和弦 + 轴）
+      if (mode === "negative") {
+        inputEl.style.display = "";
+        kcContainer.style.display = "none";
+        if (axisRow) axisRow.style.display = "block";
+        if (sampleInputs[mode] !== undefined) inputEl.value = sampleInputs[mode];
+        if (axisInput && !axisInput.value) axisInput.value = "C";
+      } else {
+        if (axisRow) axisRow.style.display = "none";
+        if (useChordList) {
+          // 显示可增删列表，隐藏单行输入
+          inputEl.style.display = "none";
+          kcContainer.style.display = "block";
+          const example = sampleInputs[mode] || "";
+          const arr = example
+            .split(",")
+            .map((s) => s.trim())
+            .filter((s) => s);
+          setKeyCenterChords(arr);
+        } else {
+          inputEl.style.display = "";
+          kcContainer.style.display = "none";
+          if (sampleInputs[mode] !== undefined)
+            inputEl.value = sampleInputs[mode];
+        }
+      }
     }
 
     setOtherMode(currentOtherMode);
@@ -1046,11 +1270,52 @@ document.addEventListener("DOMContentLoaded", () => {
     const val = document.getElementById("cst-input").value;
     updateCST(target, val);
   });
+  // add/remove behavior for key center chord inputs
+  document.getElementById("add-keycenter-chord").addEventListener("click", () => {
+    const container = document.getElementById("keycenter-inputs");
+    const entry = createKeyCenterEntry("");
+    container.insertBefore(entry, document.getElementById("add-keycenter-chord"));
+  });
+
   document.getElementById("other-run").addEventListener("click", () => {
     const target = document.getElementById("panel-other-body");
-    const val = document.getElementById("other-input").value;
+    let val;
+    if (
+      currentOtherMode === "key_center" ||
+      currentOtherMode === "progression" ||
+      currentOtherMode === "guide"
+    ) {
+      // 这三种模式都从“可增删”列表收集和弦
+      val = getKeyCenterValue();
+    } else {
+      val = document.getElementById("other-input").value;
+    }
     processOther(target, val);
   });
+
+  // 和弦衔接推荐面板 - 按钮事件绑定
+const recRunBtn = document.getElementById("rec-run");
+const recInput = document.getElementById("rec-input");
+const recPanelBody = document.getElementById("panel-rec-body");
+
+if (recRunBtn && recInput && recPanelBody) {
+  recRunBtn.addEventListener("click", () => {
+    const inputVal = recInput.value.trim();
+    updateRec(recPanelBody, inputVal);
+  });
+
+  // 支持回车触发
+  recInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      recRunBtn.click();
+    }
+  });
+}
+
+// 初始化默认显示第一个面板（保持原有逻辑）
+const defaultFeature = navButtons.length > 0 ? navButtons[0].dataset.feature : "chord";
+showOnlyFeature(defaultFeature);
 
   showOnlyFeature("chord");
 });

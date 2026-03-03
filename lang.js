@@ -9,11 +9,19 @@ const i18n = {
     nav_other: { zh: "其他工具", ja: "その他ツール", en: "Other Tools" },
     nav_about: { zh: "关于", ja: "について", en: "About" },
 
-    label_chord_example: { zh: "示例和弦（单独）：", ja: "サンプルコード(個別)：", en: "Example chord (single):" },
-    label_blues_example: { zh: "示例和弦（布鲁斯）：", ja: "サンプルコード(ブルース)：", en: "Example chord (blues):" },
-    label_lcc_example: { zh: "示例和弦（LCC）：", ja: "サンプルコード(LCC)：", en: "Example chord (LCC):" },
-    label_cst_example: { zh: "示例和弦（CST）：", ja: "サンプルコード(CST)：", en: "Example chord (CST):" },
-    label_other_example: { zh: "示例和弦（其他）：", ja: "サンプルコード(その他)：", en: "Example chord (other):" },
+    sort_title: {zh: "排序方式", ja: "ソート方式", en: "Sort By"},
+    sort_score: { zh: "评分", ja: "スコア", en: "Score" },
+    sort_stability: { zh: "稳定性", ja: "安定性", en: "Stability" },
+    sort_tension: { zh: "紧张度", ja: "緊張度", en: "Tension" },
+    sort_brightness: { zh: "明亮度", ja: "明るさ", en: "Brightness" },
+    sort_asc: { zh: "升序", ja: "昇順", en: "Ascending" },
+    sort_desc: { zh: "降序", ja: "降順", en: "Descending" },
+
+    label_chord_example: { zh: "和弦（单独）：", ja: "コード(個別)：", en: "Chord (single):" },
+    label_blues_example: { zh: "和弦（布鲁斯）：", ja: "コード(ブルース)：", en: "Chord (blues):" },
+    label_lcc_example: { zh: "和弦（LCC）：", ja: "コード(LCC)：", en: "Chord (LCC):" },
+    label_cst_example: { zh: "和弦（CST）：", ja: "コード(CST)：", en: "Chord (CST):" },
+    label_other_example: { zh: "和弦（其他）：", ja: "コード(その他)：", en: "Chord (other):" },
 
     btn_parse: { zh: "解析", ja: "解析", en: "Parse" },
     btn_analyze: { zh: "分析", ja: "解析", en: "Analyze" },
@@ -23,6 +31,14 @@ const i18n = {
     lcc_run_btn: { zh: "分析", ja: "解析", en: "Analyze" },
     cst_run_btn: { zh: "分析", ja: "解析", en: "Analyze" },
     other_run_btn: { zh: "分析", ja: "解析", en: "Analyze" },
+    
+    nav_rec: { zh: "和弦衔接", ja: "コード・コネクション", en: "Chord Connection" },
+    nav_rec_example: { zh: "和弦 (衔接)", ja: "コード (コネクション)", en: "Chord (Connection)" },
+    rec_count: { zh: "为 {input1} 推荐 {input2} 个衔接和弦", ja: "{input1} に {input2} 個の接続コードを推薦する", en: "Recommend {input2} connecting chords for {input1}" },
+    label_rec_input: { zh: "起始和弦：", ja: "開始コード：", en: "Start Chord:" },
+    stat_stability: { zh: "稳定性", ja: "安定性", en: "Stability" },
+    stat_tension: { zh: "紧张度", ja: "緊張度", en: "Tension" },
+    stat_brightness: { zh: "明亮度", ja: "明るさ", en: "Brightness" },
 
     // Blues panel buttons
     blues_basic: { zh: "标准推荐", ja: "標準提案", en: "Standard Suggestions" },
@@ -43,6 +59,7 @@ const i18n = {
     chord_parse_heading: { zh: "和弦解析: {input}", ja: "コード解析: {input}", en: "Chord Parse: {input}" },
     chord_parse_error: { zh: "和弦解析错误", ja: "コード解析エラー", en: "Chord parse error" },
     root_label: { zh: "根音", ja: "ルート", en: "Root" },
+    chord_label: { zh: "和弦", ja: "コード", en: "Chord" },
     // slash_label: { zh: "斜杠和弦", ja: "スラッシュコード", en: "Slash chord" },
 
     other_report: { zh: "和弦分析报告", ja: "コード分析レポート", en: "Chord Analysis Report" },
@@ -114,11 +131,11 @@ const i18n = {
     },
 
     // input labels for other modes (fallback to default if absent)
-    label_other_example_key_center: { zh: "示例和弦（数组）：", ja: "サンプルコード(配列):", en: "Example chords (array):" },
-    label_other_example_report: { zh: "示例和弦：", ja: "サンプルコード：", en: "Example chord:" },
-    label_other_example_progression: { zh: "示例进行：", ja: "サンプル進行：", en: "Example progression:" },
-    label_other_example_negative: { zh: "示例和弦,轴：", ja: "サンプルコード, 軸:", en: "Example chord, axis:" },
-    label_other_example_guide: { zh: "示例进行：", ja: "サンプル進行：", en: "Example progression:" },
+    label_other_example_key_center: { zh: "和弦（可增删）：", ja: "コード(増減可):", en: "Chords (add/remove):" },
+    label_other_example_report: { zh: "和弦：", ja: "コード：", en: "Chord:" },
+    label_other_example_progression: { zh: "进行：", ja: "進行：", en: "progression:" },
+    label_other_example_negative: { zh: "和弦：", ja: "コード:", en: "Chord:" },
+    label_other_example_guide: { zh: "进行：", ja: "進行：", en: "progression:" },
 
     // LCC labels
     parent_label: { zh: "Parent", ja: "親", en: "Parent" },

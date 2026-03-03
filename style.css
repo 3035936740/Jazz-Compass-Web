@@ -157,6 +157,96 @@ body {
 	color: var(--muted)
 }
 
+/* 让“其他”面板的头部上下排列，更像独立表单区块 */
+#panel-other .panel-header {
+	flex-direction: column;
+	align-items: stretch;
+	gap: 10px;
+}
+
+#keycenter-inputs {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	align-self: stretch;
+	width: 100%;
+	margin-top: 4px;
+	padding: 10px 12px;
+	border-radius: 10px;
+	background: rgba(15, 23, 42, 0.55);
+	border: 1px solid var(--glass-border);
+	box-sizing: border-box;
+}
+
+
+
+/* 和弦推荐评分徽章 */
+.score-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 0.8em;
+  margin-left: 8px;
+}
+
+/* 和弦推荐卡片 hover 效果 */
+.rec-card {
+  margin: 8px 0;
+  padding: 12px;
+  border-radius: 8px;
+  transition: transform 0.2s ease;
+}
+
+.rec-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.kc-chord-entry {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.kc-chord-entry input {
+	flex: 1;
+	background: transparent;
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	padding: 8px 10px;
+	border-radius: 8px;
+	color: var(--muted);
+}
+
+#add-keycenter-chord,
+.kc-remove-btn {
+	padding: 6px 10px;
+	border-radius: 999px;
+	border: none;
+	background: var(--accent);
+	color: #fff;
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 600;
+}
+
+#add-keycenter-chord {
+	align-self: flex-start;
+	padding-inline: 10px;
+	margin-top: 4px;
+}
+
+.kc-remove-btn {
+	background: rgba(148, 163, 184, 0.22);
+	color: var(--muted);
+}
+
+.kc-remove-btn:hover {
+	background: rgba(148, 163, 184, 0.32);
+}
+
 .panel-header button {
 	margin-left: 6px;
 	padding: 8px 12px;
