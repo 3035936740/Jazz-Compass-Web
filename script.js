@@ -772,80 +772,82 @@ document.addEventListener("DOMContentLoaded", () => {
           const results = brain.findKeyCenterPro(arr, true);
 
           if (Array.isArray(results) && results.length) {
-            const top = results[0]; // 获取匹配度最高的调性
-            const parts = top.name.split(" ");
-            const root = parts[0];
-            const sysName = parts.slice(1).join(" ").trim();
+            results.forEach(function(result, index) {
+              // const result = results[0]; // 获取匹配度最高的调性
+              const parts = result.name.split(" ");
+              const root = parts[0];
+              const sysName = parts.slice(1).join(" ").trim();
 
-            let notes = [];
-            try {
-              notes = brain.cst.scaleNotes(root, sysName);
-            } catch (e) {
-              notes = [];
-            }
-
-            // 2. 创建卡片容器
-            const card = document.createElement("div");
-            card.className = "result-card";
-
-            try {
-              const sp = Number(feel.spiciness_level || 0);
-              let hue = 200,
-                sat = 20,
-                top = 30,
-                bot = 26;
-              if (sp <= 1) {
-                hue = 200;
-                sat = 18;
-                top = 30;
-                bot = 26;
-              } else if (sp <= 3) {
-                hue = 38;
-                sat = 20;
-                top = 32;
-                bot = 26;
-              } else if (sp <= 5) {
-                hue = 18;
-                sat = 24;
-                top = 34;
-                bot = 28;
-              } else {
-                hue = 300;
-                sat = 20;
-                top = 34;
-                bot = 26;
+              let notes = [];
+              try {
+                notes = brain.cst.scaleNotes(root, sysName);
+              } catch (e) {
+                notes = [];
               }
-              card.style.background = `linear-gradient(135deg, hsl(${hue}, ${sat}%, ${top}%), hsl(${hue}, ${Math.max(sat - 4, 8)}%, ${bot}%))`;
-            } catch (e) {}
 
-            // 4. 构建标题和评分
-            const title = document.createElement("div");
-            title.className = "card-title";
-            title.innerHTML = `<span>${top.name}</span> <span class="spice-badge" style="margin-left:8px; font-size:0.8em; opacity:0.8;">${window.__("key_center_match_score") || "Score"}: ${Math.round(top.score)}</span>`;
+              // 2. 创建卡片容器
+              const card = document.createElement("div");
+              card.className = "result-card";
 
-            const noteRow = document.createElement("div");
-            noteRow.className = "note-grid";
-            (notes || []).forEach((n) => {
-              const nc = document.createElement("div");
-              nc.className = "note-cell";
-              nc.innerHTML = `<div class="note">${n}</div>`;
-              noteRow.appendChild(nc);
+              try {
+                const sp = Number(feel.spiciness_level || 0);
+                let hue = 200,
+                  sat = 20,
+                  top = 30,
+                  bot = 26;
+                if (sp <= 1) {
+                  hue = 200;
+                  sat = 18;
+                  top = 30;
+                  bot = 26;
+                } else if (sp <= 3) {
+                  hue = 38;
+                  sat = 20;
+                  top = 32;
+                  bot = 26;
+                } else if (sp <= 5) {
+                  hue = 18;
+                  sat = 24;
+                  top = 34;
+                  bot = 28;
+                } else {
+                  hue = 300;
+                  sat = 20;
+                  top = 34;
+                  bot = 26;
+                }
+                card.style.background = `linear-gradient(135deg, hsl(${hue}, ${sat}%, ${top}%), hsl(${hue}, ${Math.max(sat - 4, 8)}%, ${bot}%))`;
+              } catch (e) {}
+
+              // 4. 构建标题和评分
+              const title = document.createElement("div");
+              title.className = "card-title";
+              title.innerHTML = `<span>${result.name}</span> <span class="spice-badge" style="margin-left:8px; font-size:0.8em; opacity:0.8;">${window.__("key_center_match_score") || "Score"}: ${Math.round(result.score)}</span>`;
+
+              const noteRow = document.createElement("div");
+              noteRow.className = "note-grid";
+              (notes || []).forEach((n) => {
+                const nc = document.createElement("div");
+                nc.className = "note-cell";
+                nc.innerHTML = `<div class="note">${n}</div>`;
+                noteRow.appendChild(nc);
+              });
+
+              // 6. 组合元素
+              card.appendChild(title);
+
+              // 如果有原因/描述，也可以加上
+              const reason = document.createElement("div");
+              reason.className = "small-muted";
+              reason.style.marginBottom = "8px";
+              reason.textContent = `${window.__("key_center_detected") || "Detected Key Center"}`;
+              card.appendChild(reason);
+
+              card.appendChild(noteRow);
+
+              // targetEl.innerHTML = "";
+              targetEl.appendChild(card);
             });
-
-            // 6. 组合元素
-            card.appendChild(title);
-
-            // 如果有原因/描述，也可以加上
-            const reason = document.createElement("div");
-            reason.className = "small-muted";
-            reason.style.marginBottom = "8px";
-            reason.textContent = `${window.__("key_center_detected") || "Detected Key Center"}`;
-            card.appendChild(reason);
-
-            card.appendChild(noteRow);
-
-            targetEl.innerHTML = "";
-            targetEl.appendChild(card);
           } else {
             targetEl.innerHTML = `<div class="small-muted">${window.__("no_key_recommended") || "no key recommended"}</div>`;
           }
