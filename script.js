@@ -2342,6 +2342,29 @@ document.addEventListener("DOMContentLoaded", () => {
       "B#",
       "Cb",
     ];
+    const semitoneMap = {
+      C: 0,
+      "B#": 0,
+      "C#": 1,
+      Db: 1,
+      D: 2,
+      "D#": 3,
+      Eb: 3,
+      E: 4,
+      Fb: 4,
+      "E#": 5,
+      F: 5,
+      "F#": 6,
+      Gb: 6,
+      G: 7,
+      "G#": 8,
+      Ab: 8,
+      A: 9,
+      "A#": 10,
+      Bb: 10,
+      B: 11,
+      Cb: 11,
+    };
     const noteNormalizeFull = {
       C: "C",
       "C#": "C#",
@@ -2350,8 +2373,8 @@ document.addEventListener("DOMContentLoaded", () => {
       "D#": "D#",
       Eb: "Eb",
       E: "E",
-      "E#": "E",
-      Fb: "E",
+      "E#": "E#",
+      Fb: "Fb",
       F: "F",
       "F#": "F#",
       Gb: "Gb",
@@ -2362,11 +2385,11 @@ document.addEventListener("DOMContentLoaded", () => {
       "A#": "A#",
       Bb: "Bb",
       B: "B",
-      "B#": "B",
-      Cb: "B",
+      "B#": "B#",
+      Cb: "Cb",
       // 复合名映射到标准名
-      Cbm: "B",
-      "B#m": "B",
+      Cbm: "Cb",
+      "B#m": "B#",
     };
 
     // 核心：将任何输入音符标准化为 0-11 索引
@@ -2377,13 +2400,11 @@ document.addEventListener("DOMContentLoaded", () => {
         .replace(/dim$/, "")
         .replace(/°$/, "")
         .trim();
-      // 尝试直接匹配
-      if (noteNormalizeFull[clean] !== undefined) {
-        clean = noteNormalizeFull[clean];
+      const normalized = noteNormalizeFull[clean] || clean;
+      if (semitoneMap[normalized] !== undefined) {
+        return semitoneMap[normalized];
       }
-      const idx = allNotesExt.indexOf(clean);
-      if (idx !== -1) return idx % 12;
-      // 最后兜底
+      console.warn("Unknown note for semitone conversion:", note);
       return undefined;
     }
 
@@ -2419,7 +2440,8 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error("Unknown root:", root);
         return intervals.map(() => "?");
       }
-      return intervals.map((i) => semitoneToNote((rootIdx + i) % 12));
+      const preferSharps = /[#♯]/.test(root);
+      return intervals.map((i) => semitoneToNote((rootIdx + i) % 12, preferSharps));
     }
 
     const axisColorMap = {
@@ -2668,7 +2690,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // 生成调性对照表
-    function renderKeyTable(majorKey, minorKey) {
+    function renderKeyTable(majorKey, minorKey, primarySection = "major") {
       tableContainer.innerHTML = "";
 
       // --- 大调切换按钮 ---
@@ -2687,7 +2709,7 @@ document.addEventListener("DOMContentLoaded", () => {
         majorMode === "natural",
         () => {
           majorMode = "natural";
-          renderKeyTable(majorKey, minorKey);
+          renderKeyTable(majorKey, minorKey, circleCurrentKey?.primary || "major");
         },
       );
       const btnMajorHarmonic = createModeButton(
@@ -2695,12 +2717,11 @@ document.addEventListener("DOMContentLoaded", () => {
         majorMode === "harmonic",
         () => {
           majorMode = "harmonic";
-          renderKeyTable(majorKey, minorKey);
+          renderKeyTable(majorKey, minorKey, circleCurrentKey?.primary || "major");
         },
       );
       majorToggleRow.appendChild(btnMajorNatural);
       majorToggleRow.appendChild(btnMajorHarmonic);
-      tableContainer.appendChild(majorToggleRow);
 
       // --- 大调表 ---
       const majorSec = document.createElement("div");
@@ -2731,14 +2752,12 @@ document.addEventListener("DOMContentLoaded", () => {
       majorSec.appendChild(
         buildDegreeTable(majorNotes, degreeNums, funcs, chordTypes, majorKey),
       );
-      tableContainer.appendChild(majorSec);
 
       // --- 分隔线 ---
       const divider = document.createElement("hr");
       divider.style.border = "none";
       divider.style.borderTop = "1px solid rgba(255,255,255,0.1)";
       divider.style.margin = "16px 0";
-      tableContainer.appendChild(divider);
 
       // --- 小调切换按钮 ---
       const minorToggleRow = document.createElement("div");
@@ -2755,7 +2774,7 @@ document.addEventListener("DOMContentLoaded", () => {
         minorMode === "natural",
         () => {
           minorMode = "natural";
-          renderKeyTable(majorKey, minorKey);
+          renderKeyTable(majorKey, minorKey, circleCurrentKey?.primary || "major");
         },
       );
       const btnMinorHarmonic = createModeButton(
@@ -2763,12 +2782,11 @@ document.addEventListener("DOMContentLoaded", () => {
         minorMode === "harmonic",
         () => {
           minorMode = "harmonic";
-          renderKeyTable(majorKey, minorKey);
+          renderKeyTable(majorKey, minorKey, circleCurrentKey?.primary || "major");
         },
       );
       minorToggleRow.appendChild(btnMinorNatural);
       minorToggleRow.appendChild(btnMinorHarmonic);
-      tableContainer.appendChild(minorToggleRow);
 
       // --- 小调表 ---
       const minorSec = document.createElement("div");
@@ -2804,7 +2822,20 @@ document.addEventListener("DOMContentLoaded", () => {
           minorKey,
         ),
       );
-      tableContainer.appendChild(minorSec);
+
+      if (primarySection === "major") {
+        tableContainer.appendChild(majorToggleRow);
+        tableContainer.appendChild(majorSec);
+        tableContainer.appendChild(divider);
+        tableContainer.appendChild(minorToggleRow);
+        tableContainer.appendChild(minorSec);
+      } else {
+        tableContainer.appendChild(minorToggleRow);
+        tableContainer.appendChild(minorSec);
+        tableContainer.appendChild(divider);
+        tableContainer.appendChild(majorToggleRow);
+        tableContainer.appendChild(majorSec);
+      }
     }
 
     function buildDegreeTable(notes, degreeNums, funcs, chordTypes, keyRoot) {
@@ -2968,7 +2999,7 @@ document.addEventListener("DOMContentLoaded", () => {
           primary: "major",
         };
         drawCircle(item.major, null);
-        renderKeyTable(item.major, item.minor);
+        renderKeyTable(item.major, item.minor, "major");
       } else if (dist >= centerR && dist < innerR) {
         // 点击内环 — 小调
         circleCurrentKey = {
@@ -2977,7 +3008,7 @@ document.addEventListener("DOMContentLoaded", () => {
           primary: "minor",
         };
         drawCircle(null, item.minor);
-        renderKeyTable(item.major, item.minor);
+        renderKeyTable(item.major, item.minor, "minor");
       }
     });
 
@@ -2999,6 +3030,11 @@ document.addEventListener("DOMContentLoaded", () => {
             circleCurrentKey.primary === "minor"
               ? circleCurrentKey.minor
               : null,
+          );
+          renderKeyTable(
+            circleCurrentKey.major,
+            circleCurrentKey.minor,
+            circleCurrentKey.primary,
           );
         } else {
           drawCircle(null, null);
