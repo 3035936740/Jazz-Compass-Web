@@ -149,12 +149,33 @@ body {
 	font-weight: 500
 }
 
-.panel-header input {
-	background: transparent;
-	border: 1px solid rgba(255, 255, 255, 0.06);
-	padding: 8px 10px;
-	border-radius: 8px;
-	color: var(--muted)
+.panel-header input,
+.panel-header select {
+	background: rgba(255, 255, 255, 0.06);
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	padding: 8px 12px;
+	border-radius: 10px;
+	color: var(--muted);
+	min-width: 120px;
+	outline: none;
+	transition: border-color 0.18s ease, box-shadow 0.18s ease;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+}
+
+.panel-header select {
+	background-image: url("resources/more-arrow.svg");
+	background-position: right 12px center;
+	background-size: 12px 12px;
+	background-repeat: no-repeat;
+	padding-right: 34px;
+}
+
+.panel-header input:focus,
+.panel-header select:focus {
+	border-color: var(--accent-2);
+	box-shadow: 0 0 0 3px rgba(0, 181, 173, 0.12);
 }
 
 /* 让“其他”面板的头部上下排列，更像独立表单区块 */

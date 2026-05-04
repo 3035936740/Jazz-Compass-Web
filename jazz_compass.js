@@ -123,6 +123,428 @@ export class ChordConverter {
     }
 }
 
+export class MusicScale {
+    constructor() {
+        this.scaleMode = [
+            {
+                "id": "lydian_sharp_5",
+                "scale_name": ["Lydian #5/Lydian Augmented", "Lydian #5", "Lydian Augmented", "利底亚升五音阶", "利底亚升5音阶", "利底亚增音阶", "增利底亚音阶"],
+                "family": "Augment M7",
+                "intervals": [0, 2, 4, 6, 8, 9, 11],
+                "avoid_intervals_ids": [5],
+                "related_strong": ["ionian_sharp_5"],
+                "related_weak": ["lydian_sharp_2", "lydian"]
+            },
+            {
+                "id": "ionian_sharp_5",
+                "scale_name": ["Ionian #5/Ionian Augmented", "Ionian #5", "Ionian Augmented", "伊奥尼亚升五音阶", "伊奥尼亚升5音阶", "伊奥尼亚增音阶", "增伊奥尼亚音阶"],
+                "family": "Augment M7",
+                "intervals": [0, 2, 4, 5, 8, 9, 11],
+                "avoid_intervals_ids": [3, 5],
+                "related_strong": ["lydian_sharp_5"],
+                "related_weak": ["ionian"]
+            },
+            {
+                "id": "wholetone",
+                "scale_name": ["Wholetone", "全音音阶", "全音阶"],
+                "family": "Augment 7",
+                "intervals": [0, 2, 4, 6, 8, 10],
+                "avoid_intervals_ids": [],
+                "related_strong": [],
+                "related_weak": ["lydian_dominant"]
+            },
+            {
+                "id": "lydian",
+                "scale_name": ["Lydian", "利底亚音阶", "利底亚调式"],
+                "family": "Major Seventh",
+                "intervals": [0, 2, 4, 6, 7, 9, 11],
+                "avoid_intervals_ids": [],
+                "related_strong": ["lydian_sharp_2", "ionian"],
+                "related_weak": ["lydian_sharp_5"]
+            },
+            {
+                "id": "lydian_dominant",
+                "scale_name": ["Lydian Dominant/Lydian b7", "Lydian Dominant", "Lydian b7", "利底亚属音阶", "利底亚降七音阶", "利底亚降7音阶"],
+                "family": "Dominant Seventh",
+                "intervals": [0, 2, 4, 6, 7, 9, 10],
+                "avoid_intervals_ids": [],
+                "related_strong": ["mixlydian"],
+                "related_weak": ["wholetone", "dorian_sharp_4"]
+            },
+            {
+                "id": "lydian_sharp_2",
+                "scale_name": ["Lydian #2", "利底亚升二音阶", "利底亚增二音阶", "利底亚升2音阶", "利底亚增2音阶"],
+                "family": "Major Seventh",
+                "intervals": [0, 3, 4, 6, 7, 9, 11],
+                "avoid_intervals_ids": [],
+                "related_strong": ["lydian"],
+                "related_weak": ["lydian_sharp_5", "neapolitan_major"]
+            },
+            {
+                "id": "ionian",
+                "scale_name": ["Natural Major", "Major", "Ionian", "自然大调", "大调", "大调音阶", "伊奥尼亚调式"],
+                "family": "Major Seventh",
+                "intervals": [0, 2, 4, 5, 7, 9, 11],
+                "avoid_intervals_ids": [3],
+                "related_strong": ["lydian", "harmonic_major"],
+                "related_weak": ["ionian_sharp_5", "mixlydian", "melodic_minor", "blues_major"]
+            },
+            {
+                "id": "harmonic_major",
+                "scale_name": ["Harmonic Major", "Ionian b6", "和声大调", "伊奥尼亚降六音阶", "伊奥尼亚降6音阶"],
+                "family": "Major Seventh",
+                "intervals": [0, 2, 4, 5, 7, 8, 11],
+                "avoid_intervals_ids": [3, 5],
+                "related_strong": ["ionian", "arabic"],
+                "related_weak": ["harmonic_minor"]
+            },
+            {
+                "id": "arabic",
+                "scale_name": ["Arabic", "阿拉伯音阶"],
+                "family": "Major Seventh",
+                "intervals": [0, 1, 4, 5, 7, 8, 11],
+                "avoid_intervals_ids": [1, 3, 5],
+                "related_strong": ["harmonic_major", "neapolitan_major"],
+                "related_weak": []
+            },
+            {
+                "id": "mixlydian",
+                "scale_name": ["Mixlydian", "混合利底亚音阶", "混合利底亚调式", "米克索利底亚音阶"],
+                "family": "Dominant Seventh",
+                "intervals": [0, 2, 4, 5, 7, 9, 10],
+                "avoid_intervals_ids": [3],
+                "related_strong": ["lydian_dominant", "aeolian_dominant", "blues_major"],
+                "related_weak": ["ionian", "blues_minor"]
+            },
+            {
+                "id": "phrygian_dominant",
+                "scale_name": ["Phrygian Dominant(HmP5b)", "Phrygian Dominant", "HmP5b", "Phrygian #3", "弗里几亚属音阶", "弗里几亚升三音阶", "弗里几亚升3音阶", "西班牙音阶"],
+                "family": "Dominant Seventh",
+                "intervals": [0, 1, 4, 5, 7, 8, 10],
+                "avoid_intervals_ids": [3],
+                "related_strong": ["altered_dominant", "aeolian_dominant"],
+                "related_weak": ["dominant_diminished", "phrygian"]
+            },
+            {
+                "id": "aeolian_dominant",
+                "scale_name": ["Mixlydian b6/Aeolian Dominant", "Mixlydian b6", "Aeolian Dominant", "Aeolian b3", "Melodic Major", "混合利底亚降六音阶", "混合利底亚降6音阶", "爱奥利亚属音阶", "旋律大调音阶"],
+                "family": "Dominant Seventh",
+                "intervals": [0, 2, 4, 5, 7, 8, 10],
+                "avoid_intervals_ids": [3],
+                "related_strong": ["mixlydian", "phrygian_dominant"],
+                "related_weak": []
+            },
+            {
+                "id": "melodic_minor",
+                "scale_name": ["Melodic Minor", "Jazz Minor", "旋律小调", "爵士小调"],
+                "family": "Minor Major Seventh",
+                "intervals": [0, 2, 3, 5, 7, 9, 11],
+                "avoid_intervals_ids": [],
+                "related_strong": ["harmonic_minor", "neapolitan_major"],
+                "related_weak": ["ionian"]
+            },
+            {
+                "id": "harmonic_minor",
+                "scale_name": ["Harmonic Minor", "和声小调"],
+                "family": "Minor Major Seventh",
+                "intervals": [0, 2, 3, 5, 7, 8, 11],
+                "avoid_intervals_ids": [5],
+                "related_strong": ["melodic_minor", "neapolitan_minor"],
+                "related_weak": ["harmonic_major", "aeolian"]
+            },
+            {
+                "id": "dorian",
+                "scale_name": ["Dorian", "多利亚音阶", "多利亚调式"],
+                "family": "Minor Seventh",
+                "intervals": [0, 2, 3, 5, 7, 9, 10],
+                "avoid_intervals_ids": [5],
+                "related_strong": ["dorian_sharp_4", "aeolian", "dorian_flat_2"],
+                "related_weak": ["blues_minor"]
+            },
+            {
+                "id": "dorian_sharp_4",
+                "scale_name": ["Dorian #4", "多利亚升四音阶", "多利亚增四音阶", "多利亚升4音阶", "多利亚增4音阶"],
+                "family": "Minor Seventh",
+                "intervals": [0, 2, 3, 6, 7, 9, 10],
+                "avoid_intervals_ids": [],
+                "related_strong": ["dorian"],
+                "related_weak": ["lydian_dominant", "dorian_flat_2"]
+            },
+            {
+                "id": "aeolian",
+                "scale_name": ["Natural Minor", "Minor", "Aeolian", "自然小调", "小调音阶", "小调", "爱奥利亚调式"],
+                "family": "Minor Seventh",
+                "intervals": [0, 2, 3, 5, 7, 8, 10],
+                "avoid_intervals_ids": [5],
+                "related_strong": ["dorian", "phrygian"],
+                "related_weak": ["harmonic_minor", "aeolian_flat_5", "neapolitan_minor"]
+            },
+            {
+                "id": "dorian_flat_2",
+                "scale_name": ["Dorian b2/Phrygian ♮6", "Dorian b2", "Phrygian ♮6", "Phrygian #6", "多利亚降二音阶", "弗里几亚还原六音阶", "多利亚降2音阶", "弗里几亚还原6音阶"],
+                "family": "Minor Seventh",
+                "intervals": [0, 1, 3, 5, 7, 9, 10],
+                "avoid_intervals_ids": [1, 5],
+                "related_strong": ["dorian", "phrygian", "neapolitan_major"],
+                "related_weak": ["dorian_sharp_4", "neapolitan_minor"]
+            },
+            {
+                "id": "phrygian",
+                "scale_name": ["Phrygian", "弗里几亚音阶", "弗里几亚调式"],
+                "family": "Minor Seventh",
+                "intervals": [0, 1, 3, 5, 7, 8, 10],
+                "avoid_intervals_ids": [1, 5],
+                "related_strong": ["dorian_flat_2", "aeolian", "neapolitan_minor"],
+                "related_weak": ["phrygian_dominant"]
+            },
+            {
+                "id": "aeolian_flat_5",
+                "scale_name": ["Aeolian b5/Locrian ♮2","Aeolian b5", "Locrian ♮2", "Locrian #2", "爱奥利亚降五音阶", "洛克里亚还原二音阶", "爱奥利亚降5音阶", "洛克里亚还原2音阶"],
+                "family": "Half Diminished Seventh",
+                "intervals": [0, 2, 3, 5, 6, 8, 10],
+                "avoid_intervals_ids": [],
+                "related_strong": ["locrian"],
+                "related_weak": ["aeolian"]
+            },
+            {
+                "id": "locrian",
+                "scale_name": ["Locrian", "洛克里亚音阶", "洛克里亚调式"],
+                "family": "Half Diminished Seventh",
+                "intervals": [0, 1, 3, 5, 6, 8, 10],
+                "avoid_intervals_ids": [1],
+                "related_strong": ["aeolian_flat_5", "super_locrian"],
+                "related_weak": ["phrygian"]
+            },
+            {
+                "id": "super_locrian",
+                "scale_name": ["Super Locrian", "Locrian b4", "超级洛克里亚音阶", "洛克里亚降四音阶", "洛克里亚降4音阶"],
+                "family": "Half Diminished Seventh",
+                "intervals": [0, 1, 3, 4, 6, 8, 10],
+                "avoid_intervals_ids": [1,3],
+                "related_strong": ["locrian", "locrian_natural_6"],
+                "related_weak": []
+            },
+            {
+                "id": "locrian_natural_6",
+                "scale_name": ["Locrian ♮6", "Locrian #6", "洛克里亚还原六音阶"],
+                "family": "Half Diminished Seventh",
+                "intervals": [0, 1, 3, 5, 6, 9, 10],
+                "avoid_intervals_ids": [1],
+                "related_strong": ["super_locrian"],
+                "related_weak": []
+            },
+            {
+                "id": "altered_dominant",
+                "scale_name": ["Altered Dominant", "变化属音阶", "变更属音阶"],
+                "family": "Dominant Seventh",
+                "intervals": [0, 1, 3, 4, 6, 8, 10],
+                "avoid_intervals_ids": [],
+                "related_strong": ["phrygian_dominant"],
+                "related_weak": ["dominant_diminished"]
+            },
+            {
+                "id": "dominant_diminished",
+                "scale_name": ["Dominant Diminished(H-W)", "属减音阶", "属减缩音阶(半全)"],
+                "family": "Dominant Seventh",
+                "intervals": [0, 1, 3, 4, 6, 7, 9, 10],
+                "avoid_intervals_ids": [], 
+                "related_strong": ["dominant_diminished_as_dim"],
+                "related_weak": ["altered_dominant", "phrygian_dominant"]
+            },
+            {
+                "id": "dominant_diminished_as_dim",
+                "scale_name": ["Dominant Diminished(H-W)(as dim)", "属减缩音阶(减和弦视角)"],
+                "family": "Diminished Seventh",
+                "intervals": [0, 1, 3, 4, 6, 7, 9, 10],
+                "avoid_intervals_ids": [1,3,5,7], 
+                "related_strong": ["dominant_diminished", "diminished"],
+                "related_weak": []
+            },
+            {
+                "id": "diminished",
+                "scale_name": ["Diminished(W-H)", "减音阶", "减缩音阶(全半)"],
+                "family": "Diminished Seventh",
+                "intervals": [0, 2, 3, 5, 6, 8, 9, 11],
+                "avoid_intervals_ids": [1,3,5,7], 
+                "related_strong": ["dominant_diminished", "dominant_diminished_as_dim", "altered_super_locrian"],
+                "related_weak": []
+            },
+            {
+                "id": "altered_super_locrian",
+                "scale_name": ["Altered Super Locrian", "Super Locrian b7", "Locrian b4 b7", "变化超级洛克里亚音阶", "超级洛克里亚降七音阶", "洛克里亚降四降七音阶", "超级洛克里亚降7音阶", "洛克里亚降4降7音阶"],
+                "family": "Diminished Seventh",
+                "intervals": [0, 1, 3, 4, 6, 8, 9],
+                "avoid_intervals_ids": [1,3], 
+                "related_strong": ["diminished"],
+                "related_weak": []
+            },
+            {
+                "id": "neapolitan_major",
+                "scale_name": ["Neapolitan Major", "Melodic Minor b2", "那不勒斯大调", "拿坡里大调", "旋律小调降二音阶", "旋律小调降2音阶"],
+                "family": "Minor Major Seventh",
+                "intervals": [0, 1, 3, 5, 7, 9, 11],
+                "avoid_intervals_ids": [1],
+                "related_strong": ["melodic_minor", "lydian_sharp_2"],
+                "related_weak": ["dorian_flat_2"]
+            },
+            {
+                "id": "neapolitan_minor",
+                "scale_name": ["Neapolitan Minor", "Harmonic Minor b2", "那不勒斯小调", "拿坡里小调", "和声小调降二音阶", "和声小调降2音阶"],
+                "family": "Minor Major Seventh",
+                "intervals": [0, 1, 3, 5, 7, 8, 11],
+                "avoid_intervals_ids": [1, 5],
+                "related_strong": ["harmonic_minor", "phrygian"],
+                "related_weak": ["aeolian", "dorian_flat_2"]
+            },
+            {
+                "id": "blues_major",
+                "scale_name": ["Blues Major", "Major Blues", "大调布鲁斯音阶", "大布鲁斯音阶"],
+                "family": "Major Sixth",
+                "intervals": [0, 2, 3, 4, 7, 9],
+                "avoid_intervals_ids": [2],
+                "related_strong": ["mixlydian"],
+                "related_weak": ["ionian", "blues_minor"]
+            },
+            {
+                "id": "blues_minor",
+                "scale_name": ["Blues Minor", "Minor Blues", "小调布鲁斯音阶", "小布鲁斯音阶", "布鲁斯音阶"],
+                "family": "Minor Seventh",
+                "intervals": [0, 3, 5, 6, 7, 10],
+                "avoid_intervals_ids": [3],
+                "related_strong": ["aeolian"],
+                "related_weak": ["dorian", "mixlydian"]
+            }
+        ];
+        
+        this.chordFamily = {
+            "Augment M7": [0, 4, 8, 11],
+            "Augment 7": [0, 4, 8, 10],
+            "Major Seventh": [0, 4, 7, 11],
+            "Dominant Seventh": [0, 4, 7, 10],
+            "Minor Major Seventh": [0, 3, 7, 11],
+            "Minor Seventh": [0, 3, 7, 10],
+            "Half Diminished Seventh": [0, 3, 6, 10],
+            "Diminished Seventh": [0, 3, 6, 9],
+            "Major Sixth": [0, 4, 7, 9],
+        };
+    }
+
+    // ===================== 实用工具函数 =====================
+
+    /**
+     * 根据和弦家族名称，查询所有匹配的音阶
+     * @param {string} family_name - 和弦家族名(如 "Major Seventh")
+     * @returns {Array} 音阶列表
+     */
+    get_scales_by_chord_family(family_name) {
+        return this.scaleMode.filter(scale => scale.family === family_name);
+    }
+
+    /**
+     * 根据ID精确查询音阶
+     * @param {string} scale_id - 音阶ID
+     * @returns {Object|null} 音阶对象
+     */
+    get_scale_by_id(scale_id) {
+        return this.scaleMode.find(scale => scale.id === scale_id) || null;
+    }
+
+    /**
+     * 查询和弦家族对应的音程
+     * @param {string} family_name - 和弦家族名
+     * @returns {Array|null} 音程列表
+     */
+    get_chord_by_family(family_name) {
+        return this.chordFamily[family_name] || null;
+    }
+
+    /**
+     * 生成具体音符（MIDI数字）
+     * @param {number} root_note - 根音MIDI（如C4=60）
+     * @param {Array} scale_intervals - 音阶音程列表
+     * @returns {Array} 实际音符列表
+     */
+    generate_scale_notes(root_note, scale_intervals) {
+        return scale_intervals.map(interval => root_note + interval);
+    }
+
+    /**
+     * 列出所有和弦家族
+     * @returns {Array} 和弦家族列表
+     */
+    list_all_families() {
+        return Object.keys(this.chordFamily);
+    }
+
+    /**
+     * 列出所有音阶ID
+     * @returns {Array} 音阶ID列表
+     */
+    list_all_scales() {
+        return this.scaleMode.map(scale => scale.id);
+    }
+
+    /**
+     * 音阶匹配查询
+     * @param {string} query - 查询字符串
+     * @param {boolean} is_nocase - 是否忽略大小写（默认true）
+     * @param {boolean} is_fuzzy - 是否模糊匹配（默认true）
+     * @returns {Array} 匹配结果列表
+     */
+    match_scale(query, is_nocase = true, is_fuzzy = true) {
+        // 转换查询为小写，方便匹配
+        let searchQuery = is_nocase ? query.toLowerCase() : query;
+        
+        // 存储匹配的结果
+        let matches = [];
+        
+        // 遍历数组，进行模糊匹配
+        for (const scale of this.scaleMode) {
+            let complete_match = false;
+            let found_match = false;
+            const info = { id: scale.id, scale_names: [] };
+            
+            for (let scale_name of scale.scale_name) {
+                const compareName = is_nocase ? scale_name.toLowerCase() : scale_name;
+                
+                if (searchQuery === compareName) {
+                    found_match = true;
+                    info.scale_names.push(scale_name);
+                    complete_match = true;
+                    break; // 精确匹配到一个名称就可以了
+                }
+                
+                if (is_fuzzy) {
+                    if (compareName.includes(searchQuery)) {
+                        found_match = true;
+                        info.scale_names.push(scale_name);
+                    }
+                } else {
+                    if (searchQuery === compareName) {
+                        found_match = true;
+                        info.scale_names.push(scale_name);
+                    }
+                }
+            }
+            
+            if (found_match) {
+                matches.push(info);
+            }
+            
+            if (complete_match) {
+                // 如果有完全匹配的结果，清除之前的模糊匹配结果，优先返回精确匹配
+                matches = [info];
+                break;
+            }
+        }
+        
+        return matches;
+    }
+}
+
+// 导出类（如果使用模块化）
+// export default MusicScale;
+
 export class EnhancedChordConverter extends ChordConverter {
     constructor() {
         super();
@@ -651,26 +1073,27 @@ export class BluesToolkit {
     }
 }
 
-export class CSTAnalyzer {
+export class CSTAnalyzer extends MusicScale{
     constructor() {
+        super();
         this.handleNotes = { "Cb": "B", "C#": "Db", "D#": "Eb", "E#": "F", "Fb": "E", "F#": "Gb", "G#": "Ab", "A#": "Bb", "B#": "C" };
         this.notes = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
         this.noteToVal = Object.fromEntries(this.notes.map((n, i) => [n, i]));
         this.circleOfFifths = ['Gb', 'Db', 'Ab', 'Eb', 'Bb', 'F', 'C', 'G', 'D', 'A', 'E', 'B'];
 
         this.scaleDefinitions = {
-            "Ionian (Major)": [0, 2, 4, 5, 7, 9, 11], "Dorian": [0, 2, 3, 5, 7, 9, 10], "Phrygian": [0, 1, 3, 5, 7, 8, 10],
-            "Lydian": [0, 2, 4, 6, 7, 9, 11], "Mixolydian": [0, 2, 4, 5, 7, 9, 10], "Aeolian (Minor)": [0, 2, 3, 5, 7, 8, 10],
-            "Locrian": [0, 1, 3, 5, 6, 8, 10], "Neapolitan Major": [0, 1, 3, 5, 7, 9, 11], "Harmonic Major": [0, 2, 4, 5, 7, 8, 11],
-            "Melodic Major (Desc)": [0, 2, 4, 5, 7, 8, 10], "Neapolitan Minor": [0, 1, 3, 5, 7, 8, 11], "Harmonic Minor": [0, 2, 3, 5, 7, 8, 11],
-            "Melodic Minor": [0, 2, 3, 5, 7, 9, 11], "Phrygian Dominant": [0, 1, 4, 5, 7, 8, 10], "Altered (Super Locrian)": [0, 1, 3, 4, 6, 8, 10],
-            "Lydian Dominant": [0, 2, 4, 6, 7, 9, 10], "Lydian Augmented": [0, 2, 4, 6, 8, 9, 11], "Diminished (H-W)": [0, 1, 3, 4, 6, 7, 9, 10],
-            "Dominant Diminished (W-H)": [0, 2, 3, 5, 6, 8, 9, 11], "Whole Tone": [0, 2, 4, 6, 8, 10], "Blues Major": [0, 3, 5, 6, 7, 10],
-            "Blues Minor": [0, 2, 3, 4, 7, 9], "Bebop Dominant": [0, 2, 4, 5, 7, 9, 10, 11], "Bebop Major": [0, 2, 4, 5, 7, 8, 9, 11],
+            "Bebop Dominant": [0, 2, 4, 5, 7, 9, 10, 11], "Bebop Major": [0, 2, 4, 5, 7, 8, 9, 11],
             "Gong Mode (Gong)": [0, 2, 4, 7, 9], "Shang Mode (Shang)": [0, 2, 5, 7, 10], "Jue Mode (Jue)": [0, 3, 5, 8, 10],
             "Zhi Mode (Zhi)": [0, 2, 5, 7, 9], "Yu Mode (Yu)": [0, 3, 5, 7, 10], "Japan Major": [0, 1, 5, 7, 10],
             "Japan Minor": [0, 2, 3, 7, 8], "Hungarian Minor": [0, 2, 3, 6, 7, 8, 11], "Egypt Scale": [0, 1, 3, 4, 7, 8, 10]
         };
+
+        for (const scaleInfo of this.scaleMode) {
+            const scale_name = scaleInfo.scale_name[0];
+            const intervals = scaleInfo.intervals;
+            this.scaleDefinitions[scale_name] = intervals;
+        }
+
     }
 
     scaleNotes(...args) {
@@ -1015,6 +1438,158 @@ class NeoRiemannianToolkit {
         results.Octatonic_Tower.forEach(name => results.candidates.push(name));
 
         return results;
+    }
+
+        /**
+     * 获取音网几何结构数据 — 供可视化使用
+     * 每个变换操作独立展示，即使产生相同和弦也分别渲染
+     */
+    getTonnetzGraph(chordInput) {
+        const centerData = this.getTriadTransform(chordInput);
+        if (!centerData || Object.keys(centerData).length === 0) return null;
+
+        const nodes = [];
+        const edges = [];
+        
+        // 中心节点
+        const centerInfo = this.converter.parseAndGetNotes(chordInput);
+        nodes.push({
+            id: 0,
+            chord: chordInput,
+            notes: centerInfo.notes,
+            label: "中心",
+            x: 0,
+            y: 0,
+            group: "center"
+        });
+        
+        // 六边形排列 (P, L, R, S, N, D1)——共 6 个基本方向
+        const mainOps = ["P", "L", "R", "S", "N", "D1"];
+        const angleStep = (2 * Math.PI) / 6;
+        
+        let idx = 1;
+        const placedMainOps = []; // 记录已放置的主操作
+        
+        // 第一轮：放置明确属于主方向的变换
+        for (const op of mainOps) {
+            if (centerData[op]) {
+                const result = centerData[op];
+                const dirIdx = mainOps.indexOf(op);
+                const angle = dirIdx * angleStep - Math.PI / 2;
+                const radius = 140;
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+                
+                nodes.push({
+                    id: idx,
+                    chord: result.chord,
+                    notes: result.notes || [],
+                    label: op,
+                    x: Math.round(x),
+                    y: Math.round(y),
+                    group: "transform"
+                });
+                edges.push({ source: 0, target: idx, label: op });
+                placedMainOps.push(op);
+                idx++;
+            }
+        }
+        
+        // 第二轮：放置 Aug、Sus4、Sus2 等特殊变换，放置在稍微偏移的位置
+        const specialOps = [];
+        for (const [op, result] of Object.entries(centerData)) {
+            if (!mainOps.includes(op) && !op.startsWith("D")) {
+                specialOps.push(op);
+            }
+        }
+        // 第二批 D 变换 (D2 - D6)
+        const dOps = [];
+        for (const [op, result] of Object.entries(centerData)) {
+            if (op.startsWith("D") && !mainOps.includes(op)) {
+                dOps.push(op);
+            }
+        }
+        
+        // 将特殊操作分布在内圈（较小半径，交错角度）
+        const allSecondaryOps = [...specialOps, ...dOps];
+        if (allSecondaryOps.length > 0) {
+            const innerRadius = 100;
+            const secondaryAngleStep = (2 * Math.PI) / allSecondaryOps.length;
+            const offsetAngle = Math.PI / 12; // 偏移以避免完全对齐
+            
+            allSecondaryOps.forEach((op, i) => {
+                const result = centerData[op];
+                const angle = i * secondaryAngleStep - Math.PI / 2 + offsetAngle;
+                const x = Math.cos(angle) * innerRadius;
+                const y = Math.sin(angle) * innerRadius;
+                
+                nodes.push({
+                    id: idx,
+                    chord: result.chord,
+                    notes: result.notes || [],
+                    label: op,
+                    x: Math.round(x),
+                    y: Math.round(y),
+                    group: "secondary"
+                });
+                edges.push({ source: 0, target: idx, label: op });
+                idx++;
+            });
+        }
+        
+        return { nodes, edges, center: chordInput };
+    }
+
+        /**
+     * 获取八度音阶塔结构数据 — 供可视化使用
+     */
+    getOctatonicGraph(chordInput) {
+        const neighbors = this.getOctatonicNeighbors(chordInput);
+        if (!neighbors || neighbors.length === 0) return null;
+        
+        const nodes = [];
+        const edges = [];
+        
+        // 中心节点
+        const centerInfo = this.converter.parseAndGetNotes(chordInput);
+        nodes.push({
+            id: 0,
+            chord: chordInput,
+            notes: centerInfo.notes,
+            label: "Root",
+            x: 0,
+            y: 0,
+            group: "center"
+        });
+        
+        // 邻居节点呈圆形排列
+        const radius = 120;
+        const angleStep = (2 * Math.PI) / neighbors.length;
+        
+        neighbors.forEach((neighbor, i) => {
+            const angle = i * angleStep - Math.PI / 2;
+            const x = Math.cos(angle) * radius;
+            const y = Math.sin(angle) * radius;
+            
+            let notes = [];
+            try {
+                const parsed = this.converter._ensureNotesAndRoot(neighbor, true);
+                notes = parsed.notes || [];
+            } catch (e) {}
+            
+            nodes.push({
+                id: i + 1,
+                chord: neighbor,
+                notes: notes,
+                label: "",
+                x: Math.round(x),
+                y: Math.round(y),
+                group: "octatonic"
+            });
+            edges.push({ source: 0, target: i + 1, label: "" });
+        });
+        
+        return { nodes, edges, center: chordInput };
     }
 }
 

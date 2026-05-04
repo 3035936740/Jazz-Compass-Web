@@ -28,6 +28,9 @@
             <button class="feature-btn" data-feature="lcc"><span id="nav_lcc">LCC理论处理</span></button>
             <button class="feature-btn" data-feature="cst"><span id="nav_cst">CST理论处理</span></button>
             <button class="feature-btn" data-feature="rec"><span id="nav_rec">和弦衔接</span></button>
+            <button class="feature-btn" data-feature="neo"><span id="nav_neo">新里曼理论</span></button>
+            <button class="feature-btn" data-feature="ref"><span id="nav_ref">和弦音阶速查</span></button>
+            <button class="feature-btn" data-feature="circle"><span id="nav_circle">五度圈</span></button>
             <button class="feature-btn" data-feature="other"><span id="nav_other">其他工具</span></button>
             <button class="feature-btn" data-feature="about"><span id="nav_about">关于</span></button>
         </nav>
@@ -90,6 +93,52 @@
                 <!-- action buttons will be injected here -->
                 <div id="other-action-row" class="panel-action-row"></div>
                 <div class="panel-body" id="panel-other-body"></div>
+            </div>
+
+            <div id="panel-neo" class="panel" data-feature="neo" role="tabpanel">
+                <div class="panel-header">
+                    <label><span id="label_neo_example">示例和弦（新里曼）：</span> <input id="neo-input" type="text" value="Cmaj" /></label>
+                    <button id="neo-run"><span id="neo_run_btn">分析</span></button>
+                </div>
+                <div class="panel-body" id="panel-neo-body"></div>
+            </div>
+
+            <div id="panel-ref" class="panel" data-feature="ref" role="tabpanel">
+                <div class="panel-header" style="flex-wrap:wrap; gap:12px;">
+                    <div id="ref-scale-section" style="display:flex; align-items:center; gap:8px;">
+                        <label><span id="label_ref_root">根音：</span>
+                            <select id="ref-root-select"></select>
+                        </label>
+                        <label><span id="label_ref_scale">音阶：</span>
+                            <select id="ref-scale-select"></select>
+                        </label>
+                        <button id="ref-scale-run"><span id="ref_scale_run_btn">查询音阶</span></button>
+                    </div>
+                    <div id="ref-family-section" style="display:flex; align-items:center; gap:8px;">
+                        <label><span id="label_ref_family">和弦家族：</span>
+                            <select id="ref-family-select"></select>
+                        </label>
+                        <button id="ref-family-run"><span id="ref_family_run_btn">查询家族</span></button>
+                    </div>
+                </div>
+                <div class="panel-body" id="panel-ref-body"></div>
+            </div>
+
+            <div id="panel-circle" class="panel" data-feature="circle" role="tabpanel">
+                <div class="panel-header" style="flex-direction:column; align-items:stretch;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span id="circle_instruction" style="font-size:0.85rem; color:var(--muted);">点击外环或内环扇区查看调性详情</span>
+                        <button id="circle-reset" style="padding:4px 12px; border-radius:4px; border:1px solid rgba(255,255,255,0.2); background:transparent; color:var(--muted); cursor:pointer;">↺ 重置</button>
+                    </div>
+                </div>
+                <div class="panel-body" id="panel-circle-body" style="display:flex; flex-direction:column; align-items:center;">
+                    <!-- Canvas 五度圈 -->
+                    <div id="circle-canvas-container" style="width:100%; max-width:520px; aspect-ratio:1/1; position:relative;">
+                        <canvas id="circle-canvas" style="width:100%; height:100%; display:block;"></canvas>
+                    </div>
+                    <!-- 调性对照表 -->
+                    <div id="circle-table-container" style="width:100%; margin-top:16px;"></div>
+                </div>
             </div>
 
             <div id="panel-about" class="panel" data-feature="about" role="tabpanel">
