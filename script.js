@@ -1530,6 +1530,45 @@ document.addEventListener("DOMContentLoaded", () => {
       py: Math.round(cy + n.y),
     }));
 
+    const getNodeRadius = (node) =>
+      node.group === "center" ? 30 : node.group === "transform" ? 24 : 20;
+
+    const getNodeAtPoint = (x, y) =>
+      nodePositions.find((node) => {
+        const r = getNodeRadius(node) + 6;
+        return Math.hypot(node.px - x, node.py - y) <= r;
+      });
+
+    canvas.style.cursor = "default";
+    canvas.addEventListener("mousemove", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const x = (e.clientX - rect.left) * scaleX;
+      const y = (e.clientY - rect.top) * scaleY;
+      canvas.style.cursor = getNodeAtPoint(x, y) ? "pointer" : "default";
+    });
+
+    canvas.addEventListener("click", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const x = (e.clientX - rect.left) * scaleX;
+      const y = (e.clientY - rect.top) * scaleY;
+      const hit = getNodeAtPoint(x, y);
+      if (hit) {
+        const chordText = hit.chord || hit.label;
+        const neoInput = document.getElementById("neo-input");
+        if (neoInput) {
+          neoInput.value = chordText;
+        }
+        const targetEl = container.parentElement;
+        if (targetEl) {
+          updateNeo(targetEl, chordText);
+        }
+      }
+    });
+
     // === 节点碰撞检测与微调 ===
     const minDistance = 55; // 节点间最小像素距离
     const adjustPositions = (positions) => {
