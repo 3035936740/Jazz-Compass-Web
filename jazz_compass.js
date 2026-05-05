@@ -299,7 +299,7 @@ export class MusicScale {
             },
             {
                 "id": "aeolian_flat_5",
-                "scale_name": ["Aeolian b5/Locrian ♮2","Aeolian b5", "Locrian ♮2", "Locrian #2", "爱奥利亚降五音阶", "洛克里亚还原二音阶", "爱奥利亚降5音阶", "洛克里亚还原2音阶"],
+                "scale_name": ["Aeolian b5/Locrian ♮2", "Aeolian b5", "Locrian ♮2", "Locrian #2", "爱奥利亚降五音阶", "洛克里亚还原二音阶", "爱奥利亚降5音阶", "洛克里亚还原2音阶"],
                 "family": "Half Diminished Seventh",
                 "intervals": [0, 2, 3, 5, 6, 8, 10],
                 "avoid_intervals_ids": [],
@@ -320,7 +320,7 @@ export class MusicScale {
                 "scale_name": ["Super Locrian", "Locrian b4", "超级洛克里亚音阶", "洛克里亚降四音阶", "洛克里亚降4音阶"],
                 "family": "Half Diminished Seventh",
                 "intervals": [0, 1, 3, 4, 6, 8, 10],
-                "avoid_intervals_ids": [1,3],
+                "avoid_intervals_ids": [1, 3],
                 "related_strong": ["locrian", "locrian_natural_6"],
                 "related_weak": []
             },
@@ -347,7 +347,7 @@ export class MusicScale {
                 "scale_name": ["Dominant Diminished(H-W)", "属减音阶", "属减缩音阶(半全)"],
                 "family": "Dominant Seventh",
                 "intervals": [0, 1, 3, 4, 6, 7, 9, 10],
-                "avoid_intervals_ids": [], 
+                "avoid_intervals_ids": [],
                 "related_strong": ["dominant_diminished_as_dim"],
                 "related_weak": ["altered_dominant", "phrygian_dominant"]
             },
@@ -356,7 +356,7 @@ export class MusicScale {
                 "scale_name": ["Dominant Diminished(H-W)(as dim)", "属减缩音阶(减和弦视角)"],
                 "family": "Diminished Seventh",
                 "intervals": [0, 1, 3, 4, 6, 7, 9, 10],
-                "avoid_intervals_ids": [1,3,5,7], 
+                "avoid_intervals_ids": [1, 3, 5, 7],
                 "related_strong": ["dominant_diminished", "diminished"],
                 "related_weak": []
             },
@@ -365,7 +365,7 @@ export class MusicScale {
                 "scale_name": ["Diminished(W-H)", "减音阶", "减缩音阶(全半)"],
                 "family": "Diminished Seventh",
                 "intervals": [0, 2, 3, 5, 6, 8, 9, 11],
-                "avoid_intervals_ids": [1,3,5,7], 
+                "avoid_intervals_ids": [1, 3, 5, 7],
                 "related_strong": ["dominant_diminished", "dominant_diminished_as_dim", "altered_super_locrian"],
                 "related_weak": []
             },
@@ -374,7 +374,7 @@ export class MusicScale {
                 "scale_name": ["Altered Super Locrian", "Super Locrian b7", "Locrian b4 b7", "变化超级洛克里亚音阶", "超级洛克里亚降七音阶", "洛克里亚降四降七音阶", "超级洛克里亚降7音阶", "洛克里亚降4降7音阶"],
                 "family": "Diminished Seventh",
                 "intervals": [0, 1, 3, 4, 6, 8, 9],
-                "avoid_intervals_ids": [1,3], 
+                "avoid_intervals_ids": [1, 3],
                 "related_strong": ["diminished"],
                 "related_weak": []
             },
@@ -415,7 +415,7 @@ export class MusicScale {
                 "related_weak": ["dorian", "mixlydian"]
             }
         ];
-        
+
         this.chordFamily = {
             "Augment M7": [0, 4, 8, 11],
             "Augment 7": [0, 4, 8, 10],
@@ -494,26 +494,26 @@ export class MusicScale {
     match_scale(query, is_nocase = true, is_fuzzy = true) {
         // 转换查询为小写，方便匹配
         let searchQuery = is_nocase ? query.toLowerCase() : query;
-        
+
         // 存储匹配的结果
         let matches = [];
-        
+
         // 遍历数组，进行模糊匹配
         for (const scale of this.scaleMode) {
             let complete_match = false;
             let found_match = false;
             const info = { id: scale.id, scale_names: [] };
-            
+
             for (let scale_name of scale.scale_name) {
                 const compareName = is_nocase ? scale_name.toLowerCase() : scale_name;
-                
+
                 if (searchQuery === compareName) {
                     found_match = true;
                     info.scale_names.push(scale_name);
                     complete_match = true;
                     break; // 精确匹配到一个名称就可以了
                 }
-                
+
                 if (is_fuzzy) {
                     if (compareName.includes(searchQuery)) {
                         found_match = true;
@@ -526,18 +526,18 @@ export class MusicScale {
                     }
                 }
             }
-            
+
             if (found_match) {
                 matches.push(info);
             }
-            
+
             if (complete_match) {
                 // 如果有完全匹配的结果，清除之前的模糊匹配结果，优先返回精确匹配
                 matches = [info];
                 break;
             }
         }
-        
+
         return matches;
     }
 }
@@ -636,18 +636,18 @@ export class EnhancedChordConverter extends ChordConverter {
      */
     _buildResult(root, chordType, offsets, originalStr) {
         const rootIdx = this.noteToIdx[root];
-        
+
         // 1. 计算绝对索引并去重 (保持相对于根音的偏移顺序)
         // 我们不直接全局 sort，而是根据 offsets 的原始逻辑或半音程关系排列
         const uniqueOffsets = [...new Set(offsets)].sort((a, b) => a - b);
-        
+
         // 2. 映射为绝对音符索引，并确保根音（偏移量为 0 的音）排在最前
         // 如果 offsets 里没有 0（理论上不会，但为了健壮性考虑），我们手动补上
         const absIndices = uniqueOffsets.map(o => (rootIdx + o) % 12);
-        
+
         // 3. 转换为音符名称
         const noteNames = absIndices.map(i => this.idxToNote[i]);
-        
+
         return {
             "chord": originalStr,
             "notes": noteNames,    // 这里的第一个音现在确定是 root 了
@@ -731,12 +731,12 @@ export class EnhancedChordConverter extends ChordConverter {
 
     identifyChord(indices) {
         if (!indices || indices.length === 0) return null;
-    
+
         const rootIdx = indices[0] % 12;
         const rootName = this.idxToNote[rootIdx];
         const inputOffsets = [...new Set(indices.map(i => (i - indices[0] + 12) % 12))].sort((a, b) => a - b);
         const inputSet = new Set(inputOffsets);
-    
+
         // 1. 尝试精确匹配（保留你原来的逻辑）
         const offsetsKey = inputOffsets.join(',');
         if (this.reverseFormulas[offsetsKey]) {
@@ -745,56 +745,56 @@ export class EnhancedChordConverter extends ChordConverter {
                 quality: this.reverseFormulas[offsetsKey]
             };
         }
-    
+
         // 2. 寻找最接近的标准和弦 (Fuzzy Matching)
         let bestMatch = { quality: "maj", score: 0, omit: [], add: [] };
-        
+
         // 遍历你定义的公式库 (e.g., {"maj": [0,4,7], "m7": [0,3,7,10]...})
         for (const [quality, templateOffsets] of Object.entries(this.chordFormulas)) {
             const templateSet = new Set(templateOffsets);
-            
+
             // 计算交集：输入中匹配模板的音
             const intersection = templateOffsets.filter(x => inputSet.has(x));
-            
+
             // 计算 Omit：模板里有，但输入里没有的 (重点！)
             const omit = templateOffsets.filter(x => !inputSet.has(x));
-            
+
             // 计算 Add：输入里有，但模板里没有的
             const add = inputOffsets.filter(x => !templateSet.has(x) && x !== 0);
-    
+
             // 评分机制：匹配的音越多评分越高，冲突越少分越高
             // 这里的评分逻辑可以根据需求调整
             let score = intersection.length * 2 - omit.length - add.length;
-    
+
             if (score > bestMatch.score) {
                 bestMatch = { quality, score, omit, add };
             }
         }
-    
+
         // 3. 构建字符串
         let qualityStr = bestMatch.quality === "maj" ? "" : bestMatch.quality;
         let modifierParts = [];
-        
+
         if (bestMatch.omit.length > 0) {
             // 将半音转回数字名称（如 4 -> 3, 7 -> 5）
             const omitLabels = bestMatch.omit.map(o => this.semitoneToIntervalName(o));
             modifierParts.push(`omit ${omitLabels.join(',')}`);
         }
-        
+
         if (bestMatch.add.length > 0) {
             const addLabels = bestMatch.add.map(a => this.semitoneToIntervalName(a));
             modifierParts.push(`add ${addLabels.join(',')}`);
         }
-    
+
         const finalQuality = `${qualityStr} ${modifierParts.join(' ')}`.trim();
-        
+
         return {
             chord: `${rootName}${finalQuality}`,
             quality: finalQuality,
             root: rootName
         };
     }
-    
+
     // 辅助函数：将半音偏移转为音程名称
     semitoneToIntervalName(s) {
         const map = { 1: "b2", 2: "2", 3: "b3", 4: "3", 5: "4", 6: "b5", 7: "5", 8: "b6", 9: "6", 10: "b7", 11: "7" };
@@ -805,29 +805,29 @@ export class EnhancedChordConverter extends ChordConverter {
 export class BluesToolkit {
     constructor() {
         this.scaleMetadata = {
-            "Minor Blues": { 
-                "intervals": [0, 3, 5, 6, 7, 10], 
-                "blue_notes": [3, 6, 10] 
+            "Minor Blues": {
+                "intervals": [0, 3, 5, 6, 7, 10],
+                "blue_notes": [3, 6, 10]
             },
-            "Major Blues": { 
-                "intervals": [0, 2, 3, 4, 7, 9], 
-                "blue_notes": [3] 
+            "Major Blues": {
+                "intervals": [0, 2, 3, 4, 7, 9],
+                "blue_notes": [3]
             },
-            "Mixolydian Blues": { 
-                "intervals": [0, 2, 3, 4, 5, 7, 9, 10], 
-                "blue_notes": [3, 10] 
+            "Mixolydian Blues": {
+                "intervals": [0, 2, 3, 4, 5, 7, 9, 10],
+                "blue_notes": [3, 10]
             },
-            "Lydian Dominant": { 
-                "intervals": [0, 2, 4, 6, 7, 9, 10], 
-                "blue_notes": [6] 
+            "Lydian Dominant": {
+                "intervals": [0, 2, 4, 6, 7, 9, 10],
+                "blue_notes": [6]
             },
-            "Major Pentatonic": { 
-                "intervals": [0, 2, 4, 7, 9], 
-                "blue_notes": [] 
+            "Major Pentatonic": {
+                "intervals": [0, 2, 4, 7, 9],
+                "blue_notes": []
             },
-            "Minor Pentatonic": { 
-                "intervals": [0, 3, 5, 7, 10], 
-                "blue_notes": [] 
+            "Minor Pentatonic": {
+                "intervals": [0, 3, 5, 7, 10],
+                "blue_notes": []
             },
         };
     }
@@ -839,7 +839,7 @@ export class BluesToolkit {
         const converter = new EnhancedChordConverter();
         const meta = this.scaleMetadata[scaleName] || { "intervals": [] };
         const rootIdx = converter.noteToIdx[root];
-        
+
         const detailedNotes = [];
         const intervals = meta["intervals"] || [];
         const blueNotes = meta["blue_notes"] || [];
@@ -848,19 +848,19 @@ export class BluesToolkit {
             // 计算音符名称
             const noteName = converter.idxToNote[(rootIdx + i) % 12];
             const tags = [];
-            
+
             // 标注：蓝调音 (BLUE)
             if (blueNotes.includes(i)) {
                 tags.push("BLUE");
             }
-            
+
             // 标注：和弦内音 (CHORD_TONE) 或 张力音 (TENSION)
             if (chordOffsets.has(i)) {
                 tags.push("CHORD_TONE");
             } else {
                 tags.push("TENSION");
             }
-            
+
             detailedNotes.append({
                 "note": noteName,
                 "role": tags.join("/")
@@ -874,7 +874,7 @@ export class BluesToolkit {
      */
     _calculateScaleNotes(root, scaleName) {
         const converter = new EnhancedChordConverter();
-        
+
         // 检查音阶名称是否存在于元数据中
         if (!this.scaleMetadata[scaleName]) {
             return [];
@@ -901,7 +901,7 @@ export class BluesToolkit {
 
         const root = notes[0];
         const rootIdx = converter.noteToIdx[root];
-        
+
         // 计算相对于根音的半音偏移量集合
         const chordOffsets = new Set(notes.map(n => (converter.noteToIdx[n] - rootIdx + 12) % 12));
 
@@ -953,10 +953,10 @@ export class BluesToolkit {
 
         const root = notes[0];
         const rootIdx = converter.noteToIdx[root];
-        
+
         // 计算偏移量集合
         const chordOffsets = new Set(notes.map(n => (converter.noteToIdx[n] - rootIdx + 12) % 12));
-        
+
         // 获取现有的基础推荐
         let recommendations = this.suggestForChord(chordInput);
 
@@ -999,13 +999,13 @@ export class BluesToolkit {
     analyzeImprovFeel(scaleNotes, chordNotes) {
         const scaleSet = new Set(scaleNotes);
         const chordSet = new Set(chordNotes);
-        
+
         // 1. 识别音阶中的“张力音”(不在和弦内的音符)
         const tensions = [...scaleSet].filter(note => !chordSet.has(note));
-        
+
         // 2. 计算张力得分
         const tensionScore = tensions.length;
-        
+
         // 3. 评价逻辑
         let feeling = "";
         let description = "";
@@ -1046,22 +1046,22 @@ export class BluesToolkit {
         const converter = new EnhancedChordConverter();
         const notes = converter._ensureNotesAndRoot(chordInput);
         if (!notes || notes.length === 0) return [];
-        
+
         const root = notes[0];
-        
+
         // 假设这里我们推荐几种不同风格的音阶
         const suggestions = [
             [root, "Major Pentatonic"],
             [root, "Minor Blues"],
             [root, "Lydian Dominant"]
         ];
-        
+
         const report = [];
         for (const [sRoot, sName] of suggestions) {
             if (this.scaleMetadata[sName]) {
                 const sNotes = this._calculateScaleNotes(sRoot, sName);
                 const feel = this.analyzeImprovFeel(sNotes, notes);
-                
+
                 report.push({
                     "scale": `${sRoot} ${sName}`,
                     "notes": sNotes,
@@ -1073,7 +1073,7 @@ export class BluesToolkit {
     }
 }
 
-export class CSTAnalyzer extends MusicScale{
+export class CSTAnalyzer extends MusicScale {
     constructor() {
         super();
         this.handleNotes = { "Cb": "B", "C#": "Db", "D#": "Eb", "E#": "F", "Fb": "E", "F#": "Gb", "G#": "Ab", "A#": "Bb", "B#": "C" };
@@ -1099,7 +1099,7 @@ export class CSTAnalyzer extends MusicScale{
     scaleNotes(...args) {
         let root, scaleName;
         if (args.length === 1) [root, scaleName] = args[0].split(/ (.*)/).filter(item => item !== "");
-        else [root, scaleName] = args;
+        else[root, scaleName] = args;
 
         if (!(scaleName in this.scaleDefinitions)) throw new Error(`Scale ${scaleName} not found`);
         return this.getScaleNotes(root, this.scaleDefinitions[scaleName]);
@@ -1163,7 +1163,7 @@ export class LCCAnalyzer {
         this.notes = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
         this.noteToVal = Object.fromEntries(this.notes.map((n, i) => [n, i]));
         this.fifthsOrder = ['Gb', 'Db', 'Ab', 'Eb', 'Bb', 'F', 'C', 'G', 'D', 'A', 'E', 'B'];
-        
+
         // LCC 核心音阶定义
         this.lccScales = {
             "Lydian (Fundamental)": [0, 2, 4, 6, 7, 9, 11],
@@ -1205,7 +1205,7 @@ export class LCCAnalyzer {
             // 尝试处理一下可能的异名同音(如 C# -> Db)
             parent = this.handleNotes[parent] || parent;
         }
-        
+
         const pVal = this.noteToVal[parent];
         if (pVal === undefined) throw new Error(`Invalid parent note: ${parent}`);
 
@@ -1262,12 +1262,12 @@ class NeoRiemannianToolkit {
     getDnTransform(chordInput, chordForm = [0, 4, 7], n = 1) {
         const info = this.converter.parseAndGetNotes(chordInput);
         const rootOffset = this.converter.noteToIdx[info.notes[0]];
-        
+
         const shift = (5 * n) % 12;
         const dnIndices = chordForm.map(x => (x + rootOffset + shift) % 12);
-        
+
         const identified = this.converter.identifyChord(dnIndices);
-        
+
         return {
             [`D${n}`]: {
                 chord: identified.chord,
@@ -1283,14 +1283,14 @@ class NeoRiemannianToolkit {
     getTriadTransform(chordInput) {
         const info = this.converter.parseAndGetNotes(chordInput);
         const { notes, offsets } = info;
-        
+
         const idResult = this.converter.identifyChord(offsets);
         const quality = idResult.quality;
-        
+
         if (notes.length < 3) return null;
-        
+
         const rootOffset = offsets[0];
-        
+
         // 性质判定
         const isMajor = ["", "maj", "major", "M"].includes(quality);
         const isMinor = ["min", "m", "minor"].includes(quality);
@@ -1298,7 +1298,7 @@ class NeoRiemannianToolkit {
         const isDim = quality === "dim";
         const isSus4 = quality === "sus4";
         const isSus2 = quality === "sus2";
-        
+
         const f = this.converter.chordFormulas;
         let rawOps = {};
 
@@ -1311,7 +1311,7 @@ class NeoRiemannianToolkit {
             rawOps["p1_f"] = f.minor.map(x => mod(x + rootOffset));
             rawOps["s2_r"] = f.minor.map(x => mod(x + rootOffset + 3));
             rawOps["dim"] = f.dim.map(x => mod(x + rootOffset + 6));
-        } 
+        }
         else if (isSus4) {
             rawOps["Resolve_P_Maj"] = f.major.map(x => mod(x + rootOffset));
             rawOps["Resolve_P_Min"] = f.minor.map(x => mod(x + rootOffset));
@@ -1344,7 +1344,7 @@ class NeoRiemannianToolkit {
                 "ToSus2": f.sus2.map(x => mod(x + rootOffset)),
                 "ToDim": f.dim.map(x => mod(x + rootOffset + 1)),
             });
-            for (let n = 1; n <= 6; n++) {
+            for (let n = 1; n <= 1; n++) {
                 rawOps[`D${n}`] = this.getDnTransform(chordInput, f.major, n)[`D${n}`].offsets;
             }
         }
@@ -1360,7 +1360,7 @@ class NeoRiemannianToolkit {
                 "ToSus2": f.sus2.map(x => mod(x + rootOffset)),
                 "ToDim": f.dim.map(x => mod(x + rootOffset)),
             });
-            for (let n = 1; n <= 6; n++) {
+            for (let n = 1; n <= 1; n++) {
                 rawOps[`D${n}`] = this.getDnTransform(chordInput, f.minor, n)[`D${n}`].offsets;
             }
         }
@@ -1368,9 +1368,9 @@ class NeoRiemannianToolkit {
         let finalResults = {};
         for (let [op, idxs] of Object.entries(rawOps)) {
             const res = this.converter.identifyChord(idxs);
-            finalResults[op] = { 
-                chord: res.chord, 
-                notes: idxs.map(i => this.converter.idxToNote[i]) 
+            finalResults[op] = {
+                chord: res.chord,
+                notes: idxs.map(i => this.converter.idxToNote[i])
             };
         }
         return finalResults;
@@ -1389,22 +1389,22 @@ class NeoRiemannianToolkit {
         const info = this.converter.parseAndGetNotes(chordInput);
         const root = info.offsets[0];
         const q = this.converter.identifyChord(info.offsets).quality;
-        
+
         let neighbors = [];
         if (q === "m7b5") {
-            neighbors.push(this._build(root, "m7"), this._build(root + 3, "m7"), 
-                           this._build(root - 1, "maj7"), this._build(root, "dim7"));
+            neighbors.push(this._build(root, "m7"), this._build(root + 3, "m7"),
+                this._build(root - 1, "maj7"), this._build(root, "dim7"));
         } else if (q === "dim7") {
-            [ -6, -3, 0, 3 ].forEach(s => neighbors.push(this._build(root + s, "m7b5")));
-            [ -1, -4, 2, 5 ].forEach(s => neighbors.push(this._build(root + s, "7")));
+            [-6, -3, 0, 3].forEach(s => neighbors.push(this._build(root + s, "m7b5")));
+            [-1, -4, 2, 5].forEach(s => neighbors.push(this._build(root + s, "7")));
         } else if (q === "maj7") {
             neighbors.push(this._build(root, "7"), this._build(root + 1, "m7b5"));
         } else if (q === "7") {
-            neighbors.push(this._build(root - 5, "dim7"), this._build(root, "m7"), 
-                           this._build(root - 3, "m7"), this._build(root, "maj7"));
+            neighbors.push(this._build(root - 5, "dim7"), this._build(root, "m7"),
+                this._build(root - 3, "m7"), this._build(root, "maj7"));
         } else if (q === "m7") {
-            neighbors.push(this._build(root, "7"), this._build(root - 3, "m7b5"), 
-                           this._build(root, "m7b5"), this._build(root + 3, "7"));
+            neighbors.push(this._build(root, "7"), this._build(root - 3, "m7b5"),
+                this._build(root, "m7b5"), this._build(root + 3, "7"));
         }
 
         return [...new Set(neighbors)].filter(n => n !== chordInput);
@@ -1416,7 +1416,7 @@ class NeoRiemannianToolkit {
     getGeometricNeighbors(chordInput) {
         const info = this.converter.parseAndGetNotes(chordInput);
         const uniqueOffsets = new Set(info.offsets);
-        
+
         let results = {
             Tonnetz_PLRSND: {},
             Octatonic_Tower: [],
@@ -1440,17 +1440,17 @@ class NeoRiemannianToolkit {
         return results;
     }
 
-        /**
-     * 获取音网几何结构数据 — 供可视化使用
-     * 每个变换操作独立展示，即使产生相同和弦也分别渲染
-     */
+    /**
+ * 获取音网几何结构数据 — 供可视化使用
+ * 每个变换操作独立展示，即使产生相同和弦也分别渲染
+ */
     getTonnetzGraph(chordInput) {
         const centerData = this.getTriadTransform(chordInput);
         if (!centerData || Object.keys(centerData).length === 0) return null;
 
         const nodes = [];
         const edges = [];
-        
+
         // 中心节点
         const centerInfo = this.converter.parseAndGetNotes(chordInput);
         nodes.push({
@@ -1462,14 +1462,14 @@ class NeoRiemannianToolkit {
             y: 0,
             group: "center"
         });
-        
+
         // 六边形排列 (P, L, R, S, N, D1)——共 6 个基本方向
         const mainOps = ["P", "L", "R", "S", "N", "D1"];
         const angleStep = (2 * Math.PI) / 6;
-        
+
         let idx = 1;
         const placedMainOps = []; // 记录已放置的主操作
-        
+
         // 第一轮：放置明确属于主方向的变换
         for (const op of mainOps) {
             if (centerData[op]) {
@@ -1479,7 +1479,7 @@ class NeoRiemannianToolkit {
                 const radius = 140;
                 const x = Math.cos(angle) * radius;
                 const y = Math.sin(angle) * radius;
-                
+
                 nodes.push({
                     id: idx,
                     chord: result.chord,
@@ -1494,7 +1494,7 @@ class NeoRiemannianToolkit {
                 idx++;
             }
         }
-        
+
         // 第二轮：放置 Aug、Sus4、Sus2 等特殊变换，放置在稍微偏移的位置
         const specialOps = [];
         for (const [op, result] of Object.entries(centerData)) {
@@ -1509,20 +1509,20 @@ class NeoRiemannianToolkit {
                 dOps.push(op);
             }
         }
-        
+
         // 将特殊操作分布在内圈（较小半径，交错角度）
         const allSecondaryOps = [...specialOps, ...dOps];
         if (allSecondaryOps.length > 0) {
             const innerRadius = 100;
             const secondaryAngleStep = (2 * Math.PI) / allSecondaryOps.length;
             const offsetAngle = Math.PI / 12; // 偏移以避免完全对齐
-            
+
             allSecondaryOps.forEach((op, i) => {
                 const result = centerData[op];
                 const angle = i * secondaryAngleStep - Math.PI / 2 + offsetAngle;
                 const x = Math.cos(angle) * innerRadius;
                 const y = Math.sin(angle) * innerRadius;
-                
+
                 nodes.push({
                     id: idx,
                     chord: result.chord,
@@ -1536,20 +1536,20 @@ class NeoRiemannianToolkit {
                 idx++;
             });
         }
-        
+
         return { nodes, edges, center: chordInput };
     }
 
-        /**
-     * 获取八度音阶塔结构数据 — 供可视化使用
-     */
+    /**
+ * 获取八度音阶塔结构数据 — 供可视化使用
+ */
     getOctatonicGraph(chordInput) {
         const neighbors = this.getOctatonicNeighbors(chordInput);
         if (!neighbors || neighbors.length === 0) return null;
-        
+
         const nodes = [];
         const edges = [];
-        
+
         // 中心节点
         const centerInfo = this.converter.parseAndGetNotes(chordInput);
         nodes.push({
@@ -1561,22 +1561,22 @@ class NeoRiemannianToolkit {
             y: 0,
             group: "center"
         });
-        
+
         // 邻居节点呈圆形排列
         const radius = 120;
         const angleStep = (2 * Math.PI) / neighbors.length;
-        
+
         neighbors.forEach((neighbor, i) => {
             const angle = i * angleStep - Math.PI / 2;
             const x = Math.cos(angle) * radius;
             const y = Math.sin(angle) * radius;
-            
+
             let notes = [];
             try {
                 const parsed = this.converter._ensureNotesAndRoot(neighbor, true);
                 notes = parsed.notes || [];
-            } catch (e) {}
-            
+            } catch (e) { }
+
             nodes.push({
                 id: i + 1,
                 chord: neighbor,
@@ -1588,8 +1588,88 @@ class NeoRiemannianToolkit {
             });
             edges.push({ source: 0, target: i + 1, label: "" });
         });
-        
+
         return { nodes, edges, center: chordInput };
+    }
+
+    /**
+     * 查找从和弦A到和弦B的新里曼变换路径（优化版）
+     * @param {string} chordA - 起始和弦
+     * @param {string} chordB - 目标和弦
+     * @param {number} maxSteps - 最大搜索步数，默认8
+     * @returns {Array} 路径列表，按步数排序
+     */
+    findPath(chordA, chordB, maxSteps = 8) {
+        const targetNorm = this._normalizeChord(chordB);
+        const visited = new Set();
+        const paths = [];
+
+        // BFS 查找多条路径
+        const queue = [{ chord: chordA, path: [], steps: 0 }];
+        visited.add(this._normalizeChord(chordA));
+
+        while (queue.length > 0) {
+            const { chord, path, steps } = queue.shift();
+
+            if (steps > maxSteps) continue;
+
+            // 直接使用 getGeometricNeighbors 获取所有邻居
+            const geo = this.getGeometricNeighbors(chord);
+            const allNeighbors = {};
+
+            // 合并三和弦变换
+            if (geo.Tonnetz_PLRSND) {
+                Object.entries(geo.Tonnetz_PLRSND).forEach(([op, result]) => {
+                    if (result.chord) allNeighbors[op] = result.chord;
+                });
+            }
+
+            // 合并八度音阶塔邻居
+            if (geo.Octatonic_Tower) {
+                geo.Octatonic_Tower.forEach((neighbor, i) => {
+                    if (neighbor) allNeighbors[`Oct${i + 1}`] = neighbor;
+                });
+            }
+
+            for (const [op, neighbor] of Object.entries(allNeighbors)) {
+                const normNeighbor = this._normalizeChord(neighbor);
+
+                // 找到目标
+                if (normNeighbor === targetNorm) {
+                    paths.push({
+                        path: [...path, { from: chord, to: neighbor, operation: op }],
+                        steps: steps + 1,
+                        chords: [chordA, ...path.map(p => p.to), neighbor]
+                    });
+                    continue;
+                }
+
+                // 未访问过且步数未超限
+                if (!visited.has(normNeighbor) && steps + 1 < maxSteps) {
+                    visited.add(normNeighbor);
+                    queue.push({
+                        chord: neighbor,
+                        path: [...path, { from: chord, to: neighbor, operation: op }],
+                        steps: steps + 1
+                    });
+                }
+            }
+        }
+
+        return paths.sort((a, b) => a.steps - b.steps);
+    }
+
+    /**
+     * 标准化和弦名用于比较（音符排序后逗号分隔）
+     */
+    _normalizeChord(chord) {
+        try {
+            const notes = this.converter._ensureNotesAndRoot(chord);
+            if (notes && notes.length) {
+                return [...notes].sort().join(',');
+            }
+        } catch (e) { }
+        return chord;
     }
 }
 
@@ -1608,9 +1688,9 @@ export class JazzBrain {
      */
     analyzeProgression(progression) {
         if (!Array.isArray(progression)) return [];
-        
+
         const results = [];
-        
+
         for (let i = 0; i < progression.length - 1; i++) {
             const current = progression[i];
             const nextChord = progression[i + 1];
@@ -1618,7 +1698,7 @@ export class JazzBrain {
             // 提取根音
             const currentNotes = this.converter._ensureNotesAndRoot(current);
             const nextNotes = this.converter._ensureNotesAndRoot(nextChord);
-            
+
             if (!currentNotes || !nextNotes) continue;
 
             const rootCurrent = currentNotes[0];
@@ -1638,7 +1718,7 @@ export class JazzBrain {
                 results.push(`${current} -> ${nextChord}: Strong functional progression (Dominant Motion)`);
             }
         }
-        
+
         return results;
     }
 
@@ -1652,7 +1732,7 @@ export class JazzBrain {
 
         // 1. CST 分析 (按亮度排序)
         const cstResults = this.cst.analyzeCST(notes);
-        
+
         // 2. LCC 分析 (按引力排序)
         const lccResults = this.lcc.analyzeLCC(notes);
 
@@ -1664,7 +1744,7 @@ export class JazzBrain {
 
         console.log(`Most stable (CST): ${topCST} (brightness: ${brightness})`);
         console.log(`Most modern (LCC): ${lccResults[0].parent} ${lccResults[0].scale} (gravity: ${lccResults[0].gravity})`);
-        
+
         return { cstResults, lccResults };
     }
 
@@ -1695,7 +1775,7 @@ export class JazzBrain {
         const rootIdx = this.converter.noteToIdx[root];
 
         // 2. 计算相对于根音的半音偏移量(用于判断和弦属性)
-        const offsets = new Set(notes.map(n => 
+        const offsets = new Set(notes.map(n =>
             (this.converter.noteToIdx[n] - rootIdx + 12) % 12
         ));
 
@@ -1712,10 +1792,10 @@ export class JazzBrain {
         if (hasMajor3rd && hasB7) {
             const tritoneRootIdx = (rootIdx + 6) % 12;
             const tritoneRoot = this.converter.idxToNote[tritoneRootIdx];
-            subs.push({ 
-                name: `${tritoneRoot}7`, 
-                type: "Tritone Sub", 
-                description: "Substitute using the same tritone interval, commonly found in ii-V-I resolutions" ,
+            subs.push({
+                name: `${tritoneRoot}7`,
+                type: "Tritone Sub",
+                description: "Substitute using the same tritone interval, commonly found in ii-V-I resolutions",
                 descriptionId: 1
             });
         }
@@ -1725,10 +1805,10 @@ export class JazzBrain {
         if (hasMinor3rd) {
             const relRootIdx = (rootIdx + 3) % 12;
             const relRoot = this.converter.idxToNote[relRootIdx];
-            subs.push({ 
-                name: `${relRoot}maj7`, 
-                type: "Relative Major Sub", 
-                description: "Shares many common notes, providing a brighter color" ,
+            subs.push({
+                name: `${relRoot}maj7`,
+                type: "Relative Major Sub",
+                description: "Shares many common notes, providing a brighter color",
                 descriptionId: 2
             });
         }
@@ -1736,9 +1816,9 @@ export class JazzBrain {
         else if (hasMajor3rd) {
             const relRootIdx = (rootIdx - 3 + 12) % 12;
             const relRoot = this.converter.idxToNote[relRootIdx];
-            subs.push({ 
-                name: `${relRoot}m7`, 
-                type: "Relative Minor Sub", 
+            subs.push({
+                name: `${relRoot}m7`,
+                type: "Relative Minor Sub",
                 description: "Share many of the same notes, resulting in a softer or more melancholic color.",
                 descriptionId: 3
             });
@@ -1777,7 +1857,7 @@ export class JazzBrain {
             Object.entries(systems).forEach(([sysName, config]) => {
                 const scaleNotes = this.cst.getScaleNotes(keyRoot, config.intervals);
                 const scaleSet = new Set(scaleNotes);
-                
+
                 // 基础匹配分
                 let intersectCount = 0;
                 allNotes.forEach(n => { if (scaleSet.has(n)) intersectCount++; });
@@ -1815,7 +1895,7 @@ export class JazzBrain {
         // C-G 轴在半音阶中的中心点是 3.5 (E/Eb 之间)
         const axisVal = this.converter.noteToIdx[axis] + 3.5;
         const notes = this.converter._ensureNotesAndRoot(chordInput);
-        
+
         return notes.map(n => {
             const val = this.converter.noteToIdx[n];
             const negVal = Math.round((2 * axisVal - val + 12) % 12);
@@ -1863,7 +1943,7 @@ export class JazzBrain {
             rhythm: selectedPattern
         };
     }
-    
+
     /**
      * 计算和弦进行中各和弦的导音（Guide Tones）路径。
      * 导音通常指和弦中的 3音和 7音，是体现爵士乐和声连接（Voice Leading）的关键。
@@ -1872,11 +1952,11 @@ export class JazzBrain {
      */
     getGuideTonePath(progression) {
         const path = [];
-        
+
         for (const c of progression) {
             // 使用内部转换器解析出音符列表
             const notes = this.converter._ensureNotesAndRoot(c);
-            
+
             // 导音分析通常需要至少包含根音、三音和五音/七音
             if (notes && notes.length >= 3) {
                 /**
@@ -1886,7 +1966,7 @@ export class JazzBrain {
                  * 如果是三和弦，则取最后一个音作为替代
                  */
                 const guide = [
-                    notes[1], 
+                    notes[1],
                     notes.length > 3 ? notes[3] : notes[notes.length - 1]
                 ];
                 path.push(guide);
@@ -1905,7 +1985,7 @@ export class JazzBrain {
         if (!notes) return null;
 
         console.log(`=== ${chordStr} Jazz Report ===`);
-        
+
         // 2. 调用可视化 (终端/控制台输出)
         this.drawPiano(notes);
 
@@ -1959,7 +2039,7 @@ export class JazzBrain {
         const currInfo = this.converter.parseAndGetNotes(chordInput);
         const currRoot = currInfo.offsets[0];
         const currNotesSet = new Set(currInfo.offsets);
-        
+
         let rawCandidates = [];
         // 用于物理音符去重（防止 Cmaj7 和 E/C 被重复计算）
         const seenStructures = new Set();
@@ -2061,7 +2141,7 @@ export class JazzBrain {
             // 综合推荐评分算法 (Score)
             // 考虑稳定性平衡 + 适度的紧张度奖励
             let recScore = (stability * 0.6) + (tension * 0.4);
-            
+
             // 共同音奖励 (Common Tone Reward)
             const commonCount = [...currNotesSet].filter(n => itemSet.has(n)).length;
             recScore += (commonCount * 0.2);
@@ -2128,10 +2208,10 @@ export class JazzBrain {
      */
     _calculateBrightness(currRoot, nextRoot, nextOffsets) {
         const getCirclePos = (idx) => (idx * 7) % 12;
-        
+
         // 五度圈上的相对位移
         const shift = ((getCirclePos(nextRoot) - getCirclePos(currRoot) + 6 + 12) % 12) - 6;
-        
+
         // 性质修正奖励
         let bias = 0;
         const relNotes = nextOffsets.map(n => (n - nextRoot + 12) % 12);
@@ -2140,7 +2220,7 @@ export class JazzBrain {
         if (relNotes.includes(11)) bias += 1; // 大七度 - 明亮
         if (relNotes.includes(6)) bias -= 1;  // 三全音 - 不稳定
         if (relNotes.includes(2)) bias += 1;  // 九音 - 明亮
-        
+
         return Math.floor(Math.max(-10, Math.min(10, shift + bias)));
     }
 }
