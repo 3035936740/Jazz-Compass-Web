@@ -1,20 +1,119 @@
 import { EnhancedChordConverter, JazzBrain } from "./jazz_compass.js";
 import * as lang from "./lang.js";
 
+// 在 script.js 顶部（DOMContentLoaded 之外或内部）添加
+let modesData = null;
+let funcGroupData = null;
+
+function loadJsonFiles() {
+    return Promise.all([
+        fetch('modes.json').then(res => res.json()).catch(err => { console.warn('modes.json load failed', err); return []; }),
+        fetch('funcGroup.json').then(res => res.json()).catch(err => { console.warn('funcGroup.json load failed', err); return {}; })
+    ]).then(([modes, funcGroup]) => {
+        modesData = modes;
+        funcGroupData = funcGroup;
+        console.log('Loaded modes:', modesData?.length, 'funcGroup:', funcGroupData);
+    });
+}
 document.addEventListener("DOMContentLoaded", () => {
+    loadJsonFiles().then(() => {
+      initMultiModeCircle();
+        // 原有的初始化代码...
+        // 注意：需要等待 json 加载完成后再初始化五度圈控制面板
+    });
+
 
   let circleCurrentKey = null; // 当前选中的调性
   let audioCtx = null;
+  let audioMaster = null;
+  let audioDryBus = null;
+  let audioWetBus = null;
+  let audioReverb = null;
+  /** 当前会话中的振荡器，再次播放时 stop() 立即静音 */
+  let activeSources = [];
 
   function getAudioContext() {
     if (!audioCtx) {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      setupAudioBus(audioCtx);
     }
-    // 如果音频上下文被暂停，尝试恢复
-    if (audioCtx.state === 'suspended') {
-      audioCtx.resume();
+    if (audioCtx.state === "suspended") {
+      audioCtx.resume().catch(() => {});
     }
     return audioCtx;
+  }
+
+  /** 全局音频总线（只连一次 destination，避免多次播放叠加爆音） */
+  function setupAudioBus(ctx) {
+    if (audioMaster) return;
+
+    audioMaster = ctx.createGain();
+    audioMaster.gain.value = 0.2;
+
+    const compressor = ctx.createDynamicsCompressor();
+    compressor.threshold.setValueAtTime(-22, ctx.currentTime);
+    compressor.knee.setValueAtTime(8, ctx.currentTime);
+    compressor.ratio.setValueAtTime(6, ctx.currentTime);
+    compressor.attack.setValueAtTime(0.003, ctx.currentTime);
+    compressor.release.setValueAtTime(0.2, ctx.currentTime);
+
+    audioReverb = createReverb(ctx, 1.2);
+    audioReverb.connect(audioMaster);
+    audioMaster.connect(compressor);
+    compressor.connect(ctx.destination);
+
+    audioDryBus = ctx.createGain();
+    audioWetBus = ctx.createGain();
+    audioDryBus.gain.value = 1;
+    audioWetBus.gain.value = 0.1;
+    audioDryBus.connect(audioMaster);
+    audioWetBus.connect(audioReverb);
+  }
+
+  function trackSource(node) {
+    if (node && typeof node.stop === "function") {
+      activeSources.push(node);
+    }
+  }
+
+  /** 立即打断上一轮：停振荡器、静音总线、重建干/湿输入 */
+  function interruptPlayback(ctx) {
+    const t = ctx.currentTime;
+    activeSources.forEach((src) => {
+      try {
+        src.stop(t);
+      } catch (_) {}
+    });
+    activeSources = [];
+
+    if (audioDryBus) {
+      try {
+        audioDryBus.gain.cancelScheduledValues(t);
+        audioDryBus.gain.setValueAtTime(0, t);
+        audioDryBus.disconnect();
+      } catch (_) {}
+    }
+    if (audioWetBus) {
+      try {
+        audioWetBus.gain.cancelScheduledValues(t);
+        audioWetBus.gain.setValueAtTime(0, t);
+        audioWetBus.disconnect();
+      } catch (_) {}
+    }
+    if (audioMaster) {
+      try {
+        audioMaster.gain.cancelScheduledValues(t);
+        audioMaster.gain.setValueAtTime(0, t);
+        audioMaster.gain.setValueAtTime(0.2, t + 0.01);
+      } catch (_) {}
+    }
+
+    audioDryBus = ctx.createGain();
+    audioWetBus = ctx.createGain();
+    audioDryBus.gain.value = 1;
+    audioWetBus.gain.value = 0.1;
+    audioDryBus.connect(audioMaster);
+    audioWetBus.connect(audioReverb);
   }
 
   /**
@@ -38,57 +137,51 @@ document.addEventListener("DOMContentLoaded", () => {
   /**
    * 播放单个音符的钢琴音色
    */
+  /** 音阶等快速连播：单振荡器，减轻 CPU 与卡顿 */
+  function createSimpleTone(ctx, freq, time, duration, peakGain = 0.12) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(freq, time);
+    const end = time + duration;
+    gain.gain.setValueAtTime(0, time);
+    gain.gain.linearRampToValueAtTime(peakGain, time + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.001, end);
+    osc.connect(gain);
+    trackSource(osc);
+    osc.start(time);
+    osc.stop(end + 0.05);
+    return gain;
+  }
+
+  /** 和弦：少量谐波，不用 waveshaper，避免削波 */
   function createPianoTone(ctx, freq, time, duration) {
     const masterGain = ctx.createGain();
+    masterGain.gain.setValueAtTime(1, time);
 
-    // 钢琴谐波结构
     const harmonics = [
-      { ratio: 1, amp: 0.25 },     // 基频
-      { ratio: 2, amp: 0.15 },     // 八度
-      { ratio: 3, amp: 0.10 },     // 十二度
-      { ratio: 4, amp: 0.05 },     // 双八度
-      { ratio: 5, amp: 0.03 },     // 十七度
-      { ratio: 6, amp: 0.02 },     // 十九度
-      { ratio: 7, amp: 0.01 },     // 弱七次谐波
-      { ratio: 0.5, amp: 0.08 },   // 次谐波（增加厚度）
+      { ratio: 1, amp: 0.2 },
+      { ratio: 2, amp: 0.08 },
+      { ratio: 3, amp: 0.04 },
     ];
 
+    const stopAt = time + duration * 1.2;
     harmonics.forEach(({ ratio, amp }) => {
       const osc = ctx.createOscillator();
       const harmonicGain = ctx.createGain();
-
-      // 三角波模拟钢琴音色
       osc.type = "triangle";
       osc.frequency.setValueAtTime(freq * ratio, time);
-
-      // 应用振幅和包络
       harmonicGain.gain.setValueAtTime(0, time);
-      harmonicGain.gain.linearRampToValueAtTime(amp * 0.25, time + 0.003);
-      harmonicGain.gain.linearRampToValueAtTime(amp * 0.1, time + 0.08);
-      harmonicGain.gain.setValueAtTime(amp * 0.08, time + 0.15);
-      harmonicGain.gain.exponentialRampToValueAtTime(0.001, time + duration * 1.5);
-
+      harmonicGain.gain.linearRampToValueAtTime(amp, time + 0.004);
+      harmonicGain.gain.exponentialRampToValueAtTime(0.001, stopAt);
       osc.connect(harmonicGain);
       harmonicGain.connect(masterGain);
-
+      trackSource(osc);
       osc.start(time);
-      osc.stop(time + duration * 1.5);
+      osc.stop(stopAt + 0.02);
     });
 
-    // 添加轻微失真
-    const waveshaper = ctx.createWaveShaper();
-    const n = 256;
-    const curve = new Float32Array(n);
-    for (let i = 0; i < n; i++) {
-      const x = (i * 2) / n - 1;
-      curve[i] = Math.tanh(2 * x);
-    }
-    waveshaper.curve = curve;
-    waveshaper.oversample = "2x";
-
-    masterGain.connect(waveshaper);
-
-    return waveshaper;
+    return masterGain;
   }
 
   /**
@@ -118,46 +211,21 @@ document.addEventListener("DOMContentLoaded", () => {
   /**
    * 播放和弦声音 - 钢琴音色版本（多八度扩展）
    */
-  function playChord(frequencies, duration = 1.8) {
+  function playChord(frequencies, duration = 1.2) {
     try {
       const ctx = getAudioContext();
+      interruptPlayback(ctx);
       const now = ctx.currentTime;
+      const uniqueFreqs = [...new Set(frequencies)].slice(0, 8);
 
-      // 主输出（降低整体音量，因为多个八度叠加）
-      const mainOut = ctx.createGain();
-      mainOut.gain.setValueAtTime(0.4, now);
-
-      // 混响
-      const reverb = createReverb(ctx, duration);
-      const dryGain = ctx.createGain();
-      const wetGain = ctx.createGain();
-
-      dryGain.gain.setValueAtTime(0.6, now);
-      wetGain.gain.setValueAtTime(0.4, now);
-
-      // 为每个频率创建钢琴音色
-      frequencies.forEach((freq, index) => {
-        // 音符轻微错开（模拟手指滚动）
-        const staggerTime = index * 0.015;
-        const noteTime = now + staggerTime;
-
-        // 低八度和高八度的音量降低一些
+      uniqueFreqs.forEach((freq, index) => {
+        const noteTime = now + index * 0.012;
         const tone = createPianoTone(ctx, freq, noteTime, duration);
-
-        // 干声
-        tone.connect(dryGain);
-
-        // 湿声（混响）
-        tone.connect(wetGain);
+        tone.connect(audioDryBus);
+        tone.connect(audioWetBus);
       });
-
-      dryGain.connect(mainOut);
-      wetGain.connect(reverb);
-      reverb.connect(mainOut);
-      mainOut.connect(ctx.destination);
-
     } catch (e) {
-      console.warn("play scale failure:", e);
+      console.warn("playChord failure:", e);
     }
   }
 
@@ -207,32 +275,54 @@ document.addEventListener("DOMContentLoaded", () => {
     return 440 * Math.pow(2, (midiNote - 69) / 12);
   }
 
-  /**
-   * 获取和弦中所有音符的频率（扩展到多个八度）
-   * @param {Array} notes - 音符名数组，如 ['C', 'E', 'G']
-   * @param {number} baseOctave - 基准八度，默认 C3 开始
-   * @returns {Array} 频率数组
-   */
-  function chordNotesToFrequencies(notes, baseOctave = 3) {
-    const freqs = [];
+  function semitoneToMidi(semitone, octave) {
+    return semitone + (octave + 1) * 12;
+  }
 
-    notes.forEach((note) => {
+  /**
+   * 和弦频率：以 i 级（表第一行）为基准八度，后续级根音 MIDI 严格高于前一级
+   * @param {number|null} lastRootMidi - 上一行和弦根音 MIDI，首行传 null
+   * @returns {{ freqs: number[], rootMidi: number|null }}
+   */
+  function chordNotesToFrequencies(
+    notes,
+    baseOctave = 4,
+    multiOctave = false,
+    lastRootMidi = null,
+  ) {
+    const freqs = [];
+    let prevSemitone = null;
+    let octave = baseOctave;
+    let rootMidi = null;
+
+    notes.forEach((note, idx) => {
       const semitone = noteToSemitoneValue(note);
       if (semitone === undefined) return;
 
-      // 基准八度
-      freqs.push(semitoneToFreq(semitone, baseOctave));
+      if (idx === 0) {
+        if (lastRootMidi != null) {
+          while (semitoneToMidi(semitone, octave) <= lastRootMidi) {
+            octave += 1;
+          }
+        }
+        rootMidi = semitoneToMidi(semitone, octave);
+      } else if (prevSemitone !== null && semitone <= prevSemitone) {
+        octave += 1;
+      }
 
-      // 2个低八度
-      freqs.push(semitoneToFreq(semitone, baseOctave - 1));
-      freqs.push(semitoneToFreq(semitone, baseOctave - 2));
+      freqs.push(semitoneToFreq(semitone, octave));
 
-      // 2个高八度
-      freqs.push(semitoneToFreq(semitone, baseOctave + 1));
-      freqs.push(semitoneToFreq(semitone, baseOctave + 2));
+      if (multiOctave) {
+        freqs.push(semitoneToFreq(semitone, octave - 1));
+        freqs.push(semitoneToFreq(semitone, octave - 2));
+        freqs.push(semitoneToFreq(semitone, octave + 1));
+        freqs.push(semitoneToFreq(semitone, octave + 2));
+      }
+
+      prevSemitone = semitone;
     });
 
-    return freqs;
+    return { freqs, rootMidi };
   }
 
   let majorMode = "natural"; // "natural" | "harmonic"
@@ -607,6 +697,1019 @@ document.addEventListener("DOMContentLoaded", () => {
     ctx.fillStyle = "rgba(255,255,255,0.5)";
     ctx.fillText("Circle of 5ths", cx, cy + 10);
   }
+// 多调性模式相关变量
+let multiModeActive = false;
+let currentMultiMode = null;       // 当前选中的模式对象
+let currentRoot = null;            // 主音（点击五度圈后设定）
+
+// 辅助函数：半音差转音级索引（0-11）
+function getSemitoneDistance(fromNote, toNote) {
+    const idxFrom = noteToIdx[fromNote];
+    const idxTo = noteToIdx[toNote];
+    return (idxTo - idxFrom + 12) % 12;
+}
+
+/** 在音阶顺序上取该级的三音、五音（按半音 3/4 与 6/7/8，非简单 +2/+4 音级） */
+function getScaleTriadAtDegree(intervals, degIndex) {
+    const n = intervals.length;
+    const root = intervals[degIndex];
+    let thirdOff = null;
+    let thirdDist = null;
+    let fifthOff = null;
+    let fifthDist = null;
+
+    for (let step = 1; step < n; step++) {
+        const off = intervals[(degIndex + step) % n];
+        const d = (off - root + 12) % 12;
+        if (thirdOff == null && (d === 3 || d === 4)) {
+            thirdOff = off;
+            thirdDist = d;
+        }
+    }
+
+    if (thirdOff != null) {
+        for (const want of [7, 6, 8]) {
+            for (let step = 1; step < n; step++) {
+                const off = intervals[(degIndex + step) % n];
+                const d = (off - root + 12) % 12;
+                if (d === want) {
+                    fifthOff = off;
+                    fifthDist = d;
+                    break;
+                }
+            }
+            if (fifthOff != null) break;
+        }
+    }
+
+    if (thirdOff == null) {
+        for (let step = 1; step < n; step++) {
+            const off = intervals[(degIndex + step) % n];
+            const d = (off - root + 12) % 12;
+            if (d === 2) {
+                thirdOff = off;
+                thirdDist = 2;
+                break;
+            }
+            if (d === 5) {
+                thirdOff = off;
+                thirdDist = 5;
+                break;
+            }
+        }
+        if (thirdOff != null) {
+            for (const want of [7, 6, 8]) {
+                for (let step = 1; step < n; step++) {
+                    const off = intervals[(degIndex + step) % n];
+                    const d = (off - root + 12) % 12;
+                    if (d === want) {
+                        fifthOff = off;
+                        fifthDist = d;
+                        break;
+                    }
+                }
+                if (fifthOff != null) break;
+            }
+        }
+    }
+
+    return { thirdOff, fifthOff, thirdDist, fifthDist };
+}
+
+let _multiModeChordConverter = null;
+
+function getMultiModeChordConverter() {
+    if (!_multiModeChordConverter) {
+        _multiModeChordConverter = new EnhancedChordConverter();
+    }
+    return _multiModeChordConverter;
+}
+
+/** 从 identifyChord 的 quality 提取基础和弦类型 */
+function extractBaseChordQuality(quality) {
+    if (quality == null || quality === "") return "maj";
+    const q = String(quality).trim().split(/\s+/)[0];
+    if (q === "maj" || q === "major" || q === "M") return "maj";
+    if (q === "min" || q === "m" || q === "minor") return "min";
+    if (q === "dim") return "dim";
+    if (q === "aug") return "aug";
+    if (q === "sus2") return "sus2";
+    if (q === "sus4") return "sus4";
+    return "unknown";
+}
+
+/**
+ * 音阶级数 → 和弦：取调内三音后用 EnhancedChordConverter.identifyChord 识别
+ * （与 jazz_compass.js _ensureNotesAndRoot 音名列表逻辑一致）
+ */
+function buildTriadChordAtDegree(root, intervals, degIndex, converter) {
+    const conv = converter || getMultiModeChordConverter();
+    const rootIdx = conv.noteToIdx[root];
+    const rootOff = intervals[degIndex];
+    const { thirdOff, fifthOff } = getScaleTriadAtDegree(intervals, degIndex);
+    const rootNote = conv.idxToNote[(rootIdx + rootOff) % 12];
+
+    const noteNames = [rootNote];
+    if (thirdOff != null) {
+        noteNames.push(conv.idxToNote[(rootIdx + thirdOff) % 12]);
+    }
+    if (fifthOff != null) {
+        noteNames.push(conv.idxToNote[(rootIdx + fifthOff) % 12]);
+    }
+
+    let chordLabel = rootNote;
+    let chordType = "unknown";
+    let notes = noteNames.join(", ");
+
+    if (noteNames.length >= 2) {
+        const identified = conv._ensureNotesAndRoot(noteNames, true);
+        if (identified) {
+            chordLabel = identified.chord;
+            chordType = extractBaseChordQuality(identified.quality);
+            notes = identified.notes.join(", ");
+        }
+    }
+
+    return {
+        dist: rootOff,
+        degreeLabel: formatRomanDegreeLabel(degIndex, chordType),
+        chordLabel,
+        notes,
+        chordType,
+    };
+}
+
+function formatChordName(rootNote, chordType) {
+    if (chordType === "min") return `${rootNote}m`;
+    if (chordType === "dim") return `${rootNote}°`;
+    if (chordType === "aug") return `${rootNote}+`;
+    if (chordType === "sus2") return `${rootNote}sus2`;
+    if (chordType === "sus4") return `${rootNote}sus4`;
+    return rootNote;
+}
+
+function getChordTypeForNote(root, targetNote, intervals) {
+    const dist = getSemitoneDistance(root, targetNote);
+    const degree = intervals.indexOf(dist);
+    if (degree === -1) return null;
+    return buildTriadChordAtDegree(root, intervals, degree).chordType;
+}
+
+// 更新五度圈显示（多调性模式）
+function updateCircleMultiMode() {
+    if (!multiModeActive || !currentMultiMode) {
+        // 恢复原始五度圈
+        if (circleCurrentKey) {
+            drawCircle(circleCurrentKey.major, circleCurrentKey.minor);
+            renderKeyTable(circleCurrentKey.major, circleCurrentKey.minor, circleCurrentKey.primary);
+        } else {
+            drawCircle(null, null);
+            const tableContainer = document.getElementById("circle-table-container");
+            if (tableContainer) tableContainer.innerHTML = "";
+        }
+        return;
+    }
+
+    const includeSet = new Set(currentMultiMode.includeNoteIdx);
+    const root = currentRoot;
+
+    drawMultiCircle(root, includeSet, currentMultiMode);
+
+    const tableContainer = document.getElementById("circle-table-container");
+    if (root && noteToIdx[root] != null) {
+        renderMultiModeTable(root, currentMultiMode);
+    } else if (tableContainer) {
+        tableContainer.innerHTML = "";
+    }
+}
+
+// 解析内圈功能组标签片段，如 "3D(6s)" → [{text:"3D"}, {text:"6s", inParens:true}]
+function parseFuncRingLabelSegments(label) {
+    const m = String(label).match(/^([^(]+)(?:\(([^)]+)\))?$/);
+    if (!m) return [{ text: label, inParens: false }];
+    const segments = [{ text: m[1], inParens: false }];
+    if (m[2]) segments.push({ text: m[2], inParens: true });
+    return segments;
+}
+
+// 与内圈主音环一致：按扇区标签定位功能替代（不用 funcGroup 半音索引）
+function findSectorForFuncReplaceGroup(innerLabels, replaceGroup) {
+    if (!replaceGroup || !innerLabels?.length) return null;
+    for (let i = 0; i < innerLabels.length; i++) {
+        const label = innerLabels[i];
+        if (!label) continue;
+        const hit = parseFuncRingLabelSegments(label).some((s) => s.text === replaceGroup);
+        if (hit) return i;
+    }
+    return null;
+}
+
+// 主音环：沿五度圈顺时针 12 格（与画布内圈一致）
+const FUNC_RING_BASE = [
+    { main: "t" },
+    { main: "d" },
+    { main: "S" },
+    { main: "T" },
+    { main: "D" },
+    { main: "DD" },
+    { main: "3D", overlap: "6s" },
+    { main: "4D", overlap: "5s" },
+    { main: "5D", overlap: "4s" },
+    { main: "6D", overlap: "3s" },
+    { main: "ss" },
+    { main: "s" },
+];
+
+function getFuncGroupIndexForMode(key, mode) {
+    if (!funcGroupData || !mode) return null;
+    const idx = funcGroupData[key];
+    if (idx == null) return null;
+    if (!Array.isArray(idx)) return idx;
+    if (key === "tIdx") return mode.tonicGroup === "t" ? idx[0] : idx[1] ?? idx[0];
+    if (key === "TIdx") return mode.tonicGroup === "T" ? idx[0] : idx[1] ?? idx[0];
+    return idx[0];
+}
+
+function findCircleSectorForDist(root, dist) {
+    for (let i = 0; i < circleData.length; i++) {
+        if (getSemitoneDistance(root, circleData[i].major) === dist) return i;
+    }
+    return 0;
+}
+
+function formatFuncRingEntry(entry) {
+    return entry.overlap ? `${entry.main}(${entry.overlap})` : entry.main;
+}
+
+/** 内圈功能标签：从 t/T 锚点起沿五度圈顺转一圈 */
+function buildInnerFuncRingLabels(root, mode) {
+    const startChar = mode.tonicGroup === "t" ? "t" : "T";
+    const startIdx = FUNC_RING_BASE.findIndex((e) => e.main === startChar);
+    const ringSpec = startIdx <= 0
+        ? FUNC_RING_BASE
+        : [...FUNC_RING_BASE.slice(startIdx), ...FUNC_RING_BASE.slice(0, startIdx)];
+
+    const anchorKey = mode.tonicGroup === "t" ? "tIdx" : "TIdx";
+    const anchorDist = getFuncGroupIndexForMode(anchorKey, mode);
+    const anchorSector = anchorDist != null ? findCircleSectorForDist(root, anchorDist) : 0;
+
+    const perSector = Array(12).fill("");
+    for (let step = 0; step < 12; step++) {
+        const sector = (anchorSector + step) % 12;
+        perSector[sector] = formatFuncRingEntry(ringSpec[step]);
+    }
+    return perSector;
+}
+
+function buildFuncNameToSectorMap(innerLabels) {
+    const map = {};
+    for (let i = 0; i < innerLabels.length; i++) {
+        const label = innerLabels[i];
+        if (!label) continue;
+        for (const seg of parseFuncRingLabelSegments(label)) {
+            map[seg.text] = i;
+        }
+    }
+    return map;
+}
+
+function drawFuncRingLabel(ctx, centerX, centerY, label, replaceGroup) {
+    const segments = parseFuncRingLabelSegments(label);
+    const normalColor = "rgba(200,220,255,0.85)";
+    const replaceColor = "#ffb74d";
+    const replaceGlow = "rgba(255, 183, 77, 0.95)";
+    const fontNormal = "9px sans-serif";
+    const fontReplace = "bold 10px sans-serif";
+    const fontParen = "9px sans-serif";
+
+    const pieces = [];
+    let totalW = 0;
+    for (const seg of segments) {
+        const isRep = replaceGroup && seg.text === replaceGroup;
+        const font = isRep ? fontReplace : fontNormal;
+        if (seg.inParens) {
+            ctx.font = fontParen;
+            const wOpen = ctx.measureText("(").width;
+            ctx.font = font;
+            const wInner = ctx.measureText(seg.text).width;
+            ctx.font = fontParen;
+            const wClose = ctx.measureText(")").width;
+            pieces.push({ text: "(", font: fontParen, isRep: false, w: wOpen });
+            pieces.push({ text: seg.text, font, isRep, w: wInner });
+            pieces.push({ text: ")", font: fontParen, isRep: false, w: wClose });
+            totalW += wOpen + wInner + wClose;
+        } else {
+            ctx.font = font;
+            const w = ctx.measureText(seg.text).width;
+            pieces.push({ text: seg.text, font, isRep, w });
+            totalW += w;
+        }
+    }
+
+    let x = centerX - totalW / 2;
+    const prevAlign = ctx.textAlign;
+    const prevBaseline = ctx.textBaseline;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+
+    for (const p of pieces) {
+        ctx.font = p.font;
+        ctx.shadowBlur = 0;
+        if (p.isRep) {
+            ctx.shadowColor = replaceGlow;
+            ctx.shadowBlur = 12;
+            ctx.fillStyle = replaceColor;
+        } else {
+            ctx.fillStyle = normalColor;
+        }
+        ctx.fillText(p.text, x, centerY);
+        x += p.w;
+    }
+
+    ctx.shadowBlur = 0;
+    ctx.textAlign = prevAlign;
+    ctx.textBaseline = prevBaseline;
+}
+
+// 绘制多调性五度圈
+function drawMultiCircle(root, includeSet, mode) {
+    const { size, ctx } = resizeCanvas();
+    const cx = size / 2;
+    const cy = size / 2;
+    const outerR = size * 0.42;
+    const innerR = size * 0.28;
+    const centerR = size * 0.12;
+
+    ctx.clearRect(0, 0, size, size);
+    ctx.fillStyle = "rgba(0,0,0,0.15)";
+    ctx.beginPath();
+    ctx.arc(cx, cy, outerR + 20, 0, Math.PI * 2);
+    ctx.fill();
+
+    const hasRoot = root != null && noteToIdx[root] != null;
+
+    // 准备每个扇区的和弦标签
+    const chordLabels = [];
+    for (let i = 0; i < circleData.length; i++) {
+        const sectorNote = circleData[i].major; // 扇区代表的音（外环）
+        const dist = hasRoot ? getSemitoneDistance(root, sectorNote) : -1;
+        let label = sectorNote;
+        let isInside = hasRoot && includeSet.has(dist);
+        let chordType = null;
+        if (isInside) {
+            const distIdx = getSemitoneDistance(root, sectorNote);
+            const deg = mode.includeNoteIdx.indexOf(distIdx);
+            if (deg >= 0) {
+                const triad = buildTriadChordAtDegree(root, mode.includeNoteIdx, deg);
+                chordType = triad.chordType;
+                label = triad.chordLabel;
+            }
+        }
+        chordLabels.push({ label, isInside, chordType });
+    }
+
+    const categoryColors = {
+      // 非特征类使用更浅的颜色
+      tonic: "#e1f5fe",
+      tonicChar: "#e1f5fe",
+      // 特性组和对照组使用明显不同且醒目的颜色
+      featureChar: "#6a71cb", // 更深的天蓝
+      contrastChar: "#f17f7f", // 更深的橙红
+      // 保留高低极显著色
+      // highPole: "#ff80b3",
+      // lowPole: "#7c4dff",
+    };
+
+    function hexToRgba(hex, alpha) {
+        const clean = hex.replace("#", "");
+        const r = parseInt(clean.slice(0, 2), 16);
+        const g = parseInt(clean.slice(2, 4), 16);
+        const b = parseInt(clean.slice(4, 6), 16);
+        return `rgba(${r},${g},${b},${alpha})`;
+    }
+
+    function getCircleNoteCategory(dist) {
+        if (!mode) return null;
+        if (dist === mode.tonicGroupNoteIdx) return "tonic";
+        if (dist === mode.featureGroupCharNoteIdx) return "featureChar";
+        if (dist === mode.tonicGroupCharNoteIdx) return "tonicChar";
+        if (dist === mode.contrastGroupCharNoteIdx) return "contrastChar";
+        // if (dist === mode.highPoleNoteIdx) return "highPole";
+        // if (dist === mode.lowPoleNoteIdx) return "lowPole";
+        return null;
+    }
+
+    const innerFuncLabels = hasRoot ? buildInnerFuncRingLabels(root, mode) : Array(12).fill("");
+
+    const funcReplaceSector = hasRoot && mode?.funcReplaceGroup
+        ? findSectorForFuncReplaceGroup(innerFuncLabels, mode.funcReplaceGroup)
+        : null;
+    const funcReplaceColor = "#ffb74d";
+    const funcReplaceGlow = "rgba(255, 183, 77, 0.95)";
+
+    // 绘制扇区
+    for (let i = 0; i < circleData.length; i++) {
+        const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
+        const nextAngle = ((i + 1) / 12) * Math.PI * 2 - Math.PI / 2;
+        const { label, isInside } = chordLabels[i];
+        const sectorNote = circleData[i].major;
+        const dist = hasRoot ? getSemitoneDistance(root, sectorNote) : -1;
+        const noteCategory = hasRoot ? getCircleNoteCategory(dist) : null;
+        const isFuncReplace = funcReplaceSector != null && i === funcReplaceSector;
+
+        // 填充（调内和弦高亮背景 + 特殊类别底色）
+        ctx.beginPath();
+        ctx.arc(cx, cy, outerR, angle, nextAngle);
+        ctx.arc(cx, cy, innerR, nextAngle, angle, true);
+        ctx.closePath();
+        if (noteCategory/* && noteCategory !== "highPole" && noteCategory !== "lowPole"*/) {
+            ctx.fillStyle = hexToRgba(categoryColors[noteCategory], 0.18);
+        } else if (isInside) {
+            ctx.fillStyle = "rgba(139,200,231,0.3)";
+        } else {
+            ctx.fillStyle = "rgba(255,255,255,0.03)";
+        }
+        ctx.fill();
+
+        // 不在此处绘制边框，避免邻接扇区重复描边导致叠加。边框将在全部扇区填充后统一绘制。
+
+        // 标签
+        const midAngle = (angle + nextAngle) / 2;
+        const midR = (innerR + outerR) / 2;
+        const textX = cx + Math.cos(midAngle) * midR;
+        const textY = cy + Math.sin(midAngle) * midR;
+
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.shadowBlur = 0;
+        if (isFuncReplace) {
+            ctx.shadowColor = funcReplaceGlow;
+            ctx.shadowBlur = 12;
+            ctx.fillStyle = funcReplaceColor;
+            ctx.font = "bold 14px sans-serif";
+        } else {
+            ctx.fillStyle = isInside ? "#fff" : "rgba(255,255,255,0.8)";
+            ctx.font = isInside ? "bold 13px sans-serif" : "12px sans-serif";
+        }
+        ctx.fillText(label, textX, textY);
+        ctx.shadowBlur = 0;
+    }
+
+    // 绘制基础分割线和环边界，避免重复扇区描边重叠
+    ctx.beginPath();
+    for (let i = 0; i < 12; i++) {
+        const edgeAngle = (i / 12) * Math.PI * 2 - Math.PI / 2;
+        const x1 = cx + Math.cos(edgeAngle) * innerR;
+        const y1 = cy + Math.sin(edgeAngle) * innerR;
+        const x2 = cx + Math.cos(edgeAngle) * outerR;
+        const y2 = cy + Math.sin(edgeAngle) * outerR;
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+    }
+    ctx.strokeStyle = "rgba(255,255,255,0.12)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 绘制高低极与主音特殊边界
+    for (let i = 0; i < circleData.length; i++) {
+        const sectorNote = circleData[i].major;
+        const dist = hasRoot ? getSemitoneDistance(root, sectorNote) : -1;
+        const noteCategory = hasRoot ? getCircleNoteCategory(dist) : null;
+        if (!noteCategory || noteCategory === "featureChar" || noteCategory === "contrastChar" || noteCategory === "tonicChar") continue;
+
+        const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
+        const nextAngle = ((i + 1) / 12) * Math.PI * 2 - Math.PI / 2;
+        ctx.beginPath();
+        ctx.arc(cx, cy, outerR, angle, nextAngle);
+        ctx.arc(cx, cy, innerR, nextAngle, angle, true);
+        ctx.closePath();
+        if (noteCategory === "tonic") {
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
+            ctx.lineWidth = 3;
+        } else {
+            ctx.strokeStyle = hexToRgba(categoryColors[noteCategory], 0.95);
+            ctx.lineWidth = 3;
+        }
+        ctx.stroke();
+    }
+
+    // 在五度圈上方绘制图例（圆点染色 + 音名）
+    (function drawLegend() {
+      const legendItems = [
+        { key: 'tonic', label: '主音', idxKey: 'tonicGroupNoteIdx' },
+        { key: 'tonicChar', label: '主组特征音', idxKey: 'tonicGroupCharNoteIdx' },
+        { key: 'featureChar', label: '特性组特征音', idxKey: 'featureGroupCharNoteIdx' },
+        { key: 'contrastChar', label: '对照组特性音', idxKey: 'contrastGroupCharNoteIdx' }
+      ];
+      const itemW = 120;
+      const totalW = legendItems.length * itemW;
+      let startX = cx - totalW / 2;
+      const y = cy - outerR - 18;
+      ctx.font = "12px sans-serif";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+
+      // 先过滤出有效项（必须有 root 且 mode 对应 idx 为 number）
+      if (!(root in noteToIdx) || typeof noteToIdx[root] !== 'number') return;
+      const rootIdx = noteToIdx[root];
+      const validItems = legendItems.filter(it => typeof mode[it.idxKey] === 'number');
+      if (!validItems.length) return; // 无有效项则不绘制图例
+
+      for (let i = 0; i < validItems.length; i++) {
+        const it = validItems[i];
+        const x = startX + i * itemW;
+        const distIdx = mode[it.idxKey];
+        const noteIdx = (rootIdx + distIdx + 12) % 12;
+        const noteName = idxToNote[noteIdx] || '-';
+
+        // 圆点
+        ctx.beginPath();
+        ctx.arc(x + 6, y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = hexToRgba(categoryColors[it.key], 1);
+        ctx.fill();
+        // 文本
+        ctx.fillStyle = "#fff";
+        ctx.fillText(` ${it.label}: ${noteName}`, x + 18, y);
+      }
+    })();
+
+    // 中心标签（显示模式名称）
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 10px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(mode.modeName || "多调性", cx, cy - 4);
+    ctx.font = "8px sans-serif";
+    ctx.fillStyle = "rgba(255,255,255,0.6)";
+    ctx.fillText(`张力:${mode.tensionLevel} 温度:${mode.spaceTemp}`, cx, cy + 12);
+    
+    // 内圈功能组标注（需已选主音）
+    if (!hasRoot) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(255,255,255,0.15)";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        return;
+    }
+
+    const innerLabelR = (centerR + innerR) / 2;
+    const replaceGroup = mode.funcReplaceGroup || null;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    for (let i = 0; i < circleData.length; i++) {
+        const label = innerFuncLabels[i];
+        if (!label) continue;
+        const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
+        const nextAngle = ((i + 1) / 12) * Math.PI * 2 - Math.PI / 2;
+        const midAngle = (angle + nextAngle) / 2;
+        const textX = cx + Math.cos(midAngle) * innerLabelR;
+        const textY = cy + Math.sin(midAngle) * innerLabelR;
+        drawFuncRingLabel(ctx, textX, textY, label, replaceGroup);
+    }
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(255,255,255,0.15)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+}
+
+function escapeMultiModeHtml(s) {
+    return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
+function formatRomanDegreeLabel(degIndex, chordType) {
+    const romanUpper = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
+    const romanLower = ["i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x", "xi", "xii"];
+    const upper = romanUpper[degIndex] || `${degIndex + 1}`;
+    const lower = romanLower[degIndex] || `${degIndex + 1}`;
+    if (chordType === "min") return lower;
+    if (chordType === "dim") return `${lower}°`;
+    if (chordType === "aug") return `${upper}+`;
+    if (chordType === "sus2") return `${upper}sus2`;
+    if (chordType === "sus4") return `${upper}sus4`;
+    if (chordType === "unknown") return `${upper}?`;
+    return upper;
+}
+
+function buildModeScaleChordData(root, mode) {
+  // 默认使用 mode 中定义的音级（多数模式在 modes.json 中已预设）
+  let intervals = Array.isArray(mode.includeNoteIdx) ? mode.includeNoteIdx : [];
+
+  // 如果这是小调家族且用户选择了和声小调开关，则使用全局的和声小调音级
+  if (mode && mode.tonicGroup === "t" && minorMode === "harmonic") {
+    intervals = harmonicMinorIntervals;
+  }
+
+  const converter = getMultiModeChordConverter();
+  const rows = intervals.map((_, i) =>
+    buildTriadChordAtDegree(root, intervals, i, converter),
+  );
+  const chordTypes = rows.map((r) => r.chordType);
+  return { intervals, rootIdx: noteToIdx[root], chordTypes, rows };
+}
+
+/** 按五度圈内圈功能名 → 扇区 → 调内和弦（与画布一致，如 T–S–D–T → C–F–G–C） */
+function resolveFuncGroupChord(funcName, root, mode, scaleData, innerLabels) {
+    const sectorMap = buildFuncNameToSectorMap(innerLabels);
+    const sector = sectorMap[funcName];
+    if (sector == null) {
+        return { funcName, degreeLabel: "—", chordLabel: "—", notes: "—" };
+    }
+    const sectorNote = circleData[sector].major;
+    const dist = getSemitoneDistance(root, sectorNote);
+    const row = scaleData.rows.find((r) => r.dist === dist);
+    if (row) {
+        return {
+            funcName,
+            degreeLabel: row.degreeLabel,
+            chordLabel: row.chordLabel,
+            notes: row.notes,
+        };
+    }
+    return { funcName, degreeLabel: funcName, chordLabel: sectorNote, notes: "—" };
+}
+
+function parseMultiModeNotes(notesStr) {
+    if (!notesStr || notesStr === "—") return [];
+    return String(notesStr)
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+}
+
+function getModeScaleNoteNames(root, intervals) {
+    const conv = getMultiModeChordConverter();
+    const rootIdx = conv.noteToIdx[root];
+    if (rootIdx === undefined) return [];
+    return intervals.map((off) => conv.idxToNote[(rootIdx + off) % 12]);
+}
+
+function buildScalePitchListHtml(root, intervals) {
+    const rootIdx = noteToIdx[root];
+    return intervals
+        .map((off, i) => {
+            const note = idxToNote[(rootIdx + off) % 12];
+            return `<span class="scale-pitch-chip" data-multi-play="scale-note" data-note="${escapeMultiModeHtml(note)}" title="点击播放 ${escapeMultiModeHtml(note)} · includeNoteIdx[${i}]=${off}">
+        <span class="scale-pitch-idx">${i + 1}</span>
+        <span class="scale-pitch-note">${escapeMultiModeHtml(note)}</span>
+        <span class="scale-pitch-off">+${off}</span>
+      </span>`;
+        })
+        .join("");
+}
+
+// 渲染多调性模式展示区
+function renderMultiModeTable(root, mode) {
+    const tableContainer = document.getElementById("circle-table-container");
+    if (!tableContainer) return;
+
+    let intervals = mode.includeNoteIdx || [];
+
+    const scalePitchHtml = buildScalePitchListHtml(root, intervals);
+    const scaleData = buildModeScaleChordData(root, mode);
+    const innerLabels = buildInnerFuncRingLabels(root, mode);
+    const replaceGroup = mode.funcReplaceGroup || null;
+    const temp = mode.spaceTemp ?? 0;
+    const tempHue = 210 + ((Math.max(-8, Math.min(8, temp)) + 8) / 16) * (12 - 210);
+
+    const funcSeq = Array.isArray(mode.fullFuncSeq) ? mode.fullFuncSeq : [];
+    const funcSteps = funcSeq.map((fn) => {
+        const chord = resolveFuncGroupChord(fn, root, mode, scaleData, innerLabels);
+        return {
+            ...chord,
+            isReplace: replaceGroup && fn === replaceGroup,
+        };
+    });
+
+    const seqFlowHtml = funcSteps.length
+        ? funcSteps
+              .map((step, i) => {
+                  const node = `
+          <div class="func-seq-node${step.isReplace ? " is-func-replace" : ""}" data-multi-play="func-node" data-func-index="${i}" role="button" tabindex="0" title="${window.__("circle_multi_play_func_seq") || "播放序列"} ${escapeMultiModeHtml(step.chordLabel)}">
+            <div class="func-seq-func">${escapeMultiModeHtml(step.funcName)}</div>
+            <div class="func-seq-degree">${escapeMultiModeHtml(step.degreeLabel)}</div>
+            <div class="func-seq-chord">${escapeMultiModeHtml(step.chordLabel)} <span class="multi-mode-play-hint" aria-hidden="true">🔊</span></div>
+            <div class="func-seq-notes">${escapeMultiModeHtml(step.notes)}</div>
+          </div>`;
+                  const arrow =
+                      i < funcSteps.length - 1
+                          ? '<div class="func-seq-arrow" aria-hidden="true">→</div>'
+                          : funcSteps.length > 1
+                            ? `<div class="func-seq-arrow func-seq-arrow-return" aria-hidden="true" title="${window.__("circle_multi_func_seq_hint") || "回到起点"}">↺</div>`
+                            : "";
+                  return node + arrow;
+              })
+              .join("")
+        : `<p class="multi-mode-empty">${window.__("circle_multi_empty_seq") || "暂无功能序列"}</p>`;
+
+    const scaleRowsHtml = scaleData.rows
+        .map(
+            (row, idx) => `
+      <tr class="multi-mode-degree-row" data-multi-play="degree" data-degree-index="${idx}" role="button" tabindex="0" title="${window.__("circle_multi_play_scale") || "播放音阶"} ${escapeMultiModeHtml(row.chordLabel)}">
+        <td class="col-degree"><span class="roman-badge">${escapeMultiModeHtml(row.degreeLabel)}</span></td>
+        <td class="col-chord"><strong>${escapeMultiModeHtml(row.chordLabel)}</strong> <span class="multi-mode-play-hint" aria-hidden="true">🔊</span></td>
+        <td class="col-notes">${escapeMultiModeHtml(row.notes)}</td>
+      </tr>`,
+        )
+        .join("");
+
+    const antiTag = mode.isAntiFunc
+      ? `<span class="meta-chip meta-anti">${window.__("circle_multi_mode_chip") || "反功能"}</span>`
+      : "";
+
+    tableContainer.innerHTML = `
+    <div class="multi-mode-display">
+      <header class="multi-mode-header">
+        <div class="multi-mode-title-row">
+          <span class="root-badge">${escapeMultiModeHtml(root)}</span>
+          <h3 class="multi-mode-title">${escapeMultiModeHtml(mode.modeName || window.__("circle_multi_mode_label") || "调式")}</h3>
+        </div>
+        <div class="multi-mode-meta">
+          <span class="meta-chip">${window.__("circle_multi_sort_tension")?.replace("{val}", escapeMultiModeHtml(mode.tensionLevel)) || `张力 ${escapeMultiModeHtml(mode.tensionLevel)}`}</span>
+          <span class="meta-chip meta-temp" style="--temp-hue:${tempHue}">${window.__("circle_multi_sort_temp")?.replace("{val}", escapeMultiModeHtml(mode.spaceTemp)) || `温度 ${escapeMultiModeHtml(mode.spaceTemp)}`}</span>
+          ${mode.funcReplaceGroup ? `<span class="meta-chip meta-replace">${window.__("circle_multi_func_seq_hint") || "功能替代"} ${escapeMultiModeHtml(mode.funcReplaceGroup)}</span>` : ""}
+          ${antiTag}
+        </div>
+      </header>
+
+      <section class="multi-mode-section scale-pitch-section">
+        <div class="multi-mode-section-head">
+          <h4 class="section-label">${window.__("circle_multi_mode_label") || "调式音阶"}</h4>
+          <button type="button" class="multi-mode-play-btn" data-multi-play="scale" title="${window.__("circle_multi_play_scale") || "顺序播放调式音阶"}">🔊 ${window.__("circle_multi_play_scale") || "播放音阶"}</button>
+        </div>
+        <div class="scale-pitch-list">${scalePitchHtml}</div>
+      </section>
+
+      <section class="multi-mode-section full-func-seq-section">
+        <div class="multi-mode-section-head">
+          <h4 class="section-label">${window.__("circle_multi_play_func_seq") || "完全功能序列"}</h4>
+          <button type="button" class="multi-mode-play-btn" data-multi-play="func-seq" title="${window.__("circle_multi_play_func_seq") || "按序列播放各功能和弦"}" ${funcSteps.length ? "" : "disabled"}>🔊 ${window.__("circle_multi_play_func_seq") || "播放序列"}</button>
+        </div>
+        <p class="section-hint">${window.__("circle_multi_func_seq_hint") || "功能名按五度圈内圈定位 · 点击节点可单独播放 · T–S–D–T → I–IV–V–I"}</p>
+        <div class="full-func-seq-flow">${seqFlowHtml}</div>
+      </section>
+
+      <section class="multi-mode-section scale-table-section">
+        <div class="multi-mode-section-head">
+          <h4 class="section-label">${window.__("circle_multi_mode_label") || "调内音级"}</h4>
+          <span class="section-hint-inline">${window.__("circle_multi_table_hint") || "点击行播放和弦"}</span>
+        </div>
+        <div class="multi-mode-table-wrap">
+          <table class="multi-mode-degree-table degree-table">
+            <thead>
+              <tr><th>${window.__("circle_col_degree") || "音级"}</th><th>${window.__("circle_col_chord") || "和弦"}</th><th>${window.__("circle_col_notes") || "音符"}</th></tr>
+            </thead>
+            <tbody>${scaleRowsHtml}</tbody>
+          </table>
+        </div>
+      </section>
+
+      <footer class="multi-mode-footer">
+        <small>${window.__("ack_color_harmony_studio") || "特别感谢色彩和声工作室提供的特性进行数据"}</small>
+      </footer>
+    </div>`;
+
+    const display = tableContainer.querySelector(".multi-mode-display");
+    if (display && window.jazzCompassAudio) {
+        window.jazzCompassAudio.wireDisplay(display, {
+            scaleNoteNames: getModeScaleNoteNames(root, intervals),
+            degreeRows: scaleData.rows,
+            funcSteps,
+        });
+    }
+}
+
+// 初始化多调性控制面板
+function initMultiModeCircle() {
+  const toggleBtn = document.getElementById("circle-multi-toggle");
+  const panel = document.getElementById("circle-multi-panel");
+  const modeList = document.getElementById("circle-mode-list");
+  const modeDropdown = document.getElementById("circle-mode-dropdown");
+  const modeSearch = document.getElementById("circle-mode-search");
+  const modeToggleBtn = document.getElementById("circle-mode-toggle");
+  const applyBtn = document.getElementById("circle-apply-mode");
+  const filterNormal = document.getElementById("filter-normal-only");
+  const filterNatural = document.getElementById("filter-natural-only");
+  const sortType = document.getElementById("circle-sort-type");
+  const sortOrder = document.getElementById("circle-sort-order");
+
+  if (!toggleBtn || !modeToggleBtn) return;
+
+  // 颜色映射：空间温度 -> 色相（冷蓝到暖红），空间张力 -> 叠加变暗
+  function tempToHsl(temp) {
+    // temp: -8 .. 8 -> hue 210 (冷) .. 12 (暖)
+    const t = Math.max(-8, Math.min(8, temp));
+    const frac = (t + 8) / 16; // 0..1
+    const hue = 210 + frac * (12 - 210); // 210 -> 12
+    return `hsl(${hue},20%,30%)`;
+  }
+
+  function tensionDarkAlpha(tension) {
+    const t = Math.max(1, Math.min(10, tension));
+    return ((t - 1) / 9) * 0.725; // 0 .. 0.5
+  }
+
+  let selectedModeIdx = null;
+
+  function clearSelectionVisual() {
+    Array.from(modeList.children).forEach(child => child.style.boxShadow = "none");
+  }
+
+  function updateModeToggleLabel() {
+    if (currentMultiMode && currentMultiMode.modeName) {
+      modeToggleBtn.textContent = `${window.__("circle_multi_mode_chip") || "调式"}: ${currentMultiMode.modeName}`;
+    } else {
+      modeToggleBtn.textContent = window.__("circle_multi_expand") || '展开调式';
+    }
+  }
+
+  // 刷新模式卡片列表（以卡片替代 select）
+  function refreshModeList() {
+    if (!modesData) return;
+    let filtered = [...modesData];
+    if (filterNormal.checked) filtered = filtered.filter(m => m.isNormalMode === true);
+    if (filterNatural.checked) filtered = filtered.filter(m => m.isNaturalScale === true);
+
+    const keyword = modeSearch?.value.trim().toLowerCase();
+    if (keyword) {
+      filtered = filtered.filter(m => (m.modeName || '').toLowerCase().includes(keyword));
+    }
+
+    const sortKey = sortType.value === "tension" ? "tensionLevel" : "spaceTemp";
+    const order = sortOrder.value === "asc" ? 1 : -1;
+    filtered.sort((a,b) => order * (a[sortKey] - b[sortKey]));
+
+    modeList.innerHTML = "";
+    if (filtered.length === 0) {
+      const empty = document.createElement('div');
+      empty.textContent = window.__("circle_multi_no_match") || '没有匹配的调式';
+      empty.style.color = 'rgba(255,255,255,0.6)';
+      empty.style.padding = '10px';
+      modeList.appendChild(empty);
+      return;
+    }
+
+    filtered.forEach(m => {
+      const card = document.createElement('div');
+      card.className = 'mode-card';
+      card.style.minWidth = '160px';
+      card.style.padding = '8px';
+      card.style.borderRadius = '8px';
+      card.style.cursor = 'pointer';
+      card.style.color = '#fff';
+      card.style.display = 'flex';
+      card.style.flexDirection = 'column';
+      card.style.gap = '6px';
+      card.dataset.idx = m.idx;
+
+      const baseColor = tempToHsl(m.spaceTemp);
+      const darkAlpha = tensionDarkAlpha(m.tensionLevel);
+      card.style.background = `linear-gradient(rgba(0,0,0,${darkAlpha}), rgba(0,0,0,${darkAlpha})), ${baseColor}`;
+      card.style.border = '1px solid rgba(255,255,255,0.1)';
+
+      const title = document.createElement('div');
+      title.textContent = m.modeName || (`mode ${m.idx}`);
+      title.style.fontWeight = '600';
+      title.style.fontSize = '13px';
+
+      const meta = document.createElement('div');
+      meta.textContent = `${window.__("circle_multi_sort_tension")?.replace("{val}", m.tensionLevel) || `张力:${m.tensionLevel}`} ${window.__("circle_multi_sort_temp")?.replace("{val}", m.spaceTemp) || `温度:${m.spaceTemp}`}`;
+      meta.style.fontSize = '12px';
+      meta.style.opacity = '0.9';
+
+      card.appendChild(title);
+      card.appendChild(meta);
+
+      if (selectedModeIdx === m.idx) {
+        card.style.boxShadow = '0 0 0 3px rgba(255,255,255,0.18)';
+      }
+
+      card.addEventListener('click', () => {
+        selectedModeIdx = m.idx;
+        clearSelectionVisual();
+        card.style.boxShadow = '0 0 0 3px rgba(255,255,255,0.12)';
+        currentMultiMode = m;
+        currentRoot = null;
+        updateModeToggleLabel();
+        updateCircleMultiMode();
+      });
+
+      modeList.appendChild(card);
+    });
+  }
+
+  // helper: 在 checkbox 状态变化时为包裹的 label 添加/移除活动类
+  function setFilterLabelState(checkbox) {
+    if (!checkbox) return;
+    const lbl = checkbox.closest('label') || document.querySelector(`label[for="${checkbox.id}"]`);
+    if (!lbl) return;
+    if (checkbox.checked) lbl.classList.add('is-active');
+    else lbl.classList.remove('is-active');
+  }
+
+  // 初始化状态并绑定事件，使 UI 有视觉反馈
+  setFilterLabelState(filterNormal);
+  setFilterLabelState(filterNatural);
+  filterNormal.addEventListener('change', (e) => { setFilterLabelState(e.target); refreshModeList(); });
+  filterNatural.addEventListener('change', (e) => { setFilterLabelState(e.target); refreshModeList(); });
+  sortType.addEventListener('change', refreshModeList);
+  sortOrder.addEventListener('change', refreshModeList);
+  modeSearch.addEventListener('input', refreshModeList);
+
+  modeToggleBtn.addEventListener('click', () => {
+    if (!modeDropdown) return;
+    const isOpen = modeDropdown.style.display === 'flex';
+    modeDropdown.style.display = isOpen ? 'none' : 'flex';
+    modeToggleBtn.textContent = isOpen
+      ? (currentMultiMode?.modeName ? `${window.__("circle_multi_mode_chip") || "调式"}: ${currentMultiMode.modeName}` : window.__("circle_multi_expand") || '展开调式')
+      : window.__("circle_multi_collapse") || '收起调式';
+    if (!isOpen) {
+      refreshModeList();
+    }
+  });
+
+  toggleBtn.addEventListener('click', () => {
+    multiModeActive = !multiModeActive;
+    panel.style.display = multiModeActive ? 'flex' : 'none';
+    if (multiModeActive) {
+      currentRoot = null;
+      refreshModeList();
+    } else {
+      currentRoot = null;
+      circleCurrentKey = null;
+      drawCircle(null, null);
+      const tableContainer = document.getElementById('circle-table-container');
+      tableContainer.innerHTML = '';
+    }
+    toggleBtn.textContent = multiModeActive ? (window.__("circle_multi_mode") || '多调性模式') : (window.__("nav_circle") || '五度圈');
+  });
+
+  applyBtn.addEventListener('click', () => {
+    if (!multiModeActive) return;
+    if (!currentMultiMode) return;
+    updateCircleMultiMode();
+  });
+
+  // 搜索框 placeholder 本地化
+  if (modeSearch) {
+    modeSearch.placeholder = window.__("circle_multi_search_placeholder") || "搜索调式";
+  }
+
+  // 过滤器 label 本地化（只更新文本部分，保留checkbox）
+  if (filterNormal) {
+    const lbl = filterNormal.closest('label');
+    if (lbl) {
+      let textNode = Array.from(lbl.childNodes).find(n => n.nodeType === 3 && n.textContent.trim());
+      if (!textNode) {
+        textNode = document.createTextNode('');
+        lbl.appendChild(textNode);
+      }
+      textNode.textContent = ' ' + (window.__("circle_multi_filter_normal") || "仅常规调式");
+    }
+  }
+  if (filterNatural) {
+    const lbl = filterNatural.closest('label');
+    if (lbl) {
+      let textNode = Array.from(lbl.childNodes).find(n => n.nodeType === 3 && n.textContent.trim());
+      if (!textNode) {
+        textNode = document.createTextNode('');
+        lbl.appendChild(textNode);
+      }
+      textNode.textContent = ' ' + (window.__("circle_multi_filter_natural") || "仅自然音阶");
+    }
+  }
+
+  // 排序类型 label 本地化
+  if (sortType) {
+    for (const opt of sortType.options) {
+      if (opt.value === "tension") opt.textContent = window.__("circle_multi_sort_tension") || "空间张力等级";
+      if (opt.value === "temp") opt.textContent = window.__("circle_multi_sort_temp") || "空间温度等级";
+    }
+  }
+
+  // 排序顺序 label 本地化
+  if (sortOrder) {
+    for (const opt of sortOrder.options) {
+      if (opt.value === "asc") opt.textContent = window.__("sort_asc") || "升序";
+      if (opt.value === "desc") opt.textContent = window.__("sort_desc") || "降序";
+    }
+  }
+
+  // 初始隐藏面板与下拉列表
+  panel.style.display = 'none';
+  if (modeDropdown) modeDropdown.style.display = 'none';
+}
+
 
   function drawArcSegment(
     ctx,
@@ -902,6 +2005,7 @@ document.addEventListener("DOMContentLoaded", () => {
       "rgba(255,120,120,0.12)",
     ];
     const augColor = "rgba(255,200,80,0.2)";
+    let lastChordRootMidi = null;
 
     notes.forEach((note, i) => {
       const row = document.createElement("tr");
@@ -957,8 +2061,16 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       row.appendChild(notesCell);
 
-      // ============ 点击播放声音 ============
-      const chordFreqs = chordNotesToFrequencies(chordNoteNames);
+      // ============ 点击播放声音（i 级定基准，逐级抬高根音） ============
+      const { freqs: chordFreqs, rootMidi } = chordNotesToFrequencies(
+        chordNoteNames,
+        4,
+        false,
+        lastChordRootMidi,
+      );
+      if (rootMidi != null) {
+        lastChordRootMidi = rootMidi;
+      }
 
       const audioIndicator = document.createElement("span");
       audioIndicator.textContent = " 🔊";
@@ -983,10 +2095,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       row.addEventListener("click", () => {
         row.style.transform = "scale(0.98)";
-        setTimeout(() => {
-          row.style.transform = "translateX(4px)";
-        }, 100);
         playChord(chordFreqs);
+        requestAnimationFrame(() => {
+          row.style.transform = "translateX(4px)";
+        });
       });
 
       tbody.appendChild(row);
@@ -1051,6 +2163,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const sectorIndex = Math.floor((angle / (Math.PI * 2)) * 12) % 12;
     const item = circleData[sectorIndex];
 
+    if (multiModeActive && currentMultiMode) {
+      if (dist >= innerR && dist <= outerR) {
+        currentRoot = item.major;
+      } else if (dist >= centerR && dist < innerR) {
+        currentRoot = item.minor;
+      }
+      updateCircleMultiMode();
+      return;
+    }
+
     if (dist >= innerR && dist <= outerR) {
       // 点击外环 — 大调
       circleCurrentKey = {
@@ -1082,7 +2204,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // 窗口大小变化重绘
   window.addEventListener("resize", () => {
     if (document.getElementById("panel-circle").style.display !== "none") {
-      if (circleCurrentKey) {
+      if (multiModeActive && currentMultiMode) {
+        updateCircleMultiMode();
+      } else if (circleCurrentKey) {
         drawCircle(
           circleCurrentKey.primary === "major"
             ? circleCurrentKey.major
@@ -1161,6 +2285,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <li>${window.__("about_feature_lcc")}</li>
         <li>${window.__("about_feature_cst")}</li>
       </ul>
+      <p style="margin-top:16px; color:#ddd; font-size:0.95rem; line-height:1.6;">${window.__("about_acknowledgement")}</p>
       
       <h4 style="margin-top:20px">${window.__("about_github")}</h4>
       <div style="margin: 12px 0;">
@@ -3357,83 +4482,186 @@ function drawTreeCanvas(container, graphData, type) {
    * @param {number} baseOctave - 基准八度
    * @param {number} noteDuration - 每个音符的时长（秒）
    */
-  function playScale(scaleNotes, baseOctave = 3, noteDuration = 0.15) {
+  function playNoteSequence(frequencies, noteDuration = 0.15) {
     try {
       const ctx = getAudioContext();
+      interruptPlayback(ctx);
       const now = ctx.currentTime;
+      const dur = Math.max(0.08, noteDuration);
 
-      // 主输出
-      const mainOut = ctx.createGain();
-      mainOut.gain.setValueAtTime(0.4, now);
-
-      // 混响
-      const reverb = createReverb(ctx, noteDuration * scaleNotes.length * 2 + 1);
-      const dryGain = ctx.createGain();
-      const wetGain = ctx.createGain();
-
-      dryGain.gain.setValueAtTime(0.7, now);
-      wetGain.gain.setValueAtTime(0.3, now);
-
-      // 构建完整的上行+下行序列（含八度变化）
-      const sequence = [];
-
-      // 上行（从基准八度开始，逐音升高）
-      scaleNotes.forEach((note, index) => {
-        const semitone = noteToSemitoneValue(note);
-        if (semitone === undefined) return;
-
-        // 判断是否需要换八度（当音符值比前一个小，说明到了下一组）
-        let octave = baseOctave;
-        if (index > 0) {
-          const prevSemitone = noteToSemitoneValue(scaleNotes[index - 1]);
-          if (semitone <= prevSemitone) {
-            // 进入了下一个八度（如从 B 到 C）
-            octave = baseOctave + Math.floor(index / scaleNotes.length) +
-              (index >= scaleNotes.length ? 1 : 0);
-          }
-        }
-
-        sequence.push({ freq: semitoneToFreq(semitone, octave), octave });
+      frequencies.forEach((freq, index) => {
+        const startTime = now + index * dur;
+        const tone = createSimpleTone(ctx, freq, startTime, dur * 1.1, 0.1);
+        tone.connect(audioDryBus);
       });
+    } catch (e) {
+      console.warn("playNoteSequence failure:", e);
+    }
+  }
 
-      // 添加高八度的主音作为顶点
-      const rootSemitone = noteToSemitoneValue(scaleNotes[0]);
-      sequence.push({ freq: semitoneToFreq(rootSemitone, baseOctave + 1), octave: baseOctave + 1 });
+  function scaleNoteNamesToFreqs(noteNames) {
+    let lastRootMidi = null;
+    const freqs = [];
+    noteNames.forEach((name) => {
+      const { freqs: f, rootMidi } = chordNotesToFrequencies(
+        [name],
+        4,
+        false,
+        lastRootMidi,
+      );
+      if (f.length) freqs.push(f[0]);
+      if (rootMidi != null) lastRootMidi = rootMidi;
+    });
+    return freqs;
+  }
 
-      // 下行（从高八度主音往下回到基准主音）
-      for (let i = scaleNotes.length - 1; i >= 0; i--) {
-        const semitone = noteToSemitoneValue(scaleNotes[i]);
-        if (semitone === undefined) continue;
+  function buildMultiModeDegreeFreqs(rows) {
+    let lastRootMidi = null;
+    return rows.map((row) => {
+      const names = parseMultiModeNotes(row.notes);
+      const { freqs, rootMidi } = chordNotesToFrequencies(
+        names,
+        4,
+        false,
+        lastRootMidi,
+      );
+      if (rootMidi != null) lastRootMidi = rootMidi;
+      return freqs;
+    });
+  }
 
-        let octave = baseOctave;
-        if (i === scaleNotes.length - 1) octave = baseOctave + 1;
-        else if (semitone >= rootSemitone && i < scaleNotes.length - 1) {
-          octave = baseOctave + 1;
+  function playMultiModeScale(noteNames) {
+    if (!noteNames?.length) return;
+    playNoteSequence(scaleNoteNamesToFreqs(noteNames), 0.18);
+  }
+
+  function playMultiModeFuncSequence(funcSteps) {
+    if (!funcSteps?.length) return;
+    try {
+      const ctx = getAudioContext();
+      interruptPlayback(ctx);
+      const now = ctx.currentTime;
+      let t = now;
+      let lastRootMidi = null;
+      funcSteps.forEach((step) => {
+        const names = parseMultiModeNotes(step.notes);
+        if (!names.length) {
+          t += 0.4;
+          return;
         }
+        const { freqs, rootMidi } = chordNotesToFrequencies(
+          names,
+          4,
+          false,
+          lastRootMidi,
+        );
+        if (rootMidi != null) lastRootMidi = rootMidi;
+        freqs.forEach((freq, i) => {
+          const noteTime = t + i * 0.012;
+          const tone = createPianoTone(ctx, freq, noteTime, 0.85);
+          tone.connect(audioDryBus);
+          tone.connect(audioWetBus);
+        });
+        t += 0.95;
+      });
+    } catch (e) {
+      console.warn("playMultiModeFuncSequence failure:", e);
+    }
+  }
 
-        sequence.push({ freq: semitoneToFreq(semitone, octave), octave });
+  function wireMultiModeDisplayAudio(displayEl, payload) {
+    if (!payload || displayEl.dataset.audioWired === "1") return;
+    displayEl.dataset.audioWired = "1";
+
+    const degreeFreqs = buildMultiModeDegreeFreqs(payload.degreeRows || []);
+
+    displayEl.addEventListener("click", (e) => {
+      const target = e.target.closest("[data-multi-play]");
+      if (!target) return;
+      if (target.closest(".func-seq-arrow")) return;
+
+      const kind = target.dataset.multiPlay;
+
+      if (kind === "scale") {
+        playMultiModeScale(payload.scaleNoteNames);
+        return;
       }
 
-      // 最后回到基准主音
-      sequence.push({ freq: semitoneToFreq(rootSemitone, baseOctave), octave: baseOctave });
+      if (kind === "func-seq") {
+        playMultiModeFuncSequence(payload.funcSteps);
+        return;
+      }
 
-      // 播放序列
-      sequence.forEach(({ freq }, index) => {
-        const startTime = now + index * noteDuration;
-        const tone = createPianoTone(ctx, freq, startTime, noteDuration * 1.5);
+      if (kind === "scale-note") {
+        const note = target.dataset.note;
+        if (note) {
+          const { freqs } = chordNotesToFrequencies([note], 4, false, null);
+          playChord(freqs, 0.5);
+        }
+        return;
+      }
 
-        tone.connect(dryGain);
-        tone.connect(wetGain);
-      });
+      if (kind === "degree") {
+        const idx = parseInt(target.dataset.degreeIndex, 10);
+        if (!Number.isNaN(idx) && degreeFreqs[idx]?.length) {
+          playChord(degreeFreqs[idx]);
+        }
+        return;
+      }
 
-      dryGain.connect(mainOut);
-      wetGain.connect(reverb);
-      reverb.connect(mainOut);
-      mainOut.connect(ctx.destination);
+      if (kind === "func-node") {
+        const idx = parseInt(target.dataset.funcIndex, 10);
+        const step = payload.funcSteps?.[idx];
+        if (!step) return;
+        const names = parseMultiModeNotes(step.notes);
+        if (!names.length) return;
+        let lastRootMidi = null;
+        if (idx > 0) {
+          for (let j = 0; j < idx; j++) {
+            const prev = parseMultiModeNotes(payload.funcSteps[j].notes);
+            if (!prev.length) continue;
+            const { rootMidi } = chordNotesToFrequencies(
+              prev,
+              4,
+              false,
+              lastRootMidi,
+            );
+            if (rootMidi != null) lastRootMidi = rootMidi;
+          }
+        }
+        const { freqs } = chordNotesToFrequencies(
+          names,
+          4,
+          false,
+          lastRootMidi,
+        );
+        playChord(freqs);
+      }
+    });
 
-    } catch (e) {
-      console.warn("play scale failure:", e);
-    }
+    displayEl.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const target = e.target.closest("[data-multi-play]");
+      if (!target || target.tagName === "BUTTON") return;
+      e.preventDefault();
+      target.click();
+    });
+  }
+
+  window.jazzCompassAudio = {
+    wireDisplay: wireMultiModeDisplayAudio,
+    playScale: playMultiModeScale,
+    playFuncSequence: playMultiModeFuncSequence,
+    chordNotesToFrequencies,
+    parseMultiModeNotes,
+  };
+
+  function playScale(scaleNotes, baseOctave = 3, noteDuration = 0.15) {
+    const sequence = buildScaleSequence(scaleNotes, baseOctave, true);
+    playNoteSequence(
+      sequence.map((s) => s.freq),
+      noteDuration,
+    );
   }
 
   /**
@@ -3510,50 +4738,7 @@ function drawTreeCanvas(container, graphData, type) {
    * 播放音阶（使用智能八度分配）
    */
   function playScaleSequence(scaleNotes, baseOctave = 3, noteDuration = 0.15) {
-    try {
-      const ctx = getAudioContext();
-      const now = ctx.currentTime;
-
-      const mainOut = ctx.createGain();
-      mainOut.gain.setValueAtTime(0.4, now);
-
-      const reverb = createReverb(ctx, noteDuration * scaleNotes.length * 3 + 1);
-      const dryGain = ctx.createGain();
-      const wetGain = ctx.createGain();
-
-      dryGain.gain.setValueAtTime(0.7, now);
-      wetGain.gain.setValueAtTime(0.3, now);
-
-      const sequence = buildScaleSequence(scaleNotes, baseOctave, true);
-
-      sequence.forEach(({ freq }, index) => {
-        const startTime = now + index * noteDuration;
-        const tone = createPianoTone(ctx, freq, startTime, noteDuration * 1.5);
-
-        // 主音稍微强调
-        if (index === 0 || index === scaleNotes.length ||
-          index === sequence.length - 1) {
-          // 主音音量稍大
-          const extraGain = ctx.createGain();
-          extraGain.gain.setValueAtTime(1.2, startTime);
-          tone.disconnect();
-          tone.connect(extraGain);
-          extraGain.connect(dryGain);
-          extraGain.connect(wetGain);
-        } else {
-          tone.connect(dryGain);
-          tone.connect(wetGain);
-        }
-      });
-
-      dryGain.connect(mainOut);
-      wetGain.connect(reverb);
-      reverb.connect(mainOut);
-      mainOut.connect(ctx.destination);
-
-    } catch (e) {
-      console.warn("scale play failure", e);
-    }
+    playScale(scaleNotes, baseOctave, noteDuration);
   }
 
   function renderScaleDetail(container, root, scaleInfo, ms) {
@@ -3648,12 +4833,10 @@ function drawTreeCanvas(container, graphData, type) {
     // 播放按钮事件
     playUpDownBtn.addEventListener("click", () => {
       playScaleSequence(scaleNoteNames, 3, 0.15);
-
-      // 视觉反馈
       playUpDownBtn.style.background = "rgba(0, 181, 173, 0.3)";
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         playUpDownBtn.style.background = "rgba(0, 181, 173, 0.15)";
-      }, 200);
+      });
     });
 
     // 音符网格
@@ -3738,36 +4921,11 @@ function drawTreeCanvas(container, graphData, type) {
    * 从预构建的序列播放音阶
    */
   function playScaleFromSequence(sequence, noteDuration = 0.15) {
-    try {
-      const ctx = getAudioContext();
-      const now = ctx.currentTime;
-
-      const mainOut = ctx.createGain();
-      mainOut.gain.setValueAtTime(0.4, now);
-
-      const reverb = createReverb(ctx, noteDuration * sequence.length + 0.5);
-      const dryGain = ctx.createGain();
-      const wetGain = ctx.createGain();
-
-      dryGain.gain.setValueAtTime(0.7, now);
-      wetGain.gain.setValueAtTime(0.3, now);
-
-      sequence.forEach(({ freq }, index) => {
-        const startTime = now + index * noteDuration;
-        const tone = createPianoTone(ctx, freq, startTime, noteDuration * 1.5);
-
-        tone.connect(dryGain);
-        tone.connect(wetGain);
-      });
-
-      dryGain.connect(mainOut);
-      wetGain.connect(reverb);
-      reverb.connect(mainOut);
-      mainOut.connect(ctx.destination);
-
-    } catch (e) {
-      console.warn("play scale failure:", e);
-    }
+    const dur = Math.max(0.08, noteDuration);
+    playNoteSequence(
+      sequence.map((s) => (typeof s === "number" ? s : s.freq)),
+      dur,
+    );
   }
 
   // ============ 渲染和弦家族详情 ============

@@ -273,6 +273,11 @@ const i18n = {
     about_github: { zh: "GitHub仓库", ja: "GitHubリポジトリ", en: "GitHub Repositories" },
     about_github_web: { zh: "Web版本(JavaScript)", ja: "Web版(JavaScript)", en: "Web Version (JavaScript)" },
     about_github_py: { zh: "Python版本", ja: "Python版", en: "Python Version" },
+    about_acknowledgement: {
+      zh: "特别感谢<a href=\"https://space.bilibili.com/24728563\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#0066cc\">色彩和声工作室</a>（<a href=\"https://space.bilibili.com/24728563\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#0066cc\">https://space.bilibili.com/24728563</a>）提供的特性进行数据与理论。",
+      ja: "特別感謝: <a href=\"https://space.bilibili.com/24728563\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#0066cc\">Color Harmony Studio</a>（<a href=\"https://space.bilibili.com/24728563\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#0066cc\">https://space.bilibili.com/24728563</a>）が機能データと理論を提供しています。",
+      en: "Special thanks to <a href=\"https://space.bilibili.com/24728563\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#0066cc\">Color Harmony Studio</a> (<a href=\"https://space.bilibili.com/24728563\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#0066cc\">https://space.bilibili.com/24728563</a>) for providing functional data and theoretical support.",
+    },
     about_footer: { zh: "© 2026 Music Theory Toolbox 项目。所有内容仅供教育和音乐学习之用。", ja: "© 2024 Music Theory Toolbox プロジェクト。すべてのコンテンツは教育と音楽学習目的でのみ使用されます。", en: "© 2024 Music Theory Toolbox Project. All content is for educational and musical learning purposes." },
 };
 

@@ -110,36 +110,45 @@
                 </div>
 
                 <!-- 深度控制行 -->
-<!-- 深度控制行 -->
-<div class="panel-header" style="border-top: 1px solid rgba(255,255,255,0.06); margin-top:0; padding-top:10px;">
-    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-        <span style="color:var(--muted); font-size:0.85rem;" id="neo_depth_label">展开层数：</span>
-        <input id="neo-depth-input" type="number" value="1" min="1" max="10" 
-               style="width:55px; padding:4px 8px; border-radius:4px; border:1px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.06); color:#fff; font-size:0.85rem; text-align:center;" />
-        <button id="neo-depth-apply" style="padding:4px 12px; border-radius:4px; border:1px solid var(--accent-2); background:rgba(0,181,173,0.12); color:var(--accent-2); cursor:pointer; font-size:0.8rem;">应用</button>
-        <span style="color:var(--muted); font-size:0.75rem; margin-left:2px;">间距：</span>
-        <input id="neo-spacing-input" type="number" value="100" min="50" max="250" step="5"
-               style="width:55px; padding:4px 6px; border-radius:4px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.04); color:#ccc; font-size:0.8rem; text-align:center;" />
-        <span style="color:var(--muted); font-size:0.7rem;">px</span>
-        <span style="color:var(--muted); font-size:0.75rem; margin-left:2px;">球大小：</span>
-        <input id="neo-node-size-input" type="range" min="12" max="36" value="22" step="1"
-               style="width:70px; accent-color:var(--accent-2);" />
-        <span id="neo-node-size-val" style="color:var(--muted); font-size:0.75rem;">22</span>
-    </div>
-    <div style="display:flex; gap:8px; align-items:center; margin-top:6px;">
-        <span style="display:flex; gap:4px; align-items:center;">
-            <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:hsl(145,55%,45%);"></span>
-            <span style="color:var(--muted); font-size:0.7rem;">PLRSN D1 (基本)</span>
-        </span>
-        <span style="display:flex; gap:4px; align-items:center; margin-left:8px;">
-            <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:hsl(260,50%,55%);"></span>
-            <span style="color:var(--muted); font-size:0.7rem;">扩展变换</span>
-        </span>
-        <span id="neo_pan_hint" style="color:var(--muted); font-size:0.75rem; margin-left:12px;">🖱 左键拖拽画布 | 右键拖拽节点 | 滚轮缩放 | 双击重置</span>
-        <button id="neo-reset-view" style="padding:4px 10px; border-radius:4px; border:1px solid rgba(255,255,255,0.15); background:transparent; color:var(--muted); cursor:pointer; font-size:0.8rem;">↺ 重置视图</button>
-        <button id="neo-reset-positions" style="padding:4px 10px; border-radius:4px; border:1px solid rgba(255,255,255,0.15); background:transparent; color:var(--muted); cursor:pointer; font-size:0.8rem;">⟲ 重置位置</button>
-    </div>
-</div>
+                <!-- 深度控制行 -->
+                <div class="panel-header"
+                    style="border-top: 1px solid rgba(255,255,255,0.06); margin-top:0; padding-top:10px;">
+                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                        <span style="color:var(--muted); font-size:0.85rem;" id="neo_depth_label">展开层数：</span>
+                        <input id="neo-depth-input" type="number" value="1" min="1" max="10"
+                            style="width:55px; padding:4px 8px; border-radius:4px; border:1px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.06); color:#fff; font-size:0.85rem; text-align:center;" />
+                        <button id="neo-depth-apply"
+                            style="padding:4px 12px; border-radius:4px; border:1px solid var(--accent-2); background:rgba(0,181,173,0.12); color:var(--accent-2); cursor:pointer; font-size:0.8rem;">应用</button>
+                        <span style="color:var(--muted); font-size:0.75rem; margin-left:2px;">间距：</span>
+                        <input id="neo-spacing-input" type="number" value="100" min="50" max="250" step="5"
+                            style="width:55px; padding:4px 6px; border-radius:4px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.04); color:#ccc; font-size:0.8rem; text-align:center;" />
+                        <span style="color:var(--muted); font-size:0.7rem;">px</span>
+                        <span style="color:var(--muted); font-size:0.75rem; margin-left:2px;">球大小：</span>
+                        <input id="neo-node-size-input" type="range" min="12" max="36" value="22" step="1"
+                            style="width:70px; accent-color:var(--accent-2);" />
+                        <span id="neo-node-size-val" style="color:var(--muted); font-size:0.75rem;">22</span>
+                    </div>
+                    <div style="display:flex; gap:8px; align-items:center; margin-top:6px;">
+                        <span style="display:flex; gap:4px; align-items:center;">
+                            <span
+                                style="display:inline-block; width:12px; height:12px; border-radius:3px; background:hsl(145,55%,45%);"></span>
+                            <span style="color:var(--muted); font-size:0.7rem;">PLRSN D1 (基本)</span>
+                        </span>
+                        <span style="display:flex; gap:4px; align-items:center; margin-left:8px;">
+                            <span
+                                style="display:inline-block; width:12px; height:12px; border-radius:3px; background:hsl(260,50%,55%);"></span>
+                            <span style="color:var(--muted); font-size:0.7rem;">扩展变换</span>
+                        </span>
+                        <span id="neo_pan_hint" style="color:var(--muted); font-size:0.75rem; margin-left:12px;">🖱
+                            左键拖拽画布 | 右键拖拽节点 | 滚轮缩放 | 双击重置</span>
+                        <button id="neo-reset-view"
+                            style="padding:4px 10px; border-radius:4px; border:1px solid rgba(255,255,255,0.15); background:transparent; color:var(--muted); cursor:pointer; font-size:0.8rem;">↺
+                            重置视图</button>
+                        <button id="neo-reset-positions"
+                            style="padding:4px 10px; border-radius:4px; border:1px solid rgba(255,255,255,0.15); background:transparent; color:var(--muted); cursor:pointer; font-size:0.8rem;">⟲
+                            重置位置</button>
+                    </div>
+                </div>
 
                 <!-- 和弦连接路径查找 -->
                 <div class="panel-header" style="border-top: 1px solid rgba(255,255,255,0.06); margin-top: 0;">
@@ -181,26 +190,67 @@
 
             <div id="panel-circle" class="panel" data-feature="circle" role="tabpanel">
                 <div class="panel-header" style="flex-direction:column; align-items:stretch;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
                         <span id="circle_instruction"
                             style="font-size:0.85rem; color:var(--muted);">点击外环或内环扇区查看调性详情</span>
                         <button id="circle-reset"
                             style="padding:4px 12px; border-radius:4px; border:1px solid rgba(255,255,255,0.2); background:transparent; color:var(--muted); cursor:pointer;">↺
                             Reset</button>
                     </div>
-                </div>
-                <div class="panel-body" id="panel-circle-body"
-                    style="display:flex; flex-direction:column; align-items:center;">
-                    <!-- Canvas 五度圈 -->
-                    <div id="circle-canvas-container"
-                        style="width:100%; max-width:520px; aspect-ratio:1/1; position:relative;">
-                        <canvas id="circle-canvas" style="width:100%; height:100%; display:block;"></canvas>
+                    <!-- 多调性控制区（按钮始终显示，面板初始隐藏） -->
+                    <div id="circle-multi-mode-controls" style="margin-top: 10px;">
+                        <button id="circle-multi-toggle" class="panel-action"
+                            style="background: var(--accent); border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer;">多调性模式</button>
+                        <div id="circle-multi-panel"
+                            style="display: none; flex-direction:column; gap: 8px; align-items: stretch; margin-top: 8px; padding: 6px 0; font-size: 0.85rem;">
+                            <!-- 主音选择已移除，使用画布点击设定 root -->
+                            <div
+                                style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:space-between; width:100%;">
+                                <div style="font-size:0.9rem; color:var(--muted);">调式: （点击卡片选择，颜色表示 温度/张力）</div>
+                                <button id="circle-mode-toggle"
+                                    style="padding:4px 10px; border-radius:6px; border:1px solid rgba(255,255,255,0.15); background:transparent; color:#fff; cursor:pointer;">展开调式</button>
+                            </div>
+                            <div id="circle-mode-dropdown"
+                                style="display:none; flex-direction:column; gap:8px; width:100%; margin-top:6px;">
+                                <input id="circle-mode-search" type="search" placeholder="搜索调式"
+                                    style="width:100%; padding:6px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.06); color:#fff;" />
+                                <div id="circle-mode-list"
+                                    style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-start; max-height:190px; overflow-y:auto; padding-right:4px;">
+                                </div>
+                            </div>
+                            <div class="circle-filter-row">
+                                <label class="filter-chip"><input type="checkbox" id="filter-normal-only" checked>
+                                    仅常规调式</label>
+                                <label class="filter-chip"><input type="checkbox" id="filter-natural-only" checked>
+                                    仅自然音阶</label>
+                                <div class="circle-sort-row">
+                                    <span>排序：</span>
+                                    <select id="circle-sort-type" class="circle-select">
+                                        <option value="tension">空间张力等级（1-10，越大越暗）</option>
+                                        <option value="temp">空间温度等级（-8..8，<0冷色，>0暖色）</option>
+                                    </select>
+                                    <select id="circle-sort-order" class="circle-select">
+                                        <option value="asc">升序</option>
+                                        <option value="desc">降序</option>
+                                    </select>
+                                </div>
+                                <button id="circle-apply-mode" class="panel-action circle-apply-btn">应用</button>
+                            </div>
+                        </div>
                     </div>
-                    <!-- 调性对照表 -->
-                    <div id="circle-table-container" style="width:100%; margin-top:16px;"></div>
+                    <div class="panel-body" id="panel-circle-body"
+                        style="display:flex; flex-direction:column; align-items:center;">
+                        <!-- Canvas 五度圈 -->
+                        <div id="circle-canvas-container"
+                            style="width:100%; max-width:520px; aspect-ratio:1/1; position:relative;">
+                            <canvas id="circle-canvas" style="width:100%; height:100%; display:block;"></canvas>
+                        </div>
+                        <!-- 调性对照表 -->
+                        <div id="circle-table-container" style="width:100%; margin-top:16px;"></div>
+                    </div>
                 </div>
             </div>
-
+                
             <div id="panel-about" class="panel" data-feature="about" role="tabpanel">
                 <div class="panel-body" id="panel-about-body"></div>
             </div>

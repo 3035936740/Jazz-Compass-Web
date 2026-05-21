@@ -143,10 +143,115 @@ body {
 	padding: 14px;
 	border-bottom: 1px solid rgba(255, 255, 255, 0.02)
 }
+/* 确保五度圈多调性面板中的复选框使用原生外观，大小正常 */
+#circle-multi-panel input[type="checkbox"] {
+    appearance: auto;
+    -webkit-appearance: checkbox;
+    width: 13px;
+    height: 13px;
+    min-width: 13px;
+    min-height: 13px;
+    margin: 0 2px 0 0;
+    padding: 0;
+    vertical-align: middle;
+    accent-color: var(--accent); /* 可选，不影响大小 */
+}
+#circle-multi-panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;   /* 元素之间的水平间距 */
+    row-gap: 6px; /* 换行时的垂直间距 */
+    font-size: 0.85rem;
+    background: rgba(0,0,0,0.2);
+    padding: 6px 10px;
+    border-radius: 8px;
+}
+#circle-multi-panel select,
+#circle-multi-panel button {
+    font-size: 0.8rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.circle-filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.filter-chip:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.filter-chip.is-active {
+	background: linear-gradient(90deg, rgba(0,180,173,0.12), rgba(124,77,255,0.06));
+	border-color: rgba(124,77,255,0.22);
+}
+
+.filter-chip input {
+    margin: 0;
+    accent-color: var(--accent-2);
+}
+
+.circle-sort-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.circle-select {
+    min-width: 180px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(255,255,255,0.06);
+    color: #fff;
+    outline: none;
+    appearance: none;
+}
+
+.circle-select:focus {
+    border-color: var(--accent-2);
+    box-shadow: 0 0 0 3px rgba(0,181,173,0.12);
+}
+
+.circle-apply-btn {
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    transition: background 0.18s ease, transform 0.18s ease;
+}
+
+.circle-apply-btn:hover {
+    background: rgba(255,255,255,0.14);
+    transform: translateY(-1px);
+}
 
 .panel-header label {
 	color: var(--muted);
 	font-weight: 500
+}
+
+.circle-sector-inside {
+    filter: drop-shadow(0 0 6px rgba(0,181,173,0.5));
 }
 
 .panel-header input,
@@ -575,6 +680,394 @@ pre {
   filter: brightness(1.5);
   transform: scale(0.98) !important;
 }
+}
+
+/* 多调性模式展示区 */
+.multi-mode-display {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px 18px 20px;
+  border-radius: var(--radius);
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+
+.multi-mode-header {
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.multi-mode-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.root-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.4rem;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 4px 14px rgba(124, 77, 255, 0.35);
+}
+
+.multi-mode-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.multi-mode-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.meta-chip {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.meta-chip.meta-temp {
+  border-color: hsla(var(--temp-hue, 210), 45%, 55%, 0.45);
+  background: hsla(var(--temp-hue, 210), 35%, 40%, 0.22);
+}
+
+.meta-chip.meta-replace {
+  color: #ffe0b2;
+  border-color: rgba(255, 183, 77, 0.45);
+  background: rgba(255, 183, 77, 0.12);
+}
+
+.meta-chip.meta-anti {
+  color: #ffcdd2;
+  border-color: rgba(244, 143, 143, 0.4);
+  background: rgba(244, 143, 143, 0.1);
+}
+
+.multi-mode-section {
+  margin-top: 18px;
+}
+
+.section-label {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.multi-mode-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.section-hint-inline {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.multi-mode-play-btn {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 181, 173, 0.45);
+  background: rgba(0, 181, 173, 0.12);
+  color: var(--accent-2);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.multi-mode-play-btn:hover:not(:disabled) {
+  background: rgba(0, 181, 173, 0.28);
+}
+
+.multi-mode-play-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.multi-mode-play-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.multi-mode-play-hint {
+  font-size: 0.75rem;
+  opacity: 0.45;
+  margin-left: 4px;
+}
+
+/* 多调性面板底部感谢文本 */
+.multi-mode-footer {
+	margin-top: 14px;
+	padding-top: 12px;
+	border-top: 1px dashed rgba(255,255,255,0.04);
+	text-align: center;
+}
+.multi-mode-footer small {
+	color: var(--muted);
+	font-size: 0.78rem;
+}
+
+.multi-mode-degree-row {
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.multi-mode-degree-row:hover {
+  background: rgba(0, 181, 173, 0.1) !important;
+}
+
+.multi-mode-degree-row:hover .multi-mode-play-hint,
+.func-seq-node[data-multi-play]:hover .multi-mode-play-hint {
+  opacity: 1;
+}
+
+.func-seq-node[data-multi-play] {
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+}
+
+.func-seq-node[data-multi-play]:hover {
+  background: rgba(0, 181, 173, 0.12);
+  border-color: rgba(0, 181, 173, 0.35);
+}
+
+.func-seq-node[data-multi-play]:active {
+  transform: scale(0.98);
+}
+
+.scale-pitch-chip[data-multi-play] {
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.scale-pitch-chip[data-multi-play]:hover {
+  background: rgba(0, 181, 173, 0.22);
+  border-color: rgba(0, 181, 173, 0.45);
+}
+
+.scale-pitch-chip[data-multi-play]:active {
+  transform: scale(0.96);
+}
+
+.section-hint {
+  margin: 0 0 12px;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.full-func-seq-flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: center;
+  gap: 6px 4px;
+  padding: 12px 8px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.func-seq-node {
+  flex: 0 1 auto;
+  min-width: 72px;
+  max-width: 120px;
+  padding: 10px 10px 8px;
+  border-radius: 10px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.func-seq-node.is-func-replace {
+  border-color: rgba(255, 183, 77, 0.55);
+  background: rgba(255, 183, 77, 0.1);
+  box-shadow: 0 0 16px rgba(255, 183, 77, 0.25);
+}
+
+.func-seq-func {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--accent-2);
+  margin-bottom: 6px;
+}
+
+.func-seq-node.is-func-replace .func-seq-func {
+  color: #ffb74d;
+  text-shadow: 0 0 10px rgba(255, 183, 77, 0.5);
+}
+
+.func-seq-degree {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 2px;
+}
+
+.func-seq-chord {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+  margin-bottom: 4px;
+}
+
+.func-seq-notes {
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--muted);
+  word-break: break-word;
+}
+
+.func-seq-arrow {
+  display: flex;
+  align-items: center;
+  align-self: center;
+  padding: 0 2px;
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.45);
+  user-select: none;
+}
+
+.func-seq-arrow-return {
+  color: rgba(124, 77, 255, 0.85);
+  font-size: 1.25rem;
+}
+
+.func-seq-cycle-note {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+.multi-mode-empty {
+  margin: 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.scale-pitch-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 8px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.scale-pitch-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(96, 180, 255, 0.12);
+  border: 1px solid rgba(96, 180, 255, 0.25);
+  font-size: 0.85rem;
+}
+
+.scale-pitch-idx {
+  font-size: 0.72rem;
+  color: var(--muted);
+  min-width: 1.2em;
+  text-align: center;
+}
+
+.scale-pitch-note {
+  font-weight: 700;
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.scale-pitch-off {
+  font-size: 0.72rem;
+  color: var(--accent-2);
+  font-family: ui-monospace, monospace;
+}
+
+.scale-pitch-raw {
+  margin-top: 8px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-family: ui-monospace, monospace;
+  word-break: break-all;
+}
+
+.multi-mode-table-wrap {
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.multi-mode-degree-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.multi-mode-degree-table thead th {
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--muted);
+  background: rgba(0, 0, 0, 0.22);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.multi-mode-degree-table tbody td {
+  padding: 9px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  vertical-align: middle;
+}
+
+.multi-mode-degree-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.multi-mode-degree-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.col-degree .roman-badge {
+  display: inline-block;
+  min-width: 2em;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #fff;
+}
+
+.col-chord strong {
+  color: rgba(200, 230, 255, 0.95);
+}
+
+.col-notes {
+  color: var(--muted);
+  font-size: 0.82rem;
 }
 
 /* 深度按钮样式 */
