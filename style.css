@@ -25,6 +25,38 @@
 	align-items: start;
 }
 
+/* 在 style.css 中添加 */
+.func-seq-node.is-out-of-scale {
+    opacity: 0.45;
+    filter: grayscale(0.6);
+    cursor: default;
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.04);
+}
+
+.func-seq-node.out-of-scale {
+    opacity: 0.6;
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.func-seq-node.out-of-scale .func-seq-chord {
+    text-decoration: line-through;
+    color: var(--muted);
+}
+
+.func-seq-node.is-out-of-scale:hover {
+    transform: none;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.func-seq-node.is-out-of-scale .func-seq-func,
+.func-seq-node.is-out-of-scale .func-seq-degree,
+.func-seq-node.is-out-of-scale .func-seq-chord,
+.func-seq-node.is-out-of-scale .func-seq-notes {
+    color: var(--muted);
+}
+
 /* subtle inner fade to avoid hard separation when panels end */
 .container::after{
 	content: "";

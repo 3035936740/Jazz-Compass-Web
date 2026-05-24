@@ -6,21 +6,21 @@ let modesData = null;
 let funcGroupData = null;
 
 function loadJsonFiles() {
-    return Promise.all([
-        fetch('modes.json').then(res => res.json()).catch(err => { console.warn('modes.json load failed', err); return []; }),
-        fetch('funcGroup.json').then(res => res.json()).catch(err => { console.warn('funcGroup.json load failed', err); return {}; })
-    ]).then(([modes, funcGroup]) => {
-        modesData = modes;
-        funcGroupData = funcGroup;
-        console.log('Loaded modes:', modesData?.length, 'funcGroup:', funcGroupData);
-    });
+  return Promise.all([
+    fetch('modes.json').then(res => res.json()).catch(err => { console.warn('modes.json load failed', err); return []; }),
+    fetch('funcGroup.json').then(res => res.json()).catch(err => { console.warn('funcGroup.json load failed', err); return {}; })
+  ]).then(([modes, funcGroup]) => {
+    modesData = modes;
+    funcGroupData = funcGroup;
+    console.log('Loaded modes:', modesData?.length);
+  });
 }
 document.addEventListener("DOMContentLoaded", () => {
-    loadJsonFiles().then(() => {
-      initMultiModeCircle();
-        // 原有的初始化代码...
-        // 注意：需要等待 json 加载完成后再初始化五度圈控制面板
-    });
+  loadJsonFiles().then(() => {
+    initMultiModeCircle();
+    // 原有的初始化代码...
+    // 注意：需要等待 json 加载完成后再初始化五度圈控制面板
+  });
 
 
   let circleCurrentKey = null; // 当前选中的调性
@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
       setupAudioBus(audioCtx);
     }
     if (audioCtx.state === "suspended") {
-      audioCtx.resume().catch(() => {});
+      audioCtx.resume().catch(() => { });
     }
     return audioCtx;
   }
@@ -82,7 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
     activeSources.forEach((src) => {
       try {
         src.stop(t);
-      } catch (_) {}
+      } catch (_) { }
     });
     activeSources = [];
 
@@ -91,21 +91,21 @@ document.addEventListener("DOMContentLoaded", () => {
         audioDryBus.gain.cancelScheduledValues(t);
         audioDryBus.gain.setValueAtTime(0, t);
         audioDryBus.disconnect();
-      } catch (_) {}
+      } catch (_) { }
     }
     if (audioWetBus) {
       try {
         audioWetBus.gain.cancelScheduledValues(t);
         audioWetBus.gain.setValueAtTime(0, t);
         audioWetBus.disconnect();
-      } catch (_) {}
+      } catch (_) { }
     }
     if (audioMaster) {
       try {
         audioMaster.gain.cancelScheduledValues(t);
         audioMaster.gain.setValueAtTime(0, t);
         audioMaster.gain.setValueAtTime(0.2, t + 0.01);
-      } catch (_) {}
+      } catch (_) { }
     }
 
     audioDryBus = ctx.createGain();
@@ -697,20 +697,20 @@ document.addEventListener("DOMContentLoaded", () => {
     ctx.fillStyle = "rgba(255,255,255,0.5)";
     ctx.fillText("Circle of 5ths", cx, cy + 10);
   }
-// 多调性模式相关变量
-let multiModeActive = false;
-let currentMultiMode = null;       // 当前选中的模式对象
-let currentRoot = null;            // 主音（点击五度圈后设定）
+  // 多调性模式相关变量
+  let multiModeActive = false;
+  let currentMultiMode = null;       // 当前选中的模式对象
+  let currentRoot = null;            // 主音（点击五度圈后设定）
 
-// 辅助函数：半音差转音级索引（0-11）
-function getSemitoneDistance(fromNote, toNote) {
+  // 辅助函数：半音差转音级索引（0-11）
+  function getSemitoneDistance(fromNote, toNote) {
     const idxFrom = noteToIdx[fromNote];
     const idxTo = noteToIdx[toNote];
     return (idxTo - idxFrom + 12) % 12;
-}
+  }
 
-/** 在音阶顺序上取该级的三音、五音（按半音 3/4 与 6/7/8，非简单 +2/+4 音级） */
-function getScaleTriadAtDegree(intervals, degIndex) {
+  /** 在音阶顺序上取该级的三音、五音（按半音 3/4 与 6/7/8，非简单 +2/+4 音级） */
+  function getScaleTriadAtDegree(intervals, degIndex) {
     const n = intervals.length;
     const root = intervals[degIndex];
     let thirdOff = null;
@@ -719,74 +719,74 @@ function getScaleTriadAtDegree(intervals, degIndex) {
     let fifthDist = null;
 
     for (let step = 1; step < n; step++) {
-        const off = intervals[(degIndex + step) % n];
-        const d = (off - root + 12) % 12;
-        if (thirdOff == null && (d === 3 || d === 4)) {
-            thirdOff = off;
-            thirdDist = d;
-        }
+      const off = intervals[(degIndex + step) % n];
+      const d = (off - root + 12) % 12;
+      if (thirdOff == null && (d === 3 || d === 4)) {
+        thirdOff = off;
+        thirdDist = d;
+      }
     }
 
     if (thirdOff != null) {
-        for (const want of [7, 6, 8]) {
-            for (let step = 1; step < n; step++) {
-                const off = intervals[(degIndex + step) % n];
-                const d = (off - root + 12) % 12;
-                if (d === want) {
-                    fifthOff = off;
-                    fifthDist = d;
-                    break;
-                }
-            }
-            if (fifthOff != null) break;
+      for (const want of [7, 6, 8]) {
+        for (let step = 1; step < n; step++) {
+          const off = intervals[(degIndex + step) % n];
+          const d = (off - root + 12) % 12;
+          if (d === want) {
+            fifthOff = off;
+            fifthDist = d;
+            break;
+          }
         }
+        if (fifthOff != null) break;
+      }
     }
 
     if (thirdOff == null) {
-        for (let step = 1; step < n; step++) {
+      for (let step = 1; step < n; step++) {
+        const off = intervals[(degIndex + step) % n];
+        const d = (off - root + 12) % 12;
+        if (d === 2) {
+          thirdOff = off;
+          thirdDist = 2;
+          break;
+        }
+        if (d === 5) {
+          thirdOff = off;
+          thirdDist = 5;
+          break;
+        }
+      }
+      if (thirdOff != null) {
+        for (const want of [7, 6, 8]) {
+          for (let step = 1; step < n; step++) {
             const off = intervals[(degIndex + step) % n];
             const d = (off - root + 12) % 12;
-            if (d === 2) {
-                thirdOff = off;
-                thirdDist = 2;
-                break;
+            if (d === want) {
+              fifthOff = off;
+              fifthDist = d;
+              break;
             }
-            if (d === 5) {
-                thirdOff = off;
-                thirdDist = 5;
-                break;
-            }
+          }
+          if (fifthOff != null) break;
         }
-        if (thirdOff != null) {
-            for (const want of [7, 6, 8]) {
-                for (let step = 1; step < n; step++) {
-                    const off = intervals[(degIndex + step) % n];
-                    const d = (off - root + 12) % 12;
-                    if (d === want) {
-                        fifthOff = off;
-                        fifthDist = d;
-                        break;
-                    }
-                }
-                if (fifthOff != null) break;
-            }
-        }
+      }
     }
 
     return { thirdOff, fifthOff, thirdDist, fifthDist };
-}
+  }
 
-let _multiModeChordConverter = null;
+  let _multiModeChordConverter = null;
 
-function getMultiModeChordConverter() {
+  function getMultiModeChordConverter() {
     if (!_multiModeChordConverter) {
-        _multiModeChordConverter = new EnhancedChordConverter();
+      _multiModeChordConverter = new EnhancedChordConverter();
     }
     return _multiModeChordConverter;
-}
+  }
 
-/** 从 identifyChord 的 quality 提取基础和弦类型 */
-function extractBaseChordQuality(quality) {
+  /** 从 identifyChord 的 quality 提取基础和弦类型 */
+  function extractBaseChordQuality(quality) {
     if (quality == null || quality === "") return "maj";
     const q = String(quality).trim().split(/\s+/)[0];
     if (q === "maj" || q === "major" || q === "M") return "maj";
@@ -796,19 +796,50 @@ function extractBaseChordQuality(quality) {
     if (q === "sus2") return "sus2";
     if (q === "sus4") return "sus4";
     return "unknown";
+  }
+function extractBaseChordQuality(quality) {
+    if (!quality) return "maj";
+    const q = String(quality).trim().toLowerCase();
+    
+    // 标准类型列表
+    const standardTypes = ["maj", "min", "dim", "aug", "sus2", "sus4", "5"];
+    
+    for (const type of standardTypes) {
+        if (q === type || q.startsWith(type + " ") || q.startsWith(type + "\n")) {
+            return type;
+        }
+    }
+    
+    // 处理空字符串（大三和弦）
+    if (q === "" || q === "maj") return "maj";
+    if (q === "m" || q === "min") return "min";
+    
+    return "unknown";
 }
-
-/**
- * 音阶级数 → 和弦：取调内三音后用 EnhancedChordConverter.identifyChord 识别
- * （与 jazz_compass.js _ensureNotesAndRoot 音名列表逻辑一致）
- */
-function buildTriadChordAtDegree(root, intervals, degIndex, converter) {
+  /**
+   * 音阶级数 → 和弦：取调内三音后用 EnhancedChordConverter.identifyChord 识别
+   * （与 jazz_compass.js _ensureNotesAndRoot 音名列表逻辑一致）
+   */
+function buildTriadChordAtDegree(root, intervals, degIndex, converter, preferredType = null) {
     const conv = converter || getMultiModeChordConverter();
     const rootIdx = conv.noteToIdx[root];
     const rootOff = intervals[degIndex];
-    const { thirdOff, fifthOff } = getScaleTriadAtDegree(intervals, degIndex);
     const rootNote = conv.idxToNote[(rootIdx + rootOff) % 12];
 
+    // 获取三音和五音（按音阶级进，隔一个取一个）
+    const n = intervals.length;
+    let thirdOff = null;
+    let fifthOff = null;
+    
+    // 找到第三个音（跳过1个）
+    let thirdIdx = (degIndex + 2) % n;
+    thirdOff = intervals[thirdIdx];
+    
+    // 找到第五个音（跳过3个，即 +4 索引）
+    let fifthIdx = (degIndex + 4) % n;
+    fifthOff = intervals[fifthIdx];
+    
+    // 构建音符列表
     const noteNames = [rootNote];
     if (thirdOff != null) {
         noteNames.push(conv.idxToNote[(rootIdx + thirdOff) % 12]);
@@ -816,58 +847,265 @@ function buildTriadChordAtDegree(root, intervals, degIndex, converter) {
     if (fifthOff != null) {
         noteNames.push(conv.idxToNote[(rootIdx + fifthOff) % 12]);
     }
-
+    
+    // 使用 EnhancedChordConverter 识别和弦
     let chordLabel = rootNote;
     let chordType = "unknown";
     let notes = noteNames.join(", ");
+    let finalNotes = noteNames;
 
-    if (noteNames.length >= 2) {
-        const identified = conv._ensureNotesAndRoot(noteNames, true);
-        if (identified) {
-            chordLabel = identified.chord;
-            chordType = extractBaseChordQuality(identified.quality);
-            notes = identified.notes.join(", ");
+    // 优先：基于调内音在整调上尝试匹配标准三和弦（不再严格限制为同一格子）
+    function findTriadFromScaleNotes(scaleRoot, chordRoot, scaleIntervals, conv, preferred) {
+        const scaleRootIdx = conv.noteToIdx[scaleRoot];
+        const scaleSet = new Set(
+            scaleIntervals.map(i => (scaleRootIdx + i) % 12)
+        );
+        const rootIdxLocal = conv.noteToIdx[chordRoot];
+
+        const triadSpecs = [
+            { type: 'maj', ints: [4,7] },
+            { type: 'min', ints: [3,7] },
+            { type: 'dim', ints: [3,6] },
+            { type: 'aug', ints: [4,8] },
+            { type: 'sus2', ints: [2,7] },
+            { type: 'sus4', ints: [5,7] },
+        ];
+
+        // 按优先级分组： maj/min > dim/aug > sus2/sus4
+        const priorityGroups = [
+            ['maj','min'],
+            ['dim','aug'],
+            ['sus2','sus4']
+        ];
+
+        // 先检测完全匹配（三音都在调内）
+        const matches = [];
+        for (const spec of triadSpecs) {
+            const ok = spec.ints.every(i => scaleSet.has((rootIdxLocal + i) % 12));
+            if (ok) {
+                const notesArr = [
+                    conv.idxToNote[rootIdxLocal % 12],
+                    conv.idxToNote[(rootIdxLocal + spec.ints[0]) % 12],
+                    conv.idxToNote[(rootIdxLocal + spec.ints[1]) % 12]
+                ];
+                matches.push({ type: spec.type, notes: notesArr });
+            }
         }
+
+        if (matches.length) {
+            // 如果有优先类型且能找到，直接返回
+            if (preferred && (preferred === 'maj' || preferred === 'min')) {
+                const found = matches.find(m => m.type === preferred);
+                if (found) return found;
+            }
+            
+            // 选择最高优先级匹配
+            for (const group of priorityGroups) {
+                const found = matches.find(m => group.includes(m.type));
+                if (found) return found;
+            }
+            return matches[0];
+        }
+
+        // 如果没有完全三音匹配，尝试弱匹配（任意两个音在调内）
+        const weakMatches = [];
+        for (const spec of triadSpecs) {
+            const have = spec.ints.filter(i => scaleSet.has((rootIdxLocal + i) % 12)).length;
+            if (have >= 2) {
+                const notesArr = [
+                    conv.idxToNote[rootIdxLocal % 12],
+                    conv.idxToNote[(rootIdxLocal + spec.ints[0]) % 12],
+                    conv.idxToNote[(rootIdxLocal + spec.ints[1]) % 12]
+                ];
+                weakMatches.push({ type: spec.type, notes: notesArr, have });
+            }
+        }
+        if (weakMatches.length) {
+            // 按 have(desc) + priority
+            weakMatches.sort((a,b) => b.have - a.have);
+            
+            // 如果有优先类型且能找到，直接返回
+            if (preferred && (preferred === 'maj' || preferred === 'min')) {
+                const found = weakMatches.find(m => m.type === preferred);
+                if (found) return found;
+            }
+            
+            for (const group of priorityGroups) {
+                const found = weakMatches.find(m => group.includes(m.type));
+                if (found) return found;
+            }
+            return weakMatches[0];
+        }
+
+        return null;
     }
 
+    // 先尝试基于整调的triad匹配
+    try {
+        const scaleBased = findTriadFromScaleNotes(root, rootNote, intervals, conv, preferredType);
+      if (scaleBased) {
+        chordType = scaleBased.type === 'min' ? 'min' : (scaleBased.type === 'maj' ? 'maj' : scaleBased.type);
+        chordLabel = formatChordName(rootNote, chordType);
+        finalNotes = scaleBased.notes;
+        notes = finalNotes.join(', ');
+        return {
+          dist: rootOff,
+          degreeLabel: formatRomanDegreeLabel(degIndex, chordType),
+          chordLabel: chordLabel,
+          notes: notes,
+          chordType: chordType,
+          notesArray: finalNotes
+        };
+      }
+    } catch (e) {
+      console.warn('scale-based triad detection failed', e);
+    }
+
+    // 回退到原有的识别逻辑
+    if (noteNames.length >= 2) {
+      try {
+        // 直接使用 identifyChord 方法
+        const identified = conv.identifyChord(
+          noteNames.map(n => conv.noteToIdx[n])
+        );
+
+        if (identified && identified.chord) {
+          chordLabel = identified.chord;
+          // 提取基础和弦类型
+          const quality = identified.quality || "";
+          const baseQuality = quality.split(/\s+/)[0];
+
+          // 确定和弦类型
+          if (baseQuality === "" || baseQuality === "maj") {
+            chordType = "maj";
+          } else if (baseQuality === "min" || baseQuality === "m") {
+            chordType = "min";
+          } else if (baseQuality === "dim") {
+            chordType = "dim";
+          } else if (baseQuality === "aug") {
+            chordType = "aug";
+          } else if (baseQuality === "sus2") {
+            chordType = "sus2";
+          } else if (baseQuality === "sus4") {
+            chordType = "sus4";
+          } else {
+            chordType = baseQuality;
+          }
+
+          // 获取识别出的音符
+          if (identified.quality && identified.quality !== quality) {
+            // 尝试解析出音符
+            const parsedNotes = conv._ensureNotesAndRoot(chordLabel);
+            if (parsedNotes && parsedNotes.length) {
+              finalNotes = parsedNotes;
+              notes = finalNotes.join(", ");
+            }
+          }
+        }
+      } catch (e) {
+        console.warn(`识别和弦失败 ${rootNote}${rootOff}:`, e);
+        // 保持原始标签
+      }
+    }
+    
     return {
         dist: rootOff,
         degreeLabel: formatRomanDegreeLabel(degIndex, chordType),
-        chordLabel,
-        notes,
-        chordType,
+        chordLabel: chordLabel,
+        notes: notes,
+        chordType: chordType,
+        notesArray: finalNotes
     };
 }
 
-function formatChordName(rootNote, chordType) {
+// 新增：强制匹配最接近的标准三和弦
+function forceToStandardTriad(notes, converter) {
+    if (!notes || notes.length < 3) return null;
+    
+    const root = notes[0];
+    const rootIdx = converter.noteToIdx[root];
+    
+    // 计算相对于根音的音程
+    const intervals = notes.map(n => {
+        const idx = converter.noteToIdx[n];
+        return (idx - rootIdx + 12) % 12;
+    }).sort((a, b) => a - b);
+    
+    // 标准三和弦的音程模式
+    const standardTriads = [
+        { intervals: [0, 4, 7], type: "maj", chord: root, label: root },
+        { intervals: [0, 3, 7], type: "min", chord: `${root}m`, label: `${root}m` },
+        { intervals: [0, 4, 8], type: "aug", chord: `${root}+`, label: `${root}+` },
+        { intervals: [0, 3, 6], type: "dim", chord: `${root}°`, label: `${root}°` },
+        { intervals: [0, 2, 7], type: "sus2", chord: `${root}sus2`, label: `${root}sus2` },
+        { intervals: [0, 5, 7], type: "sus4", chord: `${root}sus4`, label: `${root}sus4` },
+    ];
+    
+    // 找匹配度最高的
+    let bestMatch = null;
+    let bestScore = -1;
+    
+    for (const triad of standardTriads) {
+        let score = 0;
+        for (const interval of triad.intervals) {
+            if (intervals.includes(interval)) score++;
+        }
+        // 也检查是否有冲突音（不应该有的音）
+        for (const interval of intervals) {
+            if (!triad.intervals.includes(interval) && interval !== 0) {
+                score -= 0.5;
+            }
+        }
+        if (score > bestScore) {
+            bestScore = score;
+            bestMatch = triad;
+        }
+    }
+    
+    if (bestMatch && bestScore >= 2) {
+        // 构建标准音符
+        const standardNotes = bestMatch.intervals.map(i => 
+            converter.idxToNote[(rootIdx + i) % 12]
+        );
+        return {
+            chord: bestMatch.chord,
+            chordType: bestMatch.type,
+            notes: standardNotes
+        };
+    }
+    
+    return null;
+}
+
+  function formatChordName(rootNote, chordType) {
     if (chordType === "min") return `${rootNote}m`;
     if (chordType === "dim") return `${rootNote}°`;
     if (chordType === "aug") return `${rootNote}+`;
     if (chordType === "sus2") return `${rootNote}sus2`;
     if (chordType === "sus4") return `${rootNote}sus4`;
     return rootNote;
-}
+  }
 
-function getChordTypeForNote(root, targetNote, intervals) {
+  function getChordTypeForNote(root, targetNote, intervals) {
     const dist = getSemitoneDistance(root, targetNote);
     const degree = intervals.indexOf(dist);
     if (degree === -1) return null;
     return buildTriadChordAtDegree(root, intervals, degree).chordType;
-}
+  }
 
-// 更新五度圈显示（多调性模式）
-function updateCircleMultiMode() {
+  // 更新五度圈显示（多调性模式）
+  function updateCircleMultiMode() {
     if (!multiModeActive || !currentMultiMode) {
-        // 恢复原始五度圈
-        if (circleCurrentKey) {
-            drawCircle(circleCurrentKey.major, circleCurrentKey.minor);
-            renderKeyTable(circleCurrentKey.major, circleCurrentKey.minor, circleCurrentKey.primary);
-        } else {
-            drawCircle(null, null);
-            const tableContainer = document.getElementById("circle-table-container");
-            if (tableContainer) tableContainer.innerHTML = "";
-        }
-        return;
+      // 恢复原始五度圈
+      if (circleCurrentKey) {
+        drawCircle(circleCurrentKey.major, circleCurrentKey.minor);
+        renderKeyTable(circleCurrentKey.major, circleCurrentKey.minor, circleCurrentKey.primary);
+      } else {
+        drawCircle(null, null);
+        const tableContainer = document.getElementById("circle-table-container");
+        if (tableContainer) tableContainer.innerHTML = "";
+      }
+      return;
     }
 
     const includeSet = new Set(currentMultiMode.includeNoteIdx);
@@ -877,35 +1115,35 @@ function updateCircleMultiMode() {
 
     const tableContainer = document.getElementById("circle-table-container");
     if (root && noteToIdx[root] != null) {
-        renderMultiModeTable(root, currentMultiMode);
+      renderMultiModeTable(root, currentMultiMode);
     } else if (tableContainer) {
-        tableContainer.innerHTML = "";
+      tableContainer.innerHTML = "";
     }
-}
+  }
 
-// 解析内圈功能组标签片段，如 "3D(6s)" → [{text:"3D"}, {text:"6s", inParens:true}]
-function parseFuncRingLabelSegments(label) {
+  // 解析内圈功能组标签片段，如 "3D(6s)" → [{text:"3D"}, {text:"6s", inParens:true}]
+  function parseFuncRingLabelSegments(label) {
     const m = String(label).match(/^([^(]+)(?:\(([^)]+)\))?$/);
     if (!m) return [{ text: label, inParens: false }];
     const segments = [{ text: m[1], inParens: false }];
     if (m[2]) segments.push({ text: m[2], inParens: true });
     return segments;
-}
+  }
 
-// 与内圈主音环一致：按扇区标签定位功能替代（不用 funcGroup 半音索引）
-function findSectorForFuncReplaceGroup(innerLabels, replaceGroup) {
+  // 与内圈主音环一致：按扇区标签定位功能替代（不用 funcGroup 半音索引）
+  function findSectorForFuncReplaceGroup(innerLabels, replaceGroup) {
     if (!replaceGroup || !innerLabels?.length) return null;
     for (let i = 0; i < innerLabels.length; i++) {
-        const label = innerLabels[i];
-        if (!label) continue;
-        const hit = parseFuncRingLabelSegments(label).some((s) => s.text === replaceGroup);
-        if (hit) return i;
+      const label = innerLabels[i];
+      if (!label) continue;
+      const hit = parseFuncRingLabelSegments(label).some((s) => s.text === replaceGroup);
+      if (hit) return i;
     }
     return null;
-}
+  }
 
-// 主音环：沿五度圈顺时针 12 格（与画布内圈一致）
-const FUNC_RING_BASE = [
+  // 主音环：沿五度圈顺时针 12 格（与画布内圈一致）
+  const FUNC_RING_BASE = [
     { main: "t" },
     { main: "d" },
     { main: "S" },
@@ -918,9 +1156,9 @@ const FUNC_RING_BASE = [
     { main: "6D", overlap: "3s" },
     { main: "ss" },
     { main: "s" },
-];
+  ];
 
-function getFuncGroupIndexForMode(key, mode) {
+  function getFuncGroupIndexForMode(key, mode) {
     if (!funcGroupData || !mode) return null;
     const idx = funcGroupData[key];
     if (idx == null) return null;
@@ -928,52 +1166,109 @@ function getFuncGroupIndexForMode(key, mode) {
     if (key === "tIdx") return mode.tonicGroup === "t" ? idx[0] : idx[1] ?? idx[0];
     if (key === "TIdx") return mode.tonicGroup === "T" ? idx[0] : idx[1] ?? idx[0];
     return idx[0];
-}
+  }
 
-function findCircleSectorForDist(root, dist) {
+  function findCircleSectorForDist(root, dist) {
     for (let i = 0; i < circleData.length; i++) {
-        if (getSemitoneDistance(root, circleData[i].major) === dist) return i;
+      if (getSemitoneDistance(root, circleData[i].major) === dist) return i;
     }
     return 0;
-}
+  }
 
-function formatFuncRingEntry(entry) {
+  function formatFuncRingEntry(entry) {
     return entry.overlap ? `${entry.main}(${entry.overlap})` : entry.main;
-}
+  }
 
-/** 内圈功能标签：从 t/T 锚点起沿五度圈顺转一圈 */
-function buildInnerFuncRingLabels(root, mode) {
+  /** 内圈功能标签：从 t/T 锚点起沿五度圈顺转一圈 */
+  // 在 script.js 中，找到 buildInnerFuncRingLabels 函数并替换
+
+  function buildInnerFuncRingLabels(root, mode) {
     const startChar = mode.tonicGroup === "t" ? "t" : "T";
     const startIdx = FUNC_RING_BASE.findIndex((e) => e.main === startChar);
     const ringSpec = startIdx <= 0
-        ? FUNC_RING_BASE
-        : [...FUNC_RING_BASE.slice(startIdx), ...FUNC_RING_BASE.slice(0, startIdx)];
+      ? FUNC_RING_BASE
+      : [...FUNC_RING_BASE.slice(startIdx), ...FUNC_RING_BASE.slice(0, startIdx)];
 
     const anchorKey = mode.tonicGroup === "t" ? "tIdx" : "TIdx";
     const anchorDist = getFuncGroupIndexForMode(anchorKey, mode);
     const anchorSector = anchorDist != null ? findCircleSectorForDist(root, anchorDist) : 0;
 
+    // 获取各扇区对应的和弦类型
+    const converter = getMultiModeChordConverter();
+    const rootIdx = converter.noteToIdx[root];
+    const intervals = mode.includeNoteIdx || [];
+    const degreePreferredType = buildDegreePreferredTypeMap(mode);
+
+    // 构建每个扇区（距离）对应的和弦类型
+    const chordTypeByDist = {};
+    const chordLabelByDist = {};
+    for (let i = 0; i < intervals.length; i++) {
+      const dist = intervals[i];
+      const preferred = degreePreferredType[i];
+      const triad = buildTriadChordAtDegree(root, intervals, i, converter, preferred);
+      chordTypeByDist[dist] = triad.chordType;
+      chordLabelByDist[dist] = triad.chordLabel;
+    }
+
     const perSector = Array(12).fill("");
     for (let step = 0; step < 12; step++) {
-        const sector = (anchorSector + step) % 12;
-        perSector[sector] = formatFuncRingEntry(ringSpec[step]);
+      const sector = (anchorSector + step) % 12;
+      let label = formatFuncRingEntry(ringSpec[step]);
+
+      // 获取该扇区对应的音符和和弦类型
+      const sectorNote = circleData[sector].major;
+      const dist = getSemitoneDistance(root, sectorNote);
+      const chordType = chordTypeByDist[dist];
+      const chordLabel = chordLabelByDist[dist];
+      console.log(`Sector ${sector}: ${sectorNote} (dist ${dist}) -> ${label}, chord: ${chordLabel} (${chordType})`);
+      // 根据和弦类型调整功能标签的大小写
+      label = adjustFuncLabelByChordType(label, chordType);
+      // console.log(`Sector ${sector}: ${sectorNote} (dist ${dist}) -> ${label}, chord: ${chordLabel} (${chordType})`);
+      perSector[sector] = label;
     }
     return perSector;
-}
+  }
 
-function buildFuncNameToSectorMap(innerLabels) {
+  // 新增辅助函数：根据和弦类型调整功能标签
+  function adjustFuncLabelByChordType(label, chordType) {
+      if (!label || !chordType) return label;
+      
+      const upperToLowerMap = { 'T': 't', 'D': 'd', 'S': 's', 'DD': 'dd' };
+      const lowerToUpperMap = { 't': 'T', 'd': 'D', 's': 'S', 'dd': 'DD' };
+      
+      let adjusted = label;
+      
+      // 只有 min 转换小写，maj 转换大写
+      // dim、aug 保持原样
+      if (chordType === 'min') {
+          for (const [upper, lower] of Object.entries(upperToLowerMap)) {
+              adjusted = adjusted.replace(new RegExp(upper, 'g'), lower);
+          }
+      } else if (chordType === 'maj') {
+          for (const [lower, upper] of Object.entries(lowerToUpperMap)) {
+              adjusted = adjusted.replace(new RegExp(lower, 'g'), upper);
+          }
+      }
+      // dim、aug、sus2、sus4 → 不转换
+      
+      return adjusted;
+  }
+
+  function buildFuncNameToSectorMap(innerLabels) {
     const map = {};
     for (let i = 0; i < innerLabels.length; i++) {
-        const label = innerLabels[i];
-        if (!label) continue;
-        for (const seg of parseFuncRingLabelSegments(label)) {
-            map[seg.text] = i;
-        }
+      const label = innerLabels[i];
+      if (!label) continue;
+      for (const seg of parseFuncRingLabelSegments(label)) {
+        map[seg.text] = i;
+      }
     }
     return map;
-}
+  }
 
-function drawFuncRingLabel(ctx, centerX, centerY, label, replaceGroup) {
+  // 替换 drawFuncRingLabel 函数
+
+function drawFuncRingLabel(ctx, centerX, centerY, label, replaceGroup, chordType = null) {
     const segments = parseFuncRingLabelSegments(label);
     const normalColor = "rgba(200,220,255,0.85)";
     const replaceColor = "#ffb74d";
@@ -982,11 +1277,34 @@ function drawFuncRingLabel(ctx, centerX, centerY, label, replaceGroup) {
     const fontReplace = "bold 10px sans-serif";
     const fontParen = "9px sans-serif";
 
+    // 只有 min 强调括号内，其他情况（maj/dim/aug/null）都强调括号外
+    let emphasizeOuter = true;
+    let emphasizeInner = false;
+    
+    if (chordType === 'min') {
+        emphasizeOuter = false;
+        emphasizeInner = true;
+    }
+    // dim、aug、maj、null → 保持 emphasizeOuter = true
+
     const pieces = [];
     let totalW = 0;
+    
     for (const seg of segments) {
         const isRep = replaceGroup && seg.text === replaceGroup;
-        const font = isRep ? fontReplace : fontNormal;
+        
+        let shouldEmphasize = false;
+        if (seg.inParens) {
+            shouldEmphasize = emphasizeInner;
+        } else {
+            shouldEmphasize = emphasizeOuter;
+        }
+        
+        if (isRep) {
+            shouldEmphasize = true;
+        }
+        
+        const font = shouldEmphasize ? fontReplace : fontNormal;
         if (seg.inParens) {
             ctx.font = fontParen;
             const wOpen = ctx.measureText("(").width;
@@ -994,14 +1312,14 @@ function drawFuncRingLabel(ctx, centerX, centerY, label, replaceGroup) {
             const wInner = ctx.measureText(seg.text).width;
             ctx.font = fontParen;
             const wClose = ctx.measureText(")").width;
-            pieces.push({ text: "(", font: fontParen, isRep: false, w: wOpen });
-            pieces.push({ text: seg.text, font, isRep, w: wInner });
-            pieces.push({ text: ")", font: fontParen, isRep: false, w: wClose });
+            pieces.push({ text: "(", font: fontParen, isRep: false, shouldEmphasize: false, w: wOpen });
+            pieces.push({ text: seg.text, font, isRep, shouldEmphasize, w: wInner });
+            pieces.push({ text: ")", font: fontParen, isRep: false, shouldEmphasize: false, w: wClose });
             totalW += wOpen + wInner + wClose;
         } else {
             ctx.font = font;
             const w = ctx.measureText(seg.text).width;
-            pieces.push({ text: seg.text, font, isRep, w });
+            pieces.push({ text: seg.text, font, isRep, shouldEmphasize, w });
             totalW += w;
         }
     }
@@ -1015,10 +1333,15 @@ function drawFuncRingLabel(ctx, centerX, centerY, label, replaceGroup) {
     for (const p of pieces) {
         ctx.font = p.font;
         ctx.shadowBlur = 0;
+        
         if (p.isRep) {
             ctx.shadowColor = replaceGlow;
             ctx.shadowBlur = 12;
             ctx.fillStyle = replaceColor;
+        } else if (p.shouldEmphasize) {
+            ctx.fillStyle = "#fff";
+            ctx.shadowBlur = 6;
+            ctx.shadowColor = "rgba(0, 181, 173, 0.5)";
         } else {
             ctx.fillStyle = normalColor;
         }
@@ -1031,8 +1354,8 @@ function drawFuncRingLabel(ctx, centerX, centerY, label, replaceGroup) {
     ctx.textBaseline = prevBaseline;
 }
 
-// 绘制多调性五度圈
-function drawMultiCircle(root, includeSet, mode) {
+  // 绘制多调性五度圈
+  function drawMultiCircle(root, includeSet, mode) {
     const { size, ctx } = resizeCanvas();
     const cx = size / 2;
     const cy = size / 2;
@@ -1049,23 +1372,25 @@ function drawMultiCircle(root, includeSet, mode) {
     const hasRoot = root != null && noteToIdx[root] != null;
 
     // 准备每个扇区的和弦标签
+    const degreePreferredType = buildDegreePreferredTypeMap(mode);
     const chordLabels = [];
     for (let i = 0; i < circleData.length; i++) {
-        const sectorNote = circleData[i].major; // 扇区代表的音（外环）
-        const dist = hasRoot ? getSemitoneDistance(root, sectorNote) : -1;
-        let label = sectorNote;
-        let isInside = hasRoot && includeSet.has(dist);
-        let chordType = null;
-        if (isInside) {
-            const distIdx = getSemitoneDistance(root, sectorNote);
-            const deg = mode.includeNoteIdx.indexOf(distIdx);
-            if (deg >= 0) {
-                const triad = buildTriadChordAtDegree(root, mode.includeNoteIdx, deg);
-                chordType = triad.chordType;
-                label = triad.chordLabel;
-            }
+      const sectorNote = circleData[i].major; // 扇区代表的音（外环）
+      const dist = hasRoot ? getSemitoneDistance(root, sectorNote) : -1;
+      let label = sectorNote;
+      let isInside = hasRoot && includeSet.has(dist);
+      let chordType = null;
+      if (isInside) {
+        const distIdx = getSemitoneDistance(root, sectorNote);
+        const deg = mode.includeNoteIdx.indexOf(distIdx);
+        if (deg >= 0) {
+          const preferred = degreePreferredType[deg];
+          const triad = buildTriadChordAtDegree(root, mode.includeNoteIdx, deg, null, preferred);
+          chordType = triad.chordType;
+          label = triad.chordLabel;
         }
-        chordLabels.push({ label, isInside, chordType });
+      }
+      chordLabels.push({ label, isInside, chordType });
     }
 
     const categoryColors = {
@@ -1081,90 +1406,92 @@ function drawMultiCircle(root, includeSet, mode) {
     };
 
     function hexToRgba(hex, alpha) {
-        const clean = hex.replace("#", "");
-        const r = parseInt(clean.slice(0, 2), 16);
-        const g = parseInt(clean.slice(2, 4), 16);
-        const b = parseInt(clean.slice(4, 6), 16);
-        return `rgba(${r},${g},${b},${alpha})`;
+      const clean = hex.replace("#", "");
+      const r = parseInt(clean.slice(0, 2), 16);
+      const g = parseInt(clean.slice(2, 4), 16);
+      const b = parseInt(clean.slice(4, 6), 16);
+      return `rgba(${r},${g},${b},${alpha})`;
     }
 
     function getCircleNoteCategory(dist) {
-        if (!mode) return null;
-        if (dist === mode.tonicGroupNoteIdx) return "tonic";
-        if (dist === mode.featureGroupCharNoteIdx) return "featureChar";
-        if (dist === mode.tonicGroupCharNoteIdx) return "tonicChar";
-        if (dist === mode.contrastGroupCharNoteIdx) return "contrastChar";
-        // if (dist === mode.highPoleNoteIdx) return "highPole";
-        // if (dist === mode.lowPoleNoteIdx) return "lowPole";
-        return null;
+      if (!mode) return null;
+      if (dist === mode.tonicGroupNoteIdx) return "tonic";
+      if (dist === mode.featureGroupCharNoteIdx) return "featureChar";
+      if (dist === mode.tonicGroupCharNoteIdx) return "tonicChar";
+      if (dist === mode.contrastGroupCharNoteIdx) return "contrastChar";
+      // if (dist === mode.highPoleNoteIdx) return "highPole";
+      // if (dist === mode.lowPoleNoteIdx) return "lowPole";
+      return null;
     }
 
     const innerFuncLabels = hasRoot ? buildInnerFuncRingLabels(root, mode) : Array(12).fill("");
 
     const funcReplaceSector = hasRoot && mode?.funcReplaceGroup
-        ? findSectorForFuncReplaceGroup(innerFuncLabels, mode.funcReplaceGroup)
-        : null;
+      ? findSectorForFuncReplaceGroup(innerFuncLabels, mode.funcReplaceGroup)
+      : null;
     const funcReplaceColor = "#ffb74d";
     const funcReplaceGlow = "rgba(255, 183, 77, 0.95)";
 
     // 绘制扇区
     for (let i = 0; i < circleData.length; i++) {
-        const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
-        const nextAngle = ((i + 1) / 12) * Math.PI * 2 - Math.PI / 2;
-        const { label, isInside } = chordLabels[i];
-        const sectorNote = circleData[i].major;
-        const dist = hasRoot ? getSemitoneDistance(root, sectorNote) : -1;
-        const noteCategory = hasRoot ? getCircleNoteCategory(dist) : null;
-        const isFuncReplace = funcReplaceSector != null && i === funcReplaceSector;
+      const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
+      const nextAngle = ((i + 1) / 12) * Math.PI * 2 - Math.PI / 2;
+      const { label, isInside } = chordLabels[i];
+      const sectorNote = circleData[i].major;
+      const dist = hasRoot ? getSemitoneDistance(root, sectorNote) : -1;
+      const noteCategory = hasRoot ? getCircleNoteCategory(dist) : null;
+      const isFuncReplace = funcReplaceSector != null && i === funcReplaceSector;
 
-        // 填充（调内和弦高亮背景 + 特殊类别底色）
-        ctx.beginPath();
-        ctx.arc(cx, cy, outerR, angle, nextAngle);
-        ctx.arc(cx, cy, innerR, nextAngle, angle, true);
-        ctx.closePath();
-        if (noteCategory/* && noteCategory !== "highPole" && noteCategory !== "lowPole"*/) {
-            ctx.fillStyle = hexToRgba(categoryColors[noteCategory], 0.18);
-        } else if (isInside) {
-            ctx.fillStyle = "rgba(139,200,231,0.3)";
-        } else {
-            ctx.fillStyle = "rgba(255,255,255,0.03)";
-        }
-        ctx.fill();
+      // 填充（调内和弦高亮背景 + 特殊类别底色）
+      ctx.beginPath();
+      ctx.arc(cx, cy, outerR, angle, nextAngle);
+      ctx.arc(cx, cy, innerR, nextAngle, angle, true);
+      ctx.closePath();
+      if (noteCategory/* && noteCategory !== "highPole" && noteCategory !== "lowPole"*/) {
+        ctx.fillStyle = hexToRgba(categoryColors[noteCategory], 0.18);
+      } else if (isInside) {
+        ctx.fillStyle = "rgba(139,200,231,0.3)";
+      } else {
+        ctx.fillStyle = "rgba(255,255,255,0.03)";
+      }
+      ctx.fill();
 
-        // 不在此处绘制边框，避免邻接扇区重复描边导致叠加。边框将在全部扇区填充后统一绘制。
+      // 不在此处绘制边框，避免邻接扇区重复描边导致叠加。边框将在全部扇区填充后统一绘制。
 
-        // 标签
-        const midAngle = (angle + nextAngle) / 2;
-        const midR = (innerR + outerR) / 2;
-        const textX = cx + Math.cos(midAngle) * midR;
-        const textY = cy + Math.sin(midAngle) * midR;
+      // 标签
+      const midAngle = (angle + nextAngle) / 2;
+      const midR = (innerR + outerR) / 2;
+      const textX = cx + Math.cos(midAngle) * midR;
+      const textY = cy + Math.sin(midAngle) * midR;
 
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.shadowBlur = 0;
-        if (isFuncReplace) {
-            ctx.shadowColor = funcReplaceGlow;
-            ctx.shadowBlur = 12;
-            ctx.fillStyle = funcReplaceColor;
-            ctx.font = "bold 14px sans-serif";
-        } else {
-            ctx.fillStyle = isInside ? "#fff" : "rgba(255,255,255,0.8)";
-            ctx.font = isInside ? "bold 13px sans-serif" : "12px sans-serif";
-        }
-        ctx.fillText(label, textX, textY);
-        ctx.shadowBlur = 0;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = isInside ? "#fff" : "rgba(255,255,255,0.8)";
+      ctx.font = isInside ? "bold 13px sans-serif" : "12px sans-serif";
+      /*
+      if (isFuncReplace) {
+        ctx.shadowColor = funcReplaceGlow;
+        ctx.shadowBlur = 12;
+        // ctx.fillStyle = funcReplaceColor;
+        ctx.font = "bold 14px sans-serif";
+      } else {
+      }
+        */
+      ctx.fillText(label, textX, textY);
+      ctx.shadowBlur = 0;
     }
 
     // 绘制基础分割线和环边界，避免重复扇区描边重叠
     ctx.beginPath();
     for (let i = 0; i < 12; i++) {
-        const edgeAngle = (i / 12) * Math.PI * 2 - Math.PI / 2;
-        const x1 = cx + Math.cos(edgeAngle) * innerR;
-        const y1 = cy + Math.sin(edgeAngle) * innerR;
-        const x2 = cx + Math.cos(edgeAngle) * outerR;
-        const y2 = cy + Math.sin(edgeAngle) * outerR;
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
+      const edgeAngle = (i / 12) * Math.PI * 2 - Math.PI / 2;
+      const x1 = cx + Math.cos(edgeAngle) * innerR;
+      const y1 = cy + Math.sin(edgeAngle) * innerR;
+      const x2 = cx + Math.cos(edgeAngle) * outerR;
+      const y2 = cy + Math.sin(edgeAngle) * outerR;
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
     }
     ctx.strokeStyle = "rgba(255,255,255,0.12)";
     ctx.lineWidth = 1;
@@ -1176,25 +1503,25 @@ function drawMultiCircle(root, includeSet, mode) {
 
     // 绘制高低极与主音特殊边界
     for (let i = 0; i < circleData.length; i++) {
-        const sectorNote = circleData[i].major;
-        const dist = hasRoot ? getSemitoneDistance(root, sectorNote) : -1;
-        const noteCategory = hasRoot ? getCircleNoteCategory(dist) : null;
-        if (!noteCategory || noteCategory === "featureChar" || noteCategory === "contrastChar" || noteCategory === "tonicChar") continue;
+      const sectorNote = circleData[i].major;
+      const dist = hasRoot ? getSemitoneDistance(root, sectorNote) : -1;
+      const noteCategory = hasRoot ? getCircleNoteCategory(dist) : null;
+      if (!noteCategory || noteCategory === "featureChar" || noteCategory === "contrastChar" || noteCategory === "tonicChar") continue;
 
-        const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
-        const nextAngle = ((i + 1) / 12) * Math.PI * 2 - Math.PI / 2;
-        ctx.beginPath();
-        ctx.arc(cx, cy, outerR, angle, nextAngle);
-        ctx.arc(cx, cy, innerR, nextAngle, angle, true);
-        ctx.closePath();
-        if (noteCategory === "tonic") {
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
-            ctx.lineWidth = 3;
-        } else {
-            ctx.strokeStyle = hexToRgba(categoryColors[noteCategory], 0.95);
-            ctx.lineWidth = 3;
-        }
-        ctx.stroke();
+      const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
+      const nextAngle = ((i + 1) / 12) * Math.PI * 2 - Math.PI / 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, outerR, angle, nextAngle);
+      ctx.arc(cx, cy, innerR, nextAngle, angle, true);
+      ctx.closePath();
+      if (noteCategory === "tonic") {
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
+        ctx.lineWidth = 3;
+      } else {
+        ctx.strokeStyle = hexToRgba(categoryColors[noteCategory], 0.95);
+        ctx.lineWidth = 3;
+      }
+      ctx.stroke();
     }
 
     // 在五度圈上方绘制图例（圆点染色 + 音名）
@@ -1246,15 +1573,15 @@ function drawMultiCircle(root, includeSet, mode) {
     ctx.font = "8px sans-serif";
     ctx.fillStyle = "rgba(255,255,255,0.6)";
     ctx.fillText(`张力:${mode.tensionLevel} 温度:${mode.spaceTemp}`, cx, cy + 12);
-    
+
     // 内圈功能组标注（需已选主音）
     if (!hasRoot) {
-        ctx.beginPath();
-        ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
-        ctx.strokeStyle = "rgba(255,255,255,0.15)";
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        return;
+      ctx.beginPath();
+      ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(255,255,255,0.15)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      return;
     }
 
     const innerLabelR = (centerR + innerR) / 2;
@@ -1262,14 +1589,26 @@ function drawMultiCircle(root, includeSet, mode) {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     for (let i = 0; i < circleData.length; i++) {
-        const label = innerFuncLabels[i];
-        if (!label) continue;
-        const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
-        const nextAngle = ((i + 1) / 12) * Math.PI * 2 - Math.PI / 2;
-        const midAngle = (angle + nextAngle) / 2;
-        const textX = cx + Math.cos(midAngle) * innerLabelR;
-        const textY = cy + Math.sin(midAngle) * innerLabelR;
-        drawFuncRingLabel(ctx, textX, textY, label, replaceGroup);
+      const label = innerFuncLabels[i];
+      if (!label) continue;
+      const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
+      const nextAngle = ((i + 1) / 12) * Math.PI * 2 - Math.PI / 2;
+      const midAngle = (angle + nextAngle) / 2;
+      const textX = cx + Math.cos(midAngle) * innerLabelR;
+      const textY = cy + Math.sin(midAngle) * innerLabelR;
+      // 修改为：
+      const sectorNote = circleData[i].major;
+      const dist = getSemitoneDistance(root, sectorNote);
+      let chordTypeForLabel = null;
+      if (hasRoot) {
+        const chordTypeByDist = {}; // 需要提前构建
+        // 或者从已有的 chordLabels 中获取
+        const chordData = chordLabels[i];
+        if (chordData && chordData.chordType) {
+          chordTypeForLabel = chordData.chordType;
+        }
+      }
+      drawFuncRingLabel(ctx, textX, textY, label, replaceGroup, chordTypeForLabel);
     }
 
     ctx.beginPath();
@@ -1277,98 +1616,288 @@ function drawMultiCircle(root, includeSet, mode) {
     ctx.strokeStyle = "rgba(255,255,255,0.15)";
     ctx.lineWidth = 1;
     ctx.stroke();
-}
+  }
 
-function escapeMultiModeHtml(s) {
+  function escapeMultiModeHtml(s) {
     return String(s)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
-}
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
 
 function formatRomanDegreeLabel(degIndex, chordType) {
     const romanUpper = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
     const romanLower = ["i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x", "xi", "xii"];
     const upper = romanUpper[degIndex] || `${degIndex + 1}`;
     const lower = romanLower[degIndex] || `${degIndex + 1}`;
-    if (chordType === "min") return lower;
-    if (chordType === "dim") return `${lower}°`;
-    if (chordType === "aug") return `${upper}+`;
-    if (chordType === "sus2") return `${upper}sus2`;
-    if (chordType === "sus4") return `${upper}sus4`;
-    if (chordType === "unknown") return `${upper}?`;
-    return upper;
+    
+    switch (chordType) {
+        case "min":
+            return lower;
+        case "dim":
+            return `${lower}°`;
+        case "aug":
+            return `${upper}+`;
+        case "sus2":
+            return `${upper}sus2`;
+        case "sus4":
+            return `${upper}sus4`;
+        case "maj":
+            return upper;
+        default:
+            return `${upper}?`;
+    }
 }
 
-function buildModeScaleChordData(root, mode) {
-  // 默认使用 mode 中定义的音级（多数模式在 modes.json 中已预设）
-  let intervals = Array.isArray(mode.includeNoteIdx) ? mode.includeNoteIdx : [];
+  function buildModeScaleChordData(root, mode) {
+    // 默认使用 mode 中定义的音级（多数模式在 modes.json 中已预设）
+    let intervals = Array.isArray(mode.includeNoteIdx) ? mode.includeNoteIdx : [];
 
-  // 如果这是小调家族且用户选择了和声小调开关，则使用全局的和声小调音级
-  if (mode && mode.tonicGroup === "t" && minorMode === "harmonic") {
-    intervals = harmonicMinorIntervals;
+    // 如果这是小调家族且用户选择了和声小调开关，则使用全局的和声小调音级
+    if (mode && mode.tonicGroup === "t" && minorMode === "harmonic") {
+      intervals = harmonicMinorIntervals;
+    }
+
+    const converter = getMultiModeChordConverter();
+    const degreePreferredType = buildDegreePreferredTypeMap(mode);
+    
+    // 生成行数据，考虑功能序列的优先类型
+    const rows = intervals.map((_, i) => {
+      const preferred = degreePreferredType[i];
+      return buildTriadChordAtDegree(root, intervals, i, converter, preferred);
+    });
+    const chordTypes = rows.map((r) => r.chordType);
+    return { intervals, rootIdx: noteToIdx[root], chordTypes, rows };
   }
 
-  const converter = getMultiModeChordConverter();
-  const rows = intervals.map((_, i) =>
-    buildTriadChordAtDegree(root, intervals, i, converter),
-  );
-  const chordTypes = rows.map((r) => r.chordType);
-  return { intervals, rootIdx: noteToIdx[root], chordTypes, rows };
-}
+  function getDesiredChordQualityFromFuncName(funcName) {
+    if (!funcName) return null;
+    const letters = String(funcName).replace(/[^A-Za-z]/g, "");
+    if (!letters) return null;
+    const hasLower = /[a-z]/.test(letters);
+    const hasUpper = /[A-Z]/.test(letters);
+    if (hasLower && !hasUpper) return "min";
+    if (hasUpper && !hasLower) return "maj";
+    return null;
+  }
 
-/** 按五度圈内圈功能名 → 扇区 → 调内和弦（与画布一致，如 T–S–D–T → C–F–G–C） */
-function resolveFuncGroupChord(funcName, root, mode, scaleData, innerLabels) {
-    const sectorMap = buildFuncNameToSectorMap(innerLabels);
-    const sector = sectorMap[funcName];
-    if (sector == null) {
-        return { funcName, degreeLabel: "—", chordLabel: "—", notes: "—" };
+  function buildDegreePreferredTypeMap(mode) {
+    const degreePreferredType = {};
+    const funcSeq = Array.isArray(mode.fullFuncSeq) ? mode.fullFuncSeq : [];
+    
+    funcSeq.forEach(fn => {
+      const desiredQuality = getDesiredChordQualityFromFuncName(fn);
+      const baseFunc = fn.replace(/\([^)]*\)/g, '').toLowerCase();
+      const funcToDegreeMap = {
+        't': 0, 'T': 0,
+        'd': 4, 'D': 4,
+        's': 3, 'S': 3,
+        'dd': 1, 'DD': 1,
+        'ss': 6,
+        '3d': 2, '3D': 2,
+        '4d': 5, '4D': 5,
+        '5d': 1, '5D': 1,
+        '6d': 3, '6D': 3,
+      };
+      const degIndex = funcToDegreeMap[baseFunc];
+      if (degIndex !== undefined && desiredQuality) {
+        degreePreferredType[degIndex] = desiredQuality;
+      }
+    });
+    
+    return degreePreferredType;
+  }
+
+  function applyFuncNameCase(funcName, desiredQuality) {
+    if (!funcName || !desiredQuality) return funcName;
+    return String(funcName).replace(/[A-Za-z]+/g, (match) =>
+      desiredQuality === "maj" ? match.toUpperCase() : match.toLowerCase(),
+    );
+  }
+
+  function buildTriadChordAtDegreeWithQuality(root, intervals, degIndex, desiredQuality, converter) {
+    const triad = buildTriadChordAtDegree(root, intervals, degIndex, converter);
+    if (!desiredQuality || (desiredQuality !== "maj" && desiredQuality !== "min")) {
+      return triad;
     }
-    const sectorNote = circleData[sector].major;
-    const dist = getSemitoneDistance(root, sectorNote);
-    const row = scaleData.rows.find((r) => r.dist === dist);
-    if (row) {
+
+    const conv = converter || getMultiModeChordConverter();
+    const rootIdx = conv.noteToIdx[root];
+    const rootOff = intervals[degIndex];
+    const rootNote = conv.idxToNote[(rootIdx + rootOff) % 12];
+    const scaleSet = new Set(intervals.map((off) => (rootIdx + off) % 12));
+
+    const qualityIntervals = desiredQuality === "maj" ? [4, 7] : [3, 7];
+    const candidateNotes = qualityIntervals.map((interval) =>
+      conv.idxToNote[(rootIdx + rootOff + interval) % 12],
+    );
+    const candidateIdxs = qualityIntervals.map((interval) =>
+      (rootIdx + rootOff + interval) % 12,
+    );
+
+    const validCandidate = candidateIdxs.every((idx) => scaleSet.has(idx));
+    if (validCandidate) {
+      const notes = [rootNote, ...candidateNotes];
+      return {
+        dist: rootOff,
+        degreeLabel: formatRomanDegreeLabel(degIndex, desiredQuality),
+        chordLabel: formatChordName(rootNote, desiredQuality),
+        notes: notes.join(", "),
+        chordType: desiredQuality,
+        notesArray: notes,
+      };
+    }
+
+    return triad;
+  }
+
+  /** 按五度圈内圈功能名 → 扇区 → 调内和弦（与画布一致，如 T–S–D–T → C–F–G–C） */
+function resolveFuncGroupChord(funcName, root, mode, scaleData, innerLabels) {
+    // 1. 解析功能名，获取需要匹配的主功能
+    let targetFunc = funcName;
+    
+    // 获取所有调内和弦的音级映射
+    const degreeMap = {};
+    scaleData.rows.forEach((row, idx) => {
+        degreeMap[row.degreeLabel] = row;
+        degreeMap[idx] = row;
+        // 也按音级索引映射
+        degreeMap[`deg${idx}`] = row;
+    });
+    
+    // 标准功能到音级的映射（音级索引）
+    const funcToDegreeIndex = {
+        't': 0,   // i 级
+        'T': 0,   // I 级
+        'd': 4,   // v 级
+        'D': 4,   // V 级
+        's': 3,   // iv 级
+        'S': 3,   // IV 级
+        'dd': 1,  // ii 级
+        'DD': 1,  // II 级
+        'ss': 6,  // bVII 级 / VII 级
+        '3D': 2,  // III 级
+        '4D': 5,  // VI 级？根据五度圈位置调整
+        '5D': 1,  // bII 级
+        '6D': 3,  // bIII 级
+    };
+    
+    // 获取原始功能名（去掉大小写和括号）
+    let baseFunc = funcName.replace(/\([^)]*\)/g, '').toLowerCase();
+    if (baseFunc === 't') baseFunc = 't';
+    if (baseFunc === 'd') baseFunc = 'd';
+    if (baseFunc === 's') baseFunc = 's';
+    if (baseFunc === 'dd') baseFunc = 'dd';
+    if (baseFunc === 'ss') baseFunc = 'ss';
+    
+    // 处理数字前缀功能如 "3D", "6D"
+    const numberedMatch = baseFunc.match(/^(\d+)([A-Za-z]+)$/);
+    let numberedPrefix = null;
+    let numberedMain = null;
+    if (numberedMatch) {
+        numberedPrefix = parseInt(numberedMatch[1]);
+        numberedMain = numberedMatch[2].toLowerCase();
+        baseFunc = numberedMain;
+    }
+    
+    // 获取该功能对应的音级索引
+    let targetDegreeIndex = funcToDegreeIndex[baseFunc];
+    if (targetDegreeIndex === undefined) {
+        targetDegreeIndex = funcToDegreeIndex[baseFunc.toLowerCase()];
+    }
+    
+    // 特殊处理：ss 功能对应 VII 级（索引 6）
+    if (baseFunc === 'ss') {
+        targetDegreeIndex = 6;
+    }
+    
+    // 如果找到了音级索引，尝试获取调内该音级的和弦
+    if (targetDegreeIndex !== undefined && scaleData.rows[targetDegreeIndex]) {
+        const matchedRow = scaleData.rows[targetDegreeIndex];
+        const desiredQuality = getDesiredChordQualityFromFuncName(funcName);
+        const finalRow = (desiredQuality === 'maj' || desiredQuality === 'min')
+            ? buildTriadChordAtDegreeWithQuality(root, scaleData.intervals, targetDegreeIndex, desiredQuality, getMultiModeChordConverter())
+            : matchedRow;
+        const isMinorChord = finalRow.chordType === 'min';
+
+        // 确定最终的功能名（大小写根据和弦类型）
+        let finalFuncName = funcName;
+        if (baseFunc === 't' || baseFunc === 'T') {
+            finalFuncName = isMinorChord ? 't' : 'T';
+        } else if (baseFunc === 'd' || baseFunc === 'D') {
+            finalFuncName = isMinorChord ? 'd' : 'D';
+        } else if (baseFunc === 's' || baseFunc === 'S') {
+            finalFuncName = isMinorChord ? 's' : 'S';
+        } else if (baseFunc === 'dd' || baseFunc === 'DD') {
+            finalFuncName = isMinorChord ? 'dd' : 'DD';
+        } else {
+            finalFuncName = funcName;
+        }
+        finalFuncName = applyFuncNameCase(finalFuncName, desiredQuality);
+        
+        // 如果是数字前缀功能，保留原格式、括号片段
+        if (numberedPrefix !== null) {
+            const base = finalFuncName.replace(/^\d+/, '');
+            finalFuncName = `${numberedPrefix}${base}`;
+            if (funcName.includes('(')) {
+                const parenMatch = funcName.match(/\(([^)]+)\)/);
+                if (parenMatch) {
+                    finalFuncName += `(${parenMatch[1]})`;
+                }
+            }
+        }
+        
         return {
-            funcName,
-            degreeLabel: row.degreeLabel,
-            chordLabel: row.chordLabel,
-            notes: row.notes,
+            funcName: finalFuncName,
+            degreeLabel: finalRow.degreeLabel,
+            chordLabel: finalRow.chordLabel,
+            notes: finalRow.notes,
+            dist: finalRow.dist,
+            isOutOfScale: false
         };
     }
-    return { funcName, degreeLabel: funcName, chordLabel: sectorNote, notes: "—" };
+    
+    // 如果找不到调内和弦，只返回功能名，不返回和弦信息
+    // 这是调外功能的情况（如 C 旋律小调中的 ss 对应 Bb）
+    return {
+        funcName: funcName,
+        degreeLabel: "—",
+        chordLabel: "—",
+        notes: "—",
+        isOutOfScale: true  // 标记为调外
+    };
 }
 
-function parseMultiModeNotes(notesStr) {
+  function parseMultiModeNotes(notesStr) {
     if (!notesStr || notesStr === "—") return [];
     return String(notesStr)
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
-}
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
 
-function getModeScaleNoteNames(root, intervals) {
+  function getModeScaleNoteNames(root, intervals) {
     const conv = getMultiModeChordConverter();
     const rootIdx = conv.noteToIdx[root];
     if (rootIdx === undefined) return [];
     return intervals.map((off) => conv.idxToNote[(rootIdx + off) % 12]);
-}
+  }
 
-function buildScalePitchListHtml(root, intervals) {
+  function buildScalePitchListHtml(root, intervals) {
     const rootIdx = noteToIdx[root];
     return intervals
-        .map((off, i) => {
-            const note = idxToNote[(rootIdx + off) % 12];
-            return `<span class="scale-pitch-chip" data-multi-play="scale-note" data-note="${escapeMultiModeHtml(note)}" title="点击播放 ${escapeMultiModeHtml(note)} · includeNoteIdx[${i}]=${off}">
+      .map((off, i) => {
+        const note = idxToNote[(rootIdx + off) % 12];
+        return `<span class="scale-pitch-chip" data-multi-play="scale-note" data-note="${escapeMultiModeHtml(note)}" title="点击播放 ${escapeMultiModeHtml(note)} · includeNoteIdx[${i}]=${off}">
         <span class="scale-pitch-idx">${i + 1}</span>
         <span class="scale-pitch-note">${escapeMultiModeHtml(note)}</span>
         <span class="scale-pitch-off">+${off}</span>
       </span>`;
-        })
-        .join("");
-}
+      })
+      .join("");
+  }
 
-// 渲染多调性模式展示区
 function renderMultiModeTable(root, mode) {
     const tableContainer = document.getElementById("circle-table-container");
     if (!tableContainer) return;
@@ -1382,46 +1911,52 @@ function renderMultiModeTable(root, mode) {
     const temp = mode.spaceTemp ?? 0;
     const tempHue = 210 + ((Math.max(-8, Math.min(8, temp)) + 8) / 16) * (12 - 210);
 
+    // 构建功能序列 - 只使用调内和弦
     const funcSeq = Array.isArray(mode.fullFuncSeq) ? mode.fullFuncSeq : [];
-    const funcSteps = funcSeq.map((fn) => {
-        const chord = resolveFuncGroupChord(fn, root, mode, scaleData, innerLabels);
-        return {
-            ...chord,
-            isReplace: replaceGroup && fn === replaceGroup,
-        };
-    });
 
-    const seqFlowHtml = funcSteps.length
-        ? funcSteps
-              .map((step, i) => {
-                  const node = `
-          <div class="func-seq-node${step.isReplace ? " is-func-replace" : ""}" data-multi-play="func-node" data-func-index="${i}" role="button" tabindex="0" title="${window.__("circle_multi_play_func_seq") || "播放序列"} ${escapeMultiModeHtml(step.chordLabel)}">
+const funcSteps = funcSeq.map((fn) => {
+    const chord = resolveFuncGroupChord(fn, root, mode, scaleData, innerLabels);
+    return {
+        ...chord,
+        isReplace: replaceGroup && fn === replaceGroup,
+    };
+    // 不再过滤调外的，保留它们以显示功能标签
+});
+
+// 修改 seqFlowHtml 的渲染，区分调内调外
+const seqFlowHtml = funcSteps.length
+    ? funcSteps
+          .map((step, i) => {
+              // 调外和弦的样式不同
+              const isOutClass = step.isOutOfScale ? " func-out-of-scale" : "";
+              const node = `
+          <div class="func-seq-node${step.isReplace ? " is-func-replace" : ""}${isOutClass}" data-multi-play="func-node" data-func-index="${i}" role="button" tabindex="0" title="${window.__("circle_multi_play_func_seq") || "播放序列"} ${escapeMultiModeHtml(step.chordLabel !== "—" ? step.chordLabel : step.funcName)}">
             <div class="func-seq-func">${escapeMultiModeHtml(step.funcName)}</div>
             <div class="func-seq-degree">${escapeMultiModeHtml(step.degreeLabel)}</div>
-            <div class="func-seq-chord">${escapeMultiModeHtml(step.chordLabel)} <span class="multi-mode-play-hint" aria-hidden="true">🔊</span></div>
+            <div class="func-seq-chord">${step.chordLabel !== "—" ? escapeMultiModeHtml(step.chordLabel) : '<span class="out-of-scale">(调外)</span>'} ${step.chordLabel !== "—" ? '<span class="multi-mode-play-hint" aria-hidden="true">🔊</span>' : ''}</div>
             <div class="func-seq-notes">${escapeMultiModeHtml(step.notes)}</div>
           </div>`;
-                  const arrow =
-                      i < funcSteps.length - 1
-                          ? '<div class="func-seq-arrow" aria-hidden="true">→</div>'
-                          : funcSteps.length > 1
-                            ? `<div class="func-seq-arrow func-seq-arrow-return" aria-hidden="true" title="${window.__("circle_multi_func_seq_hint") || "回到起点"}">↺</div>`
-                            : "";
-                  return node + arrow;
-              })
-              .join("")
-        : `<p class="multi-mode-empty">${window.__("circle_multi_empty_seq") || "暂无功能序列"}</p>`;
+              const arrow =
+                  i < funcSteps.length - 1
+                      ? '<div class="func-seq-arrow" aria-hidden="true">→</div>'
+                      : funcSteps.length > 1
+                        ? `<div class="func-seq-arrow func-seq-arrow-return" aria-hidden="true" title="${window.__("circle_multi_func_seq_hint") || "回到起点"}">↺</div>`
+                        : "";
+              return node + arrow;
+          })
+          .join("")
+    : `<p class="multi-mode-empty">${window.__("circle_multi_empty_seq") || "暂无功能序列"}</p>`;
 
     const scaleRowsHtml = scaleData.rows
-        .map(
-            (row, idx) => `
+      .map(
+        (row, idx) => `
       <tr class="multi-mode-degree-row" data-multi-play="degree" data-degree-index="${idx}" role="button" tabindex="0" title="${window.__("circle_multi_play_scale") || "播放音阶"} ${escapeMultiModeHtml(row.chordLabel)}">
         <td class="col-degree"><span class="roman-badge">${escapeMultiModeHtml(row.degreeLabel)}</span></td>
         <td class="col-chord"><strong>${escapeMultiModeHtml(row.chordLabel)}</strong> <span class="multi-mode-play-hint" aria-hidden="true">🔊</span></td>
         <td class="col-notes">${escapeMultiModeHtml(row.notes)}</td>
       </tr>`,
-        )
-        .join("");
+      )
+      .join("");
 
     const antiTag = mode.isAntiFunc
       ? `<span class="meta-chip meta-anti">${window.__("circle_multi_mode_chip") || "反功能"}</span>`
@@ -1481,234 +2016,234 @@ function renderMultiModeTable(root, mode) {
 
     const display = tableContainer.querySelector(".multi-mode-display");
     if (display && window.jazzCompassAudio) {
-        window.jazzCompassAudio.wireDisplay(display, {
-            scaleNoteNames: getModeScaleNoteNames(root, intervals),
-            degreeRows: scaleData.rows,
-            funcSteps,
-        });
-    }
-}
-
-// 初始化多调性控制面板
-function initMultiModeCircle() {
-  const toggleBtn = document.getElementById("circle-multi-toggle");
-  const panel = document.getElementById("circle-multi-panel");
-  const modeList = document.getElementById("circle-mode-list");
-  const modeDropdown = document.getElementById("circle-mode-dropdown");
-  const modeSearch = document.getElementById("circle-mode-search");
-  const modeToggleBtn = document.getElementById("circle-mode-toggle");
-  const applyBtn = document.getElementById("circle-apply-mode");
-  const filterNormal = document.getElementById("filter-normal-only");
-  const filterNatural = document.getElementById("filter-natural-only");
-  const sortType = document.getElementById("circle-sort-type");
-  const sortOrder = document.getElementById("circle-sort-order");
-
-  if (!toggleBtn || !modeToggleBtn) return;
-
-  // 颜色映射：空间温度 -> 色相（冷蓝到暖红），空间张力 -> 叠加变暗
-  function tempToHsl(temp) {
-    // temp: -8 .. 8 -> hue 210 (冷) .. 12 (暖)
-    const t = Math.max(-8, Math.min(8, temp));
-    const frac = (t + 8) / 16; // 0..1
-    const hue = 210 + frac * (12 - 210); // 210 -> 12
-    return `hsl(${hue},20%,30%)`;
-  }
-
-  function tensionDarkAlpha(tension) {
-    const t = Math.max(1, Math.min(10, tension));
-    return ((t - 1) / 9) * 0.725; // 0 .. 0.5
-  }
-
-  let selectedModeIdx = null;
-
-  function clearSelectionVisual() {
-    Array.from(modeList.children).forEach(child => child.style.boxShadow = "none");
-  }
-
-  function updateModeToggleLabel() {
-    if (currentMultiMode && currentMultiMode.modeName) {
-      modeToggleBtn.textContent = `${window.__("circle_multi_mode_chip") || "调式"}: ${currentMultiMode.modeName}`;
-    } else {
-      modeToggleBtn.textContent = window.__("circle_multi_expand") || '展开调式';
-    }
-  }
-
-  // 刷新模式卡片列表（以卡片替代 select）
-  function refreshModeList() {
-    if (!modesData) return;
-    let filtered = [...modesData];
-    if (filterNormal.checked) filtered = filtered.filter(m => m.isNormalMode === true);
-    if (filterNatural.checked) filtered = filtered.filter(m => m.isNaturalScale === true);
-
-    const keyword = modeSearch?.value.trim().toLowerCase();
-    if (keyword) {
-      filtered = filtered.filter(m => (m.modeName || '').toLowerCase().includes(keyword));
-    }
-
-    const sortKey = sortType.value === "tension" ? "tensionLevel" : "spaceTemp";
-    const order = sortOrder.value === "asc" ? 1 : -1;
-    filtered.sort((a,b) => order * (a[sortKey] - b[sortKey]));
-
-    modeList.innerHTML = "";
-    if (filtered.length === 0) {
-      const empty = document.createElement('div');
-      empty.textContent = window.__("circle_multi_no_match") || '没有匹配的调式';
-      empty.style.color = 'rgba(255,255,255,0.6)';
-      empty.style.padding = '10px';
-      modeList.appendChild(empty);
-      return;
-    }
-
-    filtered.forEach(m => {
-      const card = document.createElement('div');
-      card.className = 'mode-card';
-      card.style.minWidth = '160px';
-      card.style.padding = '8px';
-      card.style.borderRadius = '8px';
-      card.style.cursor = 'pointer';
-      card.style.color = '#fff';
-      card.style.display = 'flex';
-      card.style.flexDirection = 'column';
-      card.style.gap = '6px';
-      card.dataset.idx = m.idx;
-
-      const baseColor = tempToHsl(m.spaceTemp);
-      const darkAlpha = tensionDarkAlpha(m.tensionLevel);
-      card.style.background = `linear-gradient(rgba(0,0,0,${darkAlpha}), rgba(0,0,0,${darkAlpha})), ${baseColor}`;
-      card.style.border = '1px solid rgba(255,255,255,0.1)';
-
-      const title = document.createElement('div');
-      title.textContent = m.modeName || (`mode ${m.idx}`);
-      title.style.fontWeight = '600';
-      title.style.fontSize = '13px';
-
-      const meta = document.createElement('div');
-      meta.textContent = `${window.__("circle_multi_sort_tension")?.replace("{val}", m.tensionLevel) || `张力:${m.tensionLevel}`} ${window.__("circle_multi_sort_temp")?.replace("{val}", m.spaceTemp) || `温度:${m.spaceTemp}`}`;
-      meta.style.fontSize = '12px';
-      meta.style.opacity = '0.9';
-
-      card.appendChild(title);
-      card.appendChild(meta);
-
-      if (selectedModeIdx === m.idx) {
-        card.style.boxShadow = '0 0 0 3px rgba(255,255,255,0.18)';
-      }
-
-      card.addEventListener('click', () => {
-        selectedModeIdx = m.idx;
-        clearSelectionVisual();
-        card.style.boxShadow = '0 0 0 3px rgba(255,255,255,0.12)';
-        currentMultiMode = m;
-        currentRoot = null;
-        updateModeToggleLabel();
-        updateCircleMultiMode();
+      window.jazzCompassAudio.wireDisplay(display, {
+        scaleNoteNames: getModeScaleNoteNames(root, intervals),
+        degreeRows: scaleData.rows,
+        funcSteps,
       });
+    }
+  }
 
-      modeList.appendChild(card);
+  // 初始化多调性控制面板
+  function initMultiModeCircle() {
+    const toggleBtn = document.getElementById("circle-multi-toggle");
+    const panel = document.getElementById("circle-multi-panel");
+    const modeList = document.getElementById("circle-mode-list");
+    const modeDropdown = document.getElementById("circle-mode-dropdown");
+    const modeSearch = document.getElementById("circle-mode-search");
+    const modeToggleBtn = document.getElementById("circle-mode-toggle");
+    const applyBtn = document.getElementById("circle-apply-mode");
+    const filterNormal = document.getElementById("filter-normal-only");
+    const filterNatural = document.getElementById("filter-natural-only");
+    const sortType = document.getElementById("circle-sort-type");
+    const sortOrder = document.getElementById("circle-sort-order");
+
+    if (!toggleBtn || !modeToggleBtn) return;
+
+    // 颜色映射：空间温度 -> 色相（冷蓝到暖红），空间张力 -> 叠加变暗
+    function tempToHsl(temp) {
+      // temp: -8 .. 8 -> hue 210 (冷) .. 12 (暖)
+      const t = Math.max(-8, Math.min(8, temp));
+      const frac = (t + 8) / 16; // 0..1
+      const hue = 210 + frac * (12 - 210); // 210 -> 12
+      return `hsl(${hue},20%,30%)`;
+    }
+
+    function tensionDarkAlpha(tension) {
+      const t = Math.max(1, Math.min(10, tension));
+      return ((t - 1) / 9) * 0.725; // 0 .. 0.5
+    }
+
+    let selectedModeIdx = null;
+
+    function clearSelectionVisual() {
+      Array.from(modeList.children).forEach(child => child.style.boxShadow = "none");
+    }
+
+    function updateModeToggleLabel() {
+      if (currentMultiMode && currentMultiMode.modeName) {
+        modeToggleBtn.textContent = `${window.__("circle_multi_mode_chip") || "调式"}: ${currentMultiMode.modeName}`;
+      } else {
+        modeToggleBtn.textContent = window.__("circle_multi_expand") || '展开调式';
+      }
+    }
+
+    // 刷新模式卡片列表（以卡片替代 select）
+    function refreshModeList() {
+      if (!modesData) return;
+      let filtered = [...modesData];
+      if (filterNormal.checked) filtered = filtered.filter(m => m.isNormalMode === true);
+      if (filterNatural.checked) filtered = filtered.filter(m => m.isNaturalScale === true);
+
+      const keyword = modeSearch?.value.trim().toLowerCase();
+      if (keyword) {
+        filtered = filtered.filter(m => (m.modeName || '').toLowerCase().includes(keyword));
+      }
+
+      const sortKey = sortType.value === "tension" ? "tensionLevel" : "spaceTemp";
+      const order = sortOrder.value === "asc" ? 1 : -1;
+      filtered.sort((a, b) => order * (a[sortKey] - b[sortKey]));
+
+      modeList.innerHTML = "";
+      if (filtered.length === 0) {
+        const empty = document.createElement('div');
+        empty.textContent = window.__("circle_multi_no_match") || '没有匹配的调式';
+        empty.style.color = 'rgba(255,255,255,0.6)';
+        empty.style.padding = '10px';
+        modeList.appendChild(empty);
+        return;
+      }
+
+      filtered.forEach(m => {
+        const card = document.createElement('div');
+        card.className = 'mode-card';
+        card.style.minWidth = '160px';
+        card.style.padding = '8px';
+        card.style.borderRadius = '8px';
+        card.style.cursor = 'pointer';
+        card.style.color = '#fff';
+        card.style.display = 'flex';
+        card.style.flexDirection = 'column';
+        card.style.gap = '6px';
+        card.dataset.idx = m.idx;
+
+        const baseColor = tempToHsl(m.spaceTemp);
+        const darkAlpha = tensionDarkAlpha(m.tensionLevel);
+        card.style.background = `linear-gradient(rgba(0,0,0,${darkAlpha}), rgba(0,0,0,${darkAlpha})), ${baseColor}`;
+        card.style.border = '1px solid rgba(255,255,255,0.1)';
+
+        const title = document.createElement('div');
+        title.textContent = m.modeName || (`mode ${m.idx}`);
+        title.style.fontWeight = '600';
+        title.style.fontSize = '13px';
+
+        const meta = document.createElement('div');
+        meta.textContent = `${window.__("circle_multi_sort_tension")?.replace("{val}", m.tensionLevel) || `张力:${m.tensionLevel}`} ${window.__("circle_multi_sort_temp")?.replace("{val}", m.spaceTemp) || `温度:${m.spaceTemp}`}`;
+        meta.style.fontSize = '12px';
+        meta.style.opacity = '0.9';
+
+        card.appendChild(title);
+        card.appendChild(meta);
+
+        if (selectedModeIdx === m.idx) {
+          card.style.boxShadow = '0 0 0 3px rgba(255,255,255,0.18)';
+        }
+
+        card.addEventListener('click', () => {
+          selectedModeIdx = m.idx;
+          clearSelectionVisual();
+          card.style.boxShadow = '0 0 0 3px rgba(255,255,255,0.12)';
+          currentMultiMode = m;
+          currentRoot = null;
+          updateModeToggleLabel();
+          updateCircleMultiMode();
+        });
+
+        modeList.appendChild(card);
+      });
+    }
+
+    // helper: 在 checkbox 状态变化时为包裹的 label 添加/移除活动类
+    function setFilterLabelState(checkbox) {
+      if (!checkbox) return;
+      const lbl = checkbox.closest('label') || document.querySelector(`label[for="${checkbox.id}"]`);
+      if (!lbl) return;
+      if (checkbox.checked) lbl.classList.add('is-active');
+      else lbl.classList.remove('is-active');
+    }
+
+    // 初始化状态并绑定事件，使 UI 有视觉反馈
+    setFilterLabelState(filterNormal);
+    setFilterLabelState(filterNatural);
+    filterNormal.addEventListener('change', (e) => { setFilterLabelState(e.target); refreshModeList(); });
+    filterNatural.addEventListener('change', (e) => { setFilterLabelState(e.target); refreshModeList(); });
+    sortType.addEventListener('change', refreshModeList);
+    sortOrder.addEventListener('change', refreshModeList);
+    modeSearch.addEventListener('input', refreshModeList);
+
+    modeToggleBtn.addEventListener('click', () => {
+      if (!modeDropdown) return;
+      const isOpen = modeDropdown.style.display === 'flex';
+      modeDropdown.style.display = isOpen ? 'none' : 'flex';
+      modeToggleBtn.textContent = isOpen
+        ? (currentMultiMode?.modeName ? `${window.__("circle_multi_mode_chip") || "调式"}: ${currentMultiMode.modeName}` : window.__("circle_multi_expand") || '展开调式')
+        : window.__("circle_multi_collapse") || '收起调式';
+      if (!isOpen) {
+        refreshModeList();
+      }
     });
-  }
 
-  // helper: 在 checkbox 状态变化时为包裹的 label 添加/移除活动类
-  function setFilterLabelState(checkbox) {
-    if (!checkbox) return;
-    const lbl = checkbox.closest('label') || document.querySelector(`label[for="${checkbox.id}"]`);
-    if (!lbl) return;
-    if (checkbox.checked) lbl.classList.add('is-active');
-    else lbl.classList.remove('is-active');
-  }
-
-  // 初始化状态并绑定事件，使 UI 有视觉反馈
-  setFilterLabelState(filterNormal);
-  setFilterLabelState(filterNatural);
-  filterNormal.addEventListener('change', (e) => { setFilterLabelState(e.target); refreshModeList(); });
-  filterNatural.addEventListener('change', (e) => { setFilterLabelState(e.target); refreshModeList(); });
-  sortType.addEventListener('change', refreshModeList);
-  sortOrder.addEventListener('change', refreshModeList);
-  modeSearch.addEventListener('input', refreshModeList);
-
-  modeToggleBtn.addEventListener('click', () => {
-    if (!modeDropdown) return;
-    const isOpen = modeDropdown.style.display === 'flex';
-    modeDropdown.style.display = isOpen ? 'none' : 'flex';
-    modeToggleBtn.textContent = isOpen
-      ? (currentMultiMode?.modeName ? `${window.__("circle_multi_mode_chip") || "调式"}: ${currentMultiMode.modeName}` : window.__("circle_multi_expand") || '展开调式')
-      : window.__("circle_multi_collapse") || '收起调式';
-    if (!isOpen) {
-      refreshModeList();
-    }
-  });
-
-  toggleBtn.addEventListener('click', () => {
-    multiModeActive = !multiModeActive;
-    panel.style.display = multiModeActive ? 'flex' : 'none';
-    if (multiModeActive) {
-      currentRoot = null;
-      refreshModeList();
-    } else {
-      currentRoot = null;
-      circleCurrentKey = null;
-      drawCircle(null, null);
-      const tableContainer = document.getElementById('circle-table-container');
-      tableContainer.innerHTML = '';
-    }
-    toggleBtn.textContent = multiModeActive ? (window.__("circle_multi_mode") || '多调性模式') : (window.__("nav_circle") || '五度圈');
-  });
-
-  applyBtn.addEventListener('click', () => {
-    if (!multiModeActive) return;
-    if (!currentMultiMode) return;
-    updateCircleMultiMode();
-  });
-
-  // 搜索框 placeholder 本地化
-  if (modeSearch) {
-    modeSearch.placeholder = window.__("circle_multi_search_placeholder") || "搜索调式";
-  }
-
-  // 过滤器 label 本地化（只更新文本部分，保留checkbox）
-  if (filterNormal) {
-    const lbl = filterNormal.closest('label');
-    if (lbl) {
-      let textNode = Array.from(lbl.childNodes).find(n => n.nodeType === 3 && n.textContent.trim());
-      if (!textNode) {
-        textNode = document.createTextNode('');
-        lbl.appendChild(textNode);
+    toggleBtn.addEventListener('click', () => {
+      multiModeActive = !multiModeActive;
+      panel.style.display = multiModeActive ? 'flex' : 'none';
+      if (multiModeActive) {
+        currentRoot = null;
+        refreshModeList();
+      } else {
+        currentRoot = null;
+        circleCurrentKey = null;
+        drawCircle(null, null);
+        const tableContainer = document.getElementById('circle-table-container');
+        tableContainer.innerHTML = '';
       }
-      textNode.textContent = ' ' + (window.__("circle_multi_filter_normal") || "仅常规调式");
+      toggleBtn.textContent = multiModeActive ? (window.__("circle_multi_mode") || '多调性模式') : (window.__("nav_circle") || '五度圈');
+    });
+
+    applyBtn.addEventListener('click', () => {
+      if (!multiModeActive) return;
+      if (!currentMultiMode) return;
+      updateCircleMultiMode();
+    });
+
+    // 搜索框 placeholder 本地化
+    if (modeSearch) {
+      modeSearch.placeholder = window.__("circle_multi_search_placeholder") || "搜索调式";
     }
-  }
-  if (filterNatural) {
-    const lbl = filterNatural.closest('label');
-    if (lbl) {
-      let textNode = Array.from(lbl.childNodes).find(n => n.nodeType === 3 && n.textContent.trim());
-      if (!textNode) {
-        textNode = document.createTextNode('');
-        lbl.appendChild(textNode);
+
+    // 过滤器 label 本地化（只更新文本部分，保留checkbox）
+    if (filterNormal) {
+      const lbl = filterNormal.closest('label');
+      if (lbl) {
+        let textNode = Array.from(lbl.childNodes).find(n => n.nodeType === 3 && n.textContent.trim());
+        if (!textNode) {
+          textNode = document.createTextNode('');
+          lbl.appendChild(textNode);
+        }
+        textNode.textContent = ' ' + (window.__("circle_multi_filter_normal") || "仅常规调式");
       }
-      textNode.textContent = ' ' + (window.__("circle_multi_filter_natural") || "仅自然音阶");
     }
-  }
-
-  // 排序类型 label 本地化
-  if (sortType) {
-    for (const opt of sortType.options) {
-      if (opt.value === "tension") opt.textContent = window.__("circle_multi_sort_tension") || "空间张力等级";
-      if (opt.value === "temp") opt.textContent = window.__("circle_multi_sort_temp") || "空间温度等级";
+    if (filterNatural) {
+      const lbl = filterNatural.closest('label');
+      if (lbl) {
+        let textNode = Array.from(lbl.childNodes).find(n => n.nodeType === 3 && n.textContent.trim());
+        if (!textNode) {
+          textNode = document.createTextNode('');
+          lbl.appendChild(textNode);
+        }
+        textNode.textContent = ' ' + (window.__("circle_multi_filter_natural") || "仅自然音阶");
+      }
     }
-  }
 
-  // 排序顺序 label 本地化
-  if (sortOrder) {
-    for (const opt of sortOrder.options) {
-      if (opt.value === "asc") opt.textContent = window.__("sort_asc") || "升序";
-      if (opt.value === "desc") opt.textContent = window.__("sort_desc") || "降序";
+    // 排序类型 label 本地化
+    if (sortType) {
+      for (const opt of sortType.options) {
+        if (opt.value === "tension") opt.textContent = window.__("circle_multi_sort_tension") || "空间张力等级";
+        if (opt.value === "temp") opt.textContent = window.__("circle_multi_sort_temp") || "空间温度等级";
+      }
     }
-  }
 
-  // 初始隐藏面板与下拉列表
-  panel.style.display = 'none';
-  if (modeDropdown) modeDropdown.style.display = 'none';
-}
+    // 排序顺序 label 本地化
+    if (sortOrder) {
+      for (const opt of sortOrder.options) {
+        if (opt.value === "asc") opt.textContent = window.__("sort_asc") || "升序";
+        if (opt.value === "desc") opt.textContent = window.__("sort_desc") || "降序";
+      }
+    }
+
+    // 初始隐藏面板与下拉列表
+    panel.style.display = 'none';
+    if (modeDropdown) modeDropdown.style.display = 'none';
+  }
 
 
   function drawArcSegment(
@@ -3518,857 +4053,857 @@ function initMultiModeCircle() {
   }
 
   // ===================== 新里曼面板渲染 =====================
-// ===================== 新里曼面板渲染（树型布局 + 右键拖拽节点 + 节点大小调节）=====================
-let neoCurrentDepth = 1;
-let neoCurrentInput = "";
-let neoLayerSpacing = 100;      // 层间垂直间距
-let neoNodeSize = 22;           // 节点半径
-let neoCanvasState = { offsetX: 0, offsetY: 0, scale: 1 };
-let neoNodeOffsets = {};        // 手动偏移 { nodeId: {x, y} }
+  // ===================== 新里曼面板渲染（树型布局 + 右键拖拽节点 + 节点大小调节）=====================
+  let neoCurrentDepth = 1;
+  let neoCurrentInput = "";
+  let neoLayerSpacing = 100;      // 层间垂直间距
+  let neoNodeSize = 22;           // 节点半径
+  let neoCanvasState = { offsetX: 0, offsetY: 0, scale: 1 };
+  let neoNodeOffsets = {};        // 手动偏移 { nodeId: {x, y} }
 
-// 基本操作集
-const PRIMARY_OPS = new Set(["P", "L", "R", "S", "N", "D1"]);
+  // 基本操作集
+  const PRIMARY_OPS = new Set(["P", "L", "R", "S", "N", "D1"]);
 
-function updateNeo(targetEl, inputValue) {
-  const v = inputValue.trim();
-  if (!v) {
-    targetEl.innerHTML = `<div class="result-card">${window.__("cannot_parse_input")}</div>`;
-    return;
-  }
+  function updateNeo(targetEl, inputValue) {
+    const v = inputValue.trim();
+    if (!v) {
+      targetEl.innerHTML = `<div class="result-card">${window.__("cannot_parse_input")}</div>`;
+      return;
+    }
 
-  neoCurrentInput = v;
-  neoCanvasState = { offsetX: 0, offsetY: 0, scale: 1 };
-  neoNodeOffsets = {};
+    neoCurrentInput = v;
+    neoCanvasState = { offsetX: 0, offsetY: 0, scale: 1 };
+    neoNodeOffsets = {};
 
-  let geometric;
-  try {
-    geometric = brain.nrt.getGeometricNeighbors(v);
-  } catch (e) {
-    targetEl.innerHTML = `<div class="result-card">${window.__("chord_parse_error")}: ${e.message}</div>`;
-    return;
-  }
+    let geometric;
+    try {
+      geometric = brain.nrt.getGeometricNeighbors(v);
+    } catch (e) {
+      targetEl.innerHTML = `<div class="result-card">${window.__("chord_parse_error")}: ${e.message}</div>`;
+      return;
+    }
 
-  targetEl.innerHTML = "";
+    targetEl.innerHTML = "";
 
-  // ---------- 可视化切换按钮 ----------
-  const vizRow = document.createElement("div");
-  vizRow.style.display = "flex";
-  vizRow.style.gap = "8px";
-  vizRow.style.marginBottom = "16px";
+    // ---------- 可视化切换按钮 ----------
+    const vizRow = document.createElement("div");
+    vizRow.style.display = "flex";
+    vizRow.style.gap = "8px";
+    vizRow.style.marginBottom = "16px";
 
-  const btnTonnetz = document.createElement("button");
-  btnTonnetz.textContent = window.__("neo_triad_title") || "Tonnetz Graph";
-  btnTonnetz.className = "panel-action active";
-  btnTonnetz.style.padding = "8px 14px";
-  btnTonnetz.style.borderRadius = "6px";
-  btnTonnetz.style.border = "none";
-  btnTonnetz.style.cursor = "pointer";
-  btnTonnetz.style.background = "linear-gradient(90deg, var(--accent), var(--accent-2))";
-  btnTonnetz.style.color = "#fff";
+    const btnTonnetz = document.createElement("button");
+    btnTonnetz.textContent = window.__("neo_triad_title") || "Tonnetz Graph";
+    btnTonnetz.className = "panel-action active";
+    btnTonnetz.style.padding = "8px 14px";
+    btnTonnetz.style.borderRadius = "6px";
+    btnTonnetz.style.border = "none";
+    btnTonnetz.style.cursor = "pointer";
+    btnTonnetz.style.background = "linear-gradient(90deg, var(--accent), var(--accent-2))";
+    btnTonnetz.style.color = "#fff";
 
-  const btnOcta = document.createElement("button");
-  btnOcta.textContent = window.__("neo_octatonic_title") || "Octatonic Tower";
-  btnOcta.className = "panel-action";
-  btnOcta.style.padding = "8px 14px";
-  btnOcta.style.borderRadius = "6px";
-  btnOcta.style.border = "none";
-  btnOcta.style.cursor = "pointer";
-  btnOcta.style.background = "rgba(255,255,255,0.08)";
-  btnOcta.style.color = "#ccc";
+    const btnOcta = document.createElement("button");
+    btnOcta.textContent = window.__("neo_octatonic_title") || "Octatonic Tower";
+    btnOcta.className = "panel-action";
+    btnOcta.style.padding = "8px 14px";
+    btnOcta.style.borderRadius = "6px";
+    btnOcta.style.border = "none";
+    btnOcta.style.cursor = "pointer";
+    btnOcta.style.background = "rgba(255,255,255,0.08)";
+    btnOcta.style.color = "#ccc";
 
-  vizRow.appendChild(btnTonnetz);
-  vizRow.appendChild(btnOcta);
+    vizRow.appendChild(btnTonnetz);
+    vizRow.appendChild(btnOcta);
 
-  // 可视化容器
-  const canvasContainer = document.createElement("div");
-  canvasContainer.id = "neo-canvas-container";
-  canvasContainer.style.width = "100%";
-  canvasContainer.style.minHeight = "500px";
-  canvasContainer.style.position = "relative";
-  canvasContainer.style.overflow = "hidden";
-  canvasContainer.style.borderRadius = "12px";
-  canvasContainer.style.background = "rgba(0,0,0,0.2)";
-  canvasContainer.style.cursor = "grab";
-  canvasContainer.style.userSelect = "none";
-  targetEl.appendChild(canvasContainer);
+    // 可视化容器
+    const canvasContainer = document.createElement("div");
+    canvasContainer.id = "neo-canvas-container";
+    canvasContainer.style.width = "100%";
+    canvasContainer.style.minHeight = "500px";
+    canvasContainer.style.position = "relative";
+    canvasContainer.style.overflow = "hidden";
+    canvasContainer.style.borderRadius = "12px";
+    canvasContainer.style.background = "rgba(0,0,0,0.2)";
+    canvasContainer.style.cursor = "grab";
+    canvasContainer.style.userSelect = "none";
+    targetEl.appendChild(canvasContainer);
 
-  // 图例/详情区
-  const detailArea = document.createElement("div");
-  detailArea.id = "neo-detail-area";
-  detailArea.style.marginTop = "16px";
-  detailArea.className = "neo-detail-area";
-  targetEl.appendChild(detailArea);
+    // 图例/详情区
+    const detailArea = document.createElement("div");
+    detailArea.id = "neo-detail-area";
+    detailArea.style.marginTop = "16px";
+    detailArea.className = "neo-detail-area";
+    targetEl.appendChild(detailArea);
 
-  // 绑定控件
-  const depthInput = document.getElementById("neo-depth-input");
-  const spacingInput = document.getElementById("neo-spacing-input");
-  const nodeSizeInput = document.getElementById("neo-node-size-input");
-  const nodeSizeVal = document.getElementById("neo-node-size-val");
-  const applyBtn = document.getElementById("neo-depth-apply");
+    // 绑定控件
+    const depthInput = document.getElementById("neo-depth-input");
+    const spacingInput = document.getElementById("neo-spacing-input");
+    const nodeSizeInput = document.getElementById("neo-node-size-input");
+    const nodeSizeVal = document.getElementById("neo-node-size-val");
+    const applyBtn = document.getElementById("neo-depth-apply");
 
-  if (depthInput) depthInput.value = neoCurrentDepth;
-  if (spacingInput) spacingInput.value = neoLayerSpacing;
-  if (nodeSizeInput) {
-    nodeSizeInput.value = neoNodeSize;
-    if (nodeSizeVal) nodeSizeVal.textContent = neoNodeSize;
-    nodeSizeInput.addEventListener("input", () => {
-      neoNodeSize = parseInt(nodeSizeInput.value) || 22;
+    if (depthInput) depthInput.value = neoCurrentDepth;
+    if (spacingInput) spacingInput.value = neoLayerSpacing;
+    if (nodeSizeInput) {
+      nodeSizeInput.value = neoNodeSize;
       if (nodeSizeVal) nodeSizeVal.textContent = neoNodeSize;
+      nodeSizeInput.addEventListener("input", () => {
+        neoNodeSize = parseInt(nodeSizeInput.value) || 22;
+        if (nodeSizeVal) nodeSizeVal.textContent = neoNodeSize;
+        if (currentView === "tonnetz") renderTonnetzMulti();
+        else renderOctatonicMulti();
+      });
+    }
+
+    const applyDepthAndRender = () => {
+      if (depthInput) {
+        neoCurrentDepth = Math.max(1, Math.min(10, parseInt(depthInput.value) || 1));
+        depthInput.value = neoCurrentDepth;
+      }
+      if (spacingInput) {
+        neoLayerSpacing = Math.max(50, Math.min(250, parseInt(spacingInput.value) || 100));
+        spacingInput.value = neoLayerSpacing;
+      }
+      neoCanvasState = { offsetX: 0, offsetY: 0, scale: 1 };
+      neoNodeOffsets = {};
+      if (currentView === "tonnetz") renderTonnetzMulti();
+      else renderOctatonicMulti();
+    };
+
+    if (applyBtn) applyBtn.onclick = applyDepthAndRender;
+    if (depthInput) depthInput.addEventListener("keydown", e => { if (e.key === "Enter") applyDepthAndRender(); });
+    if (spacingInput) spacingInput.addEventListener("keydown", e => { if (e.key === "Enter") applyDepthAndRender(); });
+
+    // 重置视图
+    document.getElementById("neo-reset-view")?.addEventListener("click", () => {
+      neoCanvasState = { offsetX: 0, offsetY: 0, scale: 1 };
+      neoNodeOffsets = {};
       if (currentView === "tonnetz") renderTonnetzMulti();
       else renderOctatonicMulti();
     });
-  }
 
-  const applyDepthAndRender = () => {
-    if (depthInput) {
-      neoCurrentDepth = Math.max(1, Math.min(10, parseInt(depthInput.value) || 1));
-      depthInput.value = neoCurrentDepth;
-    }
-    if (spacingInput) {
-      neoLayerSpacing = Math.max(50, Math.min(250, parseInt(spacingInput.value) || 100));
-      spacingInput.value = neoLayerSpacing;
-    }
-    neoCanvasState = { offsetX: 0, offsetY: 0, scale: 1 };
-    neoNodeOffsets = {};
-    if (currentView === "tonnetz") renderTonnetzMulti();
-    else renderOctatonicMulti();
-  };
+    // 重置节点位置
+    document.getElementById("neo-reset-positions")?.addEventListener("click", () => {
+      neoNodeOffsets = {};
+      if (currentView === "tonnetz") renderTonnetzMulti();
+      else renderOctatonicMulti();
+    });
 
-  if (applyBtn) applyBtn.onclick = applyDepthAndRender;
-  if (depthInput) depthInput.addEventListener("keydown", e => { if (e.key === "Enter") applyDepthAndRender(); });
-  if (spacingInput) spacingInput.addEventListener("keydown", e => { if (e.key === "Enter") applyDepthAndRender(); });
+    // ---------- 渲染函数 ----------
+    let currentView = "tonnetz";
 
-  // 重置视图
-  document.getElementById("neo-reset-view")?.addEventListener("click", () => {
-    neoCanvasState = { offsetX: 0, offsetY: 0, scale: 1 };
-    neoNodeOffsets = {};
-    if (currentView === "tonnetz") renderTonnetzMulti();
-    else renderOctatonicMulti();
-  });
+    function renderTonnetzMulti() {
+      canvasContainer.innerHTML = "";
+      detailArea.innerHTML = "";
 
-  // 重置节点位置
-  document.getElementById("neo-reset-positions")?.addEventListener("click", () => {
-    neoNodeOffsets = {};
-    if (currentView === "tonnetz") renderTonnetzMulti();
-    else renderOctatonicMulti();
-  });
-
-  // ---------- 渲染函数 ----------
-  let currentView = "tonnetz";
-
-  function renderTonnetzMulti() {
-    canvasContainer.innerHTML = "";
-    detailArea.innerHTML = "";
-
-    const multiGraph = buildTreeGraph(v, neoCurrentDepth, "tonnetz");
-    if (!multiGraph || !multiGraph.nodes.length) {
-      canvasContainer.innerHTML = `<div class="small-muted" style="padding:20px;">${window.__("neo_no_transform")}</div>`;
-      return;
-    }
-
-    drawTreeCanvas(canvasContainer, multiGraph, "tonnetz");
-
-    const uniqueChords = [...new Set(multiGraph.nodes.map(n => n.chord))];
-    const listTitle = document.createElement("h4");
-    listTitle.className = "section-title";
-    listTitle.textContent = `${window.__("neo_triad_title")} (${neoCurrentDepth}层, ${uniqueChords.length}个和弦)`;
-    detailArea.appendChild(listTitle);
-    detailArea.appendChild(createChordCard(v, true));
-
-    const byDepth = {};
-    multiGraph.nodes.forEach(n => {
-      if (n.depth > 0) {
-        if (!byDepth[n.depth]) byDepth[n.depth] = [];
-        byDepth[n.depth].push(n);
+      const multiGraph = buildTreeGraph(v, neoCurrentDepth, "tonnetz");
+      if (!multiGraph || !multiGraph.nodes.length) {
+        canvasContainer.innerHTML = `<div class="small-muted" style="padding:20px;">${window.__("neo_no_transform")}</div>`;
+        return;
       }
-    });
 
-    Object.keys(byDepth).sort((a, b) => a - b).forEach(depth => {
-      const depthLabel = document.createElement("div");
-      depthLabel.className = "small-muted";
-      depthLabel.style.marginTop = "12px";
-      depthLabel.style.fontWeight = "bold";
-      depthLabel.textContent = `第 ${depth} 层`;
-      detailArea.appendChild(depthLabel);
+      drawTreeCanvas(canvasContainer, multiGraph, "tonnetz");
 
-      const depthGrid = document.createElement("div");
-      depthGrid.style.display = "flex";
-      depthGrid.style.flexWrap = "wrap";
-      depthGrid.style.gap = "8px";
+      const uniqueChords = [...new Set(multiGraph.nodes.map(n => n.chord))];
+      const listTitle = document.createElement("h4");
+      listTitle.className = "section-title";
+      listTitle.textContent = `${window.__("neo_triad_title")} (${neoCurrentDepth}层, ${uniqueChords.length}个和弦)`;
+      detailArea.appendChild(listTitle);
+      detailArea.appendChild(createChordCard(v, true));
 
-      byDepth[depth].forEach(node => {
-        const chordCard = createChordCard(node.chord, false);
-        if (node.operation) {
-          const opLabel = document.createElement("div");
-          opLabel.className = "small-muted";
-          opLabel.style.fontSize = "0.7em";
-          const isPrimary = PRIMARY_OPS.has(node.operation);
-          opLabel.style.color = isPrimary ? "hsl(145, 55%, 55%)" : "hsl(260, 50%, 70%)";
-          opLabel.textContent = `← ${node.operation}${isPrimary ? '' : window.__("neo_extended")}`;
-          chordCard.insertBefore(opLabel, chordCard.firstChild);
+      const byDepth = {};
+      multiGraph.nodes.forEach(n => {
+        if (n.depth > 0) {
+          if (!byDepth[n.depth]) byDepth[n.depth] = [];
+          byDepth[n.depth].push(n);
         }
-        depthGrid.appendChild(chordCard);
       });
-      detailArea.appendChild(depthGrid);
-    });
-  }
 
-  function renderOctatonicMulti() {
-    canvasContainer.innerHTML = "";
-    detailArea.innerHTML = "";
+      Object.keys(byDepth).sort((a, b) => a - b).forEach(depth => {
+        const depthLabel = document.createElement("div");
+        depthLabel.className = "small-muted";
+        depthLabel.style.marginTop = "12px";
+        depthLabel.style.fontWeight = "bold";
+        depthLabel.textContent = `第 ${depth} 层`;
+        detailArea.appendChild(depthLabel);
 
-    const multiGraph = buildTreeGraph(v, neoCurrentDepth, "octatonic");
-    if (!multiGraph || !multiGraph.nodes || multiGraph.nodes.length === 0) {
-      canvasContainer.innerHTML = `<div class="small-muted" style="padding:20px;">${window.__("neo_no_octatonic")}</div>`;
-      return;
+        const depthGrid = document.createElement("div");
+        depthGrid.style.display = "flex";
+        depthGrid.style.flexWrap = "wrap";
+        depthGrid.style.gap = "8px";
+
+        byDepth[depth].forEach(node => {
+          const chordCard = createChordCard(node.chord, false);
+          if (node.operation) {
+            const opLabel = document.createElement("div");
+            opLabel.className = "small-muted";
+            opLabel.style.fontSize = "0.7em";
+            const isPrimary = PRIMARY_OPS.has(node.operation);
+            opLabel.style.color = isPrimary ? "hsl(145, 55%, 55%)" : "hsl(260, 50%, 70%)";
+            opLabel.textContent = `← ${node.operation}${isPrimary ? '' : window.__("neo_extended")}`;
+            chordCard.insertBefore(opLabel, chordCard.firstChild);
+          }
+          depthGrid.appendChild(chordCard);
+        });
+        detailArea.appendChild(depthGrid);
+      });
     }
 
-    drawTreeCanvas(canvasContainer, multiGraph, "octatonic");
+    function renderOctatonicMulti() {
+      canvasContainer.innerHTML = "";
+      detailArea.innerHTML = "";
 
-    const uniqueChords = [...new Set(multiGraph.nodes.map(n => n.chord))];
-    const listTitle = document.createElement("h4");
-    listTitle.className = "section-title";
-    listTitle.style.marginTop = "8px";
-    listTitle.textContent = `${window.__("neo_octatonic_neighbors")} (${window.__f("neo_chord_depth_heading", {
+      const multiGraph = buildTreeGraph(v, neoCurrentDepth, "octatonic");
+      if (!multiGraph || !multiGraph.nodes || multiGraph.nodes.length === 0) {
+        canvasContainer.innerHTML = `<div class="small-muted" style="padding:20px;">${window.__("neo_no_octatonic")}</div>`;
+        return;
+      }
+
+      drawTreeCanvas(canvasContainer, multiGraph, "octatonic");
+
+      const uniqueChords = [...new Set(multiGraph.nodes.map(n => n.chord))];
+      const listTitle = document.createElement("h4");
+      listTitle.className = "section-title";
+      listTitle.style.marginTop = "8px";
+      listTitle.textContent = `${window.__("neo_octatonic_neighbors")} (${window.__f("neo_chord_depth_heading", {
         depth: neoCurrentDepth,
         chords_count: uniqueChords.length
       })}`;
-    detailArea.appendChild(listTitle);
+      detailArea.appendChild(listTitle);
 
-    // ===== 添加原始和弦卡片（修复：八度音阶塔现在也显示原始和弦）=====
-    const originalCard = createChordCard(v, true);
-    detailArea.appendChild(originalCard);
-    
-    const byDepth = {};
-    multiGraph.nodes.forEach(n => {
-      if (n.depth > 0) {
-        if (!byDepth[n.depth]) byDepth[n.depth] = [];
-        byDepth[n.depth].push(n);
-      }
-    });
+      // ===== 添加原始和弦卡片（修复：八度音阶塔现在也显示原始和弦）=====
+      const originalCard = createChordCard(v, true);
+      detailArea.appendChild(originalCard);
 
-    Object.keys(byDepth).sort((a, b) => a - b).forEach(depth => {
-      const depthLabel = document.createElement("div");
-      depthLabel.className = "small-muted";
-      depthLabel.style.marginTop = "12px";
-      depthLabel.style.fontWeight = "bold";
-      depthLabel.textContent = window.__f("neo_chord_depth_heading", {
-        depth: depth
-      }); 
-      detailArea.appendChild(depthLabel);
-      const depthGrid = document.createElement("div");
-      depthGrid.style.display = "flex";
-      depthGrid.style.flexWrap = "wrap";
-      depthGrid.style.gap = "8px";
-      byDepth[depth].forEach(node => depthGrid.appendChild(createChordCard(node.chord, false)));
-      detailArea.appendChild(depthGrid);
-    });
-  }
+      const byDepth = {};
+      multiGraph.nodes.forEach(n => {
+        if (n.depth > 0) {
+          if (!byDepth[n.depth]) byDepth[n.depth] = [];
+          byDepth[n.depth].push(n);
+        }
+      });
 
-  function createChordCard(chordName, isOriginal) {
-    const card = document.createElement("div");
-    card.className = "result-card";
-    card.style.margin = "4px";
-    card.style.padding = "10px";
-    card.style.cursor = "pointer";
-    card.style.transition = "all 0.2s";
-    if (isOriginal) {
-      card.style.border = "1px solid var(--accent-2)";
-      card.style.background = "linear-gradient(135deg, hsl(200, 25%, 20%), hsl(200, 20%, 12%))";
+      Object.keys(byDepth).sort((a, b) => a - b).forEach(depth => {
+        const depthLabel = document.createElement("div");
+        depthLabel.className = "small-muted";
+        depthLabel.style.marginTop = "12px";
+        depthLabel.style.fontWeight = "bold";
+        depthLabel.textContent = window.__f("neo_chord_depth_heading", {
+          depth: depth
+        });
+        detailArea.appendChild(depthLabel);
+        const depthGrid = document.createElement("div");
+        depthGrid.style.display = "flex";
+        depthGrid.style.flexWrap = "wrap";
+        depthGrid.style.gap = "8px";
+        byDepth[depth].forEach(node => depthGrid.appendChild(createChordCard(node.chord, false)));
+        detailArea.appendChild(depthGrid);
+      });
     }
-    card.addEventListener("mouseenter", () => { card.style.transform = "translateY(-2px)"; card.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)"; });
-    card.addEventListener("mouseleave", () => { card.style.transform = "translateY(0)"; card.style.boxShadow = "none"; });
-    card.addEventListener("click", () => {
-      const neoInput = document.getElementById("neo-input");
-      if (neoInput) neoInput.value = chordName;
+
+    function createChordCard(chordName, isOriginal) {
+      const card = document.createElement("div");
+      card.className = "result-card";
+      card.style.margin = "4px";
+      card.style.padding = "10px";
+      card.style.cursor = "pointer";
+      card.style.transition = "all 0.2s";
+      if (isOriginal) {
+        card.style.border = "1px solid var(--accent-2)";
+        card.style.background = "linear-gradient(135deg, hsl(200, 25%, 20%), hsl(200, 20%, 12%))";
+      }
+      card.addEventListener("mouseenter", () => { card.style.transform = "translateY(-2px)"; card.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)"; });
+      card.addEventListener("mouseleave", () => { card.style.transform = "translateY(0)"; card.style.boxShadow = "none"; });
+      card.addEventListener("click", () => {
+        const neoInput = document.getElementById("neo-input");
+        if (neoInput) neoInput.value = chordName;
+        neoCanvasState = { offsetX: 0, offsetY: 0, scale: 1 };
+        neoNodeOffsets = {};
+        updateNeo(canvasContainer.parentElement, chordName);
+      });
+      const title = document.createElement("div");
+      title.className = "card-title";
+      title.style.fontSize = "0.9em";
+      title.style.margin = "0";
+      title.textContent = chordName;
+      card.appendChild(title);
+      try {
+        const parsed = brain.converter._ensureNotesAndRoot(chordName, true);
+        if (parsed?.notes?.length) {
+          const noteRow = document.createElement("div");
+          noteRow.className = "note-grid";
+          noteRow.style.margin = "6px 0 0 0";
+          noteRow.style.gap = "4px";
+          parsed.notes.slice(0, 6).forEach(n => {
+            const nc = document.createElement("div");
+            nc.className = "note-cell";
+            nc.style.padding = "4px 6px";
+            nc.style.minWidth = "auto";
+            nc.style.fontSize = "0.75em";
+            nc.innerHTML = `<div class="note" style="font-size:0.85em;">${n}</div>`;
+            noteRow.appendChild(nc);
+          });
+          card.appendChild(noteRow);
+        }
+      } catch (e) { }
+      return card;
+    }
+
+    // 切换事件
+    btnTonnetz.addEventListener("click", () => {
+      currentView = "tonnetz";
+      btnTonnetz.classList.add("active");
+      btnTonnetz.style.background = "linear-gradient(90deg, var(--accent), var(--accent-2))";
+      btnTonnetz.style.color = "#fff";
+      btnOcta.classList.remove("active");
+      btnOcta.style.background = "rgba(255,255,255,0.08)";
+      btnOcta.style.color = "#ccc";
       neoCanvasState = { offsetX: 0, offsetY: 0, scale: 1 };
       neoNodeOffsets = {};
-      updateNeo(canvasContainer.parentElement, chordName);
+      renderTonnetzMulti();
     });
-    const title = document.createElement("div");
-    title.className = "card-title";
-    title.style.fontSize = "0.9em";
-    title.style.margin = "0";
-    title.textContent = chordName;
-    card.appendChild(title);
-    try {
-      const parsed = brain.converter._ensureNotesAndRoot(chordName, true);
-      if (parsed?.notes?.length) {
-        const noteRow = document.createElement("div");
-        noteRow.className = "note-grid";
-        noteRow.style.margin = "6px 0 0 0";
-        noteRow.style.gap = "4px";
-        parsed.notes.slice(0, 6).forEach(n => {
-          const nc = document.createElement("div");
-          nc.className = "note-cell";
-          nc.style.padding = "4px 6px";
-          nc.style.minWidth = "auto";
-          nc.style.fontSize = "0.75em";
-          nc.innerHTML = `<div class="note" style="font-size:0.85em;">${n}</div>`;
-          noteRow.appendChild(nc);
-        });
-        card.appendChild(noteRow);
-      }
-    } catch (e) {}
-    return card;
-  }
 
-  // 切换事件
-  btnTonnetz.addEventListener("click", () => {
-    currentView = "tonnetz";
-    btnTonnetz.classList.add("active");
-    btnTonnetz.style.background = "linear-gradient(90deg, var(--accent), var(--accent-2))";
-    btnTonnetz.style.color = "#fff";
-    btnOcta.classList.remove("active");
-    btnOcta.style.background = "rgba(255,255,255,0.08)";
-    btnOcta.style.color = "#ccc";
-    neoCanvasState = { offsetX: 0, offsetY: 0, scale: 1 };
-    neoNodeOffsets = {};
-    renderTonnetzMulti();
-  });
+    btnOcta.addEventListener("click", () => {
+      currentView = "octatonic";
+      btnOcta.classList.add("active");
+      btnOcta.style.background = "linear-gradient(90deg, var(--accent), var(--accent-2))";
+      btnOcta.style.color = "#fff";
+      btnTonnetz.classList.remove("active");
+      btnTonnetz.style.background = "rgba(255,255,255,0.08)";
+      btnTonnetz.style.color = "#ccc";
+      neoCanvasState = { offsetX: 0, offsetY: 0, scale: 1 };
+      neoNodeOffsets = {};
+      renderOctatonicMulti();
+    });
 
-  btnOcta.addEventListener("click", () => {
-    currentView = "octatonic";
-    btnOcta.classList.add("active");
-    btnOcta.style.background = "linear-gradient(90deg, var(--accent), var(--accent-2))";
-    btnOcta.style.color = "#fff";
-    btnTonnetz.classList.remove("active");
-    btnTonnetz.style.background = "rgba(255,255,255,0.08)";
-    btnTonnetz.style.color = "#ccc";
-    neoCanvasState = { offsetX: 0, offsetY: 0, scale: 1 };
-    neoNodeOffsets = {};
-    renderOctatonicMulti();
-  });
-
-  // 初始渲染
-  if (geometric.Tonnetz_PLRSND && Object.keys(geometric.Tonnetz_PLRSND).length > 0) {
-    renderTonnetzMulti();
-  } else {
-    renderOctatonicMulti();
-  }
-}
-
-/**
- * 树型布局：根节点顶部，子节点向下展开
- * 类似二叉树/族谱结构，每层水平分布
- */
-function buildTreeGraph(rootChord, maxDepth, type) {
-  const visited = new Set();
-  const nodes = [];
-  const edges = [];
-
-  const normalize = (chord) => {
-    try {
-      const notes = brain.converter._ensureNotesAndRoot(chord);
-      if (notes?.length) return [...notes].sort().join(',');
-    } catch (e) {}
-    return chord;
-  };
-
-  const rootNorm = normalize(rootChord);
-  visited.add(rootNorm);
-
-  const centerInfo = brain.converter._ensureNotesAndRoot(rootChord, true);
-  nodes.push({
-    id: 0,
-    chord: rootChord,
-    notes: centerInfo?.notes || [],
-    label: rootChord.length > 8 ? rootChord.slice(0, 7) + ".." : rootChord,
-    x: 0,
-    y: 0,
-    group: "center",
-    depth: 0
-  });
-
-  let nodeId = 1;
-  // BFS: 队列元素 { chord, depth, parentId, operation, childIndex, totalSiblings }
-  const queue = [{ chord: rootChord, depth: 0, parentId: null, operation: null }];
-
-  while (queue.length > 0) {
-    const { chord, depth, parentId } = queue.shift();
-    if (depth >= maxDepth) continue;
-
-    let neighbors = {};
-    const geo = brain.nrt.getGeometricNeighbors(chord);
-
-    if (type === "tonnetz" && geo.Tonnetz_PLRSND) {
-      // 优先排列基本操作，再排扩展操作
-      const primary = [];
-      const secondary = [];
-      Object.entries(geo.Tonnetz_PLRSND).forEach(([op, result]) => {
-        if (result.chord) {
-          if (PRIMARY_OPS.has(op)) primary.push([op, result.chord]);
-          else secondary.push([op, result.chord]);
-        }
-      });
-      // 基本操作按固定顺序：P, L, R, S, N, D1
-      const order = ["P", "L", "R", "S", "N", "D1"];
-      primary.sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0]));
-      const allNeighbors = [...primary, ...secondary];
-      allNeighbors.forEach(([op, chord]) => { neighbors[op] = chord; });
-    } else if (type === "octatonic" && geo.Octatonic_Tower) {
-      geo.Octatonic_Tower.forEach((neighbor, i) => {
-        if (neighbor) neighbors[`O${i + 1}`] = neighbor;
-      });
+    // 初始渲染
+    if (geometric.Tonnetz_PLRSND && Object.keys(geometric.Tonnetz_PLRSND).length > 0) {
+      renderTonnetzMulti();
+    } else {
+      renderOctatonicMulti();
     }
+  }
 
-    const neighborEntries = Object.entries(neighbors);
-    const totalSiblings = neighborEntries.length;
-    const parentNode = nodes.find(n => n.id === parentId);
-    const parentX = parentNode ? parentNode.x : 0;
-    const parentY = parentNode ? parentNode.y : 0;
+  /**
+   * 树型布局：根节点顶部，子节点向下展开
+   * 类似二叉树/族谱结构，每层水平分布
+   */
+  function buildTreeGraph(rootChord, maxDepth, type) {
+    const visited = new Set();
+    const nodes = [];
+    const edges = [];
 
-    // 树的水平展开宽度随深度动态调整
-    const levelWidth = neoLayerSpacing * 2 + (depth + 1) * neoLayerSpacing * 0.8;
-    const startX = parentX - levelWidth / 2 + levelWidth / (totalSiblings + 1);
+    const normalize = (chord) => {
+      try {
+        const notes = brain.converter._ensureNotesAndRoot(chord);
+        if (notes?.length) return [...notes].sort().join(',');
+      } catch (e) { }
+      return chord;
+    };
 
-    neighborEntries.forEach(([op, neighborChord], idx) => {
-      const normNeighbor = normalize(neighborChord);
+    const rootNorm = normalize(rootChord);
+    visited.add(rootNorm);
 
-      // 计算树型位置
-      const childX = startX + (idx + 1) * (levelWidth / (totalSiblings + 1));
-      const childY = parentY + neoLayerSpacing;
+    const centerInfo = brain.converter._ensureNotesAndRoot(rootChord, true);
+    nodes.push({
+      id: 0,
+      chord: rootChord,
+      notes: centerInfo?.notes || [],
+      label: rootChord.length > 8 ? rootChord.slice(0, 7) + ".." : rootChord,
+      x: 0,
+      y: 0,
+      group: "center",
+      depth: 0
+    });
 
-      if (!visited.has(normNeighbor)) {
-        visited.add(normNeighbor);
+    let nodeId = 1;
+    // BFS: 队列元素 { chord, depth, parentId, operation, childIndex, totalSiblings }
+    const queue = [{ chord: rootChord, depth: 0, parentId: null, operation: null }];
 
-        let notes = [];
-        try {
-          const parsed = brain.converter._ensureNotesAndRoot(neighborChord, true);
-          notes = parsed?.notes || [];
-        } catch (e) {}
+    while (queue.length > 0) {
+      const { chord, depth, parentId } = queue.shift();
+      if (depth >= maxDepth) continue;
 
-        const isPrimary = PRIMARY_OPS.has(op);
-        const newNode = {
-          id: nodeId,
-          chord: neighborChord,
-          notes: notes,
-          label: op,
-          operation: op,
-          isPrimary: isPrimary,
-          x: Math.round(childX),
-          y: Math.round(childY),
-          group: isPrimary ? "transform" : "secondary",
-          depth: depth + 1
-        };
+      let neighbors = {};
+      const geo = brain.nrt.getGeometricNeighbors(chord);
 
-        nodes.push(newNode);
-        edges.push({
-          source: parentId !== null ? parentId : 0,
-          target: nodeId,
-          label: op,
-          depth: depth + 1,
-          isPrimary: isPrimary
+      if (type === "tonnetz" && geo.Tonnetz_PLRSND) {
+        // 优先排列基本操作，再排扩展操作
+        const primary = [];
+        const secondary = [];
+        Object.entries(geo.Tonnetz_PLRSND).forEach(([op, result]) => {
+          if (result.chord) {
+            if (PRIMARY_OPS.has(op)) primary.push([op, result.chord]);
+            else secondary.push([op, result.chord]);
+          }
         });
-
-        queue.push({
-          chord: neighborChord,
-          depth: depth + 1,
-          parentId: nodeId,
-          operation: op
+        // 基本操作按固定顺序：P, L, R, S, N, D1
+        const order = ["P", "L", "R", "S", "N", "D1"];
+        primary.sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0]));
+        const allNeighbors = [...primary, ...secondary];
+        allNeighbors.forEach(([op, chord]) => { neighbors[op] = chord; });
+      } else if (type === "octatonic" && geo.Octatonic_Tower) {
+        geo.Octatonic_Tower.forEach((neighbor, i) => {
+          if (neighbor) neighbors[`O${i + 1}`] = neighbor;
         });
+      }
 
-        nodeId++;
-      } else {
-        // 连接到已访问节点
-        const existingNode = nodes.find(
-          n => normalize(n.chord) === normNeighbor && n.id !== parentId
-        );
-        if (existingNode && !edges.some(
-          e => (e.source === parentId && e.target === existingNode.id) ||
-               (e.source === existingNode.id && e.target === parentId)
-        )) {
+      const neighborEntries = Object.entries(neighbors);
+      const totalSiblings = neighborEntries.length;
+      const parentNode = nodes.find(n => n.id === parentId);
+      const parentX = parentNode ? parentNode.x : 0;
+      const parentY = parentNode ? parentNode.y : 0;
+
+      // 树的水平展开宽度随深度动态调整
+      const levelWidth = neoLayerSpacing * 2 + (depth + 1) * neoLayerSpacing * 0.8;
+      const startX = parentX - levelWidth / 2 + levelWidth / (totalSiblings + 1);
+
+      neighborEntries.forEach(([op, neighborChord], idx) => {
+        const normNeighbor = normalize(neighborChord);
+
+        // 计算树型位置
+        const childX = startX + (idx + 1) * (levelWidth / (totalSiblings + 1));
+        const childY = parentY + neoLayerSpacing;
+
+        if (!visited.has(normNeighbor)) {
+          visited.add(normNeighbor);
+
+          let notes = [];
+          try {
+            const parsed = brain.converter._ensureNotesAndRoot(neighborChord, true);
+            notes = parsed?.notes || [];
+          } catch (e) { }
+
+          const isPrimary = PRIMARY_OPS.has(op);
+          const newNode = {
+            id: nodeId,
+            chord: neighborChord,
+            notes: notes,
+            label: op,
+            operation: op,
+            isPrimary: isPrimary,
+            x: Math.round(childX),
+            y: Math.round(childY),
+            group: isPrimary ? "transform" : "secondary",
+            depth: depth + 1
+          };
+
+          nodes.push(newNode);
           edges.push({
             source: parentId !== null ? parentId : 0,
-            target: existingNode.id,
+            target: nodeId,
             label: op,
-            depth: Math.max(depth + 1, existingNode.depth),
-            isPrimary: PRIMARY_OPS.has(op)
+            depth: depth + 1,
+            isPrimary: isPrimary
           });
-        }
-      }
-    });
-  }
 
-  return { nodes, edges, center: rootChord };
-}
+          queue.push({
+            chord: neighborChord,
+            depth: depth + 1,
+            parentId: nodeId,
+            operation: op
+          });
 
-/**
- * 连线颜色：浅层偏绿，深层偏蓝紫
- */
-function getEdgeColor(depth, maxDepth, isPrimary) {
-  const t = maxDepth <= 1 ? 0 : Math.min(1, (depth - 1) / Math.max(1, maxDepth - 1));
-  if (isPrimary) {
-    const hue = 145 - t * 30;
-    const light = 48 - t * 12;
-    return `hsla(${hue}, 55%, ${light}%, 0.75)`;
-  } else {
-    const hue = 180 + t * 80;
-    const light = 45 + t * 10;
-    return `hsla(${hue}, 45%, ${light}%, 0.55)`;
-  }
-}
-
-function getNodeLabelColor(isPrimary, depth, maxDepth) {
-  if (isPrimary) return "hsl(145, 55%, 55%)";
-  const t = maxDepth <= 1 ? 0 : Math.min(1, depth / maxDepth);
-  return `hsl(${200 + t * 70}, 50%, 65%)`;
-}
-
-/**
- * 树型画布绘制（支持右键拖拽节点）
- */
-function drawTreeCanvas(container, graphData, type) {
-  const canvas = document.createElement("canvas");
-  const containerWidth = container.clientWidth || 600;
-  const dpr = 2;
-  // 动态高度：层数越多画布越高
-  const canvasHeight = Math.max(500, (neoCurrentDepth + 1) * neoLayerSpacing + 200);
-  canvas.width = containerWidth * dpr;
-  canvas.height = canvasHeight * dpr;
-  canvas.style.width = containerWidth + "px";
-  canvas.style.height = canvasHeight + "px";
-  canvas.style.display = "block";
-  canvas.style.margin = "0 auto";
-  container.appendChild(canvas);
-
-  // 默认将根节点放在画布中上位置
-  if (!neoCanvasState._initialized) {
-    neoCanvasState.offsetX = 0;
-    neoCanvasState.offsetY = -canvasHeight / 3;
-    neoCanvasState._initialized = true;
-  }
-
-  const maxDepth = Math.max(1, ...graphData.nodes.map(n => n.depth || 0));
-
-  // 右键拖拽状态
-  let rightDragNode = null;
-  let rightDragStartX = 0;
-  let rightDragStartY = 0;
-  let rightDragOrigX = 0;
-  let rightDragOrigY = 0;
-
-  canvas.addEventListener("contextmenu", (e) => e.preventDefault());
-
-  function render() {
-    const ctx = canvas.getContext("2d");
-    const w = canvas.width;
-    const h = canvas.height;
-    const cx = w / 2 + neoCanvasState.offsetX * dpr;
-    const cy = h / 2 + neoCanvasState.offsetY * dpr + 100 * dpr; // 根节点偏上
-    const scale = neoCanvasState.scale;
-
-    ctx.clearRect(0, 0, w, h);
-
-    const { nodes, edges } = graphData;
-
-    // 应用手动偏移
-    const nodePositions = nodes.map(n => {
-      const manualOffset = neoNodeOffsets[n.id] || { x: 0, y: 0 };
-      return {
-        ...n,
-        px: Math.round(cx + (n.x + manualOffset.x) * scale * dpr),
-        py: Math.round(cy + (n.y + manualOffset.y) * scale * dpr),
-      };
-    });
-
-    // === 连线 ===
-    edges.forEach(edge => {
-      const from = nodePositions.find(n => n.id === edge.source);
-      const to = nodePositions.find(n => n.id === edge.target);
-      if (!from || !to) return;
-
-      const edgeDepth = edge.depth || 1;
-      const isPrimary = edge.isPrimary || false;
-
-      // 树型布局的贝塞尔：控制点在垂直中点
-      const cpx = from.px;
-      const cpy = (from.py + to.py) / 2;
-
-      ctx.beginPath();
-      ctx.moveTo(from.px, from.py);
-      ctx.quadraticCurveTo(cpx, cpy, to.px, to.py);
-
-      const edgeColor = getEdgeColor(edgeDepth, maxDepth, isPrimary);
-      ctx.strokeStyle = edgeColor;
-      ctx.lineWidth = 1.3 * scale;
-      ctx.stroke();
-
-      // 连线标签
-      if (edge.label && scale > 0.55) {
-        const labelColor = getNodeLabelColor(isPrimary, edgeDepth, maxDepth);
-        ctx.fillStyle = labelColor;
-        ctx.font = `bold ${Math.max(8, 10 * scale)}px sans-serif`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        const labelX = (from.px + to.px) / 2 + 15 * scale * dpr;
-        const labelY = (from.py + to.py) / 2;
-        // ctx.fillText(edge.label, labelX, labelY);
-      }
-    });
-
-    // === 节点 ===
-    const centerRadius = neoNodeSize * 1.15;
-    const normalRadius = neoNodeSize;
-
-    nodePositions.forEach(node => {
-      const isCenter = node.group === "center";
-      const isTransform = node.group === "transform";
-      const radius = (isCenter ? centerRadius : normalRadius) * scale;
-      const depth = node.depth || 0;
-      const depthFade = Math.max(0.35, 1 - depth * 0.12);
-
-      let glowHue = 200, glowSat = 90;
-      if (!isCenter) {
-        glowHue = isTransform ? 145 : 260;
-        glowSat = isTransform ? 60 : 55;
-      }
-
-      // 光晕
-      const glowR = radius * 2;
-      const glow = ctx.createRadialGradient(node.px, node.py, radius * 0.3, node.px, node.py, glowR);
-      glow.addColorStop(0, `hsla(${glowHue}, ${glowSat}%, 50%, ${0.5 * depthFade})`);
-      glow.addColorStop(1, "rgba(0,0,0,0)");
-      ctx.fillStyle = glow;
-      ctx.beginPath();
-      ctx.arc(node.px, node.py, glowR, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 主体
-      ctx.beginPath();
-      ctx.arc(node.px, node.py, radius, 0, Math.PI * 2);
-      const grad = ctx.createLinearGradient(node.px - radius, node.py - radius, node.px + radius, node.py + radius);
-      if (isCenter) {
-        grad.addColorStop(0, "#4a90d9");
-        grad.addColorStop(0.5, "#2563a8");
-        grad.addColorStop(1, "#1a3a6e");
-      } else if (isTransform) {
-        grad.addColorStop(0, "hsl(145, 45%, 35%)");
-        grad.addColorStop(0.5, "hsl(145, 40%, 25%)");
-        grad.addColorStop(1, "hsl(145, 35%, 15%)");
-      } else {
-        grad.addColorStop(0, `hsla(260, 40%, ${35 * depthFade}%, ${depthFade})`);
-        grad.addColorStop(0.5, `hsla(260, 35%, ${25 * depthFade}%, ${depthFade})`);
-        grad.addColorStop(1, `hsla(260, 30%, ${15 * depthFade}%, ${depthFade})`);
-      }
-      ctx.fillStyle = grad;
-      ctx.fill();
-
-      // 边框
-      if (isCenter) {
-        ctx.strokeStyle = "rgba(255,255,255,0.7)";
-        ctx.lineWidth = 2.5 * scale;
-      } else if (isTransform) {
-        ctx.strokeStyle = "hsla(145, 55%, 55%, 0.7)";
-        ctx.lineWidth = 2 * scale;
-      } else {
-        ctx.strokeStyle = `hsla(260, 50%, 60%, ${0.5 * depthFade})`;
-        ctx.lineWidth = 1.5 * scale;
-      }
-      ctx.stroke();
-
-      // 标签
-      const label = node.chord;
-      const fontSize = (isCenter ? 10 : 8) * scale;
-
-      if (scale > 0.4) {
-        if (isCenter) {
-          ctx.fillStyle = "#fff";
-          ctx.font = `bold ${Math.max(8, fontSize)}px sans-serif`;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          if (label.length > 8) {
-            ctx.fillText(label.slice(0, 5), node.px, node.py - 3);
-            ctx.fillText(label.slice(5, 10), node.px, node.py + 10);
-          } else {
-            ctx.fillText(label, node.px, node.py);
-          }
+          nodeId++;
         } else {
-          const labelColor = getNodeLabelColor(!!node.isPrimary, depth, maxDepth);
-          ctx.fillStyle = labelColor;
-          ctx.font = `bold ${Math.max(7, fontSize)}px sans-serif`;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText(label, node.px, node.py);
-
-          if (scale > 0.65) {
-            ctx.fillStyle = "rgba(255,255,255,0.35)";
-            ctx.font = `${Math.max(6, 7 * scale)}px sans-serif`;
-            const short = node.label.length > 10 ? node.label.slice(0, 9) + ".." : node.label;
-            ctx.fillText(short, node.px, node.py + radius + 8);
+          // 连接到已访问节点
+          const existingNode = nodes.find(
+            n => normalize(n.chord) === normNeighbor && n.id !== parentId
+          );
+          if (existingNode && !edges.some(
+            e => (e.source === parentId && e.target === existingNode.id) ||
+              (e.source === existingNode.id && e.target === parentId)
+          )) {
+            edges.push({
+              source: parentId !== null ? parentId : 0,
+              target: existingNode.id,
+              label: op,
+              depth: Math.max(depth + 1, existingNode.depth),
+              isPrimary: PRIMARY_OPS.has(op)
+            });
           }
         }
-      }
-    });
+      });
+    }
 
-    // 图例
-    if (scale > 0.5) {
-      const legY = h - 14 * dpr;
-      ctx.fillStyle = "hsl(145, 55%, 55%)";
-      ctx.font = `bold ${8 * dpr}px sans-serif`;
-      ctx.textAlign = "left";
-      ctx.fillText("● PLRSN D1", 10 * dpr, legY);
-      ctx.fillStyle = "hsla(260, 50%, 65%, 0.8)";
-      ctx.fillText("● 扩展", 115 * dpr, legY);
-      const barX = 190 * dpr, barW = 100 * dpr, barH = 9 * dpr;
-      const barGrad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
-      barGrad.addColorStop(0, "hsl(145, 55%, 45%)");
-      barGrad.addColorStop(1, "hsl(260, 50%, 55%)");
-      ctx.fillStyle = barGrad;
-      ctx.fillRect(barX, legY - 4 * dpr, barW, barH);
+    return { nodes, edges, center: rootChord };
+  }
+
+  /**
+   * 连线颜色：浅层偏绿，深层偏蓝紫
+   */
+  function getEdgeColor(depth, maxDepth, isPrimary) {
+    const t = maxDepth <= 1 ? 0 : Math.min(1, (depth - 1) / Math.max(1, maxDepth - 1));
+    if (isPrimary) {
+      const hue = 145 - t * 30;
+      const light = 48 - t * 12;
+      return `hsla(${hue}, 55%, ${light}%, 0.75)`;
+    } else {
+      const hue = 180 + t * 80;
+      const light = 45 + t * 10;
+      return `hsla(${hue}, 45%, ${light}%, 0.55)`;
     }
   }
 
-  // ===== 交互：左键拖拽画布 =====
-  let isPanning = false;
-  let lastMouseX = 0, lastMouseY = 0;
+  function getNodeLabelColor(isPrimary, depth, maxDepth) {
+    if (isPrimary) return "hsl(145, 55%, 55%)";
+    const t = maxDepth <= 1 ? 0 : Math.min(1, depth / maxDepth);
+    return `hsl(${200 + t * 70}, 50%, 65%)`;
+  }
 
-  canvas.addEventListener("mousedown", (e) => {
-    if (e.button === 2) return; // 右键不处理 pan
-    if (e.button === 0) {
-      isPanning = true;
+  /**
+   * 树型画布绘制（支持右键拖拽节点）
+   */
+  function drawTreeCanvas(container, graphData, type) {
+    const canvas = document.createElement("canvas");
+    const containerWidth = container.clientWidth || 600;
+    const dpr = 2;
+    // 动态高度：层数越多画布越高
+    const canvasHeight = Math.max(500, (neoCurrentDepth + 1) * neoLayerSpacing + 200);
+    canvas.width = containerWidth * dpr;
+    canvas.height = canvasHeight * dpr;
+    canvas.style.width = containerWidth + "px";
+    canvas.style.height = canvasHeight + "px";
+    canvas.style.display = "block";
+    canvas.style.margin = "0 auto";
+    container.appendChild(canvas);
+
+    // 默认将根节点放在画布中上位置
+    if (!neoCanvasState._initialized) {
+      neoCanvasState.offsetX = 0;
+      neoCanvasState.offsetY = -canvasHeight / 3;
+      neoCanvasState._initialized = true;
+    }
+
+    const maxDepth = Math.max(1, ...graphData.nodes.map(n => n.depth || 0));
+
+    // 右键拖拽状态
+    let rightDragNode = null;
+    let rightDragStartX = 0;
+    let rightDragStartY = 0;
+    let rightDragOrigX = 0;
+    let rightDragOrigY = 0;
+
+    canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+
+    function render() {
+      const ctx = canvas.getContext("2d");
+      const w = canvas.width;
+      const h = canvas.height;
+      const cx = w / 2 + neoCanvasState.offsetX * dpr;
+      const cy = h / 2 + neoCanvasState.offsetY * dpr + 100 * dpr; // 根节点偏上
+      const scale = neoCanvasState.scale;
+
+      ctx.clearRect(0, 0, w, h);
+
+      const { nodes, edges } = graphData;
+
+      // 应用手动偏移
+      const nodePositions = nodes.map(n => {
+        const manualOffset = neoNodeOffsets[n.id] || { x: 0, y: 0 };
+        return {
+          ...n,
+          px: Math.round(cx + (n.x + manualOffset.x) * scale * dpr),
+          py: Math.round(cy + (n.y + manualOffset.y) * scale * dpr),
+        };
+      });
+
+      // === 连线 ===
+      edges.forEach(edge => {
+        const from = nodePositions.find(n => n.id === edge.source);
+        const to = nodePositions.find(n => n.id === edge.target);
+        if (!from || !to) return;
+
+        const edgeDepth = edge.depth || 1;
+        const isPrimary = edge.isPrimary || false;
+
+        // 树型布局的贝塞尔：控制点在垂直中点
+        const cpx = from.px;
+        const cpy = (from.py + to.py) / 2;
+
+        ctx.beginPath();
+        ctx.moveTo(from.px, from.py);
+        ctx.quadraticCurveTo(cpx, cpy, to.px, to.py);
+
+        const edgeColor = getEdgeColor(edgeDepth, maxDepth, isPrimary);
+        ctx.strokeStyle = edgeColor;
+        ctx.lineWidth = 1.3 * scale;
+        ctx.stroke();
+
+        // 连线标签
+        if (edge.label && scale > 0.55) {
+          const labelColor = getNodeLabelColor(isPrimary, edgeDepth, maxDepth);
+          ctx.fillStyle = labelColor;
+          ctx.font = `bold ${Math.max(8, 10 * scale)}px sans-serif`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          const labelX = (from.px + to.px) / 2 + 15 * scale * dpr;
+          const labelY = (from.py + to.py) / 2;
+          // ctx.fillText(edge.label, labelX, labelY);
+        }
+      });
+
+      // === 节点 ===
+      const centerRadius = neoNodeSize * 1.15;
+      const normalRadius = neoNodeSize;
+
+      nodePositions.forEach(node => {
+        const isCenter = node.group === "center";
+        const isTransform = node.group === "transform";
+        const radius = (isCenter ? centerRadius : normalRadius) * scale;
+        const depth = node.depth || 0;
+        const depthFade = Math.max(0.35, 1 - depth * 0.12);
+
+        let glowHue = 200, glowSat = 90;
+        if (!isCenter) {
+          glowHue = isTransform ? 145 : 260;
+          glowSat = isTransform ? 60 : 55;
+        }
+
+        // 光晕
+        const glowR = radius * 2;
+        const glow = ctx.createRadialGradient(node.px, node.py, radius * 0.3, node.px, node.py, glowR);
+        glow.addColorStop(0, `hsla(${glowHue}, ${glowSat}%, 50%, ${0.5 * depthFade})`);
+        glow.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(node.px, node.py, glowR, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 主体
+        ctx.beginPath();
+        ctx.arc(node.px, node.py, radius, 0, Math.PI * 2);
+        const grad = ctx.createLinearGradient(node.px - radius, node.py - radius, node.px + radius, node.py + radius);
+        if (isCenter) {
+          grad.addColorStop(0, "#4a90d9");
+          grad.addColorStop(0.5, "#2563a8");
+          grad.addColorStop(1, "#1a3a6e");
+        } else if (isTransform) {
+          grad.addColorStop(0, "hsl(145, 45%, 35%)");
+          grad.addColorStop(0.5, "hsl(145, 40%, 25%)");
+          grad.addColorStop(1, "hsl(145, 35%, 15%)");
+        } else {
+          grad.addColorStop(0, `hsla(260, 40%, ${35 * depthFade}%, ${depthFade})`);
+          grad.addColorStop(0.5, `hsla(260, 35%, ${25 * depthFade}%, ${depthFade})`);
+          grad.addColorStop(1, `hsla(260, 30%, ${15 * depthFade}%, ${depthFade})`);
+        }
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // 边框
+        if (isCenter) {
+          ctx.strokeStyle = "rgba(255,255,255,0.7)";
+          ctx.lineWidth = 2.5 * scale;
+        } else if (isTransform) {
+          ctx.strokeStyle = "hsla(145, 55%, 55%, 0.7)";
+          ctx.lineWidth = 2 * scale;
+        } else {
+          ctx.strokeStyle = `hsla(260, 50%, 60%, ${0.5 * depthFade})`;
+          ctx.lineWidth = 1.5 * scale;
+        }
+        ctx.stroke();
+
+        // 标签
+        const label = node.chord;
+        const fontSize = (isCenter ? 10 : 8) * scale;
+
+        if (scale > 0.4) {
+          if (isCenter) {
+            ctx.fillStyle = "#fff";
+            ctx.font = `bold ${Math.max(8, fontSize)}px sans-serif`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            if (label.length > 8) {
+              ctx.fillText(label.slice(0, 5), node.px, node.py - 3);
+              ctx.fillText(label.slice(5, 10), node.px, node.py + 10);
+            } else {
+              ctx.fillText(label, node.px, node.py);
+            }
+          } else {
+            const labelColor = getNodeLabelColor(!!node.isPrimary, depth, maxDepth);
+            ctx.fillStyle = labelColor;
+            ctx.font = `bold ${Math.max(7, fontSize)}px sans-serif`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(label, node.px, node.py);
+
+            if (scale > 0.65) {
+              ctx.fillStyle = "rgba(255,255,255,0.35)";
+              ctx.font = `${Math.max(6, 7 * scale)}px sans-serif`;
+              const short = node.label.length > 10 ? node.label.slice(0, 9) + ".." : node.label;
+              ctx.fillText(short, node.px, node.py + radius + 8);
+            }
+          }
+        }
+      });
+
+      // 图例
+      if (scale > 0.5) {
+        const legY = h - 14 * dpr;
+        ctx.fillStyle = "hsl(145, 55%, 55%)";
+        ctx.font = `bold ${8 * dpr}px sans-serif`;
+        ctx.textAlign = "left";
+        ctx.fillText("● PLRSN D1", 10 * dpr, legY);
+        ctx.fillStyle = "hsla(260, 50%, 65%, 0.8)";
+        ctx.fillText("● 扩展", 115 * dpr, legY);
+        const barX = 190 * dpr, barW = 100 * dpr, barH = 9 * dpr;
+        const barGrad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
+        barGrad.addColorStop(0, "hsl(145, 55%, 45%)");
+        barGrad.addColorStop(1, "hsl(260, 50%, 55%)");
+        ctx.fillStyle = barGrad;
+        ctx.fillRect(barX, legY - 4 * dpr, barW, barH);
+      }
+    }
+
+    // ===== 交互：左键拖拽画布 =====
+    let isPanning = false;
+    let lastMouseX = 0, lastMouseY = 0;
+
+    canvas.addEventListener("mousedown", (e) => {
+      if (e.button === 2) return; // 右键不处理 pan
+      if (e.button === 0) {
+        isPanning = true;
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+        container.style.cursor = "grabbing";
+      }
+      e.preventDefault();
+    });
+
+    window.addEventListener("mousemove", (e) => {
+      if (rightDragNode) {
+        const dx = e.clientX - rightDragStartX;
+        const dy = e.clientY - rightDragStartY;
+        neoNodeOffsets[rightDragNode.id] = {
+          x: rightDragOrigX + dx / (neoCanvasState.scale * dpr),
+          y: rightDragOrigY + dy / (neoCanvasState.scale * dpr)
+        };
+        render();
+        return;
+      }
+      if (!isPanning) return;
+      const dx = e.clientX - lastMouseX;
+      const dy = e.clientY - lastMouseY;
+      neoCanvasState.offsetX += dx;
+      neoCanvasState.offsetY += dy;
       lastMouseX = e.clientX;
       lastMouseY = e.clientY;
-      container.style.cursor = "grabbing";
-    }
-    e.preventDefault();
-  });
-
-  window.addEventListener("mousemove", (e) => {
-    if (rightDragNode) {
-      const dx = e.clientX - rightDragStartX;
-      const dy = e.clientY - rightDragStartY;
-      neoNodeOffsets[rightDragNode.id] = {
-        x: rightDragOrigX + dx / (neoCanvasState.scale * dpr),
-        y: rightDragOrigY + dy / (neoCanvasState.scale * dpr)
-      };
       render();
-      return;
-    }
-    if (!isPanning) return;
-    const dx = e.clientX - lastMouseX;
-    const dy = e.clientY - lastMouseY;
-    neoCanvasState.offsetX += dx;
-    neoCanvasState.offsetY += dy;
-    lastMouseX = e.clientX;
-    lastMouseY = e.clientY;
-    render();
-  });
-
-  window.addEventListener("mouseup", (e) => {
-    if (e.button === 2 && rightDragNode) {
-      rightDragNode = null;
-      container.style.cursor = "grab";
-      return;
-    }
-    if (isPanning) {
-      isPanning = false;
-      container.style.cursor = "grab";
-    }
-  });
-
-  // ===== 右键拖拽节点 =====
-  canvas.addEventListener("mousedown", (e) => {
-    if (e.button !== 2) return;
-    e.preventDefault();
-    const rect = canvas.getBoundingClientRect();
-    const sx = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const sy = (e.clientY - rect.top) * (canvas.height / rect.height);
-
-    // 查找节点
-    const hitNodes = graphData.nodes.map(n => {
-      const mo = neoNodeOffsets[n.id] || { x: 0, y: 0 };
-      return {
-        ...n,
-        px: canvas.width / 2 + neoCanvasState.offsetX * dpr + (n.x + mo.x) * neoCanvasState.scale * dpr,
-        py: canvas.height / 2 + neoCanvasState.offsetY * dpr + 100 * dpr + (n.y + mo.y) * neoCanvasState.scale * dpr,
-      };
     });
 
-    const hit = hitNodes.find(node => {
-      const r = ((node.group === "center" ? neoNodeSize * 1.15 : neoNodeSize) * neoCanvasState.scale) + 6;
-      return Math.hypot(node.px - sx, node.py - sy) <= r;
+    window.addEventListener("mouseup", (e) => {
+      if (e.button === 2 && rightDragNode) {
+        rightDragNode = null;
+        container.style.cursor = "grab";
+        return;
+      }
+      if (isPanning) {
+        isPanning = false;
+        container.style.cursor = "grab";
+      }
     });
 
-    if (hit) {
-      rightDragNode = hit;
-      rightDragStartX = e.clientX;
-      rightDragStartY = e.clientY;
-      rightDragOrigX = neoNodeOffsets[hit.id]?.x || 0;
-      rightDragOrigY = neoNodeOffsets[hit.id]?.y || 0;
-      container.style.cursor = "grabbing";
-    }
-  });
+    // ===== 右键拖拽节点 =====
+    canvas.addEventListener("mousedown", (e) => {
+      if (e.button !== 2) return;
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const sx = (e.clientX - rect.left) * (canvas.width / rect.width);
+      const sy = (e.clientY - rect.top) * (canvas.height / rect.height);
 
-  // 滚轮缩放
-  canvas.addEventListener("wheel", (e) => {
-    e.preventDefault();
-    const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
-    neoCanvasState.scale = Math.max(0.25, Math.min(3.0, neoCanvasState.scale * zoomFactor));
-    render();
-  }, { passive: false });
+      // 查找节点
+      const hitNodes = graphData.nodes.map(n => {
+        const mo = neoNodeOffsets[n.id] || { x: 0, y: 0 };
+        return {
+          ...n,
+          px: canvas.width / 2 + neoCanvasState.offsetX * dpr + (n.x + mo.x) * neoCanvasState.scale * dpr,
+          py: canvas.height / 2 + neoCanvasState.offsetY * dpr + 100 * dpr + (n.y + mo.y) * neoCanvasState.scale * dpr,
+        };
+      });
 
-  // 触摸支持
-  canvas.addEventListener("touchstart", (e) => {
-    if (e.touches.length === 1) {
-      isPanning = true;
+      const hit = hitNodes.find(node => {
+        const r = ((node.group === "center" ? neoNodeSize * 1.15 : neoNodeSize) * neoCanvasState.scale) + 6;
+        return Math.hypot(node.px - sx, node.py - sy) <= r;
+      });
+
+      if (hit) {
+        rightDragNode = hit;
+        rightDragStartX = e.clientX;
+        rightDragStartY = e.clientY;
+        rightDragOrigX = neoNodeOffsets[hit.id]?.x || 0;
+        rightDragOrigY = neoNodeOffsets[hit.id]?.y || 0;
+        container.style.cursor = "grabbing";
+      }
+    });
+
+    // 滚轮缩放
+    canvas.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+      neoCanvasState.scale = Math.max(0.25, Math.min(3.0, neoCanvasState.scale * zoomFactor));
+      render();
+    }, { passive: false });
+
+    // 触摸支持
+    canvas.addEventListener("touchstart", (e) => {
+      if (e.touches.length === 1) {
+        isPanning = true;
+        lastMouseX = e.touches[0].clientX;
+        lastMouseY = e.touches[0].clientY;
+      }
+    }, { passive: false });
+    canvas.addEventListener("touchmove", (e) => {
+      if (!isPanning || e.touches.length !== 1) return;
+      const dx = e.touches[0].clientX - lastMouseX;
+      const dy = e.touches[0].clientY - lastMouseY;
+      neoCanvasState.offsetX += dx;
+      neoCanvasState.offsetY += dy;
       lastMouseX = e.touches[0].clientX;
       lastMouseY = e.touches[0].clientY;
-    }
-  }, { passive: false });
-  canvas.addEventListener("touchmove", (e) => {
-    if (!isPanning || e.touches.length !== 1) return;
-    const dx = e.touches[0].clientX - lastMouseX;
-    const dy = e.touches[0].clientY - lastMouseY;
-    neoCanvasState.offsetX += dx;
-    neoCanvasState.offsetY += dy;
-    lastMouseX = e.touches[0].clientX;
-    lastMouseY = e.touches[0].clientY;
-    render();
-    e.preventDefault();
-  }, { passive: false });
-  canvas.addEventListener("touchend", () => { isPanning = false; });
+      render();
+      e.preventDefault();
+    }, { passive: false });
+    canvas.addEventListener("touchend", () => { isPanning = false; });
 
-  // 双击重置
-  canvas.addEventListener("dblclick", () => {
-    neoCanvasState = { offsetX: 0, offsetY: -(canvasHeight) / 3, scale: 1, _initialized: true };
-    neoNodeOffsets = {};
-    render();
-  });
-
-  // 左键点击节点跳转
-  canvas.addEventListener("click", (e) => {
-    if (isPanning || rightDragNode) return;
-    const rect = canvas.getBoundingClientRect();
-    const sx = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const sy = (e.clientY - rect.top) * (canvas.height / rect.height);
-
-    const hitNodes = graphData.nodes.map(n => {
-      const mo = neoNodeOffsets[n.id] || { x: 0, y: 0 };
-      return {
-        ...n,
-        px: canvas.width / 2 + neoCanvasState.offsetX * dpr + (n.x + mo.x) * neoCanvasState.scale * dpr,
-        py: canvas.height / 2 + neoCanvasState.offsetY * dpr + 100 * dpr + (n.y + mo.y) * neoCanvasState.scale * dpr,
-      };
-    });
-
-    const hit = hitNodes.find(node => {
-      const r = ((node.group === "center" ? neoNodeSize * 1.15 : neoNodeSize) * neoCanvasState.scale) + 10;
-      return Math.hypot(node.px - sx, node.py - sy) <= r;
-    });
-
-    if (hit) {
-      const neoInput = document.getElementById("neo-input");
-      if (neoInput) neoInput.value = hit.chord;
+    // 双击重置
+    canvas.addEventListener("dblclick", () => {
       neoCanvasState = { offsetX: 0, offsetY: -(canvasHeight) / 3, scale: 1, _initialized: true };
       neoNodeOffsets = {};
-      updateNeo(container.parentElement, hit.chord);
-    }
-  });
+      render();
+    });
 
-  // 初始渲染
-  render();
-}
+    // 左键点击节点跳转
+    canvas.addEventListener("click", (e) => {
+      if (isPanning || rightDragNode) return;
+      const rect = canvas.getBoundingClientRect();
+      const sx = (e.clientX - rect.left) * (canvas.width / rect.width);
+      const sy = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+      const hitNodes = graphData.nodes.map(n => {
+        const mo = neoNodeOffsets[n.id] || { x: 0, y: 0 };
+        return {
+          ...n,
+          px: canvas.width / 2 + neoCanvasState.offsetX * dpr + (n.x + mo.x) * neoCanvasState.scale * dpr,
+          py: canvas.height / 2 + neoCanvasState.offsetY * dpr + 100 * dpr + (n.y + mo.y) * neoCanvasState.scale * dpr,
+        };
+      });
+
+      const hit = hitNodes.find(node => {
+        const r = ((node.group === "center" ? neoNodeSize * 1.15 : neoNodeSize) * neoCanvasState.scale) + 10;
+        return Math.hypot(node.px - sx, node.py - sy) <= r;
+      });
+
+      if (hit) {
+        const neoInput = document.getElementById("neo-input");
+        if (neoInput) neoInput.value = hit.chord;
+        neoCanvasState = { offsetX: 0, offsetY: -(canvasHeight) / 3, scale: 1, _initialized: true };
+        neoNodeOffsets = {};
+        updateNeo(container.parentElement, hit.chord);
+      }
+    });
+
+    // 初始渲染
+    render();
+  }
   // ==================== 和弦音阶速查面板 ====================
   function initRefPanel() {
     const rootSelect = document.getElementById("ref-root-select");
