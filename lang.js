@@ -3,6 +3,7 @@ const i18n = {
     header_h1: { zh: "乐理工具箱", ja: "音楽理論ツールボックス", en: "Music Theory Toolbox" },
     subtitle: { zh: "音阶和弦・调式和声实用工具箱", ja: "音階和音・旋法和声 実用ツールボックス", en: "Scale & Chord · Mode & Harmony Practical Toolkit" },
     nav_chord: { zh: "和弦转换", ja: "コード変換", en: "Chord Converter" },
+    nav_classical: { zh: "古典和声连接器", ja: "古典和声接続", en: "Classical Harmony" },
     nav_blues: { zh: "布鲁斯工具箱", ja: "ブルース・ツール", en: "Blues Toolkit" },
     nav_lcc: { zh: "LCC调性分析", ja: "LCCリディアン解析", en: "LCC Analysis" },
     nav_cst: { zh: "CST旋律关联", ja: "CSTスケール対応", en: "CST Analysis" },
@@ -18,6 +19,10 @@ const i18n = {
     sort_desc: { zh: "降序", ja: "降順", en: "Descending" },
 
     label_chord_example: { zh: "和弦(单独): ", ja: "コード(個別): ", en: "Chord (single):" },
+    label_classical_key: { zh: "调性", ja: "調", en: "Key" },
+    label_classical_mode: { zh: "调式", ja: "旋法", en: "Mode" },
+    label_classical_chord: { zh: "当前和弦", ja: "現在の和音", en: "Current chord" },
+    classical_run_btn: { zh: "推荐衔接", ja: "接続を提案", en: "Recommend" },
     label_blues_example: { zh: "和弦(布鲁斯): ", ja: "コード(ブルース): ", en: "Chord (blues):" },
     label_lcc_example: { zh: "和弦(LCC): ", ja: "コード(LCC): ", en: "Chord (LCC):" },
     label_cst_example: { zh: "和弦(CST): ", ja: "コード(CST): ", en: "Chord (CST):" },
@@ -329,4 +334,3 @@ if (document.readyState === 'loading') {
 } else {
     applyTranslations();
 }
-

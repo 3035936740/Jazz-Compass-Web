@@ -286,6 +286,108 @@ body {
     filter: drop-shadow(0 0 6px rgba(0,181,173,0.5));
 }
 
+/* Jazz Compass workspace refresh */
+:root {
+    --bg: #070b12;
+    --bg-elevated: #0d1420;
+    --card: rgba(14, 22, 34, .92);
+    --surface: #111b2a;
+    --surface-2: #172335;
+    --muted: #8d9bb0;
+    --text: #edf3fb;
+    --accent: #78a9ff;
+    --accent-2: #65e0ca;
+    --warm: #f4b875;
+    --glass: rgba(255,255,255,.045);
+    --glass-border: rgba(164,190,224,.14);
+    --radius: 14px;
+}
+
+html { background: var(--bg); }
+body {
+    background:
+      radial-gradient(circle at 82% -10%, rgba(75, 128, 206, .18), transparent 32rem),
+      linear-gradient(180deg, #080d16 0%, #070b12 62%, #090e17 100%);
+    color: var(--text);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.container {
+    width: min(1280px, calc(100% - 40px));
+    max-width: none;
+    margin: 0 auto;
+    padding: 32px 0 60px;
+    grid-template-columns: 232px minmax(0, 1fr);
+    gap: 30px;
+}
+.app-header {
+    min-height: 84px;
+    margin-bottom: 14px;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+.brand-lockup { display: flex; align-items: center; gap: 15px; }
+.logo {
+    width: 58px; height: 58px; border-radius: 16px;
+    background: linear-gradient(145deg, #6c9cff 0%, #4d76d9 55%, #56d9c3 100%);
+    box-shadow: 0 12px 34px rgba(51, 105, 207, .28), inset 0 1px rgba(255,255,255,.32);
+    letter-spacing: -.08em; font-size: 1.05rem;
+}
+.eyebrow { color: var(--accent-2); font-size: .64rem; letter-spacing: .18em; font-weight: 800; margin-bottom: 5px; }
+.eyebrow-dot { display:inline-block; width:4px; height:4px; margin:0 7px 2px; border-radius:50%; background:var(--warm); }
+.title-block h1 { color: #f7faff; font-size: clamp(1.7rem, 3vw, 2.25rem); letter-spacing: -.04em; }
+.subtitle { color: #91a1b6; font-size: .86rem; margin-top: 6px; }
+.header-tools { display:flex; align-items:center; gap:14px; padding-top:7px; }
+.notation-switch { display:flex; align-items:center; gap:4px; padding:4px; border:1px solid var(--glass-border); border-radius:10px; background:rgba(12,20,32,.78); }
+.notation-label { padding:0 8px; color:#8090a6; font-size:.7rem; letter-spacing:.05em; }
+.notation-btn { border:0; border-radius:7px; padding:7px 10px; background:transparent; color:#91a1b6; font-size:.75rem; cursor:pointer; transition:.18s ease; }
+.notation-btn:hover { color:var(--text); background:rgba(255,255,255,.06); }
+.notation-btn.active { color:#08111d; background:var(--accent-2); font-weight:800; box-shadow:0 3px 12px rgba(101,224,202,.18); }
+.status-pill { display:flex; gap:7px; align-items:center; color:#8ea1b7; font-size:.65rem; letter-spacing:.12em; font-weight:800; }
+.status-dot { width:7px; height:7px; border-radius:50%; background:var(--accent-2); box-shadow:0 0 0 4px rgba(101,224,202,.11); }
+.feature-nav { position:sticky; top:20px; gap:5px; padding:8px; border:1px solid var(--glass-border); border-radius:16px; background:rgba(12,19,30,.72); box-shadow:0 18px 42px rgba(0,0,0,.18); }
+.feature-nav::before { content:"TOOLS"; display:block; padding:5px 10px 11px; color:#61758f; font-size:.64rem; letter-spacing:.16em; font-weight:800; }
+.feature-btn { padding:11px 12px; border-radius:10px; border:1px solid transparent; color:#95a3b7; font-size:.82rem; font-weight:650; }
+.feature-btn:hover { transform:none; color:#dbe7f5; background:rgba(255,255,255,.045); }
+.feature-btn.active { color:#f6fbff; background:linear-gradient(90deg, rgba(120,169,255,.2), rgba(101,224,202,.07)); border-color:rgba(120,169,255,.18); box-shadow:none; position:relative; }
+.feature-btn.active::before { content:""; position:absolute; left:-1px; top:9px; bottom:9px; width:3px; border-radius:3px; background:var(--accent-2); }
+.panels { grid-column:2 / 3; gap:16px; }
+.panel { border:1px solid var(--glass-border); border-radius:16px; background:linear-gradient(145deg, rgba(16,26,41,.94), rgba(10,17,27,.94)); box-shadow:0 24px 70px rgba(0,0,0,.24); overflow:hidden; }
+.panel-header { min-height:62px; padding:16px 20px; gap:14px; border-bottom:1px solid rgba(159,184,215,.1); background:rgba(255,255,255,.018); }
+.panel-header label { color:#aebbd0; font-size:.8rem; letter-spacing:.01em; }
+.panel-header input, .panel-header select { min-width:150px; padding:10px 12px; border-radius:9px; border-color:rgba(161,185,214,.16); background:rgba(5,11,19,.56); color:var(--text); font-size:.88rem; }
+.panel-header input:focus, .panel-header select:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(120,169,255,.13); }
+button { font-family:inherit; }
+.panel-header > button, .panel-action-row > button, .panel-action { border:1px solid rgba(120,169,255,.25); border-radius:9px; padding:9px 16px; background:linear-gradient(135deg, #6e9cff, #4e79d3); color:#fff; font-size:.78rem; font-weight:800; cursor:pointer; box-shadow:0 8px 20px rgba(58,103,190,.2); transition:.18s ease; }
+.panel-header > button:hover, .panel-action-row > button:hover, .panel-action:hover { transform:translateY(-1px); filter:brightness(1.08); }
+.panel-body { padding:20px; }
+.panel-action-row { padding:12px 20px 0; display:flex; flex-wrap:wrap; gap:8px; }
+.panel-action-row .panel-action { background:rgba(255,255,255,.045); color:#a8bad1; border-color:rgba(161,185,214,.15); box-shadow:none; }
+.panel-action-row .panel-action.active { color:#08111d; background:var(--accent-2); border-color:var(--accent-2); }
+.result-card, .note-cell, .mini-keyboard, .rec-card { border-color:rgba(161,185,214,.13) !important; background:rgba(255,255,255,.035) !important; }
+.result-card { border-radius:12px !important; padding:16px !important; }
+.note-grid { gap:8px; }
+.note-cell { border-radius:10px; padding:12px 8px; }
+.note-cell .note { color:#f4f8ff; font-weight:800; }
+@media (max-width: 840px) {
+    .container { width:min(100% - 24px, 680px); padding-top:20px; display:block; }
+    .app-header { gap:18px; flex-direction:column; }
+    .header-tools { width:100%; justify-content:space-between; padding-top:0; }
+    .feature-nav { position:static; margin:0 0 16px; display:flex; flex-direction:row; flex-wrap:wrap; padding:7px; }
+    .feature-nav::before { width:100%; padding:3px 8px 6px; }
+    .feature-btn { flex:1 1 auto; text-align:center; min-width:30%; padding:9px 7px; font-size:.75rem; }
+    .feature-btn.active::before { left:8px; right:8px; top:auto; bottom:3px; width:auto; height:2px; }
+    .panels { width:100%; }
+    .panel-header { align-items:stretch; flex-wrap:wrap; }
+    .panel-header label { flex:1 1 auto; }
+    .panel-header input, .panel-header select { width:100%; box-sizing:border-box; }
+}
+@media (max-width: 480px) {
+    .notation-label, .status-pill { display:none; }
+    .header-tools { justify-content:flex-start; }
+    .panel-header, .panel-body { padding:14px; }
+    .panel-action-row { padding:10px 14px 0; }
+}
+
 .panel-header input,
 .panel-header select {
 	background: rgba(255, 255, 255, 0.06);
@@ -1132,4 +1234,37 @@ pre {
 }
 #neo-canvas-container.panning {
     cursor: grabbing;
+}
+
+.piano-section { margin-top: 18px; padding: 16px; border: 1px solid rgba(161,185,214,.13); border-radius: 14px; background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.018)); overflow: hidden; }
+.piano-section-head { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:14px; }
+.piano-section-head strong { display:block; margin-top:3px; color:#f1f6ff; font-size:1rem; }
+.piano-kicker { color:var(--accent-2); font-size:.62rem; letter-spacing:.16em; font-weight:800; }
+.piano-caption { display:block; margin-top:4px; color:var(--muted); font-size:.74rem; }
+.piano-legend { display:flex; gap:14px; margin-top:9px; color:#99a9bd; font-size:.68rem; }
+.piano-legend span { display:inline-flex; align-items:center; gap:6px; }
+.piano-legend i { width:9px; height:9px; border-radius:3px; box-shadow:0 0 0 2px rgba(255,255,255,.06); }
+.legend-root { background:#f2b66f; }
+.legend-tone { background:#64d8c4; }
+.chord-play-button { display:inline-flex; align-items:center; gap:7px; border:1px solid rgba(101,224,202,.3); border-radius:9px; padding:9px 13px; background:rgba(101,224,202,.12); color:#9bf3df; font-size:.76rem; font-weight:800; cursor:pointer; transition:.18s ease; }
+.chord-play-button:hover { background:rgba(101,224,202,.2); transform:translateY(-1px); }
+.piano-keyboard { position:relative; display:flex; flex-wrap:nowrap; gap:0; height:176px; margin-top:4px; padding:0 4px 4px; border:0; background:transparent !important; overflow-x:auto; overflow-y:hidden; }
+.piano-white-wrap { position:relative; flex:1 0 50px; min-width:50px; height:100%; }
+.piano-key { font:inherit; cursor:pointer; transition:background .14s ease, transform .12s ease, box-shadow .14s ease; }
+.piano-white-key { position:relative; width:100%; height:100%; border:1px solid #c3ccd9; border-radius:0 0 8px 8px; background:linear-gradient(180deg,#fbfdff 0%,#dce4ee 86%,#b7c3d3 100%); color:#58677c; z-index:1; }
+.piano-white-key:first-child { border-radius:7px 0 8px 8px; }
+.piano-white-key:hover { background:#ffffff; transform:translateY(1px); }
+.piano-white-key.is-active { background:linear-gradient(180deg,#b4f2e7,#64d8c4 84%,#36a999); color:#063c33; box-shadow:inset 0 -5px 0 rgba(5,75,65,.2); }
+.piano-white-key.is-root { background:linear-gradient(180deg,#ffe0b5,#f2b66f 84%,#c77c37); color:#4a2507; box-shadow:inset 0 -5px 0 rgba(105,53,12,.22), 0 0 0 2px rgba(242,182,111,.42); }
+.piano-key-label { position:absolute; left:0; right:0; bottom:10px; font-size:.74rem; font-weight:850; pointer-events:none; }
+.piano-black-key { position:absolute; z-index:3; top:-1px; right:-14px; width:28px; height:61%; border:1px solid #0a111c; border-radius:0 0 6px 6px; background:linear-gradient(180deg,#27364b,#090f19 80%); color:#8ea2bb; box-shadow:0 5px 9px rgba(0,0,0,.5); }
+.piano-black-key:hover { background:#344962; transform:translateY(1px); }
+.piano-black-key.is-active { background:linear-gradient(180deg,#65d9c5,#1b766e); color:#e6fff9; }
+.piano-black-key.is-root { background:linear-gradient(180deg,#f2b66f,#8f4d1f); color:#fff5e9; box-shadow:0 0 0 2px rgba(242,182,111,.45), 0 5px 9px rgba(0,0,0,.5); }
+.piano-black-key .piano-key-label { bottom:8px; font-size:.62rem; transform:rotate(-90deg); }
+@media (max-width: 560px) {
+    .piano-section-head { align-items:flex-start; flex-direction:column; }
+    .chord-play-button { align-self:stretch; justify-content:center; }
+    .piano-keyboard { height:156px; }
+    .piano-white-wrap { flex-basis:42px; min-width:42px; }
 }

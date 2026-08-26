@@ -1,4 +1,4 @@
-import { EnhancedChordConverter, JazzBrain } from "./jazz_compass.js";
+import { EnhancedChordConverter, JazzBrain, ClassicalHarmonyConnector } from "./jazz_compass.js";
 import * as lang from "./lang.js";
 
 // 在 script.js 顶部（DOMContentLoaded 之外或内部）添加
@@ -530,7 +530,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // 覆盖原有的 allNotes/noteToIdx/idxToNote
-  const allNotes = [
+  let notationMode = localStorage.getItem("jazz-compass-notation") || "flats";
+  const flatNoteNames = [
     "C",
     "Db",
     "D",
@@ -544,8 +545,56 @@ document.addEventListener("DOMContentLoaded", () => {
     "Bb",
     "B",
   ];
+  const sharpNoteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+  const allNotes = flatNoteNames;
   const noteToIdx = Object.fromEntries(allNotes.map((n, i) => [n, i]));
-  const idxToNote = allNotes;
+  let idxToNote = [...flatNoteNames];
+
+  function applyNotationToConverters() {
+    idxToNote = [...(notationMode === "sharps" ? sharpNoteNames : flatNoteNames)];
+    [
+      typeof conv !== "undefined" ? conv : null,
+      typeof brain !== "undefined" ? brain?.converter : null,
+      typeof classical !== "undefined" ? classical?.converter : null,
+      _multiModeChordConverter,
+    ]
+      .filter(Boolean)
+      .forEach((converter) => {
+        if (converter.idxToNote) converter.idxToNote.splice(0, converter.idxToNote.length, ...idxToNote);
+      });
+  }
+
+  function rerenderActivePanel() {
+    const active = document.querySelector(".feature-btn.active")?.dataset.feature;
+  const runMap = { chord: "chord-run", classical: "classical-run", blues: "blues-run", lcc: "lcc-run", cst: "cst-run", other: "other-run", neo: "neo-run" };
+    const button = runMap[active] && document.getElementById(runMap[active]);
+    if (button) button.click();
+    if (active === "circle") drawCircle(circleCurrentKey?.primary === "major" ? circleCurrentKey.major : null, circleCurrentKey?.primary === "minor" ? circleCurrentKey.minor : null);
+    if (active === "ref") initRefPanel();
+  }
+
+  function setNotation(mode) {
+    notationMode = mode === "sharps" ? "sharps" : "flats";
+    localStorage.setItem("jazz-compass-notation", notationMode);
+    applyNotationToConverters();
+    document.querySelectorAll(".notation-btn").forEach((button) => {
+      const active = button.dataset.notation === notationMode;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
+    rerenderActivePanel();
+  }
+
+  function setTheme(mode) {
+    const theme = mode === "light" ? "light" : "dark";
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem("jazz-compass-theme", theme);
+    document.querySelectorAll(".theme-btn").forEach((button) => {
+      const active = button.dataset.themeValue === theme;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
+  }
 
   // 获取音阶音符（使用半音索引，避免等音名匹配失败）
   function getScaleNotes(root, intervals) {
@@ -555,7 +604,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return intervals.map(() => "?");
     }
     const preferSharps = /[#♯]/.test(root);
-    return intervals.map((i) => semitoneToNote((rootIdx + i) % 12, preferSharps));
+    return intervals.map((i) => semitoneToNote((rootIdx + i) % 12, notationMode === "sharps" || preferSharps));
   }
 
   const axisColorMap = {
@@ -2770,6 +2819,20 @@ const seqFlowHtml = funcSteps.length
 
   const conv = new EnhancedChordConverter();
   const brain = new JazzBrain();
+  const classical = new ClassicalHarmonyConnector();
+  document.querySelectorAll(".theme-btn").forEach((button) => {
+    button.addEventListener("click", () => setTheme(button.dataset.themeValue));
+  });
+  setTheme(document.documentElement.dataset.theme || "dark");
+  document.querySelectorAll(".notation-btn").forEach((button) => {
+    button.addEventListener("click", () => setNotation(button.dataset.notation));
+  });
+  applyNotationToConverters();
+  document.querySelectorAll(".notation-btn").forEach((button) => {
+    const active = button.dataset.notation === notationMode;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
   // state for "other" panel mode
   let currentOtherMode = "report";
 
@@ -2802,6 +2865,9 @@ const seqFlowHtml = funcSteps.length
     }
     if (feature === "ref") {
       initRefPanel();
+    }
+    if (feature === "classical" && !document.getElementById("panel-classical-body")?.children.length) {
+      document.getElementById("classical-run")?.click();
     }
   }
 
@@ -2878,16 +2944,33 @@ const seqFlowHtml = funcSteps.length
       }
       htmlParts.push("</div>");
 
-      // 小键盘视觉（12键，仅标注选中）
-      const keys = conv.idxToNote
-        .map((n, idx) => {
-          const active = offsets.includes(idx) ? "active-key" : "";
-          return `<div class="key ${active}">${n}</div>`;
-        })
-        .join("");
-      htmlParts.push(`<div class="mini-keyboard">${keys}</div>`);
+      const rootIdx = conv.noteToIdx[root];
+      const activeSet = new Set(offsets);
+      const whitePcs = [0, 2, 4, 5, 7, 9, 11, 0, 2, 4, 5, 7, 9, 11];
+      const blackAfter = new Set([0, 2, 5, 7, 9]);
+      const blackPc = { 0: 1, 2: 3, 5: 6, 7: 8, 9: 10 };
+      const keys = whitePcs.map((pc, index) => {
+        const octave = index < 7 ? 4 : 5;
+        const white = `<button type="button" class="piano-key piano-white-key${activeSet.has(pc) ? " is-active" : ""}${rootIdx === pc ? " is-root" : ""}" data-piano-pc="${pc}" data-piano-octave="${octave}" aria-label="${conv.idxToNote[pc]}${octave}"><span class="piano-key-label">${conv.idxToNote[pc]}</span></button>`;
+        let black = "";
+        if (blackAfter.has(pc)) {
+          const accidentalPc = blackPc[pc];
+          black = `<button type="button" class="piano-key piano-black-key${activeSet.has(accidentalPc) ? " is-active" : ""}${rootIdx === accidentalPc ? " is-root" : ""}" data-piano-pc="${accidentalPc}" data-piano-octave="${octave}" aria-label="${conv.idxToNote[accidentalPc]}${octave}"><span class="piano-key-label">${conv.idxToNote[accidentalPc]}</span></button>`;
+        }
+        return `<div class="piano-white-wrap">${white}${black}</div>`;
+      }).join("");
+      htmlParts.push(`<section class="piano-section"><div class="piano-section-head"><div><span class="piano-kicker">VOICING</span><strong>和弦钢琴</strong><span class="piano-caption">点击琴键可单独试听</span><div class="piano-legend"><span><i class="legend-root"></i>根音</span><span><i class="legend-tone"></i>和弦音</span></div></div><button type="button" class="chord-play-button" id="chord-play-result"><span>▶</span> 播放和弦</button></div><div class="mini-keyboard piano-keyboard">${keys}</div></section>`);
 
       targetEl.innerHTML = htmlParts.join("");
+      targetEl.querySelector("#chord-play-result")?.addEventListener("click", () => {
+        const { freqs } = chordNotesToFrequencies(notes, 4, false, null);
+        playChord(freqs);
+      });
+      targetEl.querySelectorAll("[data-piano-pc]").forEach((key) => {
+        key.addEventListener("click", () => {
+          playChord([semitoneToFreq(Number(key.dataset.pianoPc), Number(key.dataset.pianoOctave))], 0.7);
+        });
+      });
       return;
     }
 
@@ -5911,6 +5994,82 @@ const seqFlowHtml = funcSteps.length
   }
 
   // Bind run buttons and inputs per-panel
+  function localizeClassicalText(text) {
+    if (window.__lang !== "zh") return text;
+    const exact = {
+      "Classical tertian harmony: triads and seventh chords; only the dominant may use a ninth.": "古典三度叠置和声：以三和弦、七和弦为主，仅属功能允许使用九和弦。",
+      "diatonic triad": "调内三和弦",
+      "diatonic seventh": "调内七和弦",
+      "diatonic ninth": "调内九和弦",
+      "cadential six-four": "终止四六和弦",
+      "dominant ninth": "属九和弦",
+      "Neapolitan sixth": "那不勒斯六和弦",
+      "double dominant": "重属和弦",
+      "secondary dominant": "离调属和弦",
+      "Italian augmented sixth": "意大利增六和弦",
+      "French augmented sixth": "法国增六和弦",
+      "German augmented sixth": "德国增六和弦",
+      "unclassified": "未分类",
+      "Continue by functional contrast or common-tone prolongation.": "通过功能对比继续，或用共同音延长当前功能。",
+      "Resolve toward the tonic; raise the leading tone in minor.": "向主功能解决；小调中须使用升高的导音。",
+      "Bass remains on scale degree 5; 6-5 and 4-3 resolve into V or V7.": "低音保持在属音，外声部按 6-5、4-3 解决到 V 或 V7。",
+      "Use first inversion (N6), then move to K64 or V; double the bass is usually preferred.": "采用第一转位 N6，随后连接 K64 或 V；通常优先重复低音。",
+      "Resolve the augmented sixth outward by semitone to scale degree 5, then continue to V.": "增六音程向外半音解决到属音，再进入 V。",
+      "Resolve through K64 to avoid parallel fifths, then continue to V.": "先经过 K64 以规避平行五度，再进入 V。",
+      "Resolve the seventh downward and the leading tone upward; the ninth resolves downward.": "七音下行、导音上行，九音下行解决。",
+    };
+    if (exact[text]) return exact[text];
+    const secondary = text.match(/^Resolve to ([^(]+) \(([^)]+)\); retain common tones and resolve the temporary leading tone upward\.$/);
+    if (secondary) return `解决到 ${secondary[1].trim()}（${secondary[2]}）；保留共同音，临时导音上行解决。`;
+    return text;
+  }
+
+  function updateClassicalHarmony(targetEl) {
+    const key = document.getElementById("classical-key")?.value || "C";
+    const mode = document.getElementById("classical-mode")?.value || "major";
+    const input = document.getElementById("classical-input")?.value.trim() || "I";
+    try {
+      const report = classical.recommend(input, key, mode, 16);
+      targetEl.innerHTML = "";
+      const summary = document.createElement("div");
+      summary.className = "classical-summary result-card";
+      summary.innerHTML = `<div class="classical-summary-title">${key} ${mode === "minor" ? "小调" : "大调"} · ${report.current.symbol || input}</div><div class="small-muted">${localizeClassicalText(report.constraints)}</div><div class="classical-current-meta">${localizeClassicalText(report.current.category || "unclassified")} · 功能 ${report.current.function || "—"} · 低音 ${report.current.bass || report.current.notes?.[0] || "—"}</div>`;
+      targetEl.appendChild(summary);
+
+      const heading = document.createElement("div");
+      heading.className = "classical-list-heading";
+      heading.textContent = `推荐衔接 · ${report.recommendations.length}`;
+      targetEl.appendChild(heading);
+
+      const list = document.createElement("div");
+      list.className = "classical-rec-list";
+      report.recommendations.forEach((item) => {
+        const card = document.createElement("article");
+        card.className = "classical-rec-card result-card";
+        const toneButtons = (item.notes || []).map(note => `<button type="button" class="classical-note" data-classical-note="${note}">${note}</button>`).join("");
+        card.innerHTML = `<div class="classical-rec-top"><div><strong>${item.symbol}</strong><span class="classical-chord-name">${item.chord}</span></div><span class="classical-score">${item.score.toFixed(1)}</span></div><div class="classical-tags"><span>${localizeClassicalText(item.category)}</span><span>功能 ${item.function}</span><span>转位 ${item.figuredBass || "根位"}</span><span>低音 ${item.bass || "—"}</span></div><div class="classical-notes">${toneButtons}</div><p class="classical-resolution">${localizeClassicalText(item.resolution)}</p><div class="classical-meta">共同音 ${item.commonTones} · 声部距离 ${item.voiceLeading}</div><button type="button" class="classical-play" title="播放和弦">▶ 播放</button>`;
+        card.querySelector(".classical-play")?.addEventListener("click", () => {
+          const { freqs } = chordNotesToFrequencies(item.notes || [], 4, false, null);
+          playChord(freqs);
+        });
+        card.querySelectorAll("[data-classical-note]").forEach(button => button.addEventListener("click", () => {
+          playChord([noteToFrequency(button.dataset.classicalNote)], 0.7);
+        }));
+        list.appendChild(card);
+      });
+      targetEl.appendChild(list);
+    } catch (error) {
+      targetEl.innerHTML = `<div class="result-card classical-error">${error.message}</div>`;
+    }
+  }
+
+  document.getElementById("classical-run")?.addEventListener("click", () => {
+    updateClassicalHarmony(document.getElementById("panel-classical-body"));
+  });
+  document.getElementById("classical-input")?.addEventListener("keydown", event => {
+    if (event.key === "Enter") document.getElementById("classical-run")?.click();
+  });
+
   document.getElementById("chord-run").addEventListener("click", () => {
     const target = document.getElementById("panel-chord-body");
     const val = document.getElementById("chord-input").value;

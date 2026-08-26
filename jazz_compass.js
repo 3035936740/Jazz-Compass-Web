@@ -61,17 +61,26 @@ export class ChordConverter {
 
     parseSlashChord(inputStr) {
         if (!inputStr.includes("/")) return null;
-        const [chordPart, bassPart] = inputStr.split("/");
+        const slashIndex = inputStr.lastIndexOf("/");
+        const chordPart = inputStr.slice(0, slashIndex).trim();
+        const bassPart = inputStr.slice(slashIndex + 1).trim();
         const upperRes = this.parseAndGetNotes(chordPart);
         if (typeof upperRes === 'string') return upperRes;
         if (!(bassPart in this.noteToIdx)) throw new Error(`Invalid bass note: ${bassPart}`);
 
         const stdBass = this.idxToNote[this.noteToIdx[bassPart]];
-        const otherNotes = upperRes.notes.filter(n => this.idxToNote[this.noteToIdx[n]] !== stdBass);
-        const finalNotes = [bassPart, ...otherNotes];
-        const finalOffsets = finalNotes.map(n => this.noteToIdx[n]);
+        const voicing = [stdBass, ...upperRes.notes.filter(n => this.idxToNote[this.noteToIdx[n]] !== stdBass)];
 
-        return { chord: inputStr, notes: finalNotes, offsets: finalOffsets, isSlash: true };
+        return {
+            chord: inputStr,
+            notes: [...upperRes.notes],
+            voicing,
+            offsets: [...upperRes.offsets],
+            isSlash: true,
+            root: upperRes.root || chordPart.match(/^([A-G][#b]?)/)?.[1],
+            bass: stdBass,
+            quality: upperRes.quality ?? (chordPart.replace(/^([A-G][#b]?)/, "") || "maj")
+        };
     }
 
     parseAndGetNotes(inputStr) {
@@ -87,7 +96,7 @@ export class ChordConverter {
         const offsets = this.chordFormulas[chordType] || [0, 4, 7];
         const absIndices = offsets.map(o => (rootIdx + o) % 12);
         const noteNames = absIndices.map(i => this.idxToNote[i]);
-        return { chord: `${root}${chordType}`, notes: noteNames, offsets: absIndices, isSlash: false };
+        return { chord: `${root}${chordType}`, notes: noteNames, offsets: absIndices, isSlash: false, root, bass: root, quality: chordType };
     }
 
     /** 统一处理输入：返回音符列表 */
@@ -667,6 +676,22 @@ export class EnhancedChordConverter extends ChordConverter {
         let result = null;
 
         if (typeof chordInput === 'string') {
+            if (chordInput.includes("/")) {
+                const parsed = this.parseAndGetNotes(chordInput.trim());
+                if (!parsed) return null;
+                if (!isDetailed) return parsed.notes;
+                return {
+                    chord: parsed.chord,
+                    notes: [...parsed.notes],
+                    voicing: [...(parsed.voicing || parsed.notes)],
+                    offsets: [...parsed.offsets],
+                    isSlash: true,
+                    is_slash: true,
+                    root: parsed.root,
+                    bass: parsed.bass,
+                    quality: parsed.quality,
+                };
+            }
             // 先复用 _ensureNotes：它已经支持逗号/空格分隔的音列表
             const notes = this._ensureNotes(chordInput);
             if (!notes) return null;
@@ -699,7 +724,8 @@ export class EnhancedChordConverter extends ChordConverter {
                 // 排序并创建键（需要转为字符串，因为JavaScript对象键不能是数组）
                 const targetTuple = [...notesIndexNew].sort((a, b) => a - b).join(',');
 
-                const key = this.identifyChord(notesIndexNew).quality
+                const identified = this.identifyChord(notesIndexNew);
+                const key = identified?.quality || "maj";
 
                 /*
                 let key = null;
@@ -716,6 +742,7 @@ export class EnhancedChordConverter extends ChordConverter {
                 result = {
                     chord: chord,
                     notes: [...chordInput],
+                    voicing: [...chordInput],
                     offsets: notesIndexNew,
                     isSlash: false,
                     root: rootNote,
@@ -734,8 +761,21 @@ export class EnhancedChordConverter extends ChordConverter {
 
         const rootIdx = indices[0] % 12;
         const rootName = this.idxToNote[rootIdx];
+        // Keep the written voicing order available. A ninth and a second are
+        // enharmonically identical in pitch-class sets, but their voicing
+        // order is musically meaningful: C-E-G-B-D is add9, C-D-E-G-B is add2.
+        const orderedOffsets = indices.map((value) => value - indices[0]);
         const inputOffsets = [...new Set(indices.map(i => (i - indices[0] + 12) % 12))].sort((a, b) => a - b);
         const inputSet = new Set(inputOffsets);
+
+        if (inputOffsets.join(",") === "0,2,4,7,11") {
+            const extension = (orderedOffsets[1] % 12) === 2 ? "2" : "9";
+            return {
+                chord: `${rootName}maj7 add ${extension}`,
+                quality: `maj7 add ${extension}`,
+                root: rootName,
+            };
+        }
 
         // 1. 尝试精确匹配（保留你原来的逻辑）
         const offsetsKey = inputOffsets.join(',');
@@ -751,13 +791,14 @@ export class EnhancedChordConverter extends ChordConverter {
 
         // 遍历你定义的公式库 (e.g., {"maj": [0,4,7], "m7": [0,3,7,10]...})
         for (const [quality, templateOffsets] of Object.entries(this.chordFormulas)) {
-            const templateSet = new Set(templateOffsets);
+            const normalizedTemplateOffsets = [...new Set(templateOffsets.map(x => x % 12))];
+            const templateSet = new Set(normalizedTemplateOffsets);
 
             // 计算交集：输入中匹配模板的音
-            const intersection = templateOffsets.filter(x => inputSet.has(x));
+            const intersection = normalizedTemplateOffsets.filter(x => inputSet.has(x));
 
             // 计算 Omit：模板里有，但输入里没有的 (重点！)
-            const omit = templateOffsets.filter(x => !inputSet.has(x));
+            const omit = normalizedTemplateOffsets.filter(x => !inputSet.has(x));
 
             // 计算 Add：输入里有，但模板里没有的
             const add = inputOffsets.filter(x => !templateSet.has(x) && x !== 0);
@@ -777,12 +818,17 @@ export class EnhancedChordConverter extends ChordConverter {
 
         if (bestMatch.omit.length > 0) {
             // 将半音转回数字名称（如 4 -> 3, 7 -> 5）
-            const omitLabels = bestMatch.omit.map(o => this.semitoneToIntervalName(o));
+            const omitLabels = bestMatch.omit.map(o => this.semitoneToIntervalName(o, bestMatch.quality));
             modifierParts.push(`omit ${omitLabels.join(',')}`);
         }
 
         if (bestMatch.add.length > 0) {
-            const addLabels = bestMatch.add.map(a => this.semitoneToIntervalName(a));
+            const addLabels = bestMatch.add.map(a => {
+                if (a === 2) return (orderedOffsets[1] % 12) === 2 ? "2" : "9";
+                if (a === 5) return (orderedOffsets[1] % 12) === 5 ? "4" : "11";
+                if (a === 9) return "13";
+                return this.semitoneToIntervalName(a);
+            });
             modifierParts.push(`add ${addLabels.join(',')}`);
         }
 
@@ -796,7 +842,10 @@ export class EnhancedChordConverter extends ChordConverter {
     }
 
     // 辅助函数：将半音偏移转为音程名称
-    semitoneToIntervalName(s) {
+    semitoneToIntervalName(s, chordQuality = "") {
+        if (/13/.test(chordQuality) && s === 9) return "13";
+        if (/(?:11|13)/.test(chordQuality) && s === 5) return "11";
+        if (/(?:9|11|13)/.test(chordQuality) && s === 2) return "9";
         const map = { 1: "b2", 2: "2", 3: "b3", 4: "3", 5: "4", 6: "b5", 7: "5", 8: "b6", 9: "6", 10: "b7", 11: "7" };
         return map[s] || s;
     }
@@ -861,7 +910,7 @@ export class BluesToolkit {
                 tags.push("TENSION");
             }
 
-            detailedNotes.append({
+            detailedNotes.push({
                 "note": noteName,
                 "role": tags.join("/")
             });
@@ -1102,27 +1151,35 @@ export class CSTAnalyzer extends MusicScale {
         else[root, scaleName] = args;
 
         if (!(scaleName in this.scaleDefinitions)) throw new Error(`Scale ${scaleName} not found`);
-        return this.getScaleNotes(root, this.scaleDefinitions[scaleName]);
+        return this.getScaleNotes(this.handleNotes[root] || root, this.scaleDefinitions[scaleName]);
     }
 
     _getRelativeFifthsPos(root, note) {
         const r = this.handleNotes[root] || root;
         const n = this.handleNotes[note] || note;
-        return this.circleOfFifths.indexOf(n) - this.circleOfFifths.indexOf(r);
+        const rootPos = this.circleOfFifths.indexOf(r);
+        const notePos = this.circleOfFifths.indexOf(n);
+        if (rootPos < 0 || notePos < 0) return 0;
+        const delta = notePos - rootPos;
+        return ((delta + 6 + 12) % 12) - 6;
     }
 
     getScaleNotes(root, intervals) {
-        const rootIdx = this.notes.indexOf(root);
+        const normalizedRoot = this.handleNotes[root] || root;
+        const rootIdx = this.notes.indexOf(normalizedRoot);
+        if (rootIdx < 0) throw new Error(`Invalid scale root: ${root}`);
         return new Set(intervals.map(i => this.notes[(rootIdx + i) % 12]));
     }
 
     analyzeTensions(chordNotes, scaleFullName) {
         const sNotes = this.scaleNotes(scaleFullName);
-        const chordVals = chordNotes.map(n => this.noteToVal[this.handleNotes[n] || n]);
+        const normalizedChord = chordNotes.map(n => this.handleNotes[n] || n);
+        const chordSet = new Set(normalizedChord);
+        const chordVals = normalizedChord.map(n => this.noteToVal[n]).filter(Number.isFinite);
         const results = { tensions: [], avoid: [] };
 
         sNotes.forEach(sNote => {
-            if (chordNotes.includes(sNote)) return;
+            if (chordSet.has(sNote)) return;
             const sVal = this.noteToVal[this.handleNotes[sNote] || sNote];
             const isAvoid = chordVals.some(cVal => (sVal - cVal + 12) % 12 === 1);
             if (isAvoid) results.avoid.push(sNote);
@@ -1133,9 +1190,11 @@ export class CSTAnalyzer extends MusicScale {
 
     calculateBrightness(root, scaleNotes) {
         let totalPos = 0, hasMajor3rd = false;
-        const rootVal = this.noteToVal[this.handleNotes[root] || root];
+        const normalizedRoot = this.handleNotes[root] || root;
+        const rootVal = this.noteToVal[normalizedRoot];
+        if (!Number.isFinite(rootVal) || !scaleNotes?.size) return 0;
         scaleNotes.forEach(n => {
-            totalPos += this._getRelativeFifthsPos(root, n);
+            totalPos += this._getRelativeFifthsPos(normalizedRoot, n);
             if ((this.noteToVal[this.handleNotes[n] || n] - rootVal + 12) % 12 === 4) hasMajor3rd = true;
         });
         let score = totalPos / scaleNotes.size;
@@ -1673,6 +1732,262 @@ class NeoRiemannianToolkit {
     }
 }
 
+export class ClassicalHarmonyConnector {
+    constructor() {
+        this.converter = new EnhancedChordConverter();
+        this.naturalPitch = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+        this.letters = ["C", "D", "E", "F", "G", "A", "B"];
+        this.modeIntervals = {
+            major: [0, 2, 4, 5, 7, 9, 11],
+            minor: [0, 2, 3, 5, 7, 8, 11]
+        };
+    }
+
+    _normalizeKey(key) {
+        const value = typeof key === "string" ? key.trim().replace("♭", "b").replace("♯", "#") : "";
+        if (!(value in this.converter.noteToIdx)) throw new Error(`Invalid key: ${key}`);
+        return value;
+    }
+
+    _accidentalForDiff(diff) {
+        const normalized = ((diff + 6) % 12) - 6;
+        return ({ "-2": "bb", "-1": "b", "0": "", "1": "#", "2": "##" })[normalized] ?? "";
+    }
+
+    _spellDegree(key, mode, degree, alteration = 0) {
+        const root = this._normalizeKey(key);
+        const intervals = this.modeIntervals[mode] || this.modeIntervals.major;
+        const zeroDegree = ((degree - 1) % 7 + 7) % 7;
+        const rootLetterIndex = this.letters.indexOf(root[0]);
+        const letter = this.letters[(rootLetterIndex + zeroDegree) % 7];
+        const targetPc = (this.converter.noteToIdx[root] + intervals[zeroDegree] + alteration + 12) % 12;
+        return `${letter}${this._accidentalForDiff(targetPc - this.naturalPitch[letter])}`;
+    }
+
+    _spellChord(rootName, intervals) {
+        const rootLetterIndex = this.letters.indexOf(rootName[0]);
+        const rootPc = this.converter.noteToIdx[rootName];
+        return intervals.map((interval, index) => {
+            const letter = this.letters[(rootLetterIndex + index * 2) % 7];
+            const targetPc = (rootPc + interval) % 12;
+            return `${letter}${this._accidentalForDiff(targetPc - this.naturalPitch[letter])}`;
+        });
+    }
+
+    _quality(intervals) {
+        const key = [...new Set(intervals.map(interval => ((interval % 12) + 12) % 12))].sort((a, b) => a - b).join(",");
+        return ({
+            "0,4,7": { suffix: "", quality: "major triad" },
+            "0,3,7": { suffix: "m", quality: "minor triad" },
+            "0,3,6": { suffix: "dim", quality: "diminished triad" },
+            "0,4,8": { suffix: "aug", quality: "augmented triad" },
+            "0,4,7,11": { suffix: "maj7", quality: "major seventh" },
+            "0,4,7,10": { suffix: "7", quality: "dominant seventh" },
+            "0,3,7,10": { suffix: "m7", quality: "minor seventh" },
+            "0,3,6,10": { suffix: "m7b5", quality: "half-diminished seventh" },
+            "0,3,6,9": { suffix: "dim7", quality: "diminished seventh" },
+            "0,2,4,7,10": { suffix: "9", quality: "dominant ninth" },
+            "0,2,4,7,11": { suffix: "maj9", quality: "major ninth" },
+            "0,2,3,7,10": { suffix: "m9", quality: "minor ninth" }
+        })[key] || { suffix: "", quality: "tertian chord" };
+    }
+
+    _makeEntry({ symbol, root, intervals, functionName, category, resolution, inversion = 0, aliases = [], priority = 0 }) {
+        const quality = this._quality(intervals);
+        const rootNotes = this._spellChord(root, intervals);
+        const bassIndex = Math.min(Math.max(inversion, 0), rootNotes.length - 1);
+        const notes = [...rootNotes.slice(bassIndex), ...rootNotes.slice(0, bassIndex)];
+        const figures = rootNotes.length === 3 ? ["", "6", "64"] : ["7", "65", "43", "42"];
+        const figuredBass = figures[bassIndex] || figures[0];
+        const chordName = `${root}${quality.suffix}${bassIndex ? `/${rootNotes[bassIndex]}` : ""}`;
+        const needsFigure = !/[0-9/]/.test(symbol) && !symbol.includes("+") && (rootNotes.length === 4 || inversion > 0);
+        const displaySymbol = needsFigure ? `${symbol}${figuredBass}` : symbol;
+        return {
+            symbol: displaySymbol,
+            baseSymbol: symbol,
+            chord: chordName,
+            notes,
+            rootNotes,
+            bass: rootNotes[bassIndex],
+            inversion: bassIndex,
+            figuredBass,
+            quality: quality.quality,
+            function: functionName,
+            category,
+            resolution,
+            aliases: [symbol, chordName, ...aliases],
+            priority
+        };
+    }
+
+    _diatonicEntry(key, mode, degree, size, inversion = 0) {
+        const scale = this.modeIntervals[mode];
+        const rootScaleIndex = degree - 1;
+        const chordOffsets = Array.from({ length: size }, (_, index) => {
+            const scaleIndex = rootScaleIndex + index * 2;
+            const octave = Math.floor(scaleIndex / 7) * 12;
+            return scale[scaleIndex % 7] + octave;
+        });
+        const intervals = chordOffsets.map(offset => (offset - chordOffsets[0] + 12) % 12);
+        const romanMajor = ["I", "II", "III", "IV", "V", "VI", "VII"];
+        const romanMinor = ["i", "ii", "iii", "iv", "v", "vi", "vii"];
+        const quality = this._quality(intervals);
+        let roman = quality.quality.startsWith("major") || quality.quality.startsWith("dominant") || quality.quality.startsWith("augmented")
+            ? romanMajor[degree - 1]
+            : romanMinor[degree - 1];
+        if (quality.quality.includes("half-diminished")) roman += "ø";
+        else if (quality.quality.includes("diminished")) roman += "°";
+        else if (quality.quality.includes("augmented")) roman += "+";
+        const functionName = [1, 3, 6].includes(degree) ? "T" : [2, 4].includes(degree) ? "S" : "D";
+        return this._makeEntry({
+            symbol: roman,
+            root: this._spellDegree(key, mode, degree),
+            intervals,
+            functionName,
+                category: size === 3 ? "diatonic triad" : (quality.quality.includes("ninth") ? "diatonic ninth" : "diatonic seventh"),
+            resolution: functionName === "D" ? "Resolve toward the tonic; raise the leading tone in minor." : "Continue by functional contrast or common-tone prolongation.",
+            inversion,
+            priority: functionName === "D" ? 2 : 1
+        });
+    }
+
+    getPalette(key = "C", mode = "major") {
+        const normalizedKey = this._normalizeKey(key);
+        const normalizedMode = mode === "minor" ? "minor" : "major";
+        const entries = [];
+        for (let degree = 1; degree <= 7; degree++) {
+            for (let inversion = 0; inversion < 3; inversion++) entries.push(this._diatonicEntry(normalizedKey, normalizedMode, degree, 3, inversion));
+            for (let inversion = 0; inversion < 4; inversion++) entries.push(this._diatonicEntry(normalizedKey, normalizedMode, degree, 4, inversion));
+        }
+
+        const tonic = this._spellDegree(normalizedKey, normalizedMode, 1);
+        const dominant = this._spellDegree(normalizedKey, normalizedMode, 5);
+        const dominantIntervals = [0, 4, 7, 10];
+        const tonic64 = this._makeEntry({
+            symbol: "K64", root: tonic, intervals: [0, 4, 7], functionName: "D",
+            category: "cadential six-four", resolution: "Bass remains on scale degree 5; 6-5 and 4-3 resolve into V or V7.", inversion: 2,
+            aliases: ["cadential 64", "I64"], priority: 10
+        });
+        tonic64.bass = dominant;
+        tonic64.notes = [dominant, tonic64.rootNotes[0], tonic64.rootNotes[1]];
+        tonic64.chord = `${tonic}/${dominant}`;
+        entries.push(tonic64);
+
+        const dominantNinth = this._makeEntry({
+            symbol: normalizedMode === "minor" ? "V7(b9)" : "V9", root: dominant,
+            intervals: normalizedMode === "minor" ? [0, 4, 7, 10, 13] : [0, 4, 7, 10, 14],
+            functionName: "D", category: "dominant ninth", resolution: "Resolve the seventh downward and the leading tone upward; the ninth resolves downward.", priority: 7
+        });
+        entries.push(dominantNinth);
+
+        const flatTwo = this._spellDegree(normalizedKey, normalizedMode, 2, -1);
+        entries.push(this._makeEntry({
+            symbol: "N", root: flatTwo, intervals: [0, 4, 7], functionName: "S",
+            category: "Neapolitan sixth", resolution: "Use first inversion (N6), then move to K64 or V; double the bass is usually preferred.", inversion: 1,
+            aliases: ["N6", "bII6"], priority: 9
+        }));
+
+        const secondaryTargets = [2, 4, 5, 6];
+        secondaryTargets.forEach(targetDegree => {
+            const targetRoot = this._spellDegree(normalizedKey, normalizedMode, targetDegree);
+            const targetPc = this.converter.noteToIdx[targetRoot];
+            const secondaryRootPc = (targetPc + 7) % 12;
+            const targetLetterIndex = this.letters.indexOf(targetRoot[0]);
+            const secondaryLetter = this.letters[(targetLetterIndex + 4) % 7];
+            const secondaryRoot = `${secondaryLetter}${this._accidentalForDiff(secondaryRootPc - this.naturalPitch[secondaryLetter])}`;
+            const targetRoman = ["I", "ii", "iii", "IV", "V", "vi", "vii°"][targetDegree - 1];
+            entries.push(this._makeEntry({
+                symbol: `V7/${targetRoman}`, root: secondaryRoot, intervals: dominantIntervals, functionName: "D",
+                category: targetDegree === 5 ? "double dominant" : "secondary dominant",
+                resolution: `Resolve to ${targetRoman} (${targetRoot}); retain common tones and resolve the temporary leading tone upward.`,
+                aliases: targetDegree === 5 ? ["DD", "V/V", "V7/V"] : [], priority: targetDegree === 5 ? 9 : 7
+            }));
+        });
+
+        const b6 = this._spellDegree(normalizedKey, normalizedMode, 6, -1);
+        const one = this._spellDegree(normalizedKey, normalizedMode, 1);
+        const sharp4 = this._spellDegree(normalizedKey, normalizedMode, 4, 1);
+        const two = this._spellDegree(normalizedKey, normalizedMode, 2);
+        const flat3 = this._spellDegree(normalizedKey, normalizedMode, 3, -1);
+        [
+            { symbol: "It+6", notes: [b6, one, sharp4], label: "Italian augmented sixth" },
+            { symbol: "Fr+6", notes: [b6, one, two, sharp4], label: "French augmented sixth" },
+            { symbol: "Ger+6", notes: [b6, one, flat3, sharp4], label: "German augmented sixth" }
+        ].forEach(item => entries.push({
+            symbol: item.symbol, baseSymbol: item.symbol, chord: item.symbol, notes: item.notes, rootNotes: item.notes,
+            bass: b6, inversion: 0, figuredBass: "+6", quality: item.label, function: "S-D", category: item.label,
+            resolution: item.symbol === "Ger+6"
+                ? "Resolve through K64 to avoid parallel fifths, then continue to V."
+                : "Resolve the augmented sixth outward by semitone to scale degree 5, then continue to V.",
+            aliases: [item.symbol, item.label], priority: 10
+        }));
+        return entries;
+    }
+
+    _pitchSet(notes) {
+        return [...new Set(notes.map(note => this.converter.noteToIdx[note]).filter(Number.isFinite))].sort((a, b) => a - b).join(",");
+    }
+
+    _resolveCurrent(input, palette) {
+        const normalized = String(input || "").trim().toLowerCase().replace(/\s+/g, "");
+        const symbolic = palette.find(entry => entry.aliases.some(alias => alias.toLowerCase().replace(/\s+/g, "") === normalized));
+        if (symbolic) return symbolic;
+        let notes;
+        try {
+            notes = this.converter._ensureNotesAndRoot(input);
+        } catch (error) {
+            return null;
+        }
+        if (!notes?.length) return null;
+        const set = this._pitchSet(notes);
+        return palette.find(entry => this._pitchSet(entry.notes) === set) || {
+            symbol: input, chord: input, notes, function: "unknown", category: "unclassified", aliases: []
+        };
+    }
+
+    _voiceLeadingDistance(fromNotes, toNotes) {
+        const from = [...new Set(fromNotes.map(note => this.converter.noteToIdx[note]))];
+        const to = [...new Set(toNotes.map(note => this.converter.noteToIdx[note]))];
+        const distance = (a, b) => Math.min(Math.abs(a - b), 12 - Math.abs(a - b));
+        return from.reduce((sum, note) => sum + Math.min(...to.map(target => distance(note, target))), 0) / Math.max(1, from.length);
+    }
+
+    recommend(currentInput, key = "C", mode = "major", limit = 12) {
+        const palette = this.getPalette(key, mode);
+        const current = this._resolveCurrent(currentInput, palette);
+        if (!current) throw new Error(`Unable to parse classical harmony input: ${currentInput}`);
+        const targetSymbols = new Set();
+        const currentSymbol = current.baseSymbol || current.symbol || "";
+
+        if (currentSymbol === "K64") ["V", "V7"].forEach(symbol => targetSymbols.add(symbol));
+        else if (currentSymbol === "N") ["K64", "V", "V7"].forEach(symbol => targetSymbols.add(symbol));
+        else if (["It+6", "Fr+6", "Ger+6"].includes(currentSymbol)) ["V", "V7", "K64"].forEach(symbol => targetSymbols.add(symbol));
+        else if (currentSymbol.startsWith("V7/")) targetSymbols.add(currentSymbol.slice(3));
+        else if (current.function === "T") ["ii", "ii°", "IV", "iv", "N", "V", "V7", "V7/V", "K64", "vi"].forEach(symbol => targetSymbols.add(symbol));
+        else if (current.function === "S" || current.function === "S-D") ["K64", "V", "V7", "vii°", "vii°7"].forEach(symbol => targetSymbols.add(symbol));
+        else if (current.function === "D") ["I", "i", "I6", "i6", "vi", "VI"].forEach(symbol => targetSymbols.add(symbol));
+        else ["I", "i", "IV", "iv", "V", "V7"].forEach(symbol => targetSymbols.add(symbol));
+
+        const unique = new Map();
+        palette.forEach(candidate => {
+            const base = candidate.baseSymbol || candidate.symbol;
+            if (!targetSymbols.has(base) && !targetSymbols.has(candidate.symbol)) return;
+            const movement = this._voiceLeadingDistance(current.notes, candidate.notes);
+            const commonTones = current.notes.filter(note => candidate.notes.some(target => this.converter.noteToIdx[target] === this.converter.noteToIdx[note])).length;
+            let score = 7.4 - movement * 1.15 + commonTones * 0.45 + (candidate.priority || 0) * 0.18;
+            if (candidate.inversion > 1 && !["K64"].includes(base)) score -= 0.5;
+            const keyValue = `${candidate.symbol}|${candidate.bass}`;
+            const result = { ...candidate, score: Math.round(Math.max(0, Math.min(10, score)) * 10) / 10, commonTones, voiceLeading: Number(movement.toFixed(2)) };
+            if (!unique.has(keyValue) || unique.get(keyValue).score < result.score) unique.set(keyValue, result);
+        });
+        return {
+            key: this._normalizeKey(key), mode: mode === "minor" ? "minor" : "major", current,
+            recommendations: [...unique.values()].sort((a, b) => b.score - a.score).slice(0, limit),
+            constraints: "Classical tertian harmony: triads and seventh chords; only the dominant may use a ninth."
+        };
+    }
+}
+
 export class JazzBrain {
     constructor() {
         this.converter = new EnhancedChordConverter();
@@ -1696,13 +2011,13 @@ export class JazzBrain {
             const nextChord = progression[i + 1];
 
             // 提取根音
-            const currentNotes = this.converter._ensureNotesAndRoot(current);
-            const nextNotes = this.converter._ensureNotesAndRoot(nextChord);
+            const currentInfo = this._getChordToneInfo(current);
+            const nextInfo = this._getChordToneInfo(nextChord);
 
-            if (!currentNotes || !nextNotes) continue;
+            if (!currentInfo || !nextInfo) continue;
 
-            const rootCurrent = currentNotes[0];
-            const rootNext = nextNotes[0];
+            const rootCurrent = currentInfo.root;
+            const rootNext = nextInfo.root;
 
             // 获取根音在半音阶中的索引
             const r1 = this.converter.noteToIdx[rootCurrent];
@@ -1714,8 +2029,10 @@ export class JazzBrain {
              * 比如 D (2) -> G (7)： (7 - 2) = 5
              * 比如 G (7) -> C (0)： (0 - 7 + 12) = 5
              */
-            if ((r2 - r1 + 12) % 12 === 5) {
+            if ((r2 - r1 + 12) % 12 === 5 && currentInfo.intervals.has(4) && currentInfo.intervals.has(10)) {
                 results.push(`${current} -> ${nextChord}: Strong functional progression (Dominant Motion)`);
+            } else if ((r2 - r1 + 12) % 12 === 5) {
+                results.push(`${current} -> ${nextChord}: Descending-fifth root motion (non-dominant)`);
             }
         }
 
@@ -1750,16 +2067,44 @@ export class JazzBrain {
 
     /** 自动和弦排列 (Voicing Generator) */
     getVoicing(chord, type = "shell") {
-        const notes = this.converter._ensureNotesAndRoot(chord);
+        const info = this._getChordToneInfo(chord);
+        if (!info) return [];
+        const notes = info.notes;
         if (type === "shell") {
-            // Root + 3rd + 7th
-            return [notes[0], notes[1], notes[notes.length > 2 ? 2 : notes.length - 1]];
+            const third = [3, 4].find(interval => info.intervals.has(interval));
+            const seventh = [10, 11, 9].find(interval => info.intervals.has(interval));
+            const fifth = [7, 6, 8].find(interval => info.intervals.has(interval));
+            return [0, third, seventh ?? fifth]
+                .filter((interval, index, values) => interval !== undefined && values.indexOf(interval) === index)
+                .map(interval => this.converter.idxToNote[(info.rootIdx + interval) % 12]);
         }
         if (type === "drop2" && notes.length >= 4) {
-            // 简化 Drop 2: 将倒数第二个音降低(此处用位置模拟)
-            return [notes[notes.length - 2], notes[0], notes[1], notes[notes.length - 1]];
+            const closed = [...info.intervals].sort((a, b) => a - b);
+            const dropped = closed.map((interval, index) => index === closed.length - 2 ? interval - 12 : interval);
+            return dropped
+                .sort((a, b) => a - b)
+                .map(interval => this.converter.idxToNote[(info.rootIdx + interval + 12) % 12]);
         }
         return notes;
+    }
+
+    _getChordToneInfo(chordInput) {
+        let detailed;
+        try {
+            detailed = this.converter._ensureNotesAndRoot(chordInput, true);
+        } catch (error) {
+            return null;
+        }
+        if (!detailed?.notes?.length || !(detailed.root in this.converter.noteToIdx)) return null;
+        const rootIdx = this.converter.noteToIdx[detailed.root];
+        const notes = detailed.notes.map(note => this.converter.idxToNote[this.converter.noteToIdx[note]]);
+        return {
+            ...detailed,
+            notes,
+            root: this.converter.idxToNote[rootIdx],
+            rootIdx,
+            intervals: new Set(notes.map(note => (this.converter.noteToIdx[note] - rootIdx + 12) % 12))
+        };
     }
 
     /**
@@ -1829,24 +2174,17 @@ export class JazzBrain {
 
     /** 专业调性中心识别 (The Heavy Lifter) */
     findKeyCenterPro(progression, returnAll = false) {
-        const allNotes = new Set();
-        const roots = [];
-        const chordNames = [];
-
-        progression.forEach(c => {
-            const notes = this.converter._ensureNotesAndRoot(c);
-            if (notes) {
-                notes.forEach(n => allNotes.add(n));
-                roots.push(notes[0]);
-                chordNames.push(typeof c === 'string' ? c : "");
-            }
-        });
+        if (!Array.isArray(progression) || progression.length === 0) {
+            return returnAll ? [] : "No key center: empty progression";
+        }
+        const chords = progression.map(chord => this._getChordToneInfo(chord)).filter(Boolean);
+        if (chords.length === 0) return returnAll ? [] : "No key center: invalid progression";
 
         // 调性系统权重配置
         const systems = {
-            "Ionian (Major)": { intervals: [0, 2, 4, 5, 7, 9, 11], priority: 2.5 },
-            "Jazz Minor": { intervals: [0, 2, 3, 5, 7, 9, 11], priority: 2.0 },
-            "Harmonic Minor": { intervals: [0, 2, 3, 5, 7, 8, 11], priority: 1.5 }
+            "Ionian (Major)": { intervals: [0, 2, 4, 5, 7, 9, 11], priority: 1.5, tonicThird: 4 },
+            "Jazz Minor": { intervals: [0, 2, 3, 5, 7, 9, 11], priority: 0.5, tonicThird: 3 },
+            "Harmonic Minor": { intervals: [0, 2, 3, 5, 7, 8, 11], priority: 1.0, tonicThird: 3 }
         };
 
         let results = [];
@@ -1855,31 +2193,51 @@ export class JazzBrain {
             const keyIdx = this.converter.noteToIdx[keyRoot];
 
             Object.entries(systems).forEach(([sysName, config]) => {
-                const scaleNotes = this.cst.getScaleNotes(keyRoot, config.intervals);
-                const scaleSet = new Set(scaleNotes);
+                const scalePcs = new Set(config.intervals.map(interval => (keyIdx + interval) % 12));
+                let score = config.priority;
 
-                // 基础匹配分
-                let intersectCount = 0;
-                allNotes.forEach(n => { if (scaleSet.has(n)) intersectCount++; });
-                let score = intersectCount + config.priority;
+                chords.forEach(chord => {
+                    const chordPcs = chord.notes.map(note => this.converter.noteToIdx[note]);
+                    const inside = chordPcs.filter(pc => scalePcs.has(pc)).length;
+                    const outside = chordPcs.length - inside;
+                    score += inside * 1.25 - outside * 3.25;
+                    if (scalePcs.has(chord.rootIdx)) score += 0.75;
 
-                // 功能性加分 (ii-V-I 识别)
-                roots.forEach((r, i) => {
-                    const relIdx = (this.converter.noteToIdx[r] - keyIdx + 12) % 12;
-                    const name = chordNames[i].toLowerCase();
-
-                    if (sysName === "Ionian (Major)") {
-                        if (relIdx === 2 && name.includes("m")) score += 4.0; // iim7
-                        if (relIdx === 7 && name.includes("7") && !name.includes("maj")) {
-                            score += (i === roots.length - 1) ? 5.0 : 2.0; // V7
-                        }
-                        if (relIdx === 0 && name.includes("maj")) score += 4.0; // Imaj7
+                    const degree = config.intervals.indexOf((chord.rootIdx - keyIdx + 12) % 12);
+                    if (degree >= 0) {
+                        const tertian = [0, 2, 4, 6].map(step => {
+                            const scaleIndex = degree + step;
+                            const octave = Math.floor(scaleIndex / 7) * 12;
+                            return config.intervals[scaleIndex % 7] + octave;
+                        });
+                        const expected = new Set(tertian.map(value => (value - tertian[0] + 12) % 12));
+                        const triadFits = [...chord.intervals].filter(i => i !== 10 && i !== 11 && i !== 9).every(i => expected.has(i));
+                        if (triadFits) score += 2;
+                        if ([9, 10, 11].some(i => chord.intervals.has(i)) && [...chord.intervals].every(i => expected.has(i))) score += 2;
                     }
                 });
 
-                // 惩罚项：如果属七和弦被识别为 Tonic (I)
-                if (sysName === "Ionian (Major)" && keyRoot === roots[roots.length - 1] && chordNames[chordNames.length - 1].includes("7")) {
-                    score -= 10.0;
+                const last = chords[chords.length - 1];
+                if (last.rootIdx === keyIdx && last.intervals.has(config.tonicThird)) score += 7;
+
+                for (let i = 0; i < chords.length - 1; i++) {
+                    const current = chords[i];
+                    const next = chords[i + 1];
+                    const dominant = current.intervals.has(4) && current.intervals.has(10);
+                    if (dominant && (next.rootIdx - current.rootIdx + 12) % 12 === 5) score += 4;
+                }
+
+                for (let i = 0; i < chords.length - 2; i++) {
+                    const [ii, dominant, tonic] = chords.slice(i, i + 3);
+                    const iiDegree = (ii.rootIdx - keyIdx + 12) % 12;
+                    const vDegree = (dominant.rootIdx - keyIdx + 12) % 12;
+                    const iDegree = (tonic.rootIdx - keyIdx + 12) % 12;
+                    const iiQualityFits = sysName === "Ionian (Major)"
+                        ? ii.intervals.has(3) && ii.intervals.has(10)
+                        : ii.intervals.has(3) && ii.intervals.has(6);
+                    if (iiDegree === 2 && vDegree === 7 && iDegree === 0 && iiQualityFits && dominant.intervals.has(4) && dominant.intervals.has(10)) {
+                        score += 14;
+                    }
                 }
 
                 results.push({ name: `${keyRoot} ${sysName}`, score: parseFloat(score.toFixed(2)) });
@@ -1892,9 +2250,12 @@ export class JazzBrain {
 
     /** 负和声转换 (Negative Harmony) */
     toNegative(chordInput, axis = "C") {
+        const normalizedAxis = typeof axis === "string" ? axis.trim() : "";
+        if (!(normalizedAxis in this.converter.noteToIdx)) throw new Error(`Invalid negative-harmony axis: ${axis}`);
         // C-G 轴在半音阶中的中心点是 3.5 (E/Eb 之间)
-        const axisVal = this.converter.noteToIdx[axis] + 3.5;
+        const axisVal = this.converter.noteToIdx[normalizedAxis] + 3.5;
         const notes = this.converter._ensureNotesAndRoot(chordInput);
+        if (!notes?.length) throw new Error(`Invalid chord: ${chordInput}`);
 
         return notes.map(n => {
             const val = this.converter.noteToIdx[n];
@@ -1954,23 +2315,13 @@ export class JazzBrain {
         const path = [];
 
         for (const c of progression) {
-            // 使用内部转换器解析出音符列表
-            const notes = this.converter._ensureNotesAndRoot(c);
-
-            // 导音分析通常需要至少包含根音、三音和五音/七音
-            if (notes && notes.length >= 3) {
-                /**
-                 * 爵士导音逻辑：
-                 * notes[1] 通常是三音 (3rd)
-                 * 如果是七和弦，notes[3] 是七音 (7th)
-                 * 如果是三和弦，则取最后一个音作为替代
-                 */
-                const guide = [
-                    notes[1],
-                    notes.length > 3 ? notes[3] : notes[notes.length - 1]
-                ];
-                path.push(guide);
-            }
+            const info = this._getChordToneInfo(c);
+            if (!info) continue;
+            const third = [3, 4].find(interval => info.intervals.has(interval));
+            const seventh = [10, 11, 9].find(interval => info.intervals.has(interval));
+            const fallback = [6, 7, 8].find(interval => info.intervals.has(interval));
+            const guideIntervals = [third, seventh ?? fallback].filter(interval => interval !== undefined);
+            if (guideIntervals.length) path.push(guideIntervals.map(interval => this.converter.idxToNote[(info.rootIdx + interval) % 12]));
         }
         return path;
     }
@@ -2048,7 +2399,7 @@ export class JazzBrain {
         // 1. 提取所有唯一的公式结构 (去重逻辑)
         const uniqueFormulas = new Map();
         for (const [fName, fOffsets] of Object.entries(this.converter.chordFormulas)) {
-            const fKey = [...fOffsets].sort((a, b) => a - b).join(',');
+            const fKey = [...new Set(fOffsets.map(offset => (offset % 12 + 12) % 12))].sort((a, b) => a - b).join(',');
             if (!uniqueFormulas.has(fKey)) {
                 uniqueFormulas.set(fKey, fName);
             }
@@ -2140,11 +2491,8 @@ export class JazzBrain {
 
             // 综合推荐评分算法 (Score)
             // 考虑稳定性平衡 + 适度的紧张度奖励
-            let recScore = (stability * 0.6) + (tension * 0.4);
-
-            // 共同音奖励 (Common Tone Reward)
-            const commonCount = [...currNotesSet].filter(n => itemSet.has(n)).length;
-            recScore += (commonCount * 0.2);
+            const usefulTension = Math.max(0, 10 - Math.abs(tension - 3.5) * 1.55);
+            let recScore = (stability * 0.78) + (usefulTension * 0.22);
 
             return {
                 chord: item.chord,
@@ -2193,14 +2541,20 @@ export class JazzBrain {
      * 计算声部连接稳定性 (Voice-leading Stability)
      */
     _calculateStability(set1, set2) {
-        const common = [...set1].filter(n => set2.has(n)).length;
-        let dist = 0;
-        for (const n1 of set1) {
-            const minDist = Math.min(...([...set2].map(n2 => Math.abs(n1 - n2) % 12)));
-            dist += minDist;
-        }
-        const val = 10 - (dist * 0.8) + (common * 2.0);
-        return Math.round(val * 10) / 10;
+        if (!set1?.size || !set2?.size) return 0;
+        const circularDistance = (a, b) => {
+            const distance = Math.abs(a - b) % 12;
+            return Math.min(distance, 12 - distance);
+        };
+        const directedAverage = (from, to) => [...from].reduce((sum, note) => {
+            return sum + Math.min(...[...to].map(target => circularDistance(note, target)));
+        }, 0) / from.size;
+        const voiceDistance = (directedAverage(set1, set2) + directedAverage(set2, set1)) / 2;
+        const common = [...set1].filter(note => set2.has(note)).length;
+        const commonRatio = common / Math.max(set1.size, set2.size);
+        const proximity = Math.max(0, 1 - voiceDistance / 6);
+        const value = Math.max(0, Math.min(10, commonRatio * 6 + proximity * 4));
+        return Math.round(value * 10) / 10;
     }
 
     /**

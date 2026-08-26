@@ -4,26 +4,44 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <script type="module" src="./script.js">
+    <script>
+        document.documentElement.dataset.theme = localStorage.getItem('jazz-compass-theme') || 'dark';
+    </script>
+    <script type="module" src="./script.js?v=20260826-4">
     </script>
     <title>Music Theory Toolbox</title>
-    <style>
-        @import url('./style.css');
-    </style>
+    <link rel="stylesheet" href="./style.css?v=20260826-4">
+    <link rel="stylesheet" href="./theme.css?v=20260826-4">
 </head>
 
 <body>
     <main class="container">
         <header class="app-header">
-            <div class="logo" aria-hidden="true">MTT</div>
-            <div class="title-block">
-                <h1 id="header_h1">Jazz Compass</h1>
-                <div id="subtitle" class="subtitle">Modern Jazz Tools · 即时乐理与即兴建议</div>
+            <div class="brand-lockup">
+                <div class="logo" aria-hidden="true"><span>JC</span><small>01</small></div>
+                <div class="title-block">
+                    <div class="eyebrow">JAZZ COMPASS / THEORY WORKSPACE</div>
+                    <h1 id="header_h1">Jazz Compass</h1>
+                    <div id="subtitle" class="subtitle">Modern jazz harmony, made visual.</div>
+                </div>
+            </div>
+            <div class="header-tools">
+                <div class="theme-switch" role="group" aria-label="界面主题">
+                    <span class="control-label">界面</span>
+                    <button class="theme-btn" type="button" data-theme-value="dark" aria-pressed="false">黑</button>
+                    <button class="theme-btn" type="button" data-theme-value="light" aria-pressed="false">白</button>
+                </div>
+                <div class="notation-switch" role="group" aria-label="音名记法">
+                    <span class="notation-label">音名记法</span>
+                    <button class="notation-btn active" type="button" data-notation="flats" aria-pressed="true">♭ 降号</button>
+                    <button class="notation-btn" type="button" data-notation="sharps" aria-pressed="false">♯ 升号</button>
+                </div>
             </div>
         </header>
 
         <nav class="feature-nav" role="tablist">
             <button class="feature-btn active" data-feature="chord"><span id="nav_chord">和弦转换处理</span></button>
+            <button class="feature-btn" data-feature="classical"><span id="nav_classical">古典和声连接器</span></button>
             <button class="feature-btn" data-feature="blues"><span id="nav_blues">布鲁斯工具处理</span></button>
             <button class="feature-btn" data-feature="lcc"><span id="nav_lcc">LCC理论处理</span></button>
             <button class="feature-btn" data-feature="cst"><span id="nav_cst">CST理论处理</span></button>
@@ -43,6 +61,29 @@
                     <button id="chord-run"><span id="chord_run_btn">解析</span></button>
                 </div>
                 <div class="panel-body" id="panel-chord-body"></div>
+            </div>
+
+            <div id="panel-classical" class="panel" data-feature="classical" role="tabpanel">
+                <div class="panel-header classical-toolbar">
+                    <label><span id="label_classical_key">调性</span>
+                        <select id="classical-key">
+                            <option>C</option><option>Db</option><option>D</option><option>Eb</option><option>E</option>
+                            <option>F</option><option>Gb</option><option>G</option><option>Ab</option><option>A</option>
+                            <option>Bb</option><option>B</option>
+                        </select>
+                    </label>
+                    <label><span id="label_classical_mode">调式</span>
+                        <select id="classical-mode">
+                            <option value="major">大调</option>
+                            <option value="minor">小调</option>
+                        </select>
+                    </label>
+                    <label class="classical-current"><span id="label_classical_chord">当前和弦</span>
+                        <input id="classical-input" type="text" value="I" autocomplete="off" />
+                    </label>
+                    <button id="classical-run"><span id="classical_run_btn">推荐衔接</span></button>
+                </div>
+                <div class="panel-body" id="panel-classical-body"></div>
             </div>
 
             <div id="panel-blues" class="panel" data-feature="blues" role="tabpanel">
