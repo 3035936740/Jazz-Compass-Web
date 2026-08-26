@@ -283,6 +283,11 @@ const i18n = {
       ja: "特別感謝: <a href=\"https://space.bilibili.com/24728563\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#0066cc\">Color Harmony Studio</a>（<a href=\"https://space.bilibili.com/24728563\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#0066cc\">https://space.bilibili.com/24728563</a>）が機能データと理論を提供しています。",
       en: "Special thanks to <a href=\"https://space.bilibili.com/24728563\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#0066cc\">Color Harmony Studio</a> (<a href=\"https://space.bilibili.com/24728563\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#0066cc\">https://space.bilibili.com/24728563</a>) for providing functional data and theoretical support.",
     },
+    about_sposobin: {
+      zh: "特别感谢 <a href=\"https://github.com/Huaishu61/Sposobin\" target=\"_blank\" rel=\"noopener noreferrer\">Huaishu61/Sposobin</a> 项目。本项目参考其内容，并将相关资料转换为 JavaScript 版本。Sposobin 以 MIT 协议发布。",
+      ja: "<a href=\"https://github.com/Huaishu61/Sposobin\" target=\"_blank\" rel=\"noopener noreferrer\">Huaishu61/Sposobin</a> プロジェクトに感謝します。本プロジェクトでは関連資料を JavaScript 版へ変換して利用しています。Sposobin は MIT ライセンスで公開されています。",
+      en: "Special thanks to the <a href=\"https://github.com/Huaishu61/Sposobin\" target=\"_blank\" rel=\"noopener noreferrer\">Huaishu61/Sposobin</a> project. This project references its materials and converts the relevant data into a JavaScript implementation. Sposobin is released under the MIT License.",
+    },
     about_footer: { zh: "© 2026 Music Theory Toolbox 项目。所有内容仅供教育和音乐学习之用。", ja: "© 2024 Music Theory Toolbox プロジェクト。すべてのコンテンツは教育と音楽学習目的でのみ使用されます。", en: "© 2024 Music Theory Toolbox Project. All content is for educational and musical learning purposes." },
 };
 

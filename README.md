@@ -1,8 +1,8 @@
-# Jazz Compass
+# Music Theory Toolbox
 
 **An Instant Music Theory Engine & Improvisation Guide for Modern Jazz.**
 
-Jazz Compass is a lightweight, high-performance web tool designed for jazz musicians, composers, and students. It translates complex harmonic concepts—from Lydian Chromatic Theory to Negative Harmony—into actionable, visual data.
+Music Theory Toolbox is a lightweight, high-performance web tool for musicians, composers, and students. It translates harmonic concepts, from classical functional harmony and Lydian Chromatic Theory to negative harmony, into practical visual tools.
 
 ## Key Features
 

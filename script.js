@@ -211,10 +211,10 @@ document.addEventListener("DOMContentLoaded", () => {
   /**
    * 播放和弦声音 - 钢琴音色版本（多八度扩展）
    */
-  function playChord(frequencies, duration = 1.2) {
+  function playChord(frequencies, duration = 1.2, options = {}) {
     try {
       const ctx = getAudioContext();
-      interruptPlayback(ctx);
+      if (options.interrupt !== false) interruptPlayback(ctx);
       const now = ctx.currentTime;
       const uniqueFreqs = [...new Set(frequencies)].slice(0, 8);
 
@@ -279,6 +279,42 @@ document.addEventListener("DOMContentLoaded", () => {
     return semitone + (octave + 1) * 12;
   }
 
+  function resolveRootOctave(semitone, baseOctave, lastRootMidi, voiceLeading = "ascending") {
+    if (lastRootMidi == null) return baseOctave;
+
+    if (voiceLeading === "nearest") {
+      const minMidi = semitoneToMidi(0, baseOctave);
+      const maxMidi = semitoneToMidi(11, baseOctave);
+      const candidates = [];
+
+      for (let octave = baseOctave - 2; octave <= baseOctave + 2; octave++) {
+        const midi = semitoneToMidi(semitone, octave);
+        candidates.push({ octave, midi });
+      }
+
+      const rangedCandidates = candidates.filter(({ midi }) => midi >= minMidi && midi <= maxMidi);
+      const availableCandidates = rangedCandidates.length ? rangedCandidates : candidates;
+      let bestOctave = baseOctave;
+      let bestDistance = Infinity;
+
+      availableCandidates.forEach(({ octave, midi }) => {
+        const distance = Math.abs(midi - lastRootMidi);
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          bestOctave = octave;
+        }
+      });
+
+      return bestOctave;
+    }
+
+    let octave = baseOctave;
+    while (semitoneToMidi(semitone, octave) <= lastRootMidi) {
+      octave += 1;
+    }
+    return octave;
+  }
+
   /**
    * 和弦频率：以 i 级（表第一行）为基准八度，后续级根音 MIDI 严格高于前一级
    * @param {number|null} lastRootMidi - 上一行和弦根音 MIDI，首行传 null
@@ -289,6 +325,7 @@ document.addEventListener("DOMContentLoaded", () => {
     baseOctave = 4,
     multiOctave = false,
     lastRootMidi = null,
+    options = {},
   ) {
     const freqs = [];
     let prevSemitone = null;
@@ -301,9 +338,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (idx === 0) {
         if (lastRootMidi != null) {
-          while (semitoneToMidi(semitone, octave) <= lastRootMidi) {
-            octave += 1;
-          }
+          octave = resolveRootOctave(semitone, baseOctave, lastRootMidi, options.voiceLeading);
         }
         rootMidi = semitoneToMidi(semitone, octave);
       } else if (prevSemitone !== null && semitone <= prevSemitone) {
@@ -587,6 +622,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function setTheme(mode) {
     const theme = mode === "light" ? "light" : "dark";
+    const changed = document.documentElement.dataset.theme !== theme;
     document.documentElement.dataset.theme = theme;
     localStorage.setItem("jazz-compass-theme", theme);
     document.querySelectorAll(".theme-btn").forEach((button) => {
@@ -594,6 +630,7 @@ document.addEventListener("DOMContentLoaded", () => {
       button.classList.toggle("active", active);
       button.setAttribute("aria-pressed", String(active));
     });
+    if (changed) requestAnimationFrame(rerenderActivePanel);
   }
 
   // 获取音阶音符（使用半音索引，避免等音名匹配失败）
@@ -674,7 +711,8 @@ document.addEventListener("DOMContentLoaded", () => {
     ctx.clearRect(0, 0, size, size);
 
     // 背景
-    ctx.fillStyle = "rgba(0,0,0,0.15)";
+    const lightTheme = document.documentElement.dataset.theme === "light";
+    ctx.fillStyle = lightTheme ? "rgba(45,44,39,0.055)" : "rgba(0,0,0,0.18)";
     ctx.beginPath();
     ctx.arc(cx, cy, outerR + 20, 0, Math.PI * 2);
     ctx.fill();
@@ -731,19 +769,19 @@ document.addEventListener("DOMContentLoaded", () => {
         cx + Math.cos(angle) * outerR,
         cy + Math.sin(angle) * outerR,
       );
-      ctx.strokeStyle = "rgba(255,255,255,0.12)";
+      ctx.strokeStyle = lightTheme ? "rgba(38,37,33,0.18)" : "rgba(255,255,255,0.12)";
       ctx.lineWidth = 1;
       ctx.stroke();
     });
 
     // 中心标签
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = lightTheme ? "#292925" : "#f5f5f2";
     ctx.font = "bold 12px sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(window.__("nav_circle"), cx, cy - 6);
     ctx.font = "9px sans-serif";
-    ctx.fillStyle = "rgba(255,255,255,0.5)";
+    ctx.fillStyle = lightTheme ? "rgba(41,41,37,0.58)" : "rgba(255,255,255,0.5)";
     ctx.fillText("Circle of 5ths", cx, cy + 10);
   }
   // 多调性模式相关变量
@@ -2319,10 +2357,13 @@ const seqFlowHtml = funcSteps.length
     ctx.arc(cx, cy, innerR, endAngle, startAngle, true);
     ctx.closePath();
 
+    const lightTheme = document.documentElement.dataset.theme === "light";
     const axisColor =
       axisGroup && axisColorMap[axisGroup]
         ? axisColorMap[axisGroup][type]
-        : axisColorMap.default[type];
+        : lightTheme
+          ? type === "major" ? "rgba(45,44,39,0.10)" : "rgba(45,44,39,0.055)"
+          : axisColorMap.default[type];
     const highlightColor =
       axisGroup && axisColorMap[axisGroup]
         ? axisColorMap[axisGroup].highlight
@@ -2335,7 +2376,7 @@ const seqFlowHtml = funcSteps.length
         cy + Math.sin(midAngle) * outerR,
       );
       grad.addColorStop(0, highlightColor);
-      grad.addColorStop(1, "rgba(255,255,255,0.15)");
+      grad.addColorStop(1, lightTheme ? "rgba(35,34,30,0.13)" : "rgba(255,255,255,0.15)");
       ctx.fillStyle = grad;
     } else {
       ctx.fillStyle = axisColor;
@@ -2347,7 +2388,7 @@ const seqFlowHtml = funcSteps.length
       ? type === "major"
         ? "rgba(100,180,255,0.8)"
         : "rgba(255,160,120,0.7)"
-      : "rgba(255,255,255,0.15)";
+      : lightTheme ? "rgba(35,34,30,0.18)" : "rgba(255,255,255,0.15)";
     ctx.lineWidth = isHighlighted ? 2 : 1;
     ctx.stroke();
 
@@ -2355,7 +2396,9 @@ const seqFlowHtml = funcSteps.length
     const textX = cx + Math.cos(midAngle) * midR;
     const textY = cy + Math.sin(midAngle) * midR;
 
-    ctx.fillStyle = isHighlighted ? "#fff" : "rgba(255,255,255,0.8)";
+    ctx.fillStyle = lightTheme
+      ? (isHighlighted ? "#171816" : "rgba(35,34,30,0.82)")
+      : (isHighlighted ? "#fff" : "rgba(255,255,255,0.8)");
     ctx.font = isHighlighted ? "bold 13px sans-serif" : "12px sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -2364,7 +2407,7 @@ const seqFlowHtml = funcSteps.length
     // 升号/降号数量小标
     if (sharps > 0 || flats > 0) {
       const subLabel = sharps > 0 ? `${sharps}♯` : `${flats}♭`;
-      ctx.fillStyle = "rgba(255,255,255,0.45)";
+      ctx.fillStyle = lightTheme ? "rgba(35,34,30,0.48)" : "rgba(255,255,255,0.45)";
       ctx.font = "8px sans-serif";
       ctx.fillText(subLabel, textX, textY + (type === "major" ? 14 : -14));
     }
@@ -2820,6 +2863,38 @@ const seqFlowHtml = funcSteps.length
   const conv = new EnhancedChordConverter();
   const brain = new JazzBrain();
   const classical = new ClassicalHarmonyConnector();
+  let classicalChain = [];
+  let classicalSegments = [];
+  let classicalLastKey = null;
+  let classicalLastMode = null;
+  let classicalActiveView = "recommendations";
+  let classicalSequencePlaybackId = 0;
+  let classicalSequenceTimers = [];
+  const CLASSICAL_PLAYBACK_STORAGE_KEY = "jazz-compass-classical-playback";
+  const DEFAULT_CLASSICAL_PLAYBACK = { bpm: 80, meter: "4/4", mode: "block" };
+
+  function stopClassicalSequencePlayback() {
+    classicalSequencePlaybackId += 1;
+    classicalSequenceTimers.forEach(timer => clearTimeout(timer));
+    classicalSequenceTimers = [];
+  }
+
+  function loadClassicalPlaybackSettings() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(CLASSICAL_PLAYBACK_STORAGE_KEY) || "{}");
+      return {
+        bpm: Math.max(40, Math.min(640, Math.round(Number(saved.bpm) || DEFAULT_CLASSICAL_PLAYBACK.bpm))),
+        meter: ["4/4", "3/4", "6/8", "8/8", "12/16", "16/16"].includes(saved.meter) ? saved.meter : DEFAULT_CLASSICAL_PLAYBACK.meter,
+        mode: ["block", "arpeggio"].includes(saved.mode) ? saved.mode : DEFAULT_CLASSICAL_PLAYBACK.mode,
+      };
+    } catch (_) {
+      return { ...DEFAULT_CLASSICAL_PLAYBACK };
+    }
+  }
+
+  function saveClassicalPlaybackSettings(settings) {
+    localStorage.setItem(CLASSICAL_PLAYBACK_STORAGE_KEY, JSON.stringify(settings));
+  }
   document.querySelectorAll(".theme-btn").forEach((button) => {
     button.addEventListener("click", () => setTheme(button.dataset.themeValue));
   });
@@ -2843,18 +2918,28 @@ const seqFlowHtml = funcSteps.length
   }
 
   function showOnlyFeature(feature) {
-    navButtons.forEach((b) =>
-      b.classList.toggle("active", b.dataset.feature === feature),
-    );
+    navButtons.forEach((b) => {
+      const active = b.dataset.feature === feature;
+      b.classList.toggle("active", active);
+      b.setAttribute("aria-selected", String(active));
+      b.setAttribute("tabindex", active ? "0" : "-1");
+    });
     panels.forEach((p) => {
       const f = p.dataset.feature;
       if (f === feature) {
+        p.classList.add("active");
         p.style.display = "block";
         p.setAttribute("aria-hidden", "false");
       } else {
+        p.classList.remove("active");
         p.style.display = "none";
         p.setAttribute("aria-hidden", "true");
       }
+    });
+    document.querySelector(`.feature-btn[data-feature="${feature}"]`)?.scrollIntoView({
+      block: "nearest",
+      inline: "center",
+      behavior: "smooth",
     });
     // special handling for about panel
     if (feature === "about") {
@@ -2887,6 +2972,7 @@ const seqFlowHtml = funcSteps.length
         <li>${window.__("about_feature_cst")}</li>
       </ul>
       <p style="margin-top:16px; color:#ddd; font-size:0.95rem; line-height:1.6;">${window.__("about_acknowledgement")}</p>
+      <p class="about-credit">${window.__("about_sposobin")}</p>
       
       <h4 style="margin-top:20px">${window.__("about_github")}</h4>
       <div style="margin: 12px 0;">
@@ -2913,13 +2999,16 @@ const seqFlowHtml = funcSteps.length
     const v = inputValue.trim();
     const data = conv._ensureNotesAndRoot(v, true);
     const notes = data.notes;
+    const displayNotes = data.voicing?.length ? data.voicing : notes;
     const chord = data.chord;
 
     if (notes && Array.isArray(notes) && notes.length > 0) {
-      const offsets = notes.map((n) => conv.noteToIdx[n]);
+      const offsets = displayNotes.map((n) => conv.noteToIdx[n]);
       // 美化输出：根 / 链接 和 列表 + 偏移 + 小键盘视图
-      const root = notes[0];
+      const root = data.root || notes[0];
       const isSlash = v.includes("/");
+      const bass = data.bass;
+      const bassIdx = bass ? conv.noteToIdx[bass] : null;
       const htmlParts = [];
       // 更紧凑的标题间距
       htmlParts.push(
@@ -2937,9 +3026,12 @@ const seqFlowHtml = funcSteps.length
       );
     */
       htmlParts.push('<div class="note-grid">');
-      for (let i = 0; i < notes.length; i++) {
+      for (let i = 0; i < displayNotes.length; i++) {
+        const note = displayNotes[i];
+        const classes = ["note-cell"];
+        if (bass && conv.noteToIdx[note] === bassIdx) classes.push("bass-note");
         htmlParts.push(
-          `<div class="note-cell"><div class="note">${notes[i]}</div></div>`,
+          `<div class="${classes.join(" ")}"><div class="note">${note}</div></div>`,
         );
       }
       htmlParts.push("</div>");
@@ -2951,19 +3043,19 @@ const seqFlowHtml = funcSteps.length
       const blackPc = { 0: 1, 2: 3, 5: 6, 7: 8, 9: 10 };
       const keys = whitePcs.map((pc, index) => {
         const octave = index < 7 ? 4 : 5;
-        const white = `<button type="button" class="piano-key piano-white-key${activeSet.has(pc) ? " is-active" : ""}${rootIdx === pc ? " is-root" : ""}" data-piano-pc="${pc}" data-piano-octave="${octave}" aria-label="${conv.idxToNote[pc]}${octave}"><span class="piano-key-label">${conv.idxToNote[pc]}</span></button>`;
+        const white = `<button type="button" class="piano-key piano-white-key${activeSet.has(pc) ? " is-active" : ""}${rootIdx === pc ? " is-root" : ""}${bassIdx === pc ? " is-bass" : ""}" data-piano-pc="${pc}" data-piano-octave="${octave}" aria-label="${conv.idxToNote[pc]}${octave}"><span class="piano-key-label">${conv.idxToNote[pc]}</span></button>`;
         let black = "";
         if (blackAfter.has(pc)) {
           const accidentalPc = blackPc[pc];
-          black = `<button type="button" class="piano-key piano-black-key${activeSet.has(accidentalPc) ? " is-active" : ""}${rootIdx === accidentalPc ? " is-root" : ""}" data-piano-pc="${accidentalPc}" data-piano-octave="${octave}" aria-label="${conv.idxToNote[accidentalPc]}${octave}"><span class="piano-key-label">${conv.idxToNote[accidentalPc]}</span></button>`;
+          black = `<button type="button" class="piano-key piano-black-key${activeSet.has(accidentalPc) ? " is-active" : ""}${rootIdx === accidentalPc ? " is-root" : ""}${bassIdx === accidentalPc ? " is-bass" : ""}" data-piano-pc="${accidentalPc}" data-piano-octave="${octave}" aria-label="${conv.idxToNote[accidentalPc]}${octave}"><span class="piano-key-label">${conv.idxToNote[accidentalPc]}</span></button>`;
         }
         return `<div class="piano-white-wrap">${white}${black}</div>`;
       }).join("");
-      htmlParts.push(`<section class="piano-section"><div class="piano-section-head"><div><span class="piano-kicker">VOICING</span><strong>和弦钢琴</strong><span class="piano-caption">点击琴键可单独试听</span><div class="piano-legend"><span><i class="legend-root"></i>根音</span><span><i class="legend-tone"></i>和弦音</span></div></div><button type="button" class="chord-play-button" id="chord-play-result"><span>▶</span> 播放和弦</button></div><div class="mini-keyboard piano-keyboard">${keys}</div></section>`);
+      htmlParts.push(`<section class="piano-section"><div class="piano-section-head"><div><span class="piano-kicker">VOICING</span><strong>和弦钢琴</strong><span class="piano-caption">点击琴键可单独试听</span><div class="piano-legend"><span><i class="legend-root"></i>根音</span><span><i class="legend-bass"></i>低音</span><span><i class="legend-tone"></i>和弦音</span></div></div><button type="button" class="chord-play-button" id="chord-play-result"><span>▶</span> 播放和弦</button></div><div class="mini-keyboard piano-keyboard">${keys}</div></section>`);
 
       targetEl.innerHTML = htmlParts.join("");
       targetEl.querySelector("#chord-play-result")?.addEventListener("click", () => {
-        const { freqs } = chordNotesToFrequencies(notes, 4, false, null);
+        const { freqs } = chordNotesToFrequencies(displayNotes, isSlash ? 3 : 4, false, null);
         playChord(freqs);
       });
       targetEl.querySelectorAll("[data-piano-pc]").forEach((key) => {
@@ -2980,6 +3072,7 @@ const seqFlowHtml = funcSteps.length
       const display = {
         chord: data.chord,
         notes: data.notes,
+        voicing: data.voicing,
         isSlash: data.isSlash,
       };
       targetEl.innerHTML = `<h3>${window.__f("chord_parse_heading", { input: v })}</h3><pre>${JSON.stringify(display, null, 2)}</pre>`;
@@ -4736,6 +4829,7 @@ const seqFlowHtml = funcSteps.length
         const depth = node.depth || 0;
         const depthFade = Math.max(0.35, 1 - depth * 0.12);
 
+        const lightTheme = document.documentElement.dataset.theme === "light";
         let glowHue = 200, glowSat = 90;
         if (!isCenter) {
           glowHue = isTransform ? 145 : 260;
@@ -4745,7 +4839,7 @@ const seqFlowHtml = funcSteps.length
         // 光晕
         const glowR = radius * 2;
         const glow = ctx.createRadialGradient(node.px, node.py, radius * 0.3, node.px, node.py, glowR);
-        glow.addColorStop(0, `hsla(${glowHue}, ${glowSat}%, 50%, ${0.5 * depthFade})`);
+        glow.addColorStop(0, `hsla(${glowHue}, ${glowSat}%, ${lightTheme ? 42 : 50}%, ${0.5 * depthFade})`);
         glow.addColorStop(1, "rgba(0,0,0,0)");
         ctx.fillStyle = glow;
         ctx.beginPath();
@@ -4757,24 +4851,25 @@ const seqFlowHtml = funcSteps.length
         ctx.arc(node.px, node.py, radius, 0, Math.PI * 2);
         const grad = ctx.createLinearGradient(node.px - radius, node.py - radius, node.px + radius, node.py + radius);
         if (isCenter) {
-          grad.addColorStop(0, "#4a90d9");
-          grad.addColorStop(0.5, "#2563a8");
-          grad.addColorStop(1, "#1a3a6e");
+          grad.addColorStop(0, lightTheme ? "#5b6f86" : "#4a90d9");
+          grad.addColorStop(0.5, lightTheme ? "#43566d" : "#2563a8");
+          grad.addColorStop(1, lightTheme ? "#2f3f52" : "#1a3a6e");
         } else if (isTransform) {
-          grad.addColorStop(0, "hsl(145, 45%, 35%)");
-          grad.addColorStop(0.5, "hsl(145, 40%, 25%)");
-          grad.addColorStop(1, "hsl(145, 35%, 15%)");
+          grad.addColorStop(0, lightTheme ? "hsl(145, 30%, 43%)" : "hsl(145, 45%, 35%)");
+          grad.addColorStop(0.5, lightTheme ? "hsl(145, 28%, 33%)" : "hsl(145, 40%, 25%)");
+          grad.addColorStop(1, lightTheme ? "hsl(145, 25%, 23%)" : "hsl(145, 35%, 15%)");
         } else {
-          grad.addColorStop(0, `hsla(260, 40%, ${35 * depthFade}%, ${depthFade})`);
-          grad.addColorStop(0.5, `hsla(260, 35%, ${25 * depthFade}%, ${depthFade})`);
-          grad.addColorStop(1, `hsla(260, 30%, ${15 * depthFade}%, ${depthFade})`);
+          const base = lightTheme ? 48 : 35;
+          grad.addColorStop(0, `hsla(260, ${lightTheme ? 28 : 40}%, ${base * depthFade}%, ${depthFade})`);
+          grad.addColorStop(0.5, `hsla(260, ${lightTheme ? 25 : 35}%, ${(lightTheme ? 36 : 25) * depthFade}%, ${depthFade})`);
+          grad.addColorStop(1, `hsla(260, ${lightTheme ? 22 : 30}%, ${(lightTheme ? 25 : 15) * depthFade}%, ${depthFade})`);
         }
         ctx.fillStyle = grad;
         ctx.fill();
 
         // 边框
         if (isCenter) {
-          ctx.strokeStyle = "rgba(255,255,255,0.7)";
+          ctx.strokeStyle = lightTheme ? "rgba(255,255,255,0.82)" : "rgba(255,255,255,0.7)";
           ctx.lineWidth = 2.5 * scale;
         } else if (isTransform) {
           ctx.strokeStyle = "hsla(145, 55%, 55%, 0.7)";
@@ -4810,7 +4905,9 @@ const seqFlowHtml = funcSteps.length
             ctx.fillText(label, node.px, node.py);
 
             if (scale > 0.65) {
-              ctx.fillStyle = "rgba(255,255,255,0.35)";
+              ctx.fillStyle = document.documentElement.dataset.theme === "light"
+                ? "rgba(35,34,30,0.52)"
+                : "rgba(255,255,255,0.35)";
               ctx.font = `${Math.max(6, 7 * scale)}px sans-serif`;
               const short = node.label.length > 10 ? node.label.slice(0, 9) + ".." : node.label;
               ctx.fillText(short, node.px, node.py + radius + 8);
@@ -5133,6 +5230,10 @@ const seqFlowHtml = funcSteps.length
     return freqs;
   }
 
+  function classicalPlaybackNotes(entry) {
+    return entry?.voicing?.length ? entry.voicing : (entry?.notes || []);
+  }
+
   function buildMultiModeDegreeFreqs(rows) {
     let lastRootMidi = null;
     return rows.map((row) => {
@@ -5172,6 +5273,7 @@ const seqFlowHtml = funcSteps.length
           4,
           false,
           lastRootMidi,
+          { voiceLeading: "nearest" },
         );
         if (rootMidi != null) lastRootMidi = rootMidi;
         freqs.forEach((freq, i) => {
@@ -5243,6 +5345,7 @@ const seqFlowHtml = funcSteps.length
               4,
               false,
               lastRootMidi,
+              { voiceLeading: "nearest" },
             );
             if (rootMidi != null) lastRootMidi = rootMidi;
           }
@@ -5252,6 +5355,7 @@ const seqFlowHtml = funcSteps.length
           4,
           false,
           lastRootMidi,
+          { voiceLeading: "nearest" },
         );
         playChord(freqs);
       }
@@ -6009,6 +6113,12 @@ const seqFlowHtml = funcSteps.length
       "Italian augmented sixth": "意大利增六和弦",
       "French augmented sixth": "法国增六和弦",
       "German augmented sixth": "德国增六和弦",
+      "tonic group": "主功能组",
+      "subdominant group": "下属功能组",
+      "dominant group": "属功能组",
+      "leading-tone group": "导功能组",
+      "altered chord group": "变和弦组",
+      "Sposobin functional DNA: recommendations follow the reference project's next-chord graph.": "基于斯波索宾功能和声连接规则生成推荐。",
       "unclassified": "未分类",
       "Continue by functional contrast or common-tone prolongation.": "通过功能对比继续，或用共同音延长当前功能。",
       "Resolve toward the tonic; raise the leading tone in minor.": "向主功能解决；小调中须使用升高的导音。",
@@ -6025,31 +6135,337 @@ const seqFlowHtml = funcSteps.length
   }
 
   function updateClassicalHarmony(targetEl) {
+    stopClassicalSequencePlayback();
     const key = document.getElementById("classical-key")?.value || "C";
     const mode = document.getElementById("classical-mode")?.value || "major";
-    const input = document.getElementById("classical-input")?.value.trim() || "I";
+    const modulationKey = document.getElementById("classical-mod-key")?.value || "G";
+    let input = document.getElementById("classical-input")?.value.trim() || "";
+    const hasInput = Boolean(input);
+    const modeIsMinor = mode.includes("minor");
+    if (hasInput && classicalLastKey !== null && classicalLastKey !== key) {
+      input = modeIsMinor ? "t" : "T";
+      document.getElementById("classical-input").value = input;
+      classicalSegments.push({ key, mode, symbols: [input] });
+    } else if (hasInput && classicalLastMode !== null && classicalLastMode !== mode) {
+      input = modeIsMinor ? "t" : "T";
+      document.getElementById("classical-input").value = input;
+      classicalSegments = [{ key, mode, symbols: [input] }];
+    }
+    classicalLastKey = key;
+    classicalLastMode = mode;
+    if (hasInput && !classicalSegments.length) classicalSegments = [{ key, mode, symbols: [input] }];
+    classicalChain = classicalSegments.length ? classicalSegments[classicalSegments.length - 1].symbols : [];
     try {
-      const report = classical.recommend(input, key, mode, 16);
+      const report = hasInput ? classical.recommend(input, key, mode, 16) : null;
       targetEl.innerHTML = "";
+
+      const workbench = document.createElement("div");
+      workbench.className = "classical-workbench";
+      const pickerPane = document.createElement("aside");
+      pickerPane.className = "classical-picker-pane";
+      const resultPane = document.createElement("div");
+      resultPane.className = "classical-result-pane";
+
+      const chainBar = document.createElement("div");
+      chainBar.className = "classical-chain result-card";
+      const displayClassicalSymbol = symbol => symbol;
+      if (report && (!classicalChain.length || classicalChain[classicalChain.length - 1] !== report.current.symbol)) {
+        classicalChain = [report.current.symbol];
+        classicalSegments[classicalSegments.length - 1].symbols = classicalChain;
+      }
+      const chainButtons = classicalChain.map((symbol, index) => `<button type="button" class="classical-chain-node" data-chain-index="${index}">${symbol}</button>${index < classicalChain.length - 1 ? "<span class=\"classical-chain-arrow\">→</span>" : ""}`).join("");
+      const segmentFlow = classicalSegments.map((segment, segmentIndex) => {
+        const segmentPalette = classical.getPalette(segment.key, segment.mode);
+        const entries = new Map(segmentPalette.map(entry => [entry.symbol, entry]));
+        const nodes = segment.symbols.map((symbol, index) => {
+          const entry = entries.get(symbol);
+          const categoryLabel = entry ? localizeClassicalText(entry.category) : "";
+          const labels = entry
+            ? `<span class="classical-chain-function">${entry.symbol}</span><span class="classical-chain-roman">${entry.roman}</span><span class="classical-chain-chord">${entry.chord}</span><span class="classical-chain-category">${categoryLabel}</span>`
+            : `<span class="classical-chain-function">${symbol}</span>`;
+          return `<span class="classical-chain-node-wrap"><button type="button" class="classical-chain-node" data-symbol="${symbol}" data-segment-index="${segmentIndex}" data-chain-index="${index}" title="${entry ? `${entry.symbol} / ${entry.roman} / ${entry.chord} / ${categoryLabel}` : symbol}">${labels}</button><button type="button" class="classical-chain-single-play" data-single-segment-index="${segmentIndex}" data-single-chain-index="${index}" aria-label="播放 ${entry ? `${entry.symbol} ${entry.chord}` : symbol}" title="播放此和弦">▶</button></span>${index < segment.symbols.length - 1 ? "<span class=\"classical-chain-arrow\">→</span>" : ""}`;
+        }).join("");
+        const keyLabelClass = segmentIndex ? "classical-chain-divider" : "classical-chain-key-start";
+        return `<span class="${keyLabelClass}">│ Key=${segment.key} │</span>${nodes}`;
+      }).join("");
+      const playbackSettings = loadClassicalPlaybackSettings();
+      chainBar.innerHTML = `<div class="classical-chain-head"><strong>连续和声连接</strong><div class="classical-chain-primary-actions"><button type="button" class="classical-chain-play" ${classicalChain.length ? "" : "disabled"}>▶ 播放</button><button type="button" class="classical-chain-back" ${classicalChain.length < 2 ? "disabled" : ""}>↶ 回退</button><button type="button" class="classical-chain-reset">× 清空</button></div></div><div class="classical-chain-flow">${segmentFlow || `<span class="small-muted">输入当前和弦，或从功能库选择起点</span>`}</div><details class="classical-playback-settings"><summary>播放设置 · ${playbackSettings.bpm} BPM · ${playbackSettings.meter}</summary><div class="classical-chain-controls"><label class="classical-chain-bpm">速度 <input class="classical-chain-tempo" type="range" min="40" max="640" step="1" value="${playbackSettings.bpm}" aria-label="播放速度"><input class="classical-chain-tempo-value" type="number" min="40" max="640" step="1" value="${playbackSettings.bpm}" aria-label="BPM 数值"> BPM</label><select class="classical-chain-meter" aria-label="播放拍号"><option value="4/4" ${playbackSettings.meter === "4/4" ? "selected" : ""}>4/4</option><option value="3/4" ${playbackSettings.meter === "3/4" ? "selected" : ""}>3/4</option><option value="6/8" ${playbackSettings.meter === "6/8" ? "selected" : ""}>6/8</option><option value="8/8" ${playbackSettings.meter === "8/8" ? "selected" : ""}>8/8</option><option value="12/16" ${playbackSettings.meter === "12/16" ? "selected" : ""}>12/16</option><option value="16/16" ${playbackSettings.meter === "16/16" ? "selected" : ""}>16/16</option></select><select class="classical-chain-play-mode" aria-label="序列播放方式"><option value="block" ${playbackSettings.mode === "block" ? "selected" : ""}>柱式和声</option><option value="arpeggio" ${playbackSettings.mode === "arpeggio" ? "selected" : ""}>琶音 1-3-5</option></select></div></details>`;
+      const clampClassicalBpm = value => Math.max(40, Math.min(640, Math.round(Number(value) || 80)));
+      const tempoSlider = chainBar.querySelector(".classical-chain-tempo");
+      const tempoValue = chainBar.querySelector(".classical-chain-tempo-value");
+      const meterSelect = chainBar.querySelector(".classical-chain-meter");
+      const modeSelect = chainBar.querySelector(".classical-chain-play-mode");
+      const syncClassicalTempo = value => {
+        const bpm = clampClassicalBpm(value);
+        if (tempoSlider) tempoSlider.value = String(bpm);
+        if (tempoValue) tempoValue.value = String(bpm);
+        saveClassicalPlaybackSettings({
+          bpm,
+          meter: meterSelect?.value || DEFAULT_CLASSICAL_PLAYBACK.meter,
+          mode: modeSelect?.value || DEFAULT_CLASSICAL_PLAYBACK.mode,
+        });
+        return bpm;
+      };
+      tempoSlider?.addEventListener("input", event => syncClassicalTempo(event.currentTarget.value));
+      tempoValue?.addEventListener("change", event => syncClassicalTempo(event.currentTarget.value));
+      meterSelect?.addEventListener("change", () => saveClassicalPlaybackSettings({
+        bpm: clampClassicalBpm(tempoValue?.value || tempoSlider?.value),
+        meter: meterSelect.value,
+        mode: modeSelect?.value || DEFAULT_CLASSICAL_PLAYBACK.mode,
+      }));
+      modeSelect?.addEventListener("change", () => saveClassicalPlaybackSettings({
+        bpm: clampClassicalBpm(tempoValue?.value || tempoSlider?.value),
+        meter: meterSelect?.value || DEFAULT_CLASSICAL_PLAYBACK.meter,
+        mode: modeSelect.value,
+      }));
+      chainBar.querySelectorAll(".classical-chain-single-play").forEach(button => button.addEventListener("click", event => {
+        event.stopPropagation();
+        const segmentIndex = Number(button.dataset.singleSegmentIndex);
+        const chainIndex = Number(button.dataset.singleChainIndex);
+        const segment = classicalSegments[segmentIndex];
+        const symbol = segment?.symbols?.[chainIndex];
+        const entry = symbol ? classical.getPalette(segment.key, segment.mode).find(item => item.symbol === symbol) : null;
+        if (!entry?.notes?.length) return;
+        stopClassicalSequencePlayback();
+        chainBar.querySelectorAll(".classical-chain-node.is-playing").forEach(node => node.classList.remove("is-playing"));
+        chainBar.querySelector(`[data-segment-index="${segmentIndex}"][data-chain-index="${chainIndex}"]`)?.classList.add("is-playing");
+        playChord(chordNotesToFrequencies(classicalPlaybackNotes(entry), 3, false, null).freqs, 1.4);
+        setTimeout(() => chainBar.querySelector(`[data-segment-index="${segmentIndex}"][data-chain-index="${chainIndex}"]`)?.classList.remove("is-playing"), 1450);
+      }));
+      chainBar.querySelector(".classical-chain-play")?.addEventListener("click", event => {
+        const playButton = event.currentTarget;
+        if (playButton.dataset.playing === "true") {
+          stopClassicalSequencePlayback();
+          chainBar.querySelectorAll(".classical-chain-node.is-playing").forEach(node => node.classList.remove("is-playing"));
+          playButton.dataset.playing = "false";
+          playButton.textContent = "▶ 播放序列";
+          return;
+        }
+        const sequence = [];
+        let lastRootMidi = null;
+        const playbackMode = chainBar.querySelector(".classical-chain-play-mode")?.value || "block";
+        const meter = chainBar.querySelector(".classical-chain-meter")?.value || "4/4";
+        const beatCount = Math.max(1, Number(meter.split("/")[0]) || 4);
+        const bpm = syncClassicalTempo(chainBar.querySelector(".classical-chain-tempo-value")?.value ?? chainBar.querySelector(".classical-chain-tempo")?.value);
+        const beatMs = 60000 / bpm;
+        const barMs = beatMs * beatCount;
+        classicalSegments.forEach((segment, segmentIndex) => {
+          const entries = new Map(classical.getPalette(segment.key, segment.mode).map(entry => [entry.symbol, entry]));
+          segment.symbols.forEach((symbol, chainIndex) => {
+            const entry = entries.get(symbol);
+            const playbackNotes = classicalPlaybackNotes(entry);
+            if (!playbackNotes.length) return;
+            const audio = chordNotesToFrequencies(playbackNotes, 3, false, lastRootMidi, { voiceLeading: "nearest" });
+            lastRootMidi = audio.rootMidi ?? lastRootMidi;
+            sequence.push({ ...audio, segmentIndex, chainIndex, mode: playbackMode });
+          });
+        });
+        if (!sequence.length) return;
+        stopClassicalSequencePlayback();
+        const playbackId = classicalSequencePlaybackId;
+        playButton.dataset.playing = "true";
+        playButton.textContent = "■ 停止";
+        let eventIndex = 0;
+        sequence.forEach(step => {
+          const arpSource = step.freqs.slice(0, 3);
+          const frequencies = step.mode === "arpeggio"
+            ? Array.from({ length: beatCount }, (_, index) => arpSource[index % arpSource.length]).filter(Boolean)
+            : [step.freqs];
+          frequencies.forEach((frequency, frequencyIndex) => {
+            classicalSequenceTimers.push(setTimeout(() => {
+            if (playbackId !== classicalSequencePlaybackId) return;
+            chainBar.querySelectorAll(".classical-chain-node.is-playing").forEach(node => node.classList.remove("is-playing"));
+            chainBar.querySelector(`[data-segment-index="${step.segmentIndex}"][data-chain-index="${step.chainIndex}"]`)?.classList.add("is-playing");
+            playChord(step.mode === "arpeggio" ? [frequency] : frequency, step.mode === "arpeggio" ? 0.55 : Math.max(0.8, barMs / 1000 * 0.9), { interrupt: frequencyIndex === 0 || step.mode !== "arpeggio" });
+          }, eventIndex++ * (step.mode === "arpeggio" ? beatMs : barMs)));
+          });
+        });
+        const stepDuration = playbackMode === "arpeggio" ? beatMs : barMs;
+        classicalSequenceTimers.push(setTimeout(() => {
+          if (playbackId !== classicalSequencePlaybackId) return;
+          chainBar.querySelectorAll(".classical-chain-node.is-playing").forEach(node => node.classList.remove("is-playing"));
+          playButton.dataset.playing = "false";
+          playButton.textContent = "▶ 播放序列";
+          classicalSequenceTimers = [];
+        }, eventIndex * stepDuration + 180));
+      });
+      chainBar.querySelector(".classical-chain-back")?.addEventListener("click", () => {
+        if (classicalChain.length < 2) return;
+        classicalChain.pop();
+        document.getElementById("classical-input").value = classicalChain[classicalChain.length - 1];
+        updateClassicalHarmony(targetEl);
+      });
+      chainBar.querySelector(".classical-chain-reset")?.addEventListener("click", () => {
+        classicalSegments = [];
+        classicalChain = [];
+        document.getElementById("classical-input").value = "";
+        updateClassicalHarmony(targetEl);
+      });
+      chainBar.querySelectorAll(".classical-chain-node[data-chain-index]").forEach(button => button.addEventListener("click", () => {
+        const segmentIndex = Number(button.dataset.segmentIndex);
+        classicalSegments = classicalSegments.slice(0, segmentIndex + 1);
+        classicalSegments[segmentIndex].symbols = classicalSegments[segmentIndex].symbols.slice(0, Number(button.dataset.chainIndex) + 1);
+        classicalChain = classicalSegments[segmentIndex].symbols;
+        document.getElementById("classical-input").value = button.dataset.symbol;
+        updateClassicalHarmony(targetEl);
+      }));
+      targetEl.appendChild(workbench);
+      workbench.append(resultPane);
+      resultPane.appendChild(chainBar);
+
+      // The picker stays near the current sequence so users do not have to
+      // scroll past recommendation cards just to choose the next function.
+      const recommendationSection = document.createElement("section");
+      recommendationSection.className = "classical-recommendations";
+
+      const paths = hasInput ? classical.findPaths(input, key, mode, 4, 8) : [];
+      const pathBar = document.createElement("section");
+      pathBar.className = "classical-paths result-card";
+      pathBar.innerHTML = `<div class="classical-palette-title">连续建议路线</div><div class="classical-path-list">${paths.map((path, index) => `<button type="button" class="classical-path" data-path-index="${index}"><span>${path.symbols.join(" → ")}</span><small>${path.symbols.length - 1} 步 · ${path.score.toFixed(1)}</small></button>`).join("")}</div>`;
+      pathBar.querySelectorAll("[data-path-index]").forEach(button => button.addEventListener("click", () => {
+        const selected = paths[Number(button.dataset.pathIndex)];
+        classicalChain = selected.symbols;
+        classicalSegments[classicalSegments.length - 1].symbols = classicalChain;
+        document.getElementById("classical-input").value = selected.symbols[selected.symbols.length - 1];
+        classicalActiveView = "recommendations";
+        updateClassicalHarmony(targetEl);
+      }));
+
+      const modulationBar = document.createElement("section");
+      modulationBar.className = "classical-modulations result-card";
+      let modulationRoutes = [];
+      if (hasInput && modulationKey !== key) {
+        modulationRoutes = classical.suggestModulations(input, key, mode, modulationKey, mode, 6);
+      }
+      const modulationBody = !hasInput
+        ? `<div class="small-muted">先输入当前和弦或点击功能组，再选择这里的转调方案。</div>`
+        : modulationKey === key
+          ? `<div class="small-muted">目标调与当前调相同，不需要转调。</div>`
+          : modulationRoutes.length
+            ? modulationRoutes.map((route, index) => `<button type="button" class="classical-path modulation-path" data-modulation-index="${index}"><span>${route.sourceSymbols.join(" → ")} <b>│ Key=${route.targetKey} │</b> ${route.targetSymbols.join(" → ")}</span><small>枢纽 ${route.pivot.chord}</small></button>`).join("")
+            : `<div class="small-muted">当前调性与目标调性之间没有找到可用的共同和弦枢纽。</div>`;
+      modulationBar.innerHTML = `<div class="classical-palette-title">转调候选 · 到 ${modulationKey}</div><div class="small-muted classical-modulation-hint">点击下面的方案才会把转调路线加入连续和声连接；上方“转调到”只负责指定目标调。</div><div class="classical-path-list">${modulationBody}</div>`;
+      modulationBar.querySelectorAll("[data-modulation-index]").forEach(button => button.addEventListener("click", () => {
+        const selected = modulationRoutes[Number(button.dataset.modulationIndex)];
+        const sourceSegment = classicalSegments[classicalSegments.length - 1];
+        sourceSegment.symbols = [...sourceSegment.symbols, ...selected.sourceSymbols.slice(1)];
+        document.getElementById("classical-key").value = selected.targetKey;
+        classicalLastKey = selected.targetKey;
+        classicalSegments.push({ key: selected.targetKey, mode, symbols: selected.targetSymbols });
+        document.getElementById("classical-input").value = selected.targetSymbols[selected.targetSymbols.length - 1];
+        classicalActiveView = "recommendations";
+        updateClassicalHarmony(targetEl);
+      }));
+
+      // The reference Sposobin UI exposes the whole functional DNA as a
+      // palette. Clicking a symbol makes it the current chord and refreshes
+      // the exact next-chord recommendations for that node.
+      const palette = classical.getPalette(key, mode);
+      const paletteWrap = document.createElement("section");
+      paletteWrap.className = "classical-palette result-card";
+      const groups = [
+        ["tonic group", "主功能组（T / DT）"],
+        ["subdominant group", "下属功能组（S / TSVI / VII）"],
+        ["dominant group", "属功能组（D / K）"],
+        ["leading-tone group", "导功能组（Dᵥᵢᵢ）"],
+        ["altered chord group", "变和弦组（N / +6）"],
+        ["double dominant", "重属功能组（DD）"]
+      ];
+      const grouped = new Map(groups.map(([id, label]) => [id, { label, entries: [] }]));
+      const tonicized = new Map();
+      palette.forEach(entry => {
+        if (entry.symbol.includes("/")) {
+          const target = entry.symbol.split("/")[1];
+          if (!tonicized.has(target)) tonicized.set(target, []);
+          tonicized.get(target).push(entry);
+        } else if (grouped.has(entry.category)) grouped.get(entry.category).entries.push(entry);
+      });
+      const makeGroup = (label, entries, extraClass = "") => {
+        if (!entries.length) return "";
+        const buttons = entries.map(entry => `<button type="button" class="classical-palette-btn ${extraClass}" data-classical-symbol="${entry.symbol}"><span>${entry.symbol}</span><small>${entry.roman || ""}${entry.chord ? ` · ${entry.chord}` : ""}</small></button>`).join("");
+        return `<div class="classical-palette-group"><h4>${label}</h4><div class="classical-palette-grid">${buttons}</div></div>`;
+      };
+      const availableGroups = groups.filter(([id]) => grouped.get(id)?.entries.length);
+      paletteWrap.innerHTML = `<div class="classical-palette-title">Sposobin 功能组</div><div class="classical-function-tabs">${availableGroups.map(([id]) => `<button type="button" class="classical-function-tab" data-function-group="${id}">${grouped.get(id).label.replace(/（.*$/, "")} <span>${grouped.get(id).entries.length}</span></button>`).join("")}</div><div class="classical-function-list"></div><div class="classical-palette-tonicization"><h4>离调与变音体系</h4><div class="classical-tonicization-tabs">${["II", "III", "IV", "V", "VI"].map(target => `<button type="button" class="classical-tonicization-tab" data-tonic-target="${target}">至 ${target} 级 <span>${(tonicized.get(target) || []).length}</span></button>`).join("")}</div><div class="classical-tonicization-list"></div></div>`;
+      const appendClassicalSymbol = symbol => {
+        const activeSegment = classicalSegments[classicalSegments.length - 1] || { key, mode, symbols: [] };
+        if (!classicalSegments.length) classicalSegments.push(activeSegment);
+        activeSegment.symbols.push(symbol);
+        classicalChain = activeSegment.symbols;
+        document.getElementById("classical-input").value = symbol;
+        classicalActiveView = "recommendations";
+        updateClassicalHarmony(targetEl);
+      };
+      const bindClassicalSymbolButtons = root => {
+        root.querySelectorAll("[data-classical-symbol]").forEach(button => button.addEventListener("click", () => {
+          appendClassicalSymbol(button.dataset.classicalSymbol);
+        }));
+      };
+      const functionList = paletteWrap.querySelector(".classical-function-list");
+      const renderFunctionGroup = id => {
+        const group = grouped.get(id);
+        if (!group) return;
+        paletteWrap.querySelectorAll(".classical-function-tab").forEach(tab => tab.classList.toggle("active", tab.dataset.functionGroup === id));
+        functionList.innerHTML = makeGroup(group.label, group.entries);
+        bindClassicalSymbolButtons(functionList);
+      };
+      paletteWrap.querySelectorAll(".classical-function-tab").forEach(button => button.addEventListener("click", () => {
+        renderFunctionGroup(button.dataset.functionGroup);
+      }));
+      const tonicList = paletteWrap.querySelector(".classical-tonicization-list");
+      const renderTonicization = target => {
+        tonicList.innerHTML = makeGroup(`副属和弦 · 至 ${target} 级`, tonicized.get(target) || [], "classical-tonicization-btn");
+        bindClassicalSymbolButtons(tonicList);
+      };
+      paletteWrap.querySelectorAll(".classical-tonicization-tab").forEach(button => button.addEventListener("click", () => {
+        paletteWrap.querySelectorAll(".classical-tonicization-tab").forEach(tab => tab.classList.remove("active"));
+        button.classList.add("active");
+        renderTonicization(button.dataset.tonicTarget);
+      }));
+      if (availableGroups.length) renderFunctionGroup(availableGroups[0][0]);
+      pickerPane.appendChild(paletteWrap);
+
       const summary = document.createElement("div");
       summary.className = "classical-summary result-card";
-      summary.innerHTML = `<div class="classical-summary-title">${key} ${mode === "minor" ? "小调" : "大调"} · ${report.current.symbol || input}</div><div class="small-muted">${localizeClassicalText(report.constraints)}</div><div class="classical-current-meta">${localizeClassicalText(report.current.category || "unclassified")} · 功能 ${report.current.function || "—"} · 低音 ${report.current.bass || report.current.notes?.[0] || "—"}</div>`;
-      targetEl.appendChild(summary);
+      const modeLabel = { "all-generic": "/", "major-generic": "大调（不分）", "minor-generic": "小调（不分）", major: "自然大调", "harmonic-major": "和声大调", "melodic-major": "旋律大调", minor: "自然小调", "harmonic-minor": "和声小调", "melodic-minor": "旋律小调" }[mode] || mode;
+      summary.innerHTML = report
+        ? `<div class="classical-summary-title">${key} ${modeLabel} · ${displayClassicalSymbol(report.current.symbol || input, true)}</div><div class="small-muted">${localizeClassicalText(report.constraints)}</div><div class="classical-current-meta">${localizeClassicalText(report.current.category || "unclassified")} · 功能 ${report.current.function || "—"} · 低音 ${report.current.bass || report.current.notes?.[0] || "—"}</div>`
+        : `<div class="classical-summary-title">${key} ${modeLabel}</div><div class="small-muted">请选择或输入一个和弦，开始查看连续连接建议。</div>`;
+      resultPane.appendChild(summary);
 
       const heading = document.createElement("div");
       heading.className = "classical-list-heading";
-      heading.textContent = `推荐衔接 · ${report.recommendations.length}`;
-      targetEl.appendChild(heading);
+      heading.textContent = report ? `推荐衔接 · ${report.recommendations.length}` : "推荐衔接";
+      recommendationSection.appendChild(heading);
 
       const list = document.createElement("div");
       list.className = "classical-rec-list";
-      report.recommendations.forEach((item) => {
+      (report?.recommendations || []).forEach((item) => {
         const card = document.createElement("article");
         card.className = "classical-rec-card result-card";
+        card.tabIndex = 0;
+        card.setAttribute("role", "button");
+        card.setAttribute("aria-label", `将 ${item.symbol}（${item.roman}，${item.chord}）加入连续和声连接`);
+        card.title = "加入连续和声连接";
         const toneButtons = (item.notes || []).map(note => `<button type="button" class="classical-note" data-classical-note="${note}">${note}</button>`).join("");
-        card.innerHTML = `<div class="classical-rec-top"><div><strong>${item.symbol}</strong><span class="classical-chord-name">${item.chord}</span></div><span class="classical-score">${item.score.toFixed(1)}</span></div><div class="classical-tags"><span>${localizeClassicalText(item.category)}</span><span>功能 ${item.function}</span><span>转位 ${item.figuredBass || "根位"}</span><span>低音 ${item.bass || "—"}</span></div><div class="classical-notes">${toneButtons}</div><p class="classical-resolution">${localizeClassicalText(item.resolution)}</p><div class="classical-meta">共同音 ${item.commonTones} · 声部距离 ${item.voiceLeading}</div><button type="button" class="classical-play" title="播放和弦">▶ 播放</button>`;
+        card.innerHTML = `<div class="classical-rec-top"><div><strong>${item.symbol}</strong><span class="classical-roman-name">${item.roman || item.symbol}</span><span class="classical-chord-name">${item.chord}</span></div><div class="classical-rec-actions"><span class="classical-score">${item.score.toFixed(1)}</span><span class="classical-add" aria-hidden="true">+</span></div></div><div class="classical-tags"><span>${localizeClassicalText(item.category)}</span><span>功能 ${item.function}</span><span>转位 ${item.figuredBass || "根位"}</span><span>低音 ${item.bass || "—"}</span></div><div class="classical-notes">${toneButtons}</div><div class="classical-meta">共同音 ${item.commonTones} · 声部距离 ${item.voiceLeading}</div><button type="button" class="classical-play" title="播放和弦">▶ 播放</button>`;
+        const appendRecommendation = () => {
+          classicalChain.push(item.symbol);
+          document.getElementById("classical-input").value = item.symbol;
+          classicalActiveView = "recommendations";
+          updateClassicalHarmony(targetEl);
+        };
+        card.addEventListener("click", event => {
+          if (event.target.closest("button")) return;
+          appendRecommendation();
+        });
+        card.addEventListener("keydown", event => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          event.preventDefault();
+          appendRecommendation();
+        });
         card.querySelector(".classical-play")?.addEventListener("click", () => {
-          const { freqs } = chordNotesToFrequencies(item.notes || [], 4, false, null);
+          const { freqs } = chordNotesToFrequencies(classicalPlaybackNotes(item), 3, false, null);
           playChord(freqs);
         });
         card.querySelectorAll("[data-classical-note]").forEach(button => button.addEventListener("click", () => {
@@ -6057,17 +6473,68 @@ const seqFlowHtml = funcSteps.length
         }));
         list.appendChild(card);
       });
-      targetEl.appendChild(list);
+      recommendationSection.appendChild(list);
+
+      const viewTabs = document.createElement("div");
+      viewTabs.className = "classical-view-tabs";
+      viewTabs.setAttribute("role", "tablist");
+      const viewDefinitions = [
+        ["recommendations", "推荐", report?.recommendations?.length || 0],
+        ["paths", "路线", paths.length],
+        ["modulations", "转调", modulationRoutes.length],
+        ["palette", "功能库", palette.length],
+      ];
+      viewTabs.innerHTML = viewDefinitions.map(([id, label, count]) => `<button type="button" class="classical-view-tab" data-classical-view="${id}" role="tab"><span>${label}</span><small>${count}</small></button>`).join("");
+
+      const viewStage = document.createElement("div");
+      viewStage.className = "classical-view-stage";
+      const viewPanels = new Map();
+      viewDefinitions.forEach(([id]) => {
+        const panel = document.createElement("div");
+        panel.className = "classical-view-panel";
+        panel.dataset.classicalViewPanel = id;
+        panel.setAttribute("role", "tabpanel");
+        viewPanels.set(id, panel);
+        viewStage.appendChild(panel);
+      });
+      viewPanels.get("recommendations").appendChild(recommendationSection);
+      viewPanels.get("paths").appendChild(pathBar);
+      viewPanels.get("modulations").appendChild(modulationBar);
+      viewPanels.get("palette").appendChild(paletteWrap);
+      resultPane.append(viewTabs, viewStage);
+
+      const setClassicalView = view => {
+        classicalActiveView = viewPanels.has(view) ? view : "recommendations";
+        viewTabs.querySelectorAll("[data-classical-view]").forEach(button => {
+          const active = button.dataset.classicalView === classicalActiveView;
+          button.classList.toggle("active", active);
+          button.setAttribute("aria-selected", String(active));
+        });
+        viewPanels.forEach((panel, id) => {
+          panel.hidden = id !== classicalActiveView;
+        });
+      };
+      viewTabs.querySelectorAll("[data-classical-view]").forEach(button => button.addEventListener("click", () => {
+        setClassicalView(button.dataset.classicalView);
+      }));
+      setClassicalView(hasInput ? classicalActiveView : "palette");
     } catch (error) {
       targetEl.innerHTML = `<div class="result-card classical-error">${error.message}</div>`;
     }
   }
 
   document.getElementById("classical-run")?.addEventListener("click", () => {
+    classicalActiveView = "recommendations";
     updateClassicalHarmony(document.getElementById("panel-classical-body"));
   });
   document.getElementById("classical-input")?.addEventListener("keydown", event => {
     if (event.key === "Enter") document.getElementById("classical-run")?.click();
+  });
+  document.getElementById("classical-key")?.addEventListener("change", () => {
+    updateClassicalHarmony(document.getElementById("panel-classical-body"));
+  });
+  document.getElementById("classical-mode")?.addEventListener("change", () => {
+    updateClassicalHarmony(document.getElementById("panel-classical-body"));
   });
 
   document.getElementById("chord-run").addEventListener("click", () => {

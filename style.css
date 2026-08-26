@@ -286,7 +286,7 @@ body {
     filter: drop-shadow(0 0 6px rgba(0,181,173,0.5));
 }
 
-/* Jazz Compass workspace refresh */
+/* Music Theory Toolbox workspace refresh */
 :root {
     --bg: #070b12;
     --bg-elevated: #0d1420;
@@ -368,6 +368,8 @@ button { font-family:inherit; }
 .note-grid { gap:8px; }
 .note-cell { border-radius:10px; padding:12px 8px; }
 .note-cell .note { color:#f4f8ff; font-weight:800; }
+.note-cell.bass-note { border-color:rgba(156,142,255,.68) !important; background:rgba(112,95,220,.18) !important; box-shadow:0 0 0 2px rgba(112,95,220,.2) !important; }
+.note-cell.bass-note .note { color:#d8d1ff; }
 @media (max-width: 840px) {
     .container { width:min(100% - 24px, 680px); padding-top:20px; display:block; }
     .app-header { gap:18px; flex-direction:column; }
@@ -1245,6 +1247,7 @@ pre {
 .piano-legend span { display:inline-flex; align-items:center; gap:6px; }
 .piano-legend i { width:9px; height:9px; border-radius:3px; box-shadow:0 0 0 2px rgba(255,255,255,.06); }
 .legend-root { background:#f2b66f; }
+.legend-bass { background:#8b7cff; }
 .legend-tone { background:#64d8c4; }
 .chord-play-button { display:inline-flex; align-items:center; gap:7px; border:1px solid rgba(101,224,202,.3); border-radius:9px; padding:9px 13px; background:rgba(101,224,202,.12); color:#9bf3df; font-size:.76rem; font-weight:800; cursor:pointer; transition:.18s ease; }
 .chord-play-button:hover { background:rgba(101,224,202,.2); transform:translateY(-1px); }
@@ -1255,12 +1258,16 @@ pre {
 .piano-white-key:first-child { border-radius:7px 0 8px 8px; }
 .piano-white-key:hover { background:#ffffff; transform:translateY(1px); }
 .piano-white-key.is-active { background:linear-gradient(180deg,#b4f2e7,#64d8c4 84%,#36a999); color:#063c33; box-shadow:inset 0 -5px 0 rgba(5,75,65,.2); }
+.piano-white-key.is-bass { background:linear-gradient(180deg,#d8d1ff,#8b7cff 84%,#5947c7); color:#140d52; box-shadow:inset 0 -5px 0 rgba(34,24,102,.22), 0 0 0 2px rgba(139,124,255,.42); }
 .piano-white-key.is-root { background:linear-gradient(180deg,#ffe0b5,#f2b66f 84%,#c77c37); color:#4a2507; box-shadow:inset 0 -5px 0 rgba(105,53,12,.22), 0 0 0 2px rgba(242,182,111,.42); }
+.piano-white-key.is-root.is-bass { box-shadow:inset 0 -5px 0 rgba(105,53,12,.22), 0 0 0 2px rgba(242,182,111,.42), 0 0 0 4px rgba(139,124,255,.35); }
 .piano-key-label { position:absolute; left:0; right:0; bottom:10px; font-size:.74rem; font-weight:850; pointer-events:none; }
 .piano-black-key { position:absolute; z-index:3; top:-1px; right:-14px; width:28px; height:61%; border:1px solid #0a111c; border-radius:0 0 6px 6px; background:linear-gradient(180deg,#27364b,#090f19 80%); color:#8ea2bb; box-shadow:0 5px 9px rgba(0,0,0,.5); }
 .piano-black-key:hover { background:#344962; transform:translateY(1px); }
 .piano-black-key.is-active { background:linear-gradient(180deg,#65d9c5,#1b766e); color:#e6fff9; }
+.piano-black-key.is-bass { background:linear-gradient(180deg,#b9adff,#4d3bb6); color:#f3f0ff; box-shadow:0 0 0 2px rgba(139,124,255,.48), 0 5px 9px rgba(0,0,0,.5); }
 .piano-black-key.is-root { background:linear-gradient(180deg,#f2b66f,#8f4d1f); color:#fff5e9; box-shadow:0 0 0 2px rgba(242,182,111,.45), 0 5px 9px rgba(0,0,0,.5); }
+.piano-black-key.is-root.is-bass { box-shadow:0 0 0 2px rgba(242,182,111,.45), 0 0 0 4px rgba(139,124,255,.38), 0 5px 9px rgba(0,0,0,.5); }
 .piano-black-key .piano-key-label { bottom:8px; font-size:.62rem; transform:rotate(-90deg); }
 @media (max-width: 560px) {
     .piano-section-head { align-items:flex-start; flex-direction:column; }

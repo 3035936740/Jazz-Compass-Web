@@ -3,6 +3,8 @@
  * 1:1 Translation from Python to JavaScript
  */
 
+import { SPOSOBIN_DNA } from "./sposobin_data.js";
+
 export class ChordConverter {
     constructor() {
         this.noteToIdx = {
@@ -1739,7 +1741,11 @@ export class ClassicalHarmonyConnector {
         this.letters = ["C", "D", "E", "F", "G", "A", "B"];
         this.modeIntervals = {
             major: [0, 2, 4, 5, 7, 9, 11],
-            minor: [0, 2, 3, 5, 7, 8, 11]
+            "harmonic-major": [0, 2, 4, 5, 7, 8, 11],
+            "melodic-major": [0, 2, 4, 5, 7, 8, 10],
+            minor: [0, 2, 3, 5, 7, 8, 10],
+            "harmonic-minor": [0, 2, 3, 5, 7, 8, 11],
+            "melodic-minor": [0, 2, 3, 5, 7, 9, 11]
         };
     }
 
@@ -1985,6 +1991,334 @@ export class ClassicalHarmonyConnector {
             recommendations: [...unique.values()].sort((a, b) => b.score - a.score).slice(0, limit),
             constraints: "Classical tertian harmony: triads and seventh chords; only the dominant may use a ninth."
         };
+    }
+
+    // Sposobin's functional DNA database is kept as a separate data module.
+    // This override preserves the legacy palette helpers above while making
+    // the public connector follow the reference project's exact next graph.
+    _normalizeSposobinSymbol(value) {
+        return String(value || "").trim().replace(/\s+/g, "")
+            .replace(/[₀₁₂₃₄₅₆₇₈₉]/g, c => "0123456789"["₀₁₂₃₄₅₆₇₈₉".indexOf(c)])
+            .replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g, c => "0123456789"["⁰¹²³⁴⁵⁶⁷⁸⁹".indexOf(c)])
+            .replace(/ᵥ/g, "v").replace(/ᵢ/g, "i").replace(/♭/g, "b").replace(/♯/g, "#").replace(/⁺/g, "+");
+    }
+
+    _sposobinCategory(symbol) {
+        if (/^(It|Fr|Ger|N)/.test(symbol)) return "altered chord group";
+        if (/^DD/.test(symbol)) return "double dominant";
+        if (/^D[^/]*\/.+/.test(symbol)) return "secondary dominant";
+        if (/^(Dᵥᵢᵢ|D[vV]|VII)/.test(symbol)) return "leading-tone group";
+        if (/^(T|t|DT)/.test(symbol)) return "tonic group";
+        if (/^(S|s|VI)/.test(symbol)) return "subdominant group";
+        if (/^(D|K)/.test(symbol)) return "dominant group";
+        return "unclassified";
+    }
+
+    _sposobinFunction(symbol) {
+        const category = this._sposobinCategory(symbol);
+        if (category === "tonic group") return "T";
+        if (category === "subdominant group") return "S";
+        if (category === "altered chord group") return "S-D";
+        if (["leading-tone group", "dominant group", "double dominant", "secondary dominant"].includes(category)) return "D";
+        return "unknown";
+    }
+
+    _sposobinDegreeRoot(symbol, mode, required) {
+        const intervals = this.modeIntervals[mode] || this.modeIntervals.major;
+        const degreePc = degree => intervals[degree - 1] ?? this.modeIntervals.major[degree - 1];
+        const suffixTarget = symbol.match(/\/(II|III|IV|VI|VII|iv)$/)?.[1];
+        const targetDegrees = { II: 2, III: 3, IV: 4, iv: 4, VI: 6, VII: 7 };
+        if (suffixTarget) {
+            const targetPc = degreePc(targetDegrees[suffixTarget]);
+            return symbol.startsWith("Dᵥᵢᵢ") ? (targetPc + 11) % 12 : (targetPc + 7) % 12;
+        }
+        if (/^DD/.test(symbol)) return degreePc(2);
+        if (/^Dᵥᵢᵢ/.test(symbol)) return 11;
+        if (/^DTᵢᵢᵢ/.test(symbol)) return degreePc(3);
+        if (/^[Ss]ᵢᵢ/.test(symbol)) return degreePc(2);
+        if (/^[TtK]/.test(symbol)) return 0;
+        if (/^[Ss]/.test(symbol)) return degreePc(4);
+        if (/^D/.test(symbol)) return 7;
+        if (/^VI/.test(symbol)) return degreePc(6);
+        if (/^VII/.test(symbol)) return degreePc(7);
+        if (/^N/.test(symbol)) return 1;
+        return required[0] ?? 0;
+    }
+
+    _romanHarmonySymbol(symbol, mode) {
+        const figure = symbol.match(/[₀₁₂₃₄₅₆₇₈₉]+/)?.[0] || "";
+        const target = symbol.includes("/") ? `/${symbol.split("/")[1]}` : "";
+        if (symbol === "K₆₄") return "I⁶₄";
+        if (/^N/.test(symbol)) return "♭II⁶";
+        if (/^It/.test(symbol)) return "It⁺⁶";
+        if (/^Fr/.test(symbol)) return "Fr⁺⁶";
+        if (/^Ger/.test(symbol)) return "Ger⁺⁶";
+        if (/^DD/.test(symbol)) return `V${figure}/V`;
+        if (/^Dᵥᵢᵢ/.test(symbol)) {
+            const diminished = symbol.includes("♭") ? "°" : (symbol.includes("₇") || symbol.includes("₅₆") || symbol.includes("₃₄") || symbol.includes("₂") ? "ø" : "°");
+            return `vii${diminished}${figure}${target}`;
+        }
+        if (/^DTᵢᵢᵢ/.test(symbol)) return `${mode.includes("minor") ? "III" : "iii"}${figure}`;
+        if (/^T/.test(symbol)) return `I${figure}`;
+        if (/^t/.test(symbol)) return `i${figure}`;
+        if (/^Sᵢᵢ/.test(symbol)) return `ii${figure}`;
+        if (/^sᵢᵢ/.test(symbol)) return `ii°${figure}`;
+        if (/^S/.test(symbol)) return `IV${figure}`;
+        if (/^s/.test(symbol)) return `iv${figure}`;
+        if (/^D/.test(symbol)) return `V${figure}${target}`;
+        if (/^VI/.test(symbol)) return `${mode.includes("minor") ? "VI" : "vi"}${figure}`;
+        if (/^VII/.test(symbol)) return `${mode.includes("minor") ? "VII" : "vii°"}${figure}`;
+        return symbol;
+    }
+
+    _actualChordSymbol(symbol, key, mode, required, bassPc) {
+        const rootRelPc = this._sposobinDegreeRoot(symbol, mode, required);
+        if (/^It/.test(symbol)) return this._spellAugmentedSixthChordName(key, mode, "It");
+        if (/^Fr/.test(symbol)) return this._spellAugmentedSixthChordName(key, mode, "Fr");
+        if (/^Ger/.test(symbol)) return this._spellAugmentedSixthChordName(key, mode, "Ger");
+        const rootPc = (this.converter.noteToIdx[key] + rootRelPc) % 12;
+        const rootName = this.converter.idxToNote[rootPc];
+        if (/^D[₇₅₆₃₄₂]*不完全(?:\/|$)/.test(symbol)) {
+            const bassName = this.converter.idxToNote[bassPc];
+            return `${rootName}7(no5)${bassPc !== rootPc ? `/${bassName}` : ""}`;
+        }
+        const intervals = [...new Set(required.map(pc => (pc - rootRelPc + 12) % 12))].sort((a, b) => a - b);
+        const quality = this._quality(intervals);
+        const suffix = quality.quality === "tertian chord" ? "" : quality.suffix;
+        const bassName = this.converter.idxToNote[bassPc];
+        return `${rootName}${suffix}${bassPc !== rootPc ? `/${bassName}` : ""}`;
+    }
+
+    _spellAugmentedSixthChordName(key, mode, family) {
+        const names = this._spellAugmentedSixthNotes(key, mode, family);
+        return `${family}+6(${names.join("-")})`;
+    }
+
+    _spellAugmentedSixthNotes(key, mode, family) {
+        const names = [
+            this._spellDegree(key, mode, 6, -1),
+            this._spellDegree(key, mode, 1),
+        ];
+        if (family === "Fr") names.push(this._spellDegree(key, mode, 2));
+        if (family === "Ger") names.push(this._spellDegree(key, mode, 3, -1));
+        names.push(this._spellDegree(key, mode, 4, 1));
+        return names;
+    }
+
+    _voiceNotesFromBass(notes, bass) {
+        if (!bass) return [...notes];
+        const bassPc = this.converter.noteToIdx[bass];
+        const rest = notes.filter(note => this.converter.noteToIdx[note] !== bassPc);
+        return [bass, ...rest];
+    }
+
+    _sposobinAliases(symbol) {
+        const aliases = [symbol, this._normalizeSposobinSymbol(symbol)];
+        if (symbol === "T") aliases.push("I");
+        if (symbol === "t") aliases.push("i", "Im");
+        if (symbol === "T₆" || symbol === "t₆") aliases.push("I6", "i6");
+        if (symbol === "T₆₄" || symbol === "t₆₄") aliases.push("I64", "i64");
+        if (symbol === "S" || symbol === "s") aliases.push("IV", "iv");
+        if (symbol === "D") aliases.push("V", "v");
+        if (symbol === "D₇") aliases.push("V7", "v7");
+        if (symbol === "K₆₄") aliases.push("K64");
+        if (symbol === "DD") aliases.push("V/V", "V7/V");
+        if (symbol === "N₆") aliases.push("N", "bII6");
+        if (symbol === "Sᵢᵢ" || symbol === "sᵢᵢ") aliases.push("ii", "ii°", "ii dim", "IIdim");
+        if (symbol === "Sᵢᵢ₆" || symbol === "sᵢᵢ₆") aliases.push("ii6", "ii°6", "IIdim", "IIdim6", "ii dim");
+        if (symbol === "Sᵢᵢ₇" || symbol === "sᵢᵢ₇") aliases.push("ii7", "ii°7", "IIdim7");
+        if (symbol === "D₇") aliases.push("V77");
+        if (symbol === "K⁶₄") aliases.push("K64", "I64");
+        if (symbol === "It⁺⁶") aliases.push("It+6");
+        if (symbol === "Fr⁺⁶") aliases.push("Fr+6");
+        if (symbol === "Ger⁺⁶") aliases.push("Ger+6");
+        return [...new Set(aliases)];
+    }
+
+    getPalette(key = "C", mode = "major") {
+        const normalizedKey = this._normalizeKey(key);
+        if (mode === "all-generic") {
+            const unique = new Map();
+            [...this.getPalette(normalizedKey, "major-generic"), ...this.getPalette(normalizedKey, "minor-generic")]
+                .forEach(entry => {
+                    const keyValue = `${entry.symbol}|${entry.roman}|${entry.chord}|${entry.bass}`;
+                    if (!unique.has(keyValue)) unique.set(keyValue, entry);
+                });
+            return [...unique.values()];
+        }
+        const normalizedMode = mode === "minor-generic" ? "minor" : mode === "major-generic" ? "major" : (this.modeIntervals[mode] ? mode : "major");
+        const isMinorFamily = normalizedMode.includes("minor");
+        const db = SPOSOBIN_DNA[isMinorFamily ? "MINOR_DNA" : "MAJOR_DNA"];
+        const pcMap = isMinorFamily
+            ? (normalizedMode === "minor" ? { 11: 10 } : normalizedMode === "melodic-minor" ? { 8: 9 } : {})
+            : (normalizedMode === "harmonic-major" ? { 9: 8 } : normalizedMode === "melodic-major" ? { 9: 8, 11: 10 } : {});
+        const shift = this.converter.noteToIdx[normalizedKey];
+        return Object.entries(db).map(([symbol, dna]) => {
+            const required = [...new Set((dna.required || []).map(pc => pcMap[pc] ?? pc))].sort((a, b) => a - b);
+            let notes = required.map(pc => this.converter.idxToNote[(pc + shift) % 12]);
+            if (/^It/.test(symbol)) notes = this._spellAugmentedSixthNotes(normalizedKey, normalizedMode, "It");
+            else if (/^Fr/.test(symbol)) notes = this._spellAugmentedSixthNotes(normalizedKey, normalizedMode, "Fr");
+            else if (/^Ger/.test(symbol)) notes = this._spellAugmentedSixthNotes(normalizedKey, normalizedMode, "Ger");
+            const rawBassPc = (dna.bass_options?.[0] ?? required[0] ?? 0) % 12;
+            const bassPc = ((pcMap[rawBassPc] ?? rawBassPc) + shift) % 12;
+            const bass = this.converter.idxToNote[bassPc];
+            const voicing = this._voiceNotesFromBass(notes, bass);
+            const roman = this._romanHarmonySymbol(symbol, normalizedMode);
+            const chord = this._actualChordSymbol(symbol, normalizedKey, normalizedMode, required, bassPc);
+            return {
+                symbol, baseSymbol: symbol, roman, chord, notes, voicing,
+                rootNotes: notes, bass, inversion: 0, figuredBass: "",
+                quality: "classical harmony", function: this._sposobinFunction(symbol),
+                category: this._sposobinCategory(symbol),
+                resolution: "",
+                aliases: [...new Set([
+                    ...this._sposobinAliases(symbol),
+                    roman,
+                    chord,
+                    symbol === "K₆₄" ? "K46" : "",
+                    symbol === "Dᵥᵢᵢ₇♭" ? "vii°7" : ""
+                ].filter(Boolean))], priority: /^D|^K/.test(symbol) ? 3 : 2,
+                next: [...(dna.next || [])], required, bassOptions: dna.bass_options || []
+            };
+        });
+    }
+
+    _resolveCurrent(input, palette) {
+        const normalizedExact = this._normalizeSposobinSymbol(input);
+        const normalizedLoose = normalizedExact.toLowerCase();
+        const normalizeExact = value => this._normalizeSposobinSymbol(value);
+        const normalizeLoose = value => normalizeExact(value).toLowerCase();
+        // Sposobin function letters are case-sensitive: S/s and T/t are
+        // different harmonic functions and must never collapse together.
+        const symbolic = palette.find(entry => normalizeExact(entry.symbol) === normalizedExact)
+            || palette.find(entry => normalizeExact(entry.roman) === normalizedExact)
+            || palette.find(entry => this._sposobinAliases(entry.symbol).some(alias => normalizeExact(alias) === normalizedExact))
+            || palette.find(entry => normalizeLoose(entry.chord) === normalizedLoose)
+            || palette.find(entry => entry.aliases.some(alias => normalizeLoose(alias) === normalizedLoose));
+        if (symbolic) return symbolic;
+        let notes;
+        try { notes = this.converter._ensureNotesAndRoot(input); } catch (error) { return null; }
+        if (!notes?.length) return null;
+        const set = this._pitchSet(notes);
+        return palette.find(entry => this._pitchSet(entry.notes) === set) || {
+            symbol: input, baseSymbol: input, chord: input, notes, function: "unknown", category: "unclassified", aliases: [], next: []
+        };
+    }
+
+    recommend(currentInput, key = "C", mode = "major", limit = 12) {
+        const palette = this.getPalette(key, mode);
+        const current = this._resolveCurrent(currentInput, palette);
+        if (!current) throw new Error(`Unable to parse classical harmony input: ${currentInput}`);
+        const targetSymbols = new Set(current.next || []);
+        if (!targetSymbols.size) {
+            if (current.function === "T") ["S", "D", "T₆", "S₆", "VI", "DD", "N₆"].forEach(s => targetSymbols.add(s));
+            else if (current.function === "S" || current.function === "S-D") ["D", "K⁶₄", "D₇"].forEach(s => targetSymbols.add(s));
+            else if (current.function === "D") ["T", "t", "VI", "S"].forEach(s => targetSymbols.add(s));
+        }
+        const unique = new Map();
+        palette.forEach(candidate => {
+            if (!targetSymbols.has(candidate.symbol)) return;
+            const movement = this._voiceLeadingDistance(current.notes, candidate.notes);
+            const commonTones = current.notes.filter(note => candidate.notes.some(target => this.converter.noteToIdx[target] === this.converter.noteToIdx[note])).length;
+            const score = Math.round(Math.max(0, Math.min(10, 7.4 - movement * 1.15 + commonTones * 0.45 + (candidate.priority || 0) * 0.18)) * 10) / 10;
+            const result = { ...candidate, score, commonTones, voiceLeading: Number(movement.toFixed(2)) };
+            const keyValue = `${candidate.symbol}|${candidate.chord}|${candidate.bass}`;
+            if (!unique.has(keyValue) || unique.get(keyValue).score < score) unique.set(keyValue, result);
+        });
+        return {
+            key: this._normalizeKey(key), mode: mode || "major-generic", current,
+            recommendations: [...unique.values()].sort((a, b) => b.score - a.score).slice(0, limit),
+            constraints: "Sposobin functional DNA: recommendations follow the reference project's next-chord graph."
+        };
+    }
+
+    findPaths(currentInput, key = "C", mode = "major", maxDepth = 4, limit = 8) {
+        const palette = this.getPalette(key, mode);
+        const bySymbol = new Map(palette.map(entry => [entry.symbol, entry]));
+        const start = this._resolveCurrent(currentInput, palette);
+        if (!start) throw new Error(`Unable to parse classical harmony input: ${currentInput}`);
+        let frontier = [{ entry: start, symbols: [start.symbol], score: 0 }];
+        const completed = [];
+        for (let depth = 0; depth < maxDepth; depth++) {
+            const nextFrontier = [];
+            for (const state of frontier) {
+                for (const nextSymbol of state.entry.next || []) {
+                    const next = bySymbol.get(nextSymbol);
+                    if (!next || state.symbols.includes(nextSymbol)) continue;
+                    const movement = this._voiceLeadingDistance(state.entry.notes, next.notes);
+                    const commonTones = state.entry.notes.filter(note => next.notes.some(target => this.converter.noteToIdx[target] === this.converter.noteToIdx[note])).length;
+                    let edgeScore = 7.4 - movement * 1.15 + commonTones * 0.45 + (next.priority || 0) * 0.18;
+                    if ((next.symbol === "T" || next.symbol === "t") && depth === maxDepth - 1) edgeScore += 2;
+                    nextFrontier.push({ entry: next, symbols: [...state.symbols, nextSymbol], score: state.score + edgeScore });
+                }
+            }
+            nextFrontier.sort((a, b) => b.score - a.score);
+            frontier = nextFrontier.slice(0, 64);
+            completed.push(...frontier);
+            if (!frontier.length) break;
+        }
+        return completed.sort((a, b) => b.symbols.length - a.symbols.length || b.score - a.score)
+            .slice(0, limit).map(path => ({ symbols: path.symbols, score: Number(path.score.toFixed(2)) }));
+    }
+
+    _shortestSymbolPath(palette, startSymbol, predicate, maxDepth = 4) {
+        const bySymbol = new Map(palette.map(entry => [entry.symbol, entry]));
+        const queue = [[startSymbol]];
+        const visited = new Set([startSymbol]);
+        while (queue.length) {
+            const path = queue.shift();
+            const last = path[path.length - 1];
+            if (path.length > 1 && predicate(last)) return path;
+            if (path.length - 1 >= maxDepth) continue;
+            for (const next of bySymbol.get(last)?.next || []) {
+                if (!bySymbol.has(next) || visited.has(next)) continue;
+                visited.add(next);
+                queue.push([...path, next]);
+            }
+        }
+        return null;
+    }
+
+    suggestModulations(currentInput, fromKey = "C", mode = "major-generic", targetKey = "G", targetMode = mode, limit = 8) {
+        const sourcePalette = this.getPalette(fromKey, mode);
+        const targetPalette = this.getPalette(targetKey, targetMode);
+        const current = this._resolveCurrent(currentInput, sourcePalette);
+        if (!current) throw new Error(`Unable to parse classical harmony input: ${currentInput}`);
+        const sourceBySet = new Map();
+        sourcePalette.filter(entry => !entry.symbol.includes("/") && !entry.symbol.includes("不完全"))
+            .forEach(entry => {
+                const set = this._pitchSet(entry.notes);
+                if (!sourceBySet.has(set)) sourceBySet.set(set, []);
+                sourceBySet.get(set).push(entry);
+            });
+        const tonicSymbol = targetMode.includes("minor") ? "t" : "T";
+        const results = [];
+        targetPalette.filter(entry => !entry.symbol.includes("/") && !entry.symbol.includes("不完全")).forEach(targetPivot => {
+            const matches = sourceBySet.get(this._pitchSet(targetPivot.notes)) || [];
+            matches.forEach(sourcePivot => {
+                const sourcePath = sourcePivot.symbol === current.symbol
+                    ? [current.symbol]
+                    : this._shortestSymbolPath(sourcePalette, current.symbol, symbol => symbol === sourcePivot.symbol, 4);
+                if (!sourcePath) return;
+                let targetPath = targetPivot.symbol === tonicSymbol
+                    ? [targetPivot.symbol]
+                    : this._shortestSymbolPath(targetPalette, targetPivot.symbol, symbol => symbol === tonicSymbol, 5);
+                if (!targetPath) targetPath = [targetPivot.symbol, tonicSymbol];
+                const score = 20 - sourcePath.length * 1.3 - targetPath.length + (sourcePivot.function === targetPivot.function ? 1 : 0);
+                results.push({
+                    fromKey: this._normalizeKey(fromKey), targetKey: this._normalizeKey(targetKey),
+                    mode, targetMode, sourceSymbols: sourcePath, targetSymbols: targetPath,
+                    pivot: { source: sourcePivot.symbol, target: targetPivot.symbol, chord: sourcePivot.chord },
+                    score: Number(score.toFixed(1))
+                });
+            });
+        });
+        const unique = new Map();
+        results.sort((a, b) => b.score - a.score).forEach(route => {
+            const keyValue = `${route.sourceSymbols.join(">")}|${route.targetSymbols.join(">")}`;
+            if (!unique.has(keyValue)) unique.set(keyValue, route);
+        });
+        return [...unique.values()].slice(0, limit);
     }
 }
 

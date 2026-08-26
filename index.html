@@ -7,29 +7,28 @@
     <script>
         document.documentElement.dataset.theme = localStorage.getItem('jazz-compass-theme') || 'dark';
     </script>
-    <script type="module" src="./script.js?v=20260826-4">
+    <script type="module" src="./script.js?v=20260826-5">
     </script>
     <title>Music Theory Toolbox</title>
-    <link rel="stylesheet" href="./style.css?v=20260826-4">
-    <link rel="stylesheet" href="./theme.css?v=20260826-4">
+    <link rel="stylesheet" href="./style.css?v=20260826-5">
+    <link rel="stylesheet" href="./theme.css?v=20260826-5">
 </head>
 
 <body>
     <main class="container">
         <header class="app-header">
             <div class="brand-lockup">
-                <div class="logo" aria-hidden="true"><span>JC</span><small>01</small></div>
                 <div class="title-block">
-                    <div class="eyebrow">JAZZ COMPASS / THEORY WORKSPACE</div>
-                    <h1 id="header_h1">Jazz Compass</h1>
-                    <div id="subtitle" class="subtitle">Modern jazz harmony, made visual.</div>
+                    <div class="eyebrow">MUSIC THEORY WORKSPACE</div>
+                    <h1 id="header_h1">乐理工具箱</h1>
+                    <div id="subtitle" class="subtitle">音阶和弦・调式和声实用工具箱</div>
                 </div>
             </div>
             <div class="header-tools">
                 <div class="theme-switch" role="group" aria-label="界面主题">
                     <span class="control-label">界面</span>
-                    <button class="theme-btn" type="button" data-theme-value="dark" aria-pressed="false">黑</button>
-                    <button class="theme-btn" type="button" data-theme-value="light" aria-pressed="false">白</button>
+                    <button class="theme-btn" type="button" data-theme-value="dark" aria-pressed="false">深色</button>
+                    <button class="theme-btn" type="button" data-theme-value="light" aria-pressed="false">浅色</button>
                 </div>
                 <div class="notation-switch" role="group" aria-label="音名记法">
                     <span class="notation-label">音名记法</span>
@@ -74,12 +73,26 @@
                     </label>
                     <label><span id="label_classical_mode">调式</span>
                         <select id="classical-mode">
-                            <option value="major">大调</option>
-                            <option value="minor">小调</option>
+                            <option value="all-generic" selected>/</option>
+                            <option value="major-generic">大调（不分）</option>
+                            <option value="minor-generic">小调（不分）</option>
+                            <option value="major">自然大调</option>
+                            <option value="harmonic-major">和声大调</option>
+                            <option value="melodic-major">旋律大调</option>
+                            <option value="minor">自然小调</option>
+                            <option value="harmonic-minor">和声小调</option>
+                            <option value="melodic-minor">旋律小调</option>
                         </select>
                     </label>
                     <label class="classical-current"><span id="label_classical_chord">当前和弦</span>
-                        <input id="classical-input" type="text" value="I" autocomplete="off" />
+                        <input id="classical-input" type="text" value="" placeholder="输入和弦或点击功能组" autocomplete="off" />
+                    </label>
+                    <label><span>转调到</span>
+                        <select id="classical-mod-key">
+                            <option>C</option><option>Db</option><option>D</option><option>Eb</option><option>E</option>
+                            <option>F</option><option>Gb</option><option selected>G</option><option>Ab</option><option>A</option>
+                            <option>Bb</option><option>B</option>
+                        </select>
                     </label>
                     <button id="classical-run"><span id="classical_run_btn">推荐衔接</span></button>
                 </div>
