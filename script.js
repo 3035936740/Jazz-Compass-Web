@@ -1,10 +1,12 @@
 import { mountNeoCanvas } from "./neo_canvas.js?v=20260914-2";
+import { mountHarmonyWheel } from "./harmony_connections_ui.js?v=20260915-2";
+import { harmonyNeighborhood, mergeConnectionGraphs } from "./harmony_connections.js?v=20260915-2";
 import { mountMicrotonal } from "./microtonal_ui.js?v=20260915-2";
 import { mountLccExplorer } from "./lcc_ui.js?v=20260915-lab1";
 import { mountJazzToolbox } from "./jazz_toolbox_ui.js?v=20260915-1";
 import { mountBluesToolbox } from "./blues_ui.js?v=20260915-1";
 import { EnhancedChordConverter, JazzBrain, ClassicalHarmonyConnector } from "./jazz_compass.js?v=20260915-lcc2";
-import * as lang from "./lang.js?v=20260915-blues1";
+import * as lang from "./lang.js?v=20260915-harmony2";
 
 // 在 script.js 顶部（DOMContentLoaded 之外或内部）添加
 let modesData = null;
@@ -3000,7 +3002,7 @@ const seqFlowHtml = funcSteps.length
 
   function showOnlyFeature(feature) {
     const featureIndex = navButtons.findIndex(button => button.dataset.feature === feature);
-    const featureCodes = { chord: 'CHORD STUDY', classical: 'HARMONY', blues: 'BLUES', lcc: 'LCC CONCEPT LAB', cst: 'JAZZ TOOLBOX', neo: 'TONNETZ', micro: 'MICROTONAL LAB', ref: 'REFERENCE', circle: 'CIRCLE OF FIFTHS', other: 'TOOLS', about: 'ABOUT' };
+    const featureCodes = { chord: 'CHORD STUDY', classical: 'HARMONY', blues: 'BLUES', lcc: 'LCC CONCEPT LAB', cst: 'JAZZ TOOLBOX', neo: 'HARMONIC CONNECTIONS', micro: 'MICROTONAL LAB', ref: 'REFERENCE', circle: 'CIRCLE OF FIFTHS', other: 'TOOLS', about: 'ABOUT' };
     document.getElementById('workspace-index').textContent = `${String(featureIndex + 1).padStart(2, '0')} / ${featureCodes[feature]}`;
     document.getElementById('workspace-title').textContent = window.__(`nav_${feature}`);
     document.getElementById('workspace-description').textContent = window.__(`intro_${feature}`);
@@ -3039,6 +3041,9 @@ const seqFlowHtml = funcSteps.length
     }
     if (feature === "classical" && !document.getElementById("panel-classical-body")?.children.length) {
       document.getElementById("classical-run")?.click();
+    }
+    if (feature === 'neo' && !document.getElementById('panel-neo-body')?.children.length) {
+      document.getElementById('neo-run')?.click();
     }
   }
 
@@ -3944,12 +3949,14 @@ const seqFlowHtml = funcSteps.length
   // ===================== 新里曼面板渲染 =====================
   // ===================== 新里曼面板渲染（树型布局 + 右键拖拽节点 + 节点大小调节）=====================
   let neoCanvasCleanup = null;
+  let neoCurrentView = 'tonnetz';
   let neoCurrentDepth = 1;
   let neoCurrentInput = "";
   let neoLayerSpacing = 100;      // 层间垂直间距
   let neoNodeSize = 22;           // 节点半径
   let neoCanvasState = { offsetX: 0, offsetY: 0, scale: 1 };
   let neoNodeOffsets = {};        // 手动偏移 { nodeId: {x, y} }
+  let neoHarmonyViewState = { zoom: 1, panX: 0, panY: 0 };
 
   // 基本操作集
   const PRIMARY_OPS = new Set(["P", "L", "R", "S", "N", "D1"]);
@@ -3967,45 +3974,39 @@ const seqFlowHtml = funcSteps.length
     neoCanvasState = { offsetX: 0, offsetY: 0, scale: 1 };
     neoNodeOffsets = {};
 
-    let geometric;
-    try {
-      geometric = brain.nrt.getGeometricNeighbors(v);
-    } catch (e) {
-      targetEl.innerHTML = `<div class="result-card">${window.__("chord_parse_error")}: ${e.message}</div>`;
-      return;
+    let geometric = {};
+    if (neoCurrentView !== 'harmony') {
+      try {
+        geometric = brain.nrt.getGeometricNeighbors(v);
+      } catch (e) {
+        if (neoCurrentView !== 'all') {
+          targetEl.innerHTML = `<div class="result-card">${window.__("chord_parse_error")}: ${e.message}</div>`;
+          return;
+        }
+      }
     }
 
     targetEl.innerHTML = "";
 
     // ---------- 可视化切换按钮 ----------
-    const vizRow = document.createElement("div");
-    vizRow.style.display = "flex";
-    vizRow.style.gap = "8px";
-    vizRow.style.marginBottom = "16px";
-
-    const btnTonnetz = document.createElement("button");
-    btnTonnetz.textContent = window.__("neo_triad_title") || "Tonnetz Graph";
-    btnTonnetz.className = "panel-action active";
-    btnTonnetz.style.padding = "8px 14px";
-    btnTonnetz.style.borderRadius = "6px";
-    btnTonnetz.style.border = "none";
-    btnTonnetz.style.cursor = "pointer";
-    btnTonnetz.style.background = "linear-gradient(90deg, var(--accent), var(--accent-2))";
-    btnTonnetz.style.color = "#fff";
-
-    const btnOcta = document.createElement("button");
-    btnOcta.textContent = window.__("neo_octatonic_title") || "Octatonic Tower";
-    btnOcta.className = "panel-action";
-    btnOcta.style.padding = "8px 14px";
-    btnOcta.style.borderRadius = "6px";
-    btnOcta.style.border = "none";
-    btnOcta.style.cursor = "pointer";
-    btnOcta.style.background = "rgba(255,255,255,0.08)";
-    btnOcta.style.color = "#ccc";
-
-    vizRow.appendChild(btnTonnetz);
-    vizRow.appendChild(btnOcta);
-    vizRow.className = "neo-view-switch";
+    const vizRow = document.createElement('div');
+    vizRow.className = 'neo-view-switch';
+    const neoGroup = document.createElement('div'); neoGroup.className = 'neo-view-group';
+    const neoGroupLabel = document.createElement('span'); neoGroupLabel.textContent = window.__('neo_sublevel');
+    neoGroup.appendChild(neoGroupLabel);
+    const viewButtons = new Map();
+    for (const [view, label, parent] of [
+      ['tonnetz', window.__('neo_triad_title'), neoGroup],
+      ['octatonic', window.__('neo_octatonic_title'), neoGroup],
+      ['harmony', window.__('neo_harmony_title'), vizRow],
+      ['all', window.__('neo_all_title'), vizRow],
+    ]) {
+      const button = document.createElement('button'); button.type = 'button';
+      button.className = 'panel-action'; button.dataset.view = view; button.textContent = label;
+      viewButtons.set(view, button); parent.appendChild(button);
+    }
+    // Keep the nested Neo-Riemannian controls first in the reading order.
+    vizRow.prepend(neoGroup);
     targetEl.appendChild(vizRow);
 
     // 可视化容器
@@ -4043,8 +4044,7 @@ const seqFlowHtml = funcSteps.length
       nodeSizeInput.oninput = () => {
         neoNodeSize = parseInt(nodeSizeInput.value) || 22;
         if (nodeSizeVal) nodeSizeVal.textContent = neoNodeSize;
-        if (currentView === "tonnetz") renderTonnetzMulti();
-        else renderOctatonicMulti();
+        renderCurrent();
       };
     }
 
@@ -4059,8 +4059,7 @@ const seqFlowHtml = funcSteps.length
       }
       neoCanvasState = { offsetX: 0, offsetY: 0, scale: 1 };
       neoNodeOffsets = {};
-      if (currentView === "tonnetz") renderTonnetzMulti();
-      else renderOctatonicMulti();
+      renderCurrent();
     };
 
     if (applyBtn) applyBtn.onclick = applyDepthAndRender;
@@ -4071,19 +4070,17 @@ const seqFlowHtml = funcSteps.length
     document.getElementById("neo-reset-view").onclick = () => {
       neoCanvasState = { offsetX: 0, offsetY: 0, scale: 1 };
       neoNodeOffsets = {};
-      if (currentView === "tonnetz") renderTonnetzMulti();
-      else renderOctatonicMulti();
+      renderCurrent();
     };
 
     // 重置节点位置
     document.getElementById("neo-reset-positions").onclick = () => {
       neoNodeOffsets = {};
-      if (currentView === "tonnetz") renderTonnetzMulti();
-      else renderOctatonicMulti();
+      renderCurrent();
     };
 
     // ---------- 渲染函数 ----------
-    let currentView = "tonnetz";
+    let currentView = neoCurrentView;
 
     function renderTonnetzMulti() {
       canvasContainer.innerHTML = "";
@@ -4242,39 +4239,61 @@ const seqFlowHtml = funcSteps.length
       return card;
     }
 
-    // 切换事件
-    btnTonnetz.addEventListener("click", () => {
-      currentView = "tonnetz";
-      btnTonnetz.classList.add("active");
-      btnTonnetz.style.background = "linear-gradient(90deg, var(--accent), var(--accent-2))";
-      btnTonnetz.style.color = "#fff";
-      btnOcta.classList.remove("active");
-      btnOcta.style.background = "rgba(255,255,255,0.08)";
-      btnOcta.style.color = "#ccc";
-      neoCanvasState = { offsetX: 0, offsetY: 0, scale: 1 };
-      neoNodeOffsets = {};
-      renderTonnetzMulti();
-    });
-
-    btnOcta.addEventListener("click", () => {
-      currentView = "octatonic";
-      btnOcta.classList.add("active");
-      btnOcta.style.background = "linear-gradient(90deg, var(--accent), var(--accent-2))";
-      btnOcta.style.color = "#fff";
-      btnTonnetz.classList.remove("active");
-      btnTonnetz.style.background = "rgba(255,255,255,0.08)";
-      btnTonnetz.style.color = "#ccc";
-      neoCanvasState = { offsetX: 0, offsetY: 0, scale: 1 };
-      neoNodeOffsets = {};
-      renderOctatonicMulti();
-    });
-
-    // 初始渲染
-    if (geometric.Tonnetz_PLRSND && Object.keys(geometric.Tonnetz_PLRSND).length > 0) {
-      renderTonnetzMulti();
-    } else {
-      renderOctatonicMulti();
+    function renderHarmony() {
+      neoCanvasCleanup?.(); neoCanvasCleanup = null;
+      detailArea.replaceChildren();
+      neoCanvasCleanup = mountHarmonyWheel(canvasContainer, v, chord => {
+        document.getElementById('neo-input').value = chord;
+        updateNeo(targetEl, chord);
+      }, key => window.__(key), chord => createChordCard(chord, false), neoHarmonyViewState);
     }
+
+    function renderAll() {
+      canvasContainer.replaceChildren(); detailArea.replaceChildren();
+      const sources = [];
+      for (const family of ['tonnetz', 'octatonic']) {
+        try { sources.push({ family, graph: buildTreeGraph(v, neoCurrentDepth, family) }); }
+        catch { sources.push({ family, graph: null }); }
+      }
+      sources.push({ family: 'harmony', graph: harmonyNeighborhood(v, neoCurrentDepth) });
+      const combined = mergeConnectionGraphs(v, sources);
+      drawTreeCanvas(canvasContainer, combined, 'all');
+      const heading = document.createElement('h4'); heading.className = 'section-title';
+      heading.textContent = `${window.__('neo_all_title')} · ${combined.nodes.length} ${window.__('neo_all_chords')}`;
+      detailArea.append(heading, createChordCard(v, true));
+      for (const { family, graph } of sources) {
+        const section = document.createElement('section'); section.className = `neo-all-family family-${family}`;
+        const title = document.createElement('h5');
+        title.textContent = `${window.__({ tonnetz: 'neo_triad_title', octatonic: 'neo_octatonic_title', harmony: 'neo_harmony_title' }[family])} · ${Math.max(0, (graph?.nodes?.length || 1) - 1)}`;
+        section.appendChild(title);
+        const grid = document.createElement('div'); grid.className = 'neo-all-family-cards';
+        graph?.nodes?.filter(node => node.depth === 1).forEach(node => grid.appendChild(createChordCard(node.chord, false)));
+        if (!grid.childElementCount) grid.appendChild(document.createTextNode(window.__('neo_all_no_neighbors')));
+        section.appendChild(grid); detailArea.appendChild(section);
+      }
+    }
+
+    function renderCurrent() {
+      viewButtons.forEach((button, view) => {
+        const active = currentView === view;
+        button.classList.toggle('active', active); button.setAttribute('aria-pressed', String(active));
+      });
+      canvasContainer.classList.toggle('is-harmony-wheel', currentView === 'harmony');
+      if (currentView === 'tonnetz') renderTonnetzMulti();
+      else if (currentView === 'octatonic') renderOctatonicMulti();
+      else if (currentView === 'harmony') renderHarmony();
+      else renderAll();
+    }
+    viewButtons.forEach((button, view) => button.addEventListener('click', () => {
+      currentView = neoCurrentView = view;
+      neoCanvasState = { offsetX: 0, offsetY: 0, scale: 1 };
+      neoNodeOffsets = {};
+      renderCurrent();
+    }));
+    if (currentView === 'tonnetz' && !(geometric.Tonnetz_PLRSND && Object.keys(geometric.Tonnetz_PLRSND).length)) {
+      currentView = neoCurrentView = 'octatonic';
+    }
+    renderCurrent();
   }
 
   /**
@@ -4427,6 +4446,7 @@ const seqFlowHtml = funcSteps.length
     neoCanvasCleanup = mountNeoCanvas(container, graphData, {
       size: neoNodeSize,
       spacing: neoLayerSpacing,
+      family: type,
       state: neoCanvasState,
       offsets: neoNodeOffsets,
       onSelect(chord) {

@@ -45,7 +45,7 @@ export function layoutNeoGraph(nodes, width, size = 22, spacing = 100, forceRows
 export function mountNeoCanvas(container, graph, options) {
   const canvas = document.createElement('canvas');
   canvas.setAttribute('role', 'img');
-  canvas.setAttribute('aria-label', `${graph.center} 和弦变换图 下方提供可选择的和弦列表`);
+  canvas.setAttribute('aria-label', `${graph.center} 和声连接图 下方提供可选择的和弦列表`);
   const toolbar = document.createElement('div');
   toolbar.className = 'neo-graph-toolbar';
   const caption = document.createElement('span');
@@ -55,7 +55,24 @@ export function mountNeoCanvas(container, graph, options) {
   container.append(toolbar, canvas);
   const legend = document.createElement('div');
   legend.className = 'neo-graph-legend';
-  legend.innerHTML = '<span><i></i>基本变换</span><span><i class="is-extended"></i>扩展变换</span><span class="neo-graph-help">点击和弦继续探索</span>';
+  const families = options.family === 'all'
+    ? new Set(['tonnetz', 'octatonic', 'harmony'])
+    : new Set(graph.edges.map(edge => edge.family || options.family || 'tonnetz'));
+  const familyNames = { tonnetz: '音网图', octatonic: '八音塔', harmony: '和弦连接网' };
+  [...families].forEach(family => {
+    const entry = document.createElement('span');
+    entry.className = `neo-graph-family family-${family}`;
+    const mark = document.createElement('i');
+    entry.append(mark, document.createTextNode(familyNames[family] || family));
+    legend.appendChild(entry);
+  });
+  if (families.has('tonnetz')) {
+    const extended = document.createElement('span');
+    extended.innerHTML = '<i class="is-extended"></i>扩展变换';
+    legend.appendChild(extended);
+  }
+  const help = document.createElement('span'); help.className = 'neo-graph-help';
+  help.textContent = '点击和弦继续探索'; legend.appendChild(help);
   container.append(legend);
   const ctx = canvas.getContext('2d');
   const state = options.state;
@@ -106,6 +123,7 @@ export function mountNeoCanvas(container, graph, options) {
     const text = color('--theme-text'), muted = color('--theme-muted');
     const accent = color('--theme-accent'), ink = color('--theme-accent-ink');
     const paper = color('--theme-panel'), line = color('--theme-line-strong');
+    const familyColor = family => color(`--neo-${family}-edge`) || line;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, width, height);
     const related = new Set(hovered ? [hovered.id] : []);
@@ -118,10 +136,20 @@ export function mountNeoCanvas(container, graph, options) {
       const from = position(source), to = position(target);
       const selected = hovered && (source.id === hovered.id || target.id === hovered.id);
       ctx.globalAlpha = hovered ? (selected ? .9 : .12) : .48;
-      ctx.strokeStyle = selected ? accent : line;
+      ctx.strokeStyle = familyColor(edge.family || options.family || 'tonnetz');
       ctx.lineWidth = selected ? 1.5 : 1;
-      ctx.setLineDash(edge.isPrimary ? [] : [4, 4]);
+      ctx.setLineDash((edge.family || options.family) === 'tonnetz' && edge.isPrimary === false ? [4, 4] : []);
       ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.lineTo(to.x, to.y); ctx.stroke();
+      if (edge.directed && selected) {
+        const angle = Math.atan2(to.y - from.y, to.x - from.x);
+        const tipX = to.x - Math.cos(angle) * layout.cardWidth * state.scale / 2;
+        const tipY = to.y - Math.sin(angle) * layout.cardHeight * state.scale / 2;
+        ctx.setLineDash([]); ctx.fillStyle = ctx.strokeStyle;
+        ctx.beginPath(); ctx.moveTo(tipX, tipY);
+        ctx.lineTo(tipX - Math.cos(angle - .5) * 7, tipY - Math.sin(angle - .5) * 7);
+        ctx.lineTo(tipX - Math.cos(angle + .5) * 7, tipY - Math.sin(angle + .5) * 7);
+        ctx.closePath(); ctx.fill();
+      }
     });
     ctx.setLineDash([]);
     graph.nodes.forEach(node => {
@@ -130,7 +158,7 @@ export function mountNeoCanvas(container, graph, options) {
       ctx.globalAlpha = hovered && !related.has(node.id) ? .4 : 1;
       ctx.beginPath(); ctx.roundRect(p.x - w / 2, p.y - h / 2, w, h, 5 * state.scale);
       ctx.fillStyle = root ? accent : paper; ctx.fill();
-      ctx.strokeStyle = root || node.id === hovered?.id ? accent : line;
+      ctx.strokeStyle = root ? accent : node.id === hovered?.id ? familyColor(node.family || options.family || 'tonnetz') : line;
       ctx.lineWidth = node.id === hovered?.id ? 1.6 : 1;
       ctx.stroke();
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';

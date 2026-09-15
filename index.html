@@ -8,7 +8,7 @@
         try { document.documentElement.dataset.theme = localStorage.getItem('jazz-compass-theme') || 'light'; }
         catch { document.documentElement.dataset.theme = 'light'; }
     </script>
-    <script type="module" src="./script.js?v=20260915-blues1">
+    <script type="module" src="./script.js?v=20260915-harmony2">
     </script>
     <title>Music Theory Toolbox</title>
     <link rel="stylesheet" href="./style.css?v=20260826-5">
@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="./lcc.css?v=20260915-lab1">
     <link rel="stylesheet" href="./blues.css?v=20260915-1">
     <link rel="stylesheet" href="./jazz_toolbox.css?v=20260915-1">
+    <link rel="stylesheet" href="./harmony_connections.css?v=20260915-2">
 </head>
 
 <body>
@@ -52,7 +53,7 @@
             <button class="feature-btn" data-feature="lcc"><span id="nav_lcc">LCC概念实验室</span></button>
             <button class="feature-btn" data-feature="cst"><span id="nav_cst">爵士工具箱</span></button>
             <!--button class="feature-btn" data-feature="rec"><span id="nav_rec">和弦衔接</span></button-->
-            <button class="feature-btn" data-feature="neo"><span id="nav_neo">新里曼理论</span></button>
+            <button class="feature-btn" data-feature="neo"><span id="nav_neo">和声连接论</span></button>
             <button class="feature-btn" data-feature="micro"><span id="nav_micro">微分音工具箱</span></button>
             <button class="feature-btn" data-feature="ref"><span id="nav_ref">和弦音阶速查</span></button>
             <button class="feature-btn" data-feature="circle"><span id="nav_circle">五度圈</span></button>
@@ -171,7 +172,7 @@
 
             <div id="panel-neo" class="panel" data-feature="neo" role="tabpanel">
                 <div class="panel-header">
-                    <label><span id="label_neo_example">示例和弦(新里曼) </span> <input id="neo-input" type="text"
+                    <label><span id="label_neo_example">起始和弦 </span> <input id="neo-input" type="text"
                             value="Cmaj" /></label>
                     <button id="neo-run"><span id="neo_run_btn">分析</span></button>
                 </div>
