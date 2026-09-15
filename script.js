@@ -1,5 +1,10 @@
-import { EnhancedChordConverter, JazzBrain, ClassicalHarmonyConnector } from "./jazz_compass.js";
-import * as lang from "./lang.js";
+import { mountNeoCanvas } from "./neo_canvas.js?v=20260914-2";
+import { mountMicrotonal } from "./microtonal_ui.js?v=20260915-2";
+import { mountLccExplorer } from "./lcc_ui.js?v=20260915-lab1";
+import { mountJazzToolbox } from "./jazz_toolbox_ui.js?v=20260915-1";
+import { mountBluesToolbox } from "./blues_ui.js?v=20260915-1";
+import { EnhancedChordConverter, JazzBrain, ClassicalHarmonyConnector } from "./jazz_compass.js?v=20260915-lcc2";
+import * as lang from "./lang.js?v=20260915-blues1";
 
 // 在 script.js 顶部（DOMContentLoaded 之外或内部）添加
 let modesData = null;
@@ -216,7 +221,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const ctx = getAudioContext();
       if (options.interrupt !== false) interruptPlayback(ctx);
       const now = ctx.currentTime;
-      const uniqueFreqs = [...new Set(frequencies)].slice(0, 8);
+      // 88-key/MIDI chord input may contain more than eight held notes.
+      // Keep the shared multi-harmonic piano timbre while allowing wider harmony.
+      const uniqueFreqs = [...new Set(frequencies)].slice(0, 16);
 
       uniqueFreqs.forEach((freq, index) => {
         const noteTime = now + index * 0.012;
@@ -227,6 +234,79 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (e) {
       console.warn("playChord failure:", e);
     }
+  }
+
+  /** Independent piano voices for held MIDI notes and the 88-key chord latch. */
+  function createHeldPianoVoice(frequency, velocity = 100) {
+    const ctx = getAudioContext();
+    const start = ctx.currentTime;
+    const level = Math.max(0.08, Math.min(1, velocity / 127));
+    const voiceGain = ctx.createGain();
+    voiceGain.gain.setValueAtTime(0, start);
+    voiceGain.gain.linearRampToValueAtTime(level, start + 0.006);
+    voiceGain.gain.exponentialRampToValueAtTime(Math.max(0.001, level * 0.38), start + 0.35);
+    voiceGain.gain.exponentialRampToValueAtTime(Math.max(0.001, level * 0.16), start + 3);
+    voiceGain.connect(audioMaster);
+    let endedPartials = 0;
+    const pianoPartials = [
+      { ratio: 1, amp: 0.18 },
+      { ratio: 2.002, amp: 0.065 },
+      { ratio: 3.011, amp: 0.025 },
+      { ratio: 4.025, amp: 0.009 },
+    ];
+    const oscillators = pianoPartials.map(({ ratio, amp }) => {
+      const oscillator = ctx.createOscillator();
+      const partial = ctx.createGain();
+      oscillator.type = "triangle";
+      oscillator.frequency.setValueAtTime(frequency * ratio, start);
+      partial.gain.setValueAtTime(amp, start);
+      oscillator.connect(partial);
+      partial.connect(voiceGain);
+      oscillator.onended = () => {
+        oscillator.disconnect();
+        partial.disconnect();
+        if (++endedPartials === pianoPartials.length) voiceGain.disconnect();
+      };
+      oscillator.start(start);
+      return { oscillator, ratio };
+    });
+    // A very short filtered hammer attack gives the held harmonics a piano-like onset.
+    const hammerBuffer = ctx.createBuffer(1, Math.max(1, Math.round(ctx.sampleRate * 0.045)), ctx.sampleRate);
+    const hammerSamples = hammerBuffer.getChannelData(0);
+    for (let i = 0; i < hammerSamples.length; i++) hammerSamples[i] = (Math.random() * 2 - 1) * (1 - i / hammerSamples.length);
+    const hammer = ctx.createBufferSource();
+    const hammerFilter = ctx.createBiquadFilter();
+    const hammerGain = ctx.createGain();
+    hammer.buffer = hammerBuffer;
+    hammerFilter.type = "highpass";
+    hammerFilter.frequency.setValueAtTime(950, start);
+    hammerGain.gain.setValueAtTime(0.018 * level, start);
+    hammerGain.gain.exponentialRampToValueAtTime(0.001, start + 0.035);
+    hammer.connect(hammerFilter);
+    hammerFilter.connect(hammerGain);
+    hammerGain.connect(voiceGain);
+    hammer.onended = () => { hammer.disconnect(); hammerFilter.disconnect(); hammerGain.disconnect(); };
+    hammer.start(start);
+    hammer.stop(start + 0.045);
+    let stopped = false;
+    return {
+      setFrequency(nextFrequency) {
+        if (stopped || !Number.isFinite(nextFrequency) || nextFrequency <= 0) return;
+        const now = ctx.currentTime;
+        for (const { oscillator, ratio } of oscillators) {
+          oscillator.frequency.setTargetAtTime(nextFrequency * ratio, now, 0.012);
+        }
+      },
+      stop() {
+        if (stopped) return;
+        stopped = true;
+        const now = ctx.currentTime;
+        voiceGain.gain.cancelScheduledValues(now);
+        voiceGain.gain.setValueAtTime(Math.max(0.001, voiceGain.gain.value), now);
+        voiceGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+        for (const { oscillator } of oscillators) oscillator.stop(now + 0.2);
+      },
+    };
   }
 
   // 保持原有的音符转频率函数
@@ -2868,6 +2948,7 @@ const seqFlowHtml = funcSteps.length
   let classicalLastKey = null;
   let classicalLastMode = null;
   let classicalActiveView = "recommendations";
+  let classicalPendingChain = null;
   let classicalSequencePlaybackId = 0;
   let classicalSequenceTimers = [];
   const CLASSICAL_PLAYBACK_STORAGE_KEY = "jazz-compass-classical-playback";
@@ -2898,7 +2979,7 @@ const seqFlowHtml = funcSteps.length
   document.querySelectorAll(".theme-btn").forEach((button) => {
     button.addEventListener("click", () => setTheme(button.dataset.themeValue));
   });
-  setTheme(document.documentElement.dataset.theme || "dark");
+  setTheme(document.documentElement.dataset.theme || "light");
   document.querySelectorAll(".notation-btn").forEach((button) => {
     button.addEventListener("click", () => setNotation(button.dataset.notation));
   });
@@ -2918,6 +2999,11 @@ const seqFlowHtml = funcSteps.length
   }
 
   function showOnlyFeature(feature) {
+    const featureIndex = navButtons.findIndex(button => button.dataset.feature === feature);
+    const featureCodes = { chord: 'CHORD STUDY', classical: 'HARMONY', blues: 'BLUES', lcc: 'LCC CONCEPT LAB', cst: 'JAZZ TOOLBOX', neo: 'TONNETZ', micro: 'MICROTONAL LAB', ref: 'REFERENCE', circle: 'CIRCLE OF FIFTHS', other: 'TOOLS', about: 'ABOUT' };
+    document.getElementById('workspace-index').textContent = `${String(featureIndex + 1).padStart(2, '0')} / ${featureCodes[feature]}`;
+    document.getElementById('workspace-title').textContent = window.__(`nav_${feature}`);
+    document.getElementById('workspace-description').textContent = window.__(`intro_${feature}`);
     navButtons.forEach((b) => {
       const active = b.dataset.feature === feature;
       b.classList.toggle("active", active);
@@ -3010,16 +3096,7 @@ const seqFlowHtml = funcSteps.length
       const bass = data.bass;
       const bassIdx = bass ? conv.noteToIdx[bass] : null;
       const htmlParts = [];
-      // 更紧凑的标题间距
-      htmlParts.push(
-        `<h2 style="margin: -4px 0 2px; font-size: 1.25rem;">${window.__f("chord_label")}: ${chord}</h2>`,
-      );
-      htmlParts.push(
-        `<h3 style="margin: 0 0 8px; font-size: 1rem; font-weight: 500; color: var(--muted);">${window.__f(
-          "chord_parse_heading",
-          { input: v },
-        )}</h3>`,
-      );
+      htmlParts.push(`<div class="chord-result-heading"><div><span class="result-eyebrow">${window.__("identified_chord")}</span><h3 class="chord-symbol">${chord}</h3></div><span class="chord-note-count">${displayNotes.length} ${window.__("note_count_unit")}</span></div>`);
       /*
       htmlParts.push(
         `<p><strong>${window.__("root_label")}：</strong>${root} <strong style="margin-left:12px">${window.__("slash_label")}：</strong>${isSlash}</p>`,
@@ -3030,8 +3107,13 @@ const seqFlowHtml = funcSteps.length
         const note = displayNotes[i];
         const classes = ["note-cell"];
         if (bass && conv.noteToIdx[note] === bassIdx) classes.push("bass-note");
+        if (conv.noteToIdx[note] === conv.noteToIdx[root]) classes.push("root-note");
+        const degree = ('CDEFGAB'.indexOf(note[0]) - 'CDEFGAB'.indexOf(root[0]) + 7) % 7;
+        const semitones = (conv.noteToIdx[note] - conv.noteToIdx[root] + 12) % 12;
+        const alteration = (semitones - [0, 2, 4, 5, 7, 9, 11][degree] + 18) % 12 - 6;
+        const interval = `${alteration < 0 ? '♭'.repeat(-alteration) : '♯'.repeat(alteration)}${degree + 1}`;
         htmlParts.push(
-          `<div class="${classes.join(" ")}"><div class="note">${note}</div></div>`,
+          `<div class="${classes.join(" ")}"><div class="note">${note}</div><span class="note-interval">${interval}</span></div>`,
         );
       }
       htmlParts.push("</div>");
@@ -3051,7 +3133,7 @@ const seqFlowHtml = funcSteps.length
         }
         return `<div class="piano-white-wrap">${white}${black}</div>`;
       }).join("");
-      htmlParts.push(`<section class="piano-section"><div class="piano-section-head"><div><span class="piano-kicker">VOICING</span><strong>和弦钢琴</strong><span class="piano-caption">点击琴键可单独试听</span><div class="piano-legend"><span><i class="legend-root"></i>根音</span><span><i class="legend-bass"></i>低音</span><span><i class="legend-tone"></i>和弦音</span></div></div><button type="button" class="chord-play-button" id="chord-play-result"><span>▶</span> 播放和弦</button></div><div class="mini-keyboard piano-keyboard">${keys}</div></section>`);
+      htmlParts.push(`<section class="piano-section"><div class="piano-section-head"><div><strong>${window.__("piano_title")}</strong><span class="piano-caption">${window.__("piano_hint")}</span></div><button type="button" class="chord-play-button" id="chord-play-result"><span aria-hidden="true">▶</span> ${window.__("play_chord")}</button></div><div class="mini-keyboard piano-keyboard">${keys}</div><div class="piano-legend"><span><i class="legend-root"></i>${window.__("root_label")}</span><span><i class="legend-bass"></i>${window.__("bass_tone")}</span><span><i class="legend-tone"></i>${window.__("chord_tone")}</span><span class="piano-range">C4 — B5</span></div></section>`);
 
       targetEl.innerHTML = htmlParts.join("");
       targetEl.querySelector("#chord-play-result")?.addEventListener("click", () => {
@@ -3186,407 +3268,21 @@ const seqFlowHtml = funcSteps.length
   }
 
   function updateBlues(targetEl, inputValue) {
-    const v = inputValue.trim();
-    // render interactive UI: three action buttons + result area
-    const container = document.createElement("div");
-    container.className = "blues-panel";
-
-    const btnRow = document.createElement("div");
-    btnRow.style.display = "flex";
-    btnRow.style.gap = "8px";
-
-    const btnBasic = document.createElement("button");
-    btnBasic.textContent = window.__("blues_basic");
-    const btnAdv = document.createElement("button");
-    btnAdv.textContent = window.__("blues_advanced");
-    const btnFeel = document.createElement("button");
-    btnFeel.textContent = window.__("blues_feel");
-
-    [btnBasic, btnAdv, btnFeel].forEach((b) => {
-      b.className = "panel-action";
-      b.setAttribute("aria-pressed", "false");
-      b.style.padding = "8px 12px";
-      b.style.borderRadius = "8px";
-      b.style.border = "none";
-      b.style.cursor = "pointer";
-      b.style.background =
-        "linear-gradient(90deg,var(--accent),var(--accent-2))";
-      b.style.color = "#fff";
-    });
-
-    // helper to show which action is active
-    function setActiveAction(button) {
-      [btnBasic, btnAdv, btnFeel].forEach((b) => {
-        const active = b === button;
-        b.classList.toggle("active", active);
-        b.setAttribute("aria-pressed", active ? "true" : "false");
-      });
-    }
-
-    btnRow.appendChild(btnBasic);
-    btnRow.appendChild(btnAdv);
-    btnRow.appendChild(btnFeel);
-
-    const results = document.createElement("div");
-    results.className = "blues-results";
-    results.style.marginTop = "12px";
-
-    container.appendChild(btnRow);
-    container.appendChild(results);
-    targetEl.innerHTML = "";
-    targetEl.appendChild(container);
-
-    // helper: parse chord notes
-    function getNotesSafe(val) {
-      try {
-        return conv._ensureNotesAndRoot(val) || [];
-      } catch (e) {
-        return [];
-      }
-    }
-
-    // Basic suggestions
-    btnBasic.addEventListener("click", () => {
-      setActiveAction(btnBasic);
-      const notes = getNotesSafe(v);
-      if (!notes || notes.length === 0) {
-        results.innerHTML = `<div class="result-card">${window.__("cannot_parse_input")}</div>`;
-        return;
-      }
-      // try library method first
-      let suggestions = [];
-      try {
-        suggestions = brain.blt.suggestForChord(v);
-      } catch (e) {
-        console.error("Error getting basic suggestions:", e);
-      }
-
-      // normalize suggestions to array
-      if (!Array.isArray(suggestions)) {
-        if (suggestions == null) suggestions = [];
-        else suggestions = [suggestions];
-      }
-
-      // render
-      results.innerHTML = "";
-      const header = document.createElement("div");
-      header.className = "small-muted";
-      header.textContent = window.__f("header_basic", {
-        count: suggestions.length,
-      });
-      results.appendChild(header);
-      suggestions.forEach((s) => {
-        const card = document.createElement("div");
-        card.className = "result-card";
-        // spiciness-based soft gradient background for Improv Feel
-        try {
-          const sp = Number(feel.spiciness_level || 0);
-          let hue = 200,
-            sat = 20,
-            top = 30,
-            bot = 26;
-          if (sp <= 1) {
-            hue = 200;
-            sat = 18;
-            top = 30;
-            bot = 26;
-          } else if (sp <= 3) {
-            hue = 38;
-            sat = 20;
-            top = 32;
-            bot = 26;
-          } else if (sp <= 5) {
-            hue = 18;
-            sat = 24;
-            top = 34;
-            bot = 28;
-          } else {
-            hue = 300;
-            sat = 20;
-            top = 34;
-            bot = 26;
-          }
-          card.style.background = `linear-gradient(135deg, hsl(${hue}, ${sat}%, ${top}%), hsl(${hue}, ${Math.max(sat - 4, 8)}%, ${bot}%))`;
-        } catch (e) { }
-
-        const title = document.createElement("div");
-        title.className = "card-title";
-        title.textContent = s.name;
-        const reason = document.createElement("div");
-        reason.className = "small-muted";
-        reason.textContent = window.__("reason_" + s.reasonId) || "";
-        const noteRow = document.createElement("div");
-        noteRow.className = "note-grid";
-        (s.notes || []).forEach((n) => {
-          const nc = document.createElement("div");
-          nc.className = "note-cell";
-          nc.innerHTML = `<div class="note">${n}</div>`;
-          noteRow.appendChild(nc);
-        });
-        card.appendChild(title);
-        card.appendChild(reason);
-        card.appendChild(noteRow);
-        results.appendChild(card);
-      });
-    });
-
-    // Advanced suggestions
-    btnAdv.addEventListener("click", () => {
-      setActiveAction(btnAdv);
-      const notes = getNotesSafe(v);
-      if (!notes || notes.length === 0) {
-        results.innerHTML = `<div class="result-card">${window.__("cannot_parse_input")}</div>`;
-        return;
-      }
-      let adv = [];
-      try {
-        adv = brain.blt.suggestAdvanced(v);
-      } catch (e) {
-        console.error("Error getting advanced suggestions:", e);
-      }
-
-      if (!Array.isArray(adv)) {
-        if (adv == null) adv = [];
-        else adv = [adv];
-      }
-
-      results.innerHTML = "";
-      const headerAdv = document.createElement("div");
-      headerAdv.className = "small-muted";
-      headerAdv.textContent = window.__f("header_advanced", {
-        count: adv.length,
-      });
-      results.appendChild(headerAdv);
-      adv.forEach((s) => {
-        const card = createScaleCard(s);
-        results.appendChild(card);
-      });
-    });
-
-    // Improv Feel
-    btnFeel.addEventListener("click", () => {
-      setActiveAction(btnFeel);
-      const chordNotes = getNotesSafe(v);
-      if (!chordNotes || chordNotes.length === 0) {
-        results.innerHTML = `<div class="result-card">${window.__("cannot_parse_input")}</div>`;
-        return;
-      }
-      // candidate scales to analyze: Major Pentatonic, Minor Blues, Lydian Dominant
-      const root = chordNotes[0];
-      const candidates = Object.keys(brain.blt.scaleMetadata);
-      results.innerHTML = "";
-      const headerFeel = document.createElement("div");
-      headerFeel.className = "small-muted";
-      headerFeel.textContent = window.__f("header_improv", {
-        count: candidates.length,
-      });
-      results.appendChild(headerFeel);
-      candidates.forEach((name) => {
-        const sNotes = brain.blt._calculateScaleNotes(root, name);
-        const feel = brain.blt.analyzeImprovFeel(sNotes, chordNotes);
-        const card = document.createElement("div");
-        card.className = "result-card";
-        const title = document.createElement("div");
-        title.className = "card-title";
-        title.textContent = `${root} ${name}`;
-        const noteRow = document.createElement("div");
-        noteRow.className = "note-grid";
-        const tensionSet = new Set(feel.tension_notes || []);
-        (sNotes || []).forEach((n) => {
-          const nc = document.createElement("div");
-          const isTension = tensionSet.has(n);
-          nc.className = "note-cell" + (isTension ? " tension-note" : "");
-          nc.innerHTML = `<div class="note">${n}</div>`;
-          noteRow.appendChild(nc);
-        });
-        const body = document.createElement("div");
-        body.className = "card-body";
-        const descId =
-          feel.description_id || feel.descriptionId || feel.descriptionId === 0
-            ? feel.description_id || feel.descriptionId
-            : null;
-        const feelNameKey = descId ? `improv_feel_name_${descId}` : null;
-        const feelDescKey = descId ? `improv_feel_desc_${descId}` : null;
-        const feelName = feelNameKey
-          ? window.__(feelNameKey)
-          : feel.feeling || "";
-        const feelDesc = feelDescKey
-          ? window.__(feelDescKey)
-          : feel.description || "";
-        body.innerHTML = `<div><strong>${window.__("feel_label")} :</strong> ${feelName} (${window.__("spiciness_label")}: ${feel.spiciness_level})</div>
-								  <div class="small-muted">${window.__("tensions_label")} : ${feelDesc}</div>
-								  <div class="small-muted">${window.__("tension_source_label")}: ${JSON.stringify(feel.tension_notes)}</div>`;
-        // add small spiciness badge to title
-        const spiceBadge = document.createElement("span");
-        spiceBadge.className = "spice-badge";
-        spiceBadge.textContent = `${window.__("spiciness_label")}: ${feel.spiciness_level}`;
-        try {
-          const spVal = Number(feel.spiciness_level || 0);
-          let hue = 200,
-            sat = 18,
-            light = 28;
-          if (spVal <= 1) {
-            hue = 200;
-            sat = 16;
-            light = 28;
-          } else if (spVal <= 3) {
-            hue = 38;
-            sat = 20;
-            light = 30;
-          } else if (spVal <= 5) {
-            hue = 18;
-            sat = 22;
-            light = 32;
-          } else {
-            hue = 300;
-            sat = 20;
-            light = 32;
-          }
-          spiceBadge.style.background = `hsl(${hue}, ${sat}%, ${light}%)`;
-          spiceBadge.style.color = "#fff";
-          spiceBadge.style.border = "1px solid rgba(255,255,255,0.06)";
-        } catch (e) { }
-        title.appendChild(spiceBadge);
-        card.appendChild(title);
-        card.appendChild(noteRow);
-        card.appendChild(body);
-        results.appendChild(card);
-      });
-    });
+    mountBluesToolbox(targetEl, inputValue, { brain, conv, playChord, semitoneToFreq });
   }
 
   function updateCST(targetEl, inputValue) {
-    const v = inputValue.trim();
-    const notes = conv._ensureNotesAndRoot(v);
-    if (!notes) {
-      targetEl.innerHTML = `<p>${window.__("cannot_parse_chord")}</p>`;
-      return;
-    }
-    const root = notes[0];
-    const scaleMatches = brain.cst.analyzeCST(notes);
-    targetEl.innerHTML = "";
-    const headerCST = document.createElement("div");
-    headerCST.className = "small-muted";
-    headerCST.textContent = window.__f("header_cst", {
-      count: scaleMatches.length,
-    });
-    targetEl.appendChild(headerCST);
-
-    scaleMatches.forEach((scaleStr) => {
-      // Parse "C Mixolydian" -> scaleName
-      const parts = scaleStr.split(" ");
-      const scaleRoot = parts[0];
-      const scaleName = parts.slice(1).join(" ");
-
-      try {
-        const scaleNotes = brain.cst.scaleNotes(scaleStr);
-        const brightness = brain.cst.calculateBrightness(scaleRoot, scaleNotes);
-        const tensions = brain.cst.analyzeTensions(notes, scaleStr);
-
-        // Create card with brightness-based background gradient
-        const card = document.createElement("div");
-        card.className = "result-card cst-card";
-
-        // apply brightness-based background (low saturation, higher brightness for comfort)
-
-        let hue = 0,
-          sat = 0;
-        if (Math.abs(brightness) > 0.1) {
-          hue = brightness < 0 ? 210 : brightness > 0 ? 165 : 0; // 165是薄荷绿
-          sat = Math.abs(brightness) > 2 ? 30 : 24; // 过于刺耳的亮度降低饱和度
-        }
-        const bright = 0 + Math.abs(brightness) * 1.5;
-        card.style.background = `linear-gradient(135deg, hsl(${hue}, ${sat}%, ${Math.min(bright, 40)}%), hsl(${hue}, ${sat}%, ${Math.max(bright - 4, 24)}%))`;
-
-        const title = document.createElement("div");
-        title.className = "card-title";
-        title.innerHTML = `<span>${scaleRoot} ${scaleName}</span> <span class="brightness-label">${window.__("brightness_label")}: ${brightness}</span>`;
-
-        const noteRow = document.createElement("div");
-        noteRow.className = "note-grid";
-        const tensionSet = new Set(tensions.tensions || []);
-        const avoidSet = new Set(tensions.avoid || []);
-
-        [...scaleNotes].forEach((n) => {
-          const nc = document.createElement("div");
-          const classes = ["note-cell"];
-          if (tensionSet.has(n)) classes.push("tension-note");
-          else if (avoidSet.has(n)) classes.push("avoid-note");
-          nc.className = classes.join(" ");
-          nc.innerHTML = `<div class="note">${n}</div>`;
-          noteRow.appendChild(nc);
-        });
-
-        const infoDiv = document.createElement("div");
-        infoDiv.className = "cst-info";
-        infoDiv.innerHTML = `<div class="small-muted">${window.__("tensions_label")}: ${JSON.stringify(tensions.tensions || [])}</div>
-                                      <div class="small-muted">${window.__("avoid_label")}: ${JSON.stringify(tensions.avoid || [])}</div>`;
-
-        card.appendChild(title);
-        card.appendChild(noteRow);
-        card.appendChild(infoDiv);
-        targetEl.appendChild(card);
-      } catch (e) {
-        // skip on error
-      }
-    });
+    mountJazzToolbox(targetEl, inputValue, { conv, playChord, semitoneToFreq });
   }
 
   function updateLCC(targetEl, inputValue) {
-    const v = inputValue.trim();
-    const notes = conv._ensureNotesAndRoot(v);
-    if (!notes) {
-      targetEl.innerHTML = `<p>${window.__("cannot_parse_chord")}</p>`;
-      return;
-    }
-    const res = brain.lcc.analyzeLCC(notes);
-    targetEl.innerHTML = "";
-    const headerLCC = document.createElement("div");
-    headerLCC.className = "small-muted";
-    headerLCC.textContent = window.__f("header_lcc", { count: res.length });
-    targetEl.appendChild(headerLCC);
-
-    res.forEach((item) => {
-      const { parent, scale, degree_from_parent, gravity } = item;
-
-      try {
-        const scaleNotes = brain.lcc.scaleNotes(parent, scale);
-
-        // Create card with gravity-based background (越小越稳定蓝绿，越大越有张力橙红)
-        const card = document.createElement("div");
-        card.className = "result-card lcc-card";
-
-        // gravity from 0-12, map to hue: 0=green/cyan(~180), 6=yellow(~60), 12=red(~0), low saturation
-        const gravityHue = Math.max(0, 180 - gravity * 15);
-        const gravitySat = 25 + gravity * 2;
-        card.style.background = `linear-gradient(135deg, hsl(${gravityHue}, ${gravitySat}%, 12%), hsl(${gravityHue}, ${gravitySat}%, 5%))`;
-
-        const title = document.createElement("div");
-        title.className = "card-title";
-        title.innerHTML = `<span>${window.__("lcc_parent_prefix")} ${parent} ${scale}</span><br><span class="lcc-meta">${window.__("lcc_position_prefix")} ${degree_from_parent} ${window.__("semitones_label")} | ${window.__("lcc_gravity_prefix")} ${gravity}</span>`;
-
-        const noteRow = document.createElement("div");
-        noteRow.className = "note-grid";
-        scaleNotes.forEach((n) => {
-          const nc = document.createElement("div");
-          nc.className = "note-cell";
-          nc.innerHTML = `<div class="note">${n}</div>`;
-          noteRow.appendChild(nc);
-        });
-
-        card.appendChild(title);
-        card.appendChild(noteRow);
-        targetEl.appendChild(card);
-      } catch (e) {
-        // skip on error
-      }
-    });
+    mountLccExplorer(targetEl, inputValue, { brain, conv, playChord, semitoneToFreq });
   }
 
   function updateRec(targetEl, inputValue) {
     const v = inputValue.trim();
     if (!v) {
-      targetEl.innerHTML = `<div class="result-card">${window.__("cannot_parse_input") || "无法解析输入，请输入有效和弦（如 C7、Am9）"}</div>`;
+      targetEl.innerHTML = `<div class="result-card">${window.__("cannot_parse_input") || "无法解析输入 请输入有效和弦（如 C7、Am9）"}</div>`;
       return;
     }
 
@@ -3596,7 +3292,7 @@ const seqFlowHtml = funcSteps.length
       recommendations = brain.getChordRecommendations(v);
     } catch (e) {
       console.error("get chord scale failure:", e);
-      targetEl.innerHTML = `<div class="result-card">${window.__("parse_error") || "解析失败："}${e.message}</div>`;
+      targetEl.innerHTML = `<div class="result-card">${window.__("parse_error") || "解析失败 "}${e.message}</div>`;
       return;
     }
 
@@ -4151,6 +3847,23 @@ const seqFlowHtml = funcSteps.length
   navButtons.forEach((b) =>
     b.addEventListener("click", () => showOnlyFeature(b.dataset.feature)),
   );
+  navButtons.forEach((button, index) => {
+    button.setAttribute('role', 'tab');
+    button.id = `tab-${button.dataset.feature}`;
+    button.setAttribute('aria-controls', `panel-${button.dataset.feature}`);
+    document.getElementById(`panel-${button.dataset.feature}`).setAttribute('aria-labelledby', button.id);
+    button.addEventListener('keydown', event => {
+      let next;
+      if (event.key === 'ArrowDown' || event.key === 'ArrowRight') next = (index + 1) % navButtons.length;
+      if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') next = (index - 1 + navButtons.length) % navButtons.length;
+      if (event.key === 'Home') next = 0;
+      if (event.key === 'End') next = navButtons.length - 1;
+      if (next === undefined) return;
+      event.preventDefault();
+      navButtons[next].focus();
+      navButtons[next].click();
+    });
+  });
   // initialize other panel mode buttons
   initOtherControls();
 
@@ -4230,6 +3943,7 @@ const seqFlowHtml = funcSteps.length
 
   // ===================== 新里曼面板渲染 =====================
   // ===================== 新里曼面板渲染（树型布局 + 右键拖拽节点 + 节点大小调节）=====================
+  let neoCanvasCleanup = null;
   let neoCurrentDepth = 1;
   let neoCurrentInput = "";
   let neoLayerSpacing = 100;      // 层间垂直间距
@@ -4241,6 +3955,8 @@ const seqFlowHtml = funcSteps.length
   const PRIMARY_OPS = new Set(["P", "L", "R", "S", "N", "D1"]);
 
   function updateNeo(targetEl, inputValue) {
+    neoCanvasCleanup?.();
+    neoCanvasCleanup = null;
     const v = inputValue.trim();
     if (!v) {
       targetEl.innerHTML = `<div class="result-card">${window.__("cannot_parse_input")}</div>`;
@@ -4289,6 +4005,8 @@ const seqFlowHtml = funcSteps.length
 
     vizRow.appendChild(btnTonnetz);
     vizRow.appendChild(btnOcta);
+    vizRow.className = "neo-view-switch";
+    targetEl.appendChild(vizRow);
 
     // 可视化容器
     const canvasContainer = document.createElement("div");
@@ -4322,12 +4040,12 @@ const seqFlowHtml = funcSteps.length
     if (nodeSizeInput) {
       nodeSizeInput.value = neoNodeSize;
       if (nodeSizeVal) nodeSizeVal.textContent = neoNodeSize;
-      nodeSizeInput.addEventListener("input", () => {
+      nodeSizeInput.oninput = () => {
         neoNodeSize = parseInt(nodeSizeInput.value) || 22;
         if (nodeSizeVal) nodeSizeVal.textContent = neoNodeSize;
         if (currentView === "tonnetz") renderTonnetzMulti();
         else renderOctatonicMulti();
-      });
+      };
     }
 
     const applyDepthAndRender = () => {
@@ -4346,23 +4064,23 @@ const seqFlowHtml = funcSteps.length
     };
 
     if (applyBtn) applyBtn.onclick = applyDepthAndRender;
-    if (depthInput) depthInput.addEventListener("keydown", e => { if (e.key === "Enter") applyDepthAndRender(); });
-    if (spacingInput) spacingInput.addEventListener("keydown", e => { if (e.key === "Enter") applyDepthAndRender(); });
+    if (depthInput) depthInput.onkeydown = e => { if (e.key === "Enter") applyDepthAndRender(); };
+    if (spacingInput) spacingInput.onkeydown = e => { if (e.key === "Enter") applyDepthAndRender(); };
 
     // 重置视图
-    document.getElementById("neo-reset-view")?.addEventListener("click", () => {
+    document.getElementById("neo-reset-view").onclick = () => {
       neoCanvasState = { offsetX: 0, offsetY: 0, scale: 1 };
       neoNodeOffsets = {};
       if (currentView === "tonnetz") renderTonnetzMulti();
       else renderOctatonicMulti();
-    });
+    };
 
     // 重置节点位置
-    document.getElementById("neo-reset-positions")?.addEventListener("click", () => {
+    document.getElementById("neo-reset-positions").onclick = () => {
       neoNodeOffsets = {};
       if (currentView === "tonnetz") renderTonnetzMulti();
       else renderOctatonicMulti();
-    });
+    };
 
     // ---------- 渲染函数 ----------
     let currentView = "tonnetz";
@@ -4704,385 +4422,18 @@ const seqFlowHtml = funcSteps.length
     return { nodes, edges, center: rootChord };
   }
 
-  /**
-   * 连线颜色：浅层偏绿，深层偏蓝紫
-   */
-  function getEdgeColor(depth, maxDepth, isPrimary) {
-    const t = maxDepth <= 1 ? 0 : Math.min(1, (depth - 1) / Math.max(1, maxDepth - 1));
-    if (isPrimary) {
-      const hue = 145 - t * 30;
-      const light = 48 - t * 12;
-      return `hsla(${hue}, 55%, ${light}%, 0.75)`;
-    } else {
-      const hue = 180 + t * 80;
-      const light = 45 + t * 10;
-      return `hsla(${hue}, 45%, ${light}%, 0.55)`;
-    }
-  }
-
-  function getNodeLabelColor(isPrimary, depth, maxDepth) {
-    if (isPrimary) return "hsl(145, 55%, 55%)";
-    const t = maxDepth <= 1 ? 0 : Math.min(1, depth / maxDepth);
-    return `hsl(${200 + t * 70}, 50%, 65%)`;
-  }
-
-  /**
-   * 树型画布绘制（支持右键拖拽节点）
-   */
   function drawTreeCanvas(container, graphData, type) {
-    const canvas = document.createElement("canvas");
-    const containerWidth = container.clientWidth || 600;
-    const dpr = 2;
-    // 动态高度：层数越多画布越高
-    const canvasHeight = Math.max(500, (neoCurrentDepth + 1) * neoLayerSpacing + 200);
-    canvas.width = containerWidth * dpr;
-    canvas.height = canvasHeight * dpr;
-    canvas.style.width = containerWidth + "px";
-    canvas.style.height = canvasHeight + "px";
-    canvas.style.display = "block";
-    canvas.style.margin = "0 auto";
-    container.appendChild(canvas);
-
-    // 默认将根节点放在画布中上位置
-    if (!neoCanvasState._initialized) {
-      neoCanvasState.offsetX = 0;
-      neoCanvasState.offsetY = -canvasHeight / 3;
-      neoCanvasState._initialized = true;
-    }
-
-    const maxDepth = Math.max(1, ...graphData.nodes.map(n => n.depth || 0));
-
-    // 右键拖拽状态
-    let rightDragNode = null;
-    let rightDragStartX = 0;
-    let rightDragStartY = 0;
-    let rightDragOrigX = 0;
-    let rightDragOrigY = 0;
-
-    canvas.addEventListener("contextmenu", (e) => e.preventDefault());
-
-    function render() {
-      const ctx = canvas.getContext("2d");
-      const w = canvas.width;
-      const h = canvas.height;
-      const cx = w / 2 + neoCanvasState.offsetX * dpr;
-      const cy = h / 2 + neoCanvasState.offsetY * dpr + 100 * dpr; // 根节点偏上
-      const scale = neoCanvasState.scale;
-
-      ctx.clearRect(0, 0, w, h);
-
-      const { nodes, edges } = graphData;
-
-      // 应用手动偏移
-      const nodePositions = nodes.map(n => {
-        const manualOffset = neoNodeOffsets[n.id] || { x: 0, y: 0 };
-        return {
-          ...n,
-          px: Math.round(cx + (n.x + manualOffset.x) * scale * dpr),
-          py: Math.round(cy + (n.y + manualOffset.y) * scale * dpr),
-        };
-      });
-
-      // === 连线 ===
-      edges.forEach(edge => {
-        const from = nodePositions.find(n => n.id === edge.source);
-        const to = nodePositions.find(n => n.id === edge.target);
-        if (!from || !to) return;
-
-        const edgeDepth = edge.depth || 1;
-        const isPrimary = edge.isPrimary || false;
-
-        // 树型布局的贝塞尔：控制点在垂直中点
-        const cpx = from.px;
-        const cpy = (from.py + to.py) / 2;
-
-        ctx.beginPath();
-        ctx.moveTo(from.px, from.py);
-        ctx.quadraticCurveTo(cpx, cpy, to.px, to.py);
-
-        const edgeColor = getEdgeColor(edgeDepth, maxDepth, isPrimary);
-        ctx.strokeStyle = edgeColor;
-        ctx.lineWidth = 1.3 * scale;
-        ctx.stroke();
-
-        // 连线标签
-        if (edge.label && scale > 0.55) {
-          const labelColor = getNodeLabelColor(isPrimary, edgeDepth, maxDepth);
-          ctx.fillStyle = labelColor;
-          ctx.font = `bold ${Math.max(8, 10 * scale)}px sans-serif`;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          const labelX = (from.px + to.px) / 2 + 15 * scale * dpr;
-          const labelY = (from.py + to.py) / 2;
-          // ctx.fillText(edge.label, labelX, labelY);
-        }
-      });
-
-      // === 节点 ===
-      const centerRadius = neoNodeSize * 1.15;
-      const normalRadius = neoNodeSize;
-
-      nodePositions.forEach(node => {
-        const isCenter = node.group === "center";
-        const isTransform = node.group === "transform";
-        const radius = (isCenter ? centerRadius : normalRadius) * scale;
-        const depth = node.depth || 0;
-        const depthFade = Math.max(0.35, 1 - depth * 0.12);
-
-        const lightTheme = document.documentElement.dataset.theme === "light";
-        let glowHue = 200, glowSat = 90;
-        if (!isCenter) {
-          glowHue = isTransform ? 145 : 260;
-          glowSat = isTransform ? 60 : 55;
-        }
-
-        // 光晕
-        const glowR = radius * 2;
-        const glow = ctx.createRadialGradient(node.px, node.py, radius * 0.3, node.px, node.py, glowR);
-        glow.addColorStop(0, `hsla(${glowHue}, ${glowSat}%, ${lightTheme ? 42 : 50}%, ${0.5 * depthFade})`);
-        glow.addColorStop(1, "rgba(0,0,0,0)");
-        ctx.fillStyle = glow;
-        ctx.beginPath();
-        ctx.arc(node.px, node.py, glowR, 0, Math.PI * 2);
-        ctx.fill();
-
-        // 主体
-        ctx.beginPath();
-        ctx.arc(node.px, node.py, radius, 0, Math.PI * 2);
-        const grad = ctx.createLinearGradient(node.px - radius, node.py - radius, node.px + radius, node.py + radius);
-        if (isCenter) {
-          grad.addColorStop(0, lightTheme ? "#5b6f86" : "#4a90d9");
-          grad.addColorStop(0.5, lightTheme ? "#43566d" : "#2563a8");
-          grad.addColorStop(1, lightTheme ? "#2f3f52" : "#1a3a6e");
-        } else if (isTransform) {
-          grad.addColorStop(0, lightTheme ? "hsl(145, 30%, 43%)" : "hsl(145, 45%, 35%)");
-          grad.addColorStop(0.5, lightTheme ? "hsl(145, 28%, 33%)" : "hsl(145, 40%, 25%)");
-          grad.addColorStop(1, lightTheme ? "hsl(145, 25%, 23%)" : "hsl(145, 35%, 15%)");
-        } else {
-          const base = lightTheme ? 48 : 35;
-          grad.addColorStop(0, `hsla(260, ${lightTheme ? 28 : 40}%, ${base * depthFade}%, ${depthFade})`);
-          grad.addColorStop(0.5, `hsla(260, ${lightTheme ? 25 : 35}%, ${(lightTheme ? 36 : 25) * depthFade}%, ${depthFade})`);
-          grad.addColorStop(1, `hsla(260, ${lightTheme ? 22 : 30}%, ${(lightTheme ? 25 : 15) * depthFade}%, ${depthFade})`);
-        }
-        ctx.fillStyle = grad;
-        ctx.fill();
-
-        // 边框
-        if (isCenter) {
-          ctx.strokeStyle = lightTheme ? "rgba(255,255,255,0.82)" : "rgba(255,255,255,0.7)";
-          ctx.lineWidth = 2.5 * scale;
-        } else if (isTransform) {
-          ctx.strokeStyle = "hsla(145, 55%, 55%, 0.7)";
-          ctx.lineWidth = 2 * scale;
-        } else {
-          ctx.strokeStyle = `hsla(260, 50%, 60%, ${0.5 * depthFade})`;
-          ctx.lineWidth = 1.5 * scale;
-        }
-        ctx.stroke();
-
-        // 标签
-        const label = node.chord;
-        const fontSize = (isCenter ? 10 : 8) * scale;
-
-        if (scale > 0.4) {
-          if (isCenter) {
-            ctx.fillStyle = "#fff";
-            ctx.font = `bold ${Math.max(8, fontSize)}px sans-serif`;
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            if (label.length > 8) {
-              ctx.fillText(label.slice(0, 5), node.px, node.py - 3);
-              ctx.fillText(label.slice(5, 10), node.px, node.py + 10);
-            } else {
-              ctx.fillText(label, node.px, node.py);
-            }
-          } else {
-            const labelColor = getNodeLabelColor(!!node.isPrimary, depth, maxDepth);
-            ctx.fillStyle = labelColor;
-            ctx.font = `bold ${Math.max(7, fontSize)}px sans-serif`;
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText(label, node.px, node.py);
-
-            if (scale > 0.65) {
-              ctx.fillStyle = document.documentElement.dataset.theme === "light"
-                ? "rgba(35,34,30,0.52)"
-                : "rgba(255,255,255,0.35)";
-              ctx.font = `${Math.max(6, 7 * scale)}px sans-serif`;
-              const short = node.label.length > 10 ? node.label.slice(0, 9) + ".." : node.label;
-              ctx.fillText(short, node.px, node.py + radius + 8);
-            }
-          }
-        }
-      });
-
-      // 图例
-      if (scale > 0.5) {
-        const legY = h - 14 * dpr;
-        ctx.fillStyle = "hsl(145, 55%, 55%)";
-        ctx.font = `bold ${8 * dpr}px sans-serif`;
-        ctx.textAlign = "left";
-        ctx.fillText("● PLRSN D1", 10 * dpr, legY);
-        ctx.fillStyle = "hsla(260, 50%, 65%, 0.8)";
-        ctx.fillText("● 扩展", 115 * dpr, legY);
-        const barX = 190 * dpr, barW = 100 * dpr, barH = 9 * dpr;
-        const barGrad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
-        barGrad.addColorStop(0, "hsl(145, 55%, 45%)");
-        barGrad.addColorStop(1, "hsl(260, 50%, 55%)");
-        ctx.fillStyle = barGrad;
-        ctx.fillRect(barX, legY - 4 * dpr, barW, barH);
-      }
-    }
-
-    // ===== 交互：左键拖拽画布 =====
-    let isPanning = false;
-    let lastMouseX = 0, lastMouseY = 0;
-
-    canvas.addEventListener("mousedown", (e) => {
-      if (e.button === 2) return; // 右键不处理 pan
-      if (e.button === 0) {
-        isPanning = true;
-        lastMouseX = e.clientX;
-        lastMouseY = e.clientY;
-        container.style.cursor = "grabbing";
-      }
-      e.preventDefault();
+    neoCanvasCleanup?.();
+    neoCanvasCleanup = mountNeoCanvas(container, graphData, {
+      size: neoNodeSize,
+      spacing: neoLayerSpacing,
+      state: neoCanvasState,
+      offsets: neoNodeOffsets,
+      onSelect(chord) {
+        document.getElementById('neo-input').value = chord;
+        updateNeo(container.parentElement, chord);
+      },
     });
-
-    window.addEventListener("mousemove", (e) => {
-      if (rightDragNode) {
-        const dx = e.clientX - rightDragStartX;
-        const dy = e.clientY - rightDragStartY;
-        neoNodeOffsets[rightDragNode.id] = {
-          x: rightDragOrigX + dx / (neoCanvasState.scale * dpr),
-          y: rightDragOrigY + dy / (neoCanvasState.scale * dpr)
-        };
-        render();
-        return;
-      }
-      if (!isPanning) return;
-      const dx = e.clientX - lastMouseX;
-      const dy = e.clientY - lastMouseY;
-      neoCanvasState.offsetX += dx;
-      neoCanvasState.offsetY += dy;
-      lastMouseX = e.clientX;
-      lastMouseY = e.clientY;
-      render();
-    });
-
-    window.addEventListener("mouseup", (e) => {
-      if (e.button === 2 && rightDragNode) {
-        rightDragNode = null;
-        container.style.cursor = "grab";
-        return;
-      }
-      if (isPanning) {
-        isPanning = false;
-        container.style.cursor = "grab";
-      }
-    });
-
-    // ===== 右键拖拽节点 =====
-    canvas.addEventListener("mousedown", (e) => {
-      if (e.button !== 2) return;
-      e.preventDefault();
-      const rect = canvas.getBoundingClientRect();
-      const sx = (e.clientX - rect.left) * (canvas.width / rect.width);
-      const sy = (e.clientY - rect.top) * (canvas.height / rect.height);
-
-      // 查找节点
-      const hitNodes = graphData.nodes.map(n => {
-        const mo = neoNodeOffsets[n.id] || { x: 0, y: 0 };
-        return {
-          ...n,
-          px: canvas.width / 2 + neoCanvasState.offsetX * dpr + (n.x + mo.x) * neoCanvasState.scale * dpr,
-          py: canvas.height / 2 + neoCanvasState.offsetY * dpr + 100 * dpr + (n.y + mo.y) * neoCanvasState.scale * dpr,
-        };
-      });
-
-      const hit = hitNodes.find(node => {
-        const r = ((node.group === "center" ? neoNodeSize * 1.15 : neoNodeSize) * neoCanvasState.scale) + 6;
-        return Math.hypot(node.px - sx, node.py - sy) <= r;
-      });
-
-      if (hit) {
-        rightDragNode = hit;
-        rightDragStartX = e.clientX;
-        rightDragStartY = e.clientY;
-        rightDragOrigX = neoNodeOffsets[hit.id]?.x || 0;
-        rightDragOrigY = neoNodeOffsets[hit.id]?.y || 0;
-        container.style.cursor = "grabbing";
-      }
-    });
-
-    // 滚轮缩放
-    canvas.addEventListener("wheel", (e) => {
-      e.preventDefault();
-      const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
-      neoCanvasState.scale = Math.max(0.25, Math.min(3.0, neoCanvasState.scale * zoomFactor));
-      render();
-    }, { passive: false });
-
-    // 触摸支持
-    canvas.addEventListener("touchstart", (e) => {
-      if (e.touches.length === 1) {
-        isPanning = true;
-        lastMouseX = e.touches[0].clientX;
-        lastMouseY = e.touches[0].clientY;
-      }
-    }, { passive: false });
-    canvas.addEventListener("touchmove", (e) => {
-      if (!isPanning || e.touches.length !== 1) return;
-      const dx = e.touches[0].clientX - lastMouseX;
-      const dy = e.touches[0].clientY - lastMouseY;
-      neoCanvasState.offsetX += dx;
-      neoCanvasState.offsetY += dy;
-      lastMouseX = e.touches[0].clientX;
-      lastMouseY = e.touches[0].clientY;
-      render();
-      e.preventDefault();
-    }, { passive: false });
-    canvas.addEventListener("touchend", () => { isPanning = false; });
-
-    // 双击重置
-    canvas.addEventListener("dblclick", () => {
-      neoCanvasState = { offsetX: 0, offsetY: -(canvasHeight) / 3, scale: 1, _initialized: true };
-      neoNodeOffsets = {};
-      render();
-    });
-
-    // 左键点击节点跳转
-    canvas.addEventListener("click", (e) => {
-      if (isPanning || rightDragNode) return;
-      const rect = canvas.getBoundingClientRect();
-      const sx = (e.clientX - rect.left) * (canvas.width / rect.width);
-      const sy = (e.clientY - rect.top) * (canvas.height / rect.height);
-
-      const hitNodes = graphData.nodes.map(n => {
-        const mo = neoNodeOffsets[n.id] || { x: 0, y: 0 };
-        return {
-          ...n,
-          px: canvas.width / 2 + neoCanvasState.offsetX * dpr + (n.x + mo.x) * neoCanvasState.scale * dpr,
-          py: canvas.height / 2 + neoCanvasState.offsetY * dpr + 100 * dpr + (n.y + mo.y) * neoCanvasState.scale * dpr,
-        };
-      });
-
-      const hit = hitNodes.find(node => {
-        const r = ((node.group === "center" ? neoNodeSize * 1.15 : neoNodeSize) * neoCanvasState.scale) + 10;
-        return Math.hypot(node.px - sx, node.py - sy) <= r;
-      });
-
-      if (hit) {
-        const neoInput = document.getElementById("neo-input");
-        if (neoInput) neoInput.value = hit.chord;
-        neoCanvasState = { offsetX: 0, offsetY: -(canvasHeight) / 3, scale: 1, _initialized: true };
-        neoNodeOffsets = {};
-        updateNeo(container.parentElement, hit.chord);
-      }
-    });
-
-    // 初始渲染
-    render();
   }
   // ==================== 和弦音阶速查面板 ====================
   function initRefPanel() {
@@ -6101,7 +5452,7 @@ const seqFlowHtml = funcSteps.length
   function localizeClassicalText(text) {
     if (window.__lang !== "zh") return text;
     const exact = {
-      "Classical tertian harmony: triads and seventh chords; only the dominant may use a ninth.": "古典三度叠置和声：以三和弦、七和弦为主，仅属功能允许使用九和弦。",
+      "Classical tertian harmony: triads and seventh chords; only the dominant may use a ninth.": "古典三度叠置和声 以三和弦 七和弦为主 仅属功能允许使用九和弦 ",
       "diatonic triad": "调内三和弦",
       "diatonic seventh": "调内七和弦",
       "diatonic ninth": "调内九和弦",
@@ -6118,19 +5469,19 @@ const seqFlowHtml = funcSteps.length
       "dominant group": "属功能组",
       "leading-tone group": "导功能组",
       "altered chord group": "变和弦组",
-      "Sposobin functional DNA: recommendations follow the reference project's next-chord graph.": "基于斯波索宾功能和声连接规则生成推荐。",
+      "Sposobin functional DNA: recommendations follow the reference project's next-chord graph.": "基于斯波索宾功能和声连接规则生成推荐 ",
       "unclassified": "未分类",
-      "Continue by functional contrast or common-tone prolongation.": "通过功能对比继续，或用共同音延长当前功能。",
-      "Resolve toward the tonic; raise the leading tone in minor.": "向主功能解决；小调中须使用升高的导音。",
-      "Bass remains on scale degree 5; 6-5 and 4-3 resolve into V or V7.": "低音保持在属音，外声部按 6-5、4-3 解决到 V 或 V7。",
-      "Use first inversion (N6), then move to K64 or V; double the bass is usually preferred.": "采用第一转位 N6，随后连接 K64 或 V；通常优先重复低音。",
-      "Resolve the augmented sixth outward by semitone to scale degree 5, then continue to V.": "增六音程向外半音解决到属音，再进入 V。",
-      "Resolve through K64 to avoid parallel fifths, then continue to V.": "先经过 K64 以规避平行五度，再进入 V。",
-      "Resolve the seventh downward and the leading tone upward; the ninth resolves downward.": "七音下行、导音上行，九音下行解决。",
+      "Continue by functional contrast or common-tone prolongation.": "通过功能对比继续 或用共同音延长当前功能 ",
+      "Resolve toward the tonic; raise the leading tone in minor.": "向主功能解决 小调中须使用升高的导音 ",
+      "Bass remains on scale degree 5; 6-5 and 4-3 resolve into V or V7.": "低音保持在属音 外声部按 6-5、4-3 解决到 V 或 V7。",
+      "Use first inversion (N6), then move to K64 or V; double the bass is usually preferred.": "采用第一转位 N6 随后连接 K64 或 V 通常优先重复低音 ",
+      "Resolve the augmented sixth outward by semitone to scale degree 5, then continue to V.": "增六音程向外半音解决到属音 再进入 V。",
+      "Resolve through K64 to avoid parallel fifths, then continue to V.": "先经过 K64 以规避平行五度 再进入 V。",
+      "Resolve the seventh downward and the leading tone upward; the ninth resolves downward.": "七音下行 导音上行 九音下行解决 ",
     };
     if (exact[text]) return exact[text];
     const secondary = text.match(/^Resolve to ([^(]+) \(([^)]+)\); retain common tones and resolve the temporary leading tone upward\.$/);
-    if (secondary) return `解决到 ${secondary[1].trim()}（${secondary[2]}）；保留共同音，临时导音上行解决。`;
+    if (secondary) return `解决到 ${secondary[1].trim()}（${secondary[2]}） 保留共同音 临时导音上行解决 `;
     return text;
   }
 
@@ -6138,19 +5489,27 @@ const seqFlowHtml = funcSteps.length
     stopClassicalSequencePlayback();
     const key = document.getElementById("classical-key")?.value || "C";
     const mode = document.getElementById("classical-mode")?.value || "major";
-    const modulationKey = document.getElementById("classical-mod-key")?.value || "G";
-    let input = document.getElementById("classical-input")?.value.trim() || "";
-    const hasInput = Boolean(input);
-    const modeIsMinor = mode.includes("minor");
+     const modulationKey = document.getElementById("classical-mod-key")?.value || "G";
+     let input = document.getElementById("classical-input")?.value.trim() || "";
+     const hasInput = Boolean(input);
+     const modeIsMinor = mode.includes("minor");
     if (hasInput && classicalLastKey !== null && classicalLastKey !== key) {
       input = modeIsMinor ? "t" : "T";
       document.getElementById("classical-input").value = input;
       classicalSegments.push({ key, mode, symbols: [input] });
-    } else if (hasInput && classicalLastMode !== null && classicalLastMode !== mode) {
+     } else if (hasInput && classicalLastMode !== null && classicalLastMode !== mode) {
       input = modeIsMinor ? "t" : "T";
       document.getElementById("classical-input").value = input;
-      classicalSegments = [{ key, mode, symbols: [input] }];
-    }
+       classicalSegments = [{ key, mode, symbols: [input] }];
+     }
+     if (classicalPendingChain && classicalPendingChain.key === key && classicalPendingChain.mode === mode) {
+       const segment = classicalSegments[classicalSegments.length - 1] || { key, mode, symbols: [] };
+       segment.key = key;
+       segment.mode = mode;
+       segment.symbols = classicalPendingChain.symbols.slice();
+       if (!classicalSegments.length) classicalSegments.push(segment);
+       classicalPendingChain = null;
+     }
     classicalLastKey = key;
     classicalLastMode = mode;
     if (hasInput && !classicalSegments.length) classicalSegments = [{ key, mode, symbols: [input] }];
@@ -6169,10 +5528,21 @@ const seqFlowHtml = funcSteps.length
       const chainBar = document.createElement("div");
       chainBar.className = "classical-chain result-card";
       const displayClassicalSymbol = symbol => symbol;
-      if (report && (!classicalChain.length || classicalChain[classicalChain.length - 1] !== report.current.symbol)) {
-        classicalChain = [report.current.symbol];
-        classicalSegments[classicalSegments.length - 1].symbols = classicalChain;
-      }
+       if (report) {
+         const activeSegment = classicalSegments[classicalSegments.length - 1];
+         if (!activeSegment) {
+           classicalSegments = [{ key, mode, symbols: [report.current.symbol] }];
+         } else if (!activeSegment.symbols.length) {
+           activeSegment.symbols = [report.current.symbol];
+         } else if (activeSegment.symbols.length === 1) {
+           // Keep a chain built by clicking recommendations. The raw input
+           // may be an alias (e.g. K64 vs K₆₄), so normalize only its final
+           // node instead of replacing the entire sequence.
+           const lastValue = activeSegment.symbols[0];
+           if (lastValue === input || lastValue === report.current.symbol || lastValue === report.current.baseSymbol) activeSegment.symbols[0] = report.current.symbol;
+         }
+         classicalChain = classicalSegments[classicalSegments.length - 1].symbols;
+       }
       const chainButtons = classicalChain.map((symbol, index) => `<button type="button" class="classical-chain-node" data-chain-index="${index}">${symbol}</button>${index < classicalChain.length - 1 ? "<span class=\"classical-chain-arrow\">→</span>" : ""}`).join("");
       const segmentFlow = classicalSegments.map((segment, segmentIndex) => {
         const segmentPalette = classical.getPalette(segment.key, segment.mode);
@@ -6189,7 +5559,7 @@ const seqFlowHtml = funcSteps.length
         return `<span class="${keyLabelClass}">│ Key=${segment.key} │</span>${nodes}`;
       }).join("");
       const playbackSettings = loadClassicalPlaybackSettings();
-      chainBar.innerHTML = `<div class="classical-chain-head"><strong>连续和声连接</strong><div class="classical-chain-primary-actions"><button type="button" class="classical-chain-play" ${classicalChain.length ? "" : "disabled"}>▶ 播放</button><button type="button" class="classical-chain-back" ${classicalChain.length < 2 ? "disabled" : ""}>↶ 回退</button><button type="button" class="classical-chain-reset">× 清空</button></div></div><div class="classical-chain-flow">${segmentFlow || `<span class="small-muted">输入当前和弦，或从功能库选择起点</span>`}</div><details class="classical-playback-settings"><summary>播放设置 · ${playbackSettings.bpm} BPM · ${playbackSettings.meter}</summary><div class="classical-chain-controls"><label class="classical-chain-bpm">速度 <input class="classical-chain-tempo" type="range" min="40" max="640" step="1" value="${playbackSettings.bpm}" aria-label="播放速度"><input class="classical-chain-tempo-value" type="number" min="40" max="640" step="1" value="${playbackSettings.bpm}" aria-label="BPM 数值"> BPM</label><select class="classical-chain-meter" aria-label="播放拍号"><option value="4/4" ${playbackSettings.meter === "4/4" ? "selected" : ""}>4/4</option><option value="3/4" ${playbackSettings.meter === "3/4" ? "selected" : ""}>3/4</option><option value="6/8" ${playbackSettings.meter === "6/8" ? "selected" : ""}>6/8</option><option value="8/8" ${playbackSettings.meter === "8/8" ? "selected" : ""}>8/8</option><option value="12/16" ${playbackSettings.meter === "12/16" ? "selected" : ""}>12/16</option><option value="16/16" ${playbackSettings.meter === "16/16" ? "selected" : ""}>16/16</option></select><select class="classical-chain-play-mode" aria-label="序列播放方式"><option value="block" ${playbackSettings.mode === "block" ? "selected" : ""}>柱式和声</option><option value="arpeggio" ${playbackSettings.mode === "arpeggio" ? "selected" : ""}>琶音 1-3-5</option></select></div></details>`;
+      chainBar.innerHTML = `<div class="classical-chain-head"><strong>连续和声连接</strong><div class="classical-chain-primary-actions"><button type="button" class="classical-chain-play" ${classicalChain.length ? "" : "disabled"}>▶ 播放</button><button type="button" class="classical-chain-back" ${classicalChain.length < 2 ? "disabled" : ""}>↶ 回退</button><button type="button" class="classical-chain-reset">× 清空</button></div></div><div class="classical-chain-flow">${segmentFlow || `<span class="small-muted">输入当前和弦 或从功能库选择起点</span>`}</div><details class="classical-playback-settings"><summary>播放设置 · ${playbackSettings.bpm} BPM · ${playbackSettings.meter}</summary><div class="classical-chain-controls"><label class="classical-chain-bpm">速度 <input class="classical-chain-tempo" type="range" min="40" max="640" step="1" value="${playbackSettings.bpm}" aria-label="播放速度"><input class="classical-chain-tempo-value" type="number" min="40" max="640" step="1" value="${playbackSettings.bpm}" aria-label="BPM 数值"> BPM</label><select class="classical-chain-meter" aria-label="播放拍号"><option value="4/4" ${playbackSettings.meter === "4/4" ? "selected" : ""}>4/4</option><option value="3/4" ${playbackSettings.meter === "3/4" ? "selected" : ""}>3/4</option><option value="6/8" ${playbackSettings.meter === "6/8" ? "selected" : ""}>6/8</option><option value="8/8" ${playbackSettings.meter === "8/8" ? "selected" : ""}>8/8</option><option value="12/16" ${playbackSettings.meter === "12/16" ? "selected" : ""}>12/16</option><option value="16/16" ${playbackSettings.meter === "16/16" ? "selected" : ""}>16/16</option></select><select class="classical-chain-play-mode" aria-label="序列播放方式"><option value="block" ${playbackSettings.mode === "block" ? "selected" : ""}>柱式和声</option><option value="arpeggio" ${playbackSettings.mode === "arpeggio" ? "selected" : ""}>琶音 1-3-5</option></select></div></details>`;
       const clampClassicalBpm = value => Math.max(40, Math.min(640, Math.round(Number(value) || 80)));
       const tempoSlider = chainBar.querySelector(".classical-chain-tempo");
       const tempoValue = chainBar.querySelector(".classical-chain-tempo-value");
@@ -6338,13 +5708,13 @@ const seqFlowHtml = funcSteps.length
         modulationRoutes = classical.suggestModulations(input, key, mode, modulationKey, mode, 6);
       }
       const modulationBody = !hasInput
-        ? `<div class="small-muted">先输入当前和弦或点击功能组，再选择这里的转调方案。</div>`
+        ? `<div class="small-muted">先输入当前和弦或点击功能组 再选择这里的转调方案 </div>`
         : modulationKey === key
-          ? `<div class="small-muted">目标调与当前调相同，不需要转调。</div>`
+          ? `<div class="small-muted">目标调与当前调相同 不需要转调 </div>`
           : modulationRoutes.length
             ? modulationRoutes.map((route, index) => `<button type="button" class="classical-path modulation-path" data-modulation-index="${index}"><span>${route.sourceSymbols.join(" → ")} <b>│ Key=${route.targetKey} │</b> ${route.targetSymbols.join(" → ")}</span><small>枢纽 ${route.pivot.chord}</small></button>`).join("")
-            : `<div class="small-muted">当前调性与目标调性之间没有找到可用的共同和弦枢纽。</div>`;
-      modulationBar.innerHTML = `<div class="classical-palette-title">转调候选 · 到 ${modulationKey}</div><div class="small-muted classical-modulation-hint">点击下面的方案才会把转调路线加入连续和声连接；上方“转调到”只负责指定目标调。</div><div class="classical-path-list">${modulationBody}</div>`;
+            : `<div class="small-muted">当前调性与目标调性之间没有找到可用的共同和弦枢纽 </div>`;
+      modulationBar.innerHTML = `<div class="classical-palette-title">转调候选 · 到 ${modulationKey}</div><div class="small-muted classical-modulation-hint">点击下面的方案才会把转调路线加入连续和声连接 上方“转调到”只负责指定目标调 </div><div class="classical-path-list">${modulationBody}</div>`;
       modulationBar.querySelectorAll("[data-modulation-index]").forEach(button => button.addEventListener("click", () => {
         const selected = modulationRoutes[Number(button.dataset.modulationIndex)];
         const sourceSegment = classicalSegments[classicalSegments.length - 1];
@@ -6364,12 +5734,12 @@ const seqFlowHtml = funcSteps.length
       const paletteWrap = document.createElement("section");
       paletteWrap.className = "classical-palette result-card";
       const groups = [
-        ["tonic group", "主功能组（T / DT）"],
-        ["subdominant group", "下属功能组（S / TSVI / VII）"],
-        ["dominant group", "属功能组（D / K）"],
-        ["leading-tone group", "导功能组（Dᵥᵢᵢ）"],
-        ["altered chord group", "变和弦组（N / +6）"],
-        ["double dominant", "重属功能组（DD）"]
+        ["tonic group", "主功能组(T / DT)"],
+        ["subdominant group", "下属功能组(S / TSVI / VII)"],
+        ["dominant group", "属功能组(D / K)"],
+        ["leading-tone group", "导功能组(Dᵥᵢᵢ)"],
+        ["altered chord group", "变和弦组(N / +6)"],
+        ["double dominant", "重属功能组(DD)"]
       ];
       const grouped = new Map(groups.map(([id, label]) => [id, { label, entries: [] }]));
       const tonicized = new Map();
@@ -6386,7 +5756,7 @@ const seqFlowHtml = funcSteps.length
         return `<div class="classical-palette-group"><h4>${label}</h4><div class="classical-palette-grid">${buttons}</div></div>`;
       };
       const availableGroups = groups.filter(([id]) => grouped.get(id)?.entries.length);
-      paletteWrap.innerHTML = `<div class="classical-palette-title">Sposobin 功能组</div><div class="classical-function-tabs">${availableGroups.map(([id]) => `<button type="button" class="classical-function-tab" data-function-group="${id}">${grouped.get(id).label.replace(/（.*$/, "")} <span>${grouped.get(id).entries.length}</span></button>`).join("")}</div><div class="classical-function-list"></div><div class="classical-palette-tonicization"><h4>离调与变音体系</h4><div class="classical-tonicization-tabs">${["II", "III", "IV", "V", "VI"].map(target => `<button type="button" class="classical-tonicization-tab" data-tonic-target="${target}">至 ${target} 级 <span>${(tonicized.get(target) || []).length}</span></button>`).join("")}</div><div class="classical-tonicization-list"></div></div>`;
+      paletteWrap.innerHTML = `<div class="classical-palette-title">Sposobin 功能组</div><div class="classical-function-tabs">${availableGroups.map(([id]) => `<button type="button" class="classical-function-tab" data-function-group="${id}">${grouped.get(id).label.replace(/[（(].*$/, "")} <span>${grouped.get(id).entries.length}</span></button>`).join("")}</div><div class="classical-function-list"></div><div class="classical-palette-tonicization"><h4>离调与变音体系</h4><div class="classical-tonicization-tabs">${["II", "III", "IV", "V", "VI"].map(target => `<button type="button" class="classical-tonicization-tab" data-tonic-target="${target}">至 ${target} 级 <span>${(tonicized.get(target) || []).length}</span></button>`).join("")}</div><div class="classical-tonicization-list"></div></div>`;
       const appendClassicalSymbol = symbol => {
         const activeSegment = classicalSegments[classicalSegments.length - 1] || { key, mode, symbols: [] };
         if (!classicalSegments.length) classicalSegments.push(activeSegment);
@@ -6427,10 +5797,10 @@ const seqFlowHtml = funcSteps.length
 
       const summary = document.createElement("div");
       summary.className = "classical-summary result-card";
-      const modeLabel = { "all-generic": "/", "major-generic": "大调（不分）", "minor-generic": "小调（不分）", major: "自然大调", "harmonic-major": "和声大调", "melodic-major": "旋律大调", minor: "自然小调", "harmonic-minor": "和声小调", "melodic-minor": "旋律小调" }[mode] || mode;
+      const modeLabel = { "all-generic": "/", "major-generic": "大调(不分)", "minor-generic": "小调(不分)", major: "自然大调", "harmonic-major": "和声大调", "melodic-major": "旋律大调", minor: "自然小调", "harmonic-minor": "和声小调", "melodic-minor": "旋律小调" }[mode] || mode;
       summary.innerHTML = report
         ? `<div class="classical-summary-title">${key} ${modeLabel} · ${displayClassicalSymbol(report.current.symbol || input, true)}</div><div class="small-muted">${localizeClassicalText(report.constraints)}</div><div class="classical-current-meta">${localizeClassicalText(report.current.category || "unclassified")} · 功能 ${report.current.function || "—"} · 低音 ${report.current.bass || report.current.notes?.[0] || "—"}</div>`
-        : `<div class="classical-summary-title">${key} ${modeLabel}</div><div class="small-muted">请选择或输入一个和弦，开始查看连续连接建议。</div>`;
+        : `<div class="classical-summary-title">${key} ${modeLabel}</div><div class="small-muted">请选择或输入一个和弦 开始查看连续连接建议 </div>`;
       resultPane.appendChild(summary);
 
       const heading = document.createElement("div");
@@ -6445,12 +5815,19 @@ const seqFlowHtml = funcSteps.length
         card.className = "classical-rec-card result-card";
         card.tabIndex = 0;
         card.setAttribute("role", "button");
-        card.setAttribute("aria-label", `将 ${item.symbol}（${item.roman}，${item.chord}）加入连续和声连接`);
+        card.setAttribute("aria-label", `将 ${item.symbol} ${item.roman} ${item.chord} 加入连续和声连接`);
         card.title = "加入连续和声连接";
         const toneButtons = (item.notes || []).map(note => `<button type="button" class="classical-note" data-classical-note="${note}">${note}</button>`).join("");
         card.innerHTML = `<div class="classical-rec-top"><div><strong>${item.symbol}</strong><span class="classical-roman-name">${item.roman || item.symbol}</span><span class="classical-chord-name">${item.chord}</span></div><div class="classical-rec-actions"><span class="classical-score">${item.score.toFixed(1)}</span><span class="classical-add" aria-hidden="true">+</span></div></div><div class="classical-tags"><span>${localizeClassicalText(item.category)}</span><span>功能 ${item.function}</span><span>转位 ${item.figuredBass || "根位"}</span><span>低音 ${item.bass || "—"}</span></div><div class="classical-notes">${toneButtons}</div><div class="classical-meta">共同音 ${item.commonTones} · 声部距离 ${item.voiceLeading}</div><button type="button" class="classical-play" title="播放和弦">▶ 播放</button>`;
         const appendRecommendation = () => {
-          classicalChain.push(item.symbol);
+          const activeSegment = classicalSegments[classicalSegments.length - 1] || { key, mode, symbols: [] };
+          if (!classicalSegments.length) classicalSegments.push(activeSegment);
+          // Always mutate the segment that is rendered, not a stale alias.
+          // This preserves K64 → D6 and longer recommendation chains.
+          if (!activeSegment.symbols.length) activeSegment.symbols.push(input || report?.current?.symbol || item.symbol);
+          activeSegment.symbols.push(item.symbol);
+          classicalChain = activeSegment.symbols;
+          classicalPendingChain = { key, mode, symbols: activeSegment.symbols.slice() };
           document.getElementById("classical-input").value = item.symbol;
           classicalActiveView = "recommendations";
           updateClassicalHarmony(targetEl);
@@ -6540,7 +5917,23 @@ const seqFlowHtml = funcSteps.length
   document.getElementById("chord-run").addEventListener("click", () => {
     const target = document.getElementById("panel-chord-body");
     const val = document.getElementById("chord-input").value;
-    prettyChordRender(target, val);
+    try {
+      if (!val.trim()) throw new Error('empty');
+      prettyChordRender(target, val);
+      document.getElementById('chord-input').removeAttribute('aria-invalid');
+    } catch {
+      target.innerHTML = `<p class="input-error" role="alert">${window.__("chord_input_error")}</p>`;
+      document.getElementById('chord-input').setAttribute('aria-invalid', 'true');
+    }
+  });
+  document.getElementById('chord-input').addEventListener('keydown', event => {
+    if (event.key === 'Enter') { event.preventDefault(); document.getElementById('chord-run').click(); }
+  });
+  document.querySelectorAll('[data-chord-example]').forEach(button => {
+    button.addEventListener('click', () => {
+      document.getElementById('chord-input').value = button.dataset.chordExample;
+      document.getElementById('chord-run').click();
+    });
   });
   document.getElementById("blues-run").addEventListener("click", () => {
     const target = document.getElementById("panel-blues-body");
@@ -6606,9 +5999,14 @@ const seqFlowHtml = funcSteps.length
   }
 
   // 初始化默认显示第一个面板（保持原有逻辑）
+  mountMicrotonal(playChord, createHeldPianoVoice);
   const defaultFeature =
     navButtons.length > 0 ? navButtons[0].dataset.feature : "chord";
   showOnlyFeature(defaultFeature);
 
   showOnlyFeature("chord");
+  document.getElementById('chord-run').click();
+  document.getElementById('cst-run').click();
+  document.getElementById('lcc-run').click();
+  document.getElementById('blues-run').click();
 });

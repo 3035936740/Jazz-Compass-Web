@@ -1,14 +1,36 @@
 const i18n = {
+    play_chord: { zh: "播放和弦", ja: "コードを再生", en: "Play chord" },
+    identified_chord: { zh: "识别结果", ja: "識別結果", en: "IDENTIFIED CHORD" },
+    note_count_unit: { zh: "个组成音", ja: "構成音", en: "notes" },
+    piano_title: { zh: "听听这个和弦", ja: "コードを聴く", en: "Hear the voicing" },
+    piano_hint: { zh: "点击琴键试听单音", ja: "鍵盤をクリックして試聴", en: "Select a key to hear each note" },
+    bass_tone: { zh: "低音", ja: "ベース音", en: "Bass" },
+    chord_tone: { zh: "和弦音", ja: "コード音", en: "Chord tone" },
+    chord_input_error: { zh: "请输入有效和弦或音符 如 Cmaj7 或 C E G", ja: "Cmaj7 などのコードを入力してください", en: "Enter a chord or notes such as Cmaj7 or C E G" },
+    'chord-input-help': { zh: "试试看", ja: "試す", en: "Try" },
+    'workspace-footer-note': { zh: "让理论回到音乐", ja: "理論から音楽へ", en: "From theory to music" },
+    intro_chord: { zh: "从一个和弦开始 探索音符之间的关系", ja: "コードから音のつながりを探る", en: "Start with a chord and explore the notes within" },
+    intro_classical: { zh: "连接和声功能 寻找下一个和弦", ja: "和声機能をつなぎ 次のコードを探す", en: "Follow harmonic functions to your next chord" },
+    intro_blues: { zh: "从12小节、蓝调音、问答乐句和和弦配色探索布鲁斯", ja: "12小節、ブルーノート、フレーズとコードカラーを探る", en: "Explore 12-bar forms, blue notes, phrases and chord colors" },
+    intro_lcc: { zh: "不依赖和弦探索Lydian父本、音调顺序、色彩与派生调式", ja: "コードなしでリディアンの親音階・音調順序・カラーを探る", en: "Explore Lydian parents, tonal order, colors and derived modes without a chord" },
+    intro_cst: { zh: "从和弦音阶、进行代理、延伸音与配置，走进爵士即兴", ja: "コードスケール、進行、テンションとボイシングを探る", en: "Explore chord scales, progressions, tensions and voicings" },
+    intro_neo: { zh: "在音网中探索三和弦的变换与连接", ja: "トネッツで三和音の変換を探る", en: "Trace triad transformations across the Tonnetz" },
+    intro_micro: { zh: "用整数频率比探索纯律、平均律与微分音和声", ja: "整数比で純正律・平均律・微分音和声を探る", en: "Explore just intonation, equal temperaments and microtonal harmony through frequency ratios" },
+    intro_ref: { zh: "查阅音阶组成与和弦家族", ja: "音階とコードファミリーを調べる", en: "Look up scales and chord families" },
+    intro_circle: { zh: "沿着五度关系 探索调性与调式", ja: "五度の関係から調性を探る", en: "Explore keys and modes through fifth relationships" },
+    intro_other: { zh: "分析进行 探索负和声与导向音", ja: "進行とネガティブハーモニーを探る", en: "Explore progressions, negative harmony and guide tones" },
+    intro_about: { zh: "为学习 作曲与即兴而做", ja: "学習と作曲と即興のために", en: "Made for learning, composing and improvising" },
     title: { zh: "乐理工具箱", ja: "音楽理論ツールボックス", en: "Music Theory Toolbox" },
     header_h1: { zh: "乐理工具箱", ja: "音楽理論ツールボックス", en: "Music Theory Toolbox" },
-    subtitle: { zh: "音阶和弦・调式和声实用工具箱", ja: "音階和音・旋法和声 実用ツールボックス", en: "Scale & Chord · Mode & Harmony Practical Toolkit" },
+    subtitle: { zh: "和弦 音阶 与即兴", ja: "コード 音階 即興", en: "Chords, scales & improvisation" },
     nav_chord: { zh: "和弦转换", ja: "コード変換", en: "Chord Converter" },
-    nav_classical: { zh: "古典和声连接器", ja: "古典和声接続", en: "Classical Harmony" },
+    nav_classical: { zh: "古典和声", ja: "古典和声接続", en: "Classical Harmony" },
     nav_blues: { zh: "布鲁斯工具箱", ja: "ブルース・ツール", en: "Blues Toolkit" },
-    nav_lcc: { zh: "LCC调性分析", ja: "LCCリディアン解析", en: "LCC Analysis" },
-    nav_cst: { zh: "CST旋律关联", ja: "CSTスケール対応", en: "CST Analysis" },
+    nav_lcc: { zh: "LCC概念实验室", ja: "LCCコンセプト実験室", en: "LCC Concept Lab" },
+    nav_cst: { zh: "爵士工具箱", ja: "ジャズ・ツールボックス", en: "Jazz Toolbox" },
     nav_other: { zh: "其他工具", ja: "その他ツール", en: "Other Tools" },
     nav_about: { zh: "关于", ja: "について", en: "About" },
+    nav_micro: { zh: "微分音工具箱", ja: "微分音ツールボックス", en: "Microtonal Lab" },
 
     sort_title: { zh: "排序方式", ja: "ソート方式", en: "Sort By" },
     sort_score: { zh: "评分", ja: "スコア", en: "Score" },
@@ -18,15 +40,15 @@ const i18n = {
     sort_asc: { zh: "升序", ja: "昇順", en: "Ascending" },
     sort_desc: { zh: "降序", ja: "降順", en: "Descending" },
 
-    label_chord_example: { zh: "和弦(单独): ", ja: "コード(個別): ", en: "Chord (single):" },
+    label_chord_example: { zh: "和弦或音符", ja: "コードまたは音符", en: "Chord or notes" },
     label_classical_key: { zh: "调性", ja: "調", en: "Key" },
     label_classical_mode: { zh: "调式", ja: "旋法", en: "Mode" },
     label_classical_chord: { zh: "当前和弦", ja: "現在の和音", en: "Current chord" },
     classical_run_btn: { zh: "推荐衔接", ja: "接続を提案", en: "Recommend" },
-    label_blues_example: { zh: "和弦(布鲁斯): ", ja: "コード(ブルース): ", en: "Chord (blues):" },
-    label_lcc_example: { zh: "和弦(LCC): ", ja: "コード(LCC): ", en: "Chord (LCC):" },
-    label_cst_example: { zh: "和弦(CST): ", ja: "コード(CST): ", en: "Chord (CST):" },
-    label_other_example: { zh: "和弦(其他): ", ja: "コード(その他): ", en: "Chord (other):" },
+    label_blues_example: { zh: "布鲁斯和弦", ja: "コード(ブルース): ", en: "Blues chord" },
+    label_lcc_example: { zh: "分析和弦", ja: "コード(LCC): ", en: "Chord" },
+    label_cst_example: { zh: "和弦", ja: "コード", en: "Chord" },
+    label_other_example: { zh: "和弦", ja: "コード(その他): ", en: "Chord" },
 
     remove_chord: { zh: "移除和弦", ja: "コードを削除", en: "Remove Chord" },
     
@@ -35,16 +57,16 @@ const i18n = {
     neo_chord_depth_heading: { zh: "第 {depth} 层", ja: "第 {depth} 階層", en: "Layer {depth}" },
     neo_layer_chords_info: { zh: "{depth}层, {chords_count}个和弦", ja: "{depth}階層, コード{chords_count}個", en: "{depth} Layer, {chords_count} Chords" },
     neo_original_chord: { zh: "原始和弦", ja: "元のコード", en: "Original Chord" },
-    neo_no_transform: { zh: "该和弦没有可用的三和弦变换。", ja: "このコードには利用可能な三和音変換がありません。", en: "No triad transformations available." },
-    neo_no_octatonic: { zh: "该和弦没有八度音阶塔邻居。", ja: "このコードにはオクタトニック隣接がありません。", en: "No octatonic neighbors found for this chord." },
+    neo_no_transform: { zh: "该和弦没有可用的三和弦变换", ja: "このコードには利用可能な三和音変換がありません。", en: "No triad transformations available." },
+    neo_no_octatonic: { zh: "该和弦没有八度音阶塔邻居", ja: "このコードにはオクタトニック隣接がありません。", en: "No octatonic neighbors found for this chord." },
     neo_octatonic_neighbors: { zh: "八度音阶邻居", ja: "オクタトニック隣接", en: "Octatonic Neighbors" },
     neo_legend_tonnetz: { zh: "● 主变换  ● 扩展变换  — 音网 (Tonnetz)", ja: "● 主変換  ● 拡張変換  — 音網 (Tonnetz)", en: "● Main  ● Extended  — Tonnetz" },
     neo_legend_octatonic: { zh: "八度音阶塔 (Octatonic Tower)", ja: "オクタトニック・タワー", en: "Octatonic Tower" },
 
     // 路径查找相关
-    label_neo_path_from: { zh: "从: ", ja: "から: ", en: "From:" },
-    label_neo_path_to: { zh: "到: ", ja: "へ: ", en: "To:" },
-    label_neo_max_steps: { zh: "最大步数: ", ja: "最大ステップ: ", en: "Max Steps:" },
+    label_neo_path_from: { zh: "从", ja: "から: ", en: "From:" },
+    label_neo_path_to: { zh: "到", ja: "へ: ", en: "To:" },
+    label_neo_max_steps: { zh: "最大步数", ja: "最大ステップ: ", en: "Max Steps:" },
     neo_path_run_btn: { zh: "查找路径", ja: "パス検索", en: "Find Path" },
     neo_path_title: { zh: "和弦连接路径", ja: "コード接続パス", en: "Chord Connection Path" },
     neo_path_optimal: { zh: "最优路径", ja: "最適パス", en: "Optimal Path" },
@@ -58,15 +80,15 @@ const i18n = {
         en: "Play Scale"
     },
     nav_neo: { zh: "新里曼理论", ja: "ネオ・リーマン理論", en: "Neo-Riemannian" },
-    label_neo_example: { zh: "和弦(新里曼): ", ja: "コード(ネオ・リーマン): ", en: "Chord (Neo-Riemannian):" },
+    label_neo_example: { zh: "起始和弦", ja: "コード(ネオ・リーマン): ", en: "Starting chord" },
     neo_run_btn: { zh: "分析", ja: "解析", en: "Analyze" },
     neo_triad_title: { zh: "音网变换 (PLRNSD)", ja: "トネッツ変換 (PLRNSD)", en: "Tonnetz (PLRNSD)" },
     neo_octatonic_title: { zh: "八度音阶塔", ja: "オクタトニック・タワー", en: "Octatonic Tower" },
 
     nav_ref: { zh: "和弦音阶速查", ja: "コード・スケール辞典", en: "Chord & Scale Ref" },
-    label_ref_root: { zh: "根音: ", ja: "ルート: ", en: "Root:" },
-    label_ref_scale: { zh: "音阶: ", ja: "スケール: ", en: "Scale:" },
-    label_ref_family: { zh: "和弦家族: ", ja: "コードファミリー: ", en: "Chord Family:" },
+    label_ref_root: { zh: "根音", ja: "ルート: ", en: "Root:" },
+    label_ref_scale: { zh: "音阶", ja: "スケール: ", en: "Scale:" },
+    label_ref_family: { zh: "和弦家族", ja: "コードファミリー: ", en: "Chord Family:" },
     ref_scale_run_btn: { zh: "查询音阶", ja: "スケール検索", en: "Lookup Scale" },
     ref_family_run_btn: { zh: "查询家族", ja: "ファミリー検索", en: "Lookup Family" },
     ref_scale_title: { zh: "音阶详情", ja: "スケール詳細", en: "Scale Details" },
@@ -123,13 +145,13 @@ const i18n = {
     chord_run_btn: { zh: "解析", ja: "解析", en: "Parse" },
     blues_run_btn: { zh: "分析", ja: "解析", en: "Analyze" },
     lcc_run_btn: { zh: "分析", ja: "解析", en: "Analyze" },
-    cst_run_btn: { zh: "分析", ja: "解析", en: "Analyze" },
+    cst_run_btn: { zh: "查看", ja: "表示", en: "Explore" },
     other_run_btn: { zh: "分析", ja: "解析", en: "Analyze" },
 
     nav_rec: { zh: "和弦衔接", ja: "コード・コネクション", en: "Chord Connection" },
     nav_rec_example: { zh: "和弦 (衔接)", ja: "コード (コネクション)", en: "Chord (Connection)" },
     rec_count: { zh: "为 {input1} 推荐 {input2} 个衔接和弦", ja: "{input1} に {input2} 個の接続コードを推薦する", en: "Recommend {input2} connecting chords for {input1}" },
-    label_rec_input: { zh: "起始和弦: ", ja: "開始コード: ", en: "Start Chord:" },
+    label_rec_input: { zh: "起始和弦", ja: "開始コード: ", en: "Start Chord:" },
     stat_stability: { zh: "稳定性", ja: "安定性", en: "Stability" },
     stat_tension: { zh: "紧张度", ja: "緊張度", en: "Tension" },
     stat_brightness: { zh: "明亮度", ja: "明るさ", en: "Brightness" },
@@ -198,9 +220,9 @@ const i18n = {
     sub_type_name_3: { zh: "关系小调代理", ja: "平行小調代理", en: "Relative Minor Sub" },
 
     // 代理和弦详细描述
-    sub_type_desc_1: { zh: "使用相同的三全音音程进行替换，常用于 ii-V-I 解决。", ja: "同じ三全音(トライトーン)の間隔を使用して置き換えます。ii-V-Iの解決によく使われます。", en: "Substitute using the same tritone interval, commonly found in ii-V-I resolutions" },
-    sub_type_desc_2: { zh: "共享大量相同音符，提供更明亮的色彩。", ja: "多くの共通音を持ち、より明るい色彩を与えます。", en: "Shares many common notes, providing a brighter color" },
-    sub_type_desc_3: { zh: "共享大量相同音符，产生更柔和或更忧郁的色彩。", ja: "多くの共通音を持ち、より柔らかく、あるいは哀愁のある色彩を与えます。", en: "Share many of the same notes, resulting in a softer or more melancholic color." },
+    sub_type_desc_1: { zh: "使用相同的三全音音程进行替换 常用于 ii-V-I 解决", ja: "同じ三全音(トライトーン)の間隔を使用して置き換えます。ii-V-Iの解決によく使われます。", en: "Substitute using the same tritone interval, commonly found in ii-V-I resolutions" },
+    sub_type_desc_2: { zh: "共享大量相同音符 提供更明亮的色彩", ja: "多くの共通音を持ち、より明るい色彩を与えます。", en: "Shares many common notes, providing a brighter color" },
+    sub_type_desc_3: { zh: "共享大量相同音符 产生更柔和或更忧郁的色彩", ja: "多くの共通音を持ち、より柔らかく、あるいは哀愁のある色彩を与えます。", en: "Share many of the same notes, resulting in a softer or more melancholic color." },
 
     other_error: { zh: "其他工具错误", ja: "その他ツールのエラー", en: "Other Tools - Error" },
 
@@ -225,11 +247,11 @@ const i18n = {
     },
 
     // input labels for other modes (fallback to default if absent)
-    label_other_example_key_center: { zh: "和弦(可增删): ", ja: "コード(増減可):", en: "Chords (add/remove):" },
-    label_other_example_report: { zh: "和弦: ", ja: "コード: ", en: "Chord:" },
-    label_other_example_progression: { zh: "进行: ", ja: "進行: ", en: "progression:" },
-    label_other_example_negative: { zh: "和弦: ", ja: "コード:", en: "Chord:" },
-    label_other_example_guide: { zh: "进行: ", ja: "進行: ", en: "progression:" },
+    label_other_example_key_center: { zh: "和弦(可增删)", ja: "コード(増減可):", en: "Chords (add/remove):" },
+    label_other_example_report: { zh: "和弦", ja: "コード: ", en: "Chord:" },
+    label_other_example_progression: { zh: "进行", ja: "進行: ", en: "progression:" },
+    label_other_example_negative: { zh: "和弦", ja: "コード:", en: "Chord:" },
+    label_other_example_guide: { zh: "进行", ja: "進行: ", en: "progression:" },
 
     // LCC labels
     parent_label: { zh: "Parent", ja: "親", en: "Parent" },
@@ -243,52 +265,52 @@ const i18n = {
     avoid_label: { zh: "避免音", ja: "避ける音", en: "Avoid" },
     feel_label: { zh: "听感", ja: "フィール", en: "Feel" },
     spiciness_label: { zh: "辣度", ja: "スパイシー度", en: "Spiciness" },
-    lcc_parent_prefix: { zh: "父音: ", ja: "親: ", en: "Parent:" },
-    lcc_position_prefix: { zh: "位置: ", ja: "位置: ", en: "Position:" },
-    lcc_gravity_prefix: { zh: "引力: ", ja: "重力: ", en: "Gravity:" },
+    lcc_parent_prefix: { zh: "父音", ja: "親: ", en: "Parent:" },
+    lcc_position_prefix: { zh: "位置", ja: "位置: ", en: "Position:" },
+    lcc_gravity_prefix: { zh: "引力", ja: "重力: ", en: "Gravity:" },
 
     // reasons used in blues suggestions and fallbacks
     reason_0: { zh: "平行: 标准小调布鲁斯", ja: "パラレル: 標準的なマイナーブルース", en: "Parallel: Standard minor blues" },
     reason_1: { zh: "平行: 纯净小调音色", ja: "パラレル: 純粋なマイナーサウンド", en: "Parallel: Pure minor sound" },
     reason_2: { zh: "中性: 明亮而开阔", ja: "ニュートラル: 明るく開放的", en: "Neutral: Bright and open" },
     reason_3: { zh: "关系: 甜美乡村布鲁斯色彩", ja: "リレート: 甘いカントリーブルースカラー", en: "Relative: Sweet country-blues color" },
-    reason_4: { zh: "平行: 大调和弦上的“布鲁斯”张力", ja: "パラレル: メジャーコード上の“ブルース”テンション", en: "Parallel: 'Blue' tension over major chord" },
+    reason_4: { zh: "平行: 大调和弦上的布鲁斯张力", ja: "パラレル: メジャーコード上の“ブルース”テンション", en: "Parallel: 'Blue' tension over major chord" },
     reason_5: { zh: "平行: 经典爵士布鲁斯音色", ja: "パラレル: クラシックジャズブルースサウンド", en: "Parallel: Classic jazz-blues sound" },
     reason_6: { zh: "替代: 提供利迪亚(#11)色彩", ja: "サブスティテューション: リディアン(#11)カラー", en: "Substitution: Provides Lydian (#11) color" },
     reason_7: { zh: "替代: 平滑的爱奥利亚质感", ja: "サブスティテューション: スムーズなアイオリアンテクスチャ", en: "Substitution: Smooth Aeolian texture" },
 
     // Improv Feel names and descriptions (localized)
     improv_feel_name_1: { zh: "平和/甜美", ja: "安全でスイート", en: "Safe & Sweet" },
-    improv_feel_desc_1: { zh: "协和的听感，非常适合流行和民谣蓝调。", ja: "協和的でスイート — ポップやフォークブルースに適しています。", en: "Consonant and sweet — well suited for pop and folk-blues." },
+    improv_feel_desc_1: { zh: "协和的听感 非常适合流行和民谣蓝调", ja: "協和的でスイート — ポップやフォークブルースに適しています。", en: "Consonant and sweet — well suited for pop and folk-blues." },
     improv_feel_name_2: { zh: "灵魂感/平衡", ja: "ソウルフルでバランス", en: "Soulful & Balanced" },
-    improv_feel_desc_2: { zh: "经典的蓝调味，张力与解决感平衡。", ja: "クラシックなブルース感 — 緊張と解決のバランスが良い。", en: "Classic blues character — tension and resolution are well balanced." },
+    improv_feel_desc_2: { zh: "经典的蓝调味 张力与解决感平衡", ja: "クラシックなブルース感 — 緊張と解決のバランスが良い。", en: "Classic blues character — tension and resolution are well balanced." },
     improv_feel_name_3: { zh: "辛辣/爵士化", ja: "スパイシーでジャジー", en: "Spicy & Jazzy" },
-    improv_feel_desc_3: { zh: "较高张力，带有波普与现代爵士蓝调特征。", ja: "高めのテンション — ビバップやモダンジャズブルースの特徴を持つ。", en: "Higher tension — evokes bebop and modern jazz-blues characteristics." },
+    improv_feel_desc_3: { zh: "较高张力 带有波普与现代爵士蓝调特征", ja: "高めのテンション — ビバップやモダンジャズブルースの特徴を持つ。", en: "Higher tension — evokes bebop and modern jazz-blues characteristics." },
     improv_feel_name_4: { zh: "实验/Outside", ja: "実験的 / アウトサイド", en: "Experimental / Outside" },
-    improv_feel_desc_4: { zh: "强烈不协和，适合创造激烈的离调色彩。", ja: "非常に不協和でエッジが効いている — 強いアウトサイドの色彩を作る。", en: "Highly dissonant and edgy — creates strong outside colors and tension." },
+    improv_feel_desc_4: { zh: "强烈不协和 适合创造激烈的离调色彩", ja: "非常に不協和でエッジが効いている — 強いアウトサイドの色彩を作る。", en: "Highly dissonant and edgy — creates strong outside colors and tension." },
 
     // About page
     about_title: { zh: "关于乐理工具箱", ja: "音楽理論ツールボックスについて", en: "About Music Theory Toolbox" },
-    about_desc: { zh: "乐理工具箱是一个现代爵士音乐理论和即兴工具集合，为音乐家提供快速的乐理查询和实用的即兴建议。", ja: "音楽理論ツールボックスはモダンジャズ音楽理論と即興ツールのコレクションで、ミュージシャンに即座の理論クエリと実用的な即興提案を提供します。", en: "Music Theory Toolbox is a collection of modern jazz music theory and improvisation tools designed to provide musicians with quick theoretical insights and practical approach suggestions." },
+    about_desc: { zh: "乐理工具箱是一个现代爵士音乐理论和即兴工具集合 为音乐家提供快速的乐理查询和实用的即兴建议", ja: "音楽理論ツールボックスはモダンジャズ音楽理論と即興ツールのコレクションで、ミュージシャンに即座の理論クエリと実用的な即興提案を提供します。", en: "Music Theory Toolbox is a collection of modern jazz music theory and improvisation tools designed to provide musicians with quick theoretical insights and practical approach suggestions." },
     about_features: { zh: "主要功能", ja: "主な機能", en: "Key Features" },
-    about_feature_chord: { zh: "和弦转换: 立即识别和弦名称、音符和声部", ja: "コード変換: コード名、ノート、ボイシングを即座に識別", en: "Chord Converter: Instantly identify chord names, notes, and voicings" },
-    about_feature_blues: { zh: "布鲁斯工具箱: 蓝调进行分析和即兴音阶建议", ja: "ブルース・ツール: ブルースの進行分析と即興スケール提案", en: "Blues Toolkit: Blues progression analysis and improvisation scale suggestions" },
-    about_feature_lcc: { zh: "LCC分析: 基于重力和张力的调性分析", ja: "LCC解析: 重力と張力に基づく調性分析", en: "LCC Analysis: Tonality analysis based on gravity and tension" },
-    about_feature_cst: { zh: "CST分析: 基于亮度和张力的音阶推荐", ja: "CST解析: 明るさと張力に基づくスケール推奨", en: "CST Analysis: Scale recommendations based on brightness and tension" },
+    about_feature_chord: { zh: "和弦转换: 立即识别和弦名称 音符和声部", ja: "コード変換: コード名、ノート、ボイシングを即座に識別", en: "Chord Converter: Instantly identify chord names, notes, and voicings" },
+    about_feature_blues: { zh: "布鲁斯工具箱: 12小节形态、转折与节奏试听、蓝调音分偏移、问答乐句及和弦配色", ja: "ブルース・ツール: 12小節の形式、ターンアラウンド、音高実験、フレーズとコードカラー", en: "Blues Toolbox: 12-bar forms, turnarounds, pitch bends, phrases and chord colors" },
+    about_feature_lcc: { zh: "LCC概念实验室: 手动父本、12音音调顺序、七种主要色彩、四种水平音阶、派生调式与和弦进行", ja: "LCC実験室: 親音階、12音の順序、主要カラー、水平スケール、派生モードと進行", en: "LCC Concept Lab: manual parents, tonal order, colors, horizontal scales, derived modes and progressions" },
+    about_feature_cst: { zh: "爵士工具箱: 27种和弦音阶、进行代理、Voicing、调式地图与17节教程", ja: "ジャズ・ツールボックス: 27種類のスケール、進行、ボイシング、モード図と17章", en: "Jazz Toolbox: 27 chord scales, progressions, voicings, mode maps and 17 tutorials" },
     about_github: { zh: "GitHub仓库", ja: "GitHubリポジトリ", en: "GitHub Repositories" },
     about_github_web: { zh: "Web版本(JavaScript)", ja: "Web版(JavaScript)", en: "Web Version (JavaScript)" },
     about_github_py: { zh: "Python版本", ja: "Python版", en: "Python Version" },
     about_acknowledgement: {
-      zh: "特别感谢<a href=\"https://space.bilibili.com/24728563\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#0066cc\">色彩和声工作室</a>（<a href=\"https://space.bilibili.com/24728563\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#0066cc\">https://space.bilibili.com/24728563</a>）提供的特性进行数据与理论。",
+      zh: "特别感谢<a href=\"https://space.bilibili.com/24728563\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#0066cc\">色彩和声工作室</a>(<a href=\"https://space.bilibili.com/24728563\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#0066cc\">https://space.bilibili.com/24728563</a>)提供的特性进行数据与理论",
       ja: "特別感謝: <a href=\"https://space.bilibili.com/24728563\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#0066cc\">Color Harmony Studio</a>（<a href=\"https://space.bilibili.com/24728563\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#0066cc\">https://space.bilibili.com/24728563</a>）が機能データと理論を提供しています。",
       en: "Special thanks to <a href=\"https://space.bilibili.com/24728563\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#0066cc\">Color Harmony Studio</a> (<a href=\"https://space.bilibili.com/24728563\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#0066cc\">https://space.bilibili.com/24728563</a>) for providing functional data and theoretical support.",
     },
     about_sposobin: {
-      zh: "特别感谢 <a href=\"https://github.com/Huaishu61/Sposobin\" target=\"_blank\" rel=\"noopener noreferrer\">Huaishu61/Sposobin</a> 项目。本项目参考其内容，并将相关资料转换为 JavaScript 版本。Sposobin 以 MIT 协议发布。",
+      zh: "特别感谢 <a href=\"https://github.com/Huaishu61/Sposobin\" target=\"_blank\" rel=\"noopener noreferrer\">Huaishu61/Sposobin</a> 项目 本项目参考其内容 并将相关资料转换为 JavaScript 版本 Sposobin 以 MIT 协议发布",
       ja: "<a href=\"https://github.com/Huaishu61/Sposobin\" target=\"_blank\" rel=\"noopener noreferrer\">Huaishu61/Sposobin</a> プロジェクトに感謝します。本プロジェクトでは関連資料を JavaScript 版へ変換して利用しています。Sposobin は MIT ライセンスで公開されています。",
       en: "Special thanks to the <a href=\"https://github.com/Huaishu61/Sposobin\" target=\"_blank\" rel=\"noopener noreferrer\">Huaishu61/Sposobin</a> project. This project references its materials and converts the relevant data into a JavaScript implementation. Sposobin is released under the MIT License.",
     },
-    about_footer: { zh: "© 2026 Music Theory Toolbox 项目。所有内容仅供教育和音乐学习之用。", ja: "© 2024 Music Theory Toolbox プロジェクト。すべてのコンテンツは教育と音楽学習目的でのみ使用されます。", en: "© 2024 Music Theory Toolbox Project. All content is for educational and musical learning purposes." },
+    about_footer: { zh: "© 2026 Music Theory Toolbox 项目 所有内容仅供教育和音乐学习之用", ja: "© 2024 Music Theory Toolbox プロジェクト。すべてのコンテンツは教育と音楽学習目的でのみ使用されます。", en: "© 2024 Music Theory Toolbox Project. All content is for educational and musical learning purposes." },
 };
 
 // determine language: zh (中文), ja (日本語), otherwise en
@@ -301,6 +323,7 @@ else lang = 'en';
 // expose helper and set elements
 window.__i18n = i18n;
 window.__lang = lang;
+document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang;
 
 window.__ = function (k, def) {
     const map = i18n[k];

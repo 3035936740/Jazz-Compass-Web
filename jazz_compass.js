@@ -4,6 +4,7 @@
  */
 
 import { SPOSOBIN_DNA } from "./sposobin_data.js";
+import { LCC_NOTES, LCC_PRINCIPAL_SCALES, lccScaleNotes, lccChromaticOrder, analyzeLccParents, lccColorFamily } from "./lcc_concept.js";
 
 export class ChordConverter {
     constructor() {
@@ -1221,24 +1222,15 @@ export class CSTAnalyzer extends MusicScale {
 export class LCCAnalyzer {
     constructor() {
         this.handleNotes = { "Cb": "B", "C#": "Db", "D#": "Eb", "E#": "F", "Fb": "E", "F#": "Gb", "G#": "Ab", "A#": "Bb", "B#": "C" };
-        this.notes = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+        this.notes = [...LCC_NOTES];
         this.noteToVal = Object.fromEntries(this.notes.map((n, i) => [n, i]));
-        this.fifthsOrder = ['Gb', 'Db', 'Ab', 'Eb', 'Bb', 'F', 'C', 'G', 'D', 'A', 'E', 'B'];
 
         // LCC 核心音阶定义
-        this.lccScales = {
-            "Lydian (Fundamental)": [0, 2, 4, 6, 7, 9, 11],
-            "Lydian Augmented": [0, 2, 4, 6, 8, 9, 11],
-            "Lydian Diminished": [0, 2, 3, 6, 7, 9, 11],
-            "Lydian b7 (Dominant)": [0, 2, 4, 6, 7, 9, 10],
-            "Aux. Augmented (Whole Tone)": [0, 2, 4, 6, 8, 10],
-            "Aux. Diminished": [0, 1, 3, 4, 6, 7, 9, 10],
-            "Aux. Dim. Blues": [0, 1, 3, 4, 6, 7, 9, 10]
-        };
+        this.lccScales = Object.fromEntries(LCC_PRINCIPAL_SCALES.map(({ name, intervals }) => [name, [...intervals]]));
     }
 
     /**
-     * 补全的功能：1:1 还原 Python 的 scale_notes
+     * Backward-compatible scaleNotes signatures; scale data and spelling live in lcc_concept.js.
      * 支持两种调用：
      * 1. scaleNotes("C Lydian (Fundamental)")
      * 2. scaleNotes("C", "Lydian (Fundamental)")
@@ -1261,52 +1253,19 @@ export class LCCAnalyzer {
             throw new TypeError("scaleNotes() takes 1 or 2 positional arguments");
         }
 
-        // 获取 Lydian 主音的索引值
-        if (!(parent in this.noteToVal)) {
-            // 尝试处理一下可能的异名同音(如 C# -> Db)
-            parent = this.handleNotes[parent] || parent;
-        }
-
-        const pVal = this.noteToVal[parent];
-        if (pVal === undefined) throw new Error(`Invalid parent note: ${parent}`);
-
-        // 从 LCC 库中获取偏移量
-        const intervals = this.lccScales[scaleName];
-        if (!intervals) {
-            throw new Error(`Not found in LCC scale library: ${scaleName}`);
-        }
-
-        // 返回转换后的音名数组 (JS 中用 Array 代替 Tuple)
-        return intervals.map(i => this.notes[(pVal + i) % 12]);
+        return lccScaleNotes(parent, scaleName);
     }
 
-    _getFifthsDistance(n1, n2) {
-        const idx1 = this.fifthsOrder.indexOf(this.handleNotes[n1] || n1);
-        const idx2 = this.fifthsOrder.indexOf(this.handleNotes[n2] || n2);
-        const dist = Math.abs(idx1 - idx2);
-        return Math.min(dist, 12 - dist);
+    chromaticOrder(parent) {
+        return lccChromaticOrder(parent);
     }
 
-    analyzeLCC(chordNotes) {
-        const processed = chordNotes.map(n => this.handleNotes[n] || n);
-        const chordRoot = processed[0];
-        const results = [];
+    colorFamily(parent, chordNotes = []) {
+        return lccColorFamily(parent, chordNotes);
+    }
 
-        this.notes.forEach(parentKey => {
-            const pVal = this.noteToVal[parentKey];
-            Object.entries(this.lccScales).forEach(([name, intervals]) => {
-                const sVals = new Set(intervals.map(i => (pVal + i) % 12));
-                if (processed.every(n => sVals.has(this.noteToVal[this.handleNotes[n] || n]))) {
-                    results.push({
-                        parent: parentKey,
-                        scale: name,
-                        degree_from_parent: (this.noteToVal[chordRoot] - pVal + 12) % 12,
-                        gravity: this._getFifthsDistance(parentKey, chordRoot)
-                    });
-                }
-            });
-        });
-        return results.sort((a, b) => a.gravity - b.gravity);
+    analyzeLCC(chordNotes, options = {}) {
+        return analyzeLccParents(chordNotes, options);
     }
 }
 
@@ -2384,7 +2343,7 @@ export class JazzBrain {
         // 1. CST 分析 (按亮度排序)
         const cstResults = this.cst.analyzeCST(notes);
 
-        // 2. LCC 分析 (按引力排序)
+        // 2. LCC parent/color shortlist (not a formal tonal-gravity score)
         const lccResults = this.lcc.analyzeLCC(notes);
 
         // 3. 生成报告
@@ -2394,7 +2353,7 @@ export class JazzBrain {
         const brightness = this.cst.calculateBrightness(chordRoot, cstScaleNotes);
 
         console.log(`Most stable (CST): ${topCST} (brightness: ${brightness})`);
-        console.log(`Most modern (LCC): ${lccResults[0].parent} ${lccResults[0].scale} (gravity: ${lccResults[0].gravity})`);
+        if (lccResults[0]) console.log(`LCC parent candidate: ${lccResults[0].parent} ${lccResults[0].scale} (root tonal rank: ${lccResults[0].rootToneOrder})`);
 
         return { cstResults, lccResults };
     }
