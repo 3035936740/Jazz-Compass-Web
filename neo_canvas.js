@@ -123,6 +123,7 @@ export function mountNeoCanvas(container, graph, options) {
     const text = color('--theme-text'), muted = color('--theme-muted');
     const accent = color('--theme-accent'), ink = color('--theme-accent-ink');
     const paper = color('--theme-panel'), line = color('--theme-line-strong');
+    const displayFont = color('--font-display') || 'sans-serif', monoFont = color('--font-mono') || 'monospace';
     const familyColor = family => color(`--neo-${family}-edge`) || line;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, width, height);
@@ -156,17 +157,17 @@ export function mountNeoCanvas(container, graph, options) {
       const p = position(node), root = node.group === 'center';
       const w = layout.cardWidth * state.scale, h = layout.cardHeight * state.scale;
       ctx.globalAlpha = hovered && !related.has(node.id) ? .4 : 1;
-      ctx.beginPath(); ctx.roundRect(p.x - w / 2, p.y - h / 2, w, h, 5 * state.scale);
+      ctx.beginPath(); ctx.roundRect(p.x - w / 2, p.y - h / 2, w, h, 7 * state.scale);
       ctx.fillStyle = root ? accent : paper; ctx.fill();
       ctx.strokeStyle = root ? accent : node.id === hovered?.id ? familyColor(node.family || options.family || 'tonnetz') : line;
       ctx.lineWidth = node.id === hovered?.id ? 1.6 : 1;
       ctx.stroke();
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillStyle = root ? ink : text;
-      ctx.font = `600 ${13 * state.scale}px "Segoe UI", sans-serif`;
+      ctx.font = `600 ${14 * state.scale}px ${displayFont}`;
       ctx.fillText(node.chord, p.x, p.y - 7 * state.scale, w - 10 * state.scale);
       ctx.fillStyle = root ? ink : muted;
-      ctx.font = `${10 * state.scale}px "Consolas", monospace`;
+      ctx.font = `${10.5 * state.scale}px ${monoFont}`;
       ctx.fillText(root ? '起始和弦' : node.operation || node.label || '', p.x, p.y + 11 * state.scale, w - 8 * state.scale);
     });
     ctx.globalAlpha = 1;

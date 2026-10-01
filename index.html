@@ -8,352 +8,357 @@
         try { document.documentElement.dataset.theme = localStorage.getItem('jazz-compass-theme') || 'light'; }
         catch { document.documentElement.dataset.theme = 'light'; }
     </script>
-    <script type="module" src="./script.js?v=20260915-harmony2">
-    </script>
+    <script type="module" src="./script.js?v=20261001-ui"></script>
     <title>Music Theory Toolbox</title>
-    <link rel="stylesheet" href="./style.css?v=20260826-5">
-    <link rel="stylesheet" href="./theme.css?v=20260827-7">
-    <link rel="stylesheet" href="./studio.css?v=20260914-neo2">
-    <link rel="stylesheet" href="./microtonal.css?v=20260915-2">
-    <link rel="stylesheet" href="./lcc.css?v=20260915-lab1">
-    <link rel="stylesheet" href="./blues.css?v=20260915-1">
-    <link rel="stylesheet" href="./jazz_toolbox.css?v=20260915-1">
-    <link rel="stylesheet" href="./harmony_connections.css?v=20260915-2">
+    <link rel="stylesheet" href="./app.css?v=20261001-ui">
+    <link rel="stylesheet" href="./microtonal.css?v=20261001-ui">
+    <link rel="stylesheet" href="./lcc.css?v=20261001-ui">
+    <link rel="stylesheet" href="./blues.css?v=20261001-ui">
+    <link rel="stylesheet" href="./jazz_toolbox.css?v=20261001-ui">
+    <link rel="stylesheet" href="./harmony_connections.css?v=20261001-ui">
+    <link rel="stylesheet" href="./composition.css?v=20261001-ui">
 </head>
 
 <body>
-    <main class="container">
-        <header class="app-header">
-            <div class="brand-lockup">
-                <svg class="brand-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M7 12h26M7 18h26M7 24h26M7 30h26" stroke="currentColor" opacity=".25"/><path d="M24 8v18" stroke="currentColor" stroke-width="2"/><ellipse cx="19" cy="27" rx="6" ry="4" transform="rotate(-20 19 27)" fill="currentColor"/></svg>
+    <div class="app">
+        <aside class="rail">
+            <div class="rail-brand">
+                <svg class="brand-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+                    <path d="M4 13h32M4 18h32M4 23h32M4 28h32M4 33h32" stroke="currentColor" stroke-width="1" opacity=".35" />
+                    <path d="M25 6v22" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
+                    <path d="M25 6c3 2.4 6.6 3.1 8 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
+                    <ellipse cx="20.5" cy="28.5" rx="5.6" ry="4" transform="rotate(-22 20.5 28.5)" fill="currentColor" />
+                </svg>
                 <div class="title-block">
-                    <div class="eyebrow">JAZZ COMPASS</div>
                     <h1 id="header_h1">乐理工具箱</h1>
                     <div id="subtitle" class="subtitle">和弦 音阶 与即兴</div>
                 </div>
             </div>
-            <div class="header-tools">
-                <div class="theme-switch" role="group" aria-label="界面主题">
-                    <span class="control-label">界面</span>
-                    <button class="theme-btn" type="button" data-theme-value="dark" aria-pressed="false">深色</button>
-                    <button class="theme-btn" type="button" data-theme-value="light" aria-pressed="false">浅色</button>
-                </div>
-                <div class="notation-switch" role="group" aria-label="音名记法">
-                    <span class="notation-label">音名记法</span>
-                    <button class="notation-btn active" type="button" data-notation="flats" aria-pressed="true">♭ 降号</button>
-                    <button class="notation-btn" type="button" data-notation="sharps" aria-pressed="false">♯ 升号</button>
-                </div>
-            </div>
-        </header>
 
-        <nav class="feature-nav" role="tablist">
-            <button class="feature-btn active" data-feature="chord"><span id="nav_chord">和弦转换处理</span></button>
-            <button class="feature-btn" data-feature="classical"><span id="nav_classical">古典和声连接器</span></button>
-            <button class="feature-btn" data-feature="blues"><span id="nav_blues">布鲁斯工具箱</span></button>
-            <button class="feature-btn" data-feature="lcc"><span id="nav_lcc">LCC概念实验室</span></button>
-            <button class="feature-btn" data-feature="cst"><span id="nav_cst">爵士工具箱</span></button>
-            <!--button class="feature-btn" data-feature="rec"><span id="nav_rec">和弦衔接</span></button-->
-            <button class="feature-btn" data-feature="neo"><span id="nav_neo">和声连接论</span></button>
-            <button class="feature-btn" data-feature="micro"><span id="nav_micro">微分音工具箱</span></button>
-            <button class="feature-btn" data-feature="ref"><span id="nav_ref">和弦音阶速查</span></button>
-            <button class="feature-btn" data-feature="circle"><span id="nav_circle">五度圈</span></button>
-            <button class="feature-btn" data-feature="other"><span id="nav_other">其他工具</span></button>
-            <button class="feature-btn" data-feature="about"><span id="nav_about">关于</span></button>
-        </nav>
-
-        <section class="panels">
-            <div class="workspace-heading">
-                <div><p class="workspace-index" id="workspace-index">01 / CHORD STUDY</p><h2 id="workspace-title">和弦转换</h2><p id="workspace-description">从一个和弦开始 探索音符之间的关系</p></div>
-                <svg class="staff-motif" viewBox="0 0 168 66" fill="none" aria-hidden="true"><path d="M0 17h168M0 25h168M0 33h168M0 41h168M0 49h168" stroke="currentColor" opacity=".25"/><path d="M43 38V7M91 30V0M139 46V15" stroke="currentColor" stroke-width="1.5"/><g fill="currentColor"><ellipse cx="37" cy="40" rx="7" ry="5" transform="rotate(-20 37 40)"/><ellipse cx="85" cy="32" rx="7" ry="5" transform="rotate(-20 85 32)"/><ellipse cx="133" cy="48" rx="7" ry="5" transform="rotate(-20 133 48)"/></g></svg>
-            </div>
-            <div id="panel-chord" class="panel" data-feature="chord" role="tabpanel">
-                <div class="panel-header">
-                    <label><span id="label_chord_example">和弦或音符</span> <input id="chord-input" type="text"
-                            value="Cmaj7" autocomplete="off" spellcheck="false" aria-describedby="chord-input-help" /></label>
-                    <button id="chord-run"><span id="chord_run_btn">解析</span></button>
-                    <div class="chord-examples"><span id="chord-input-help">试试看</span><button type="button" data-chord-example="Cmaj7">Cmaj7</button><button type="button" data-chord-example="Dm9">Dm9</button><button type="button" data-chord-example="G7">G7</button><button type="button" data-chord-example="C, E, G, B">C E G B</button></div>
+            <nav class="feature-nav" role="tablist" aria-label="工具">
+                <div class="nav-group" role="presentation">
+                    <span class="nav-group-label" id="navgroup_harmony">和声</span>
+                    <button class="feature-btn active" data-feature="chord"><span id="nav_chord">和弦转换处理</span></button>
+                    <button class="feature-btn" data-feature="classical"><span id="nav_classical">古典和声连接器</span></button>
+                    <button class="feature-btn" data-feature="neo"><span id="nav_neo">和声连接论</span></button>
+                    <button class="feature-btn" data-feature="circle"><span id="nav_circle">五度圈</span></button>
                 </div>
-                <div class="panel-body" id="panel-chord-body" aria-live="polite"></div>
-            </div>
-
-            <div id="panel-classical" class="panel" data-feature="classical" role="tabpanel">
-                <div class="panel-header classical-toolbar">
-                    <label><span id="label_classical_key">调性</span>
-                        <select id="classical-key">
-                            <option>C</option><option>Db</option><option>D</option><option>Eb</option><option>E</option>
-                            <option>F</option><option>Gb</option><option>G</option><option>Ab</option><option>A</option>
-                            <option>Bb</option><option>B</option>
-                        </select>
-                    </label>
-                    <label><span id="label_classical_mode">调式</span>
-                        <select id="classical-mode">
-                            <option value="all-generic" selected>/</option>
-                            <option value="major-generic">大调(不分)</option>
-                            <option value="minor-generic">小调(不分)</option>
-                            <option value="major">自然大调</option>
-                            <option value="harmonic-major">和声大调</option>
-                            <option value="melodic-major">旋律大调</option>
-                            <option value="minor">自然小调</option>
-                            <option value="harmonic-minor">和声小调</option>
-                            <option value="melodic-minor">旋律小调</option>
-                        </select>
-                    </label>
-                    <label class="classical-current"><span id="label_classical_chord">当前和弦</span>
-                        <input id="classical-input" type="text" value="" placeholder="输入和弦或点击功能组" autocomplete="off" />
-                    </label>
-                    <label><span>转调到</span>
-                        <select id="classical-mod-key">
-                            <option>C</option><option>Db</option><option>D</option><option>Eb</option><option>E</option>
-                            <option>F</option><option>Gb</option><option selected>G</option><option>Ab</option><option>A</option>
-                            <option>Bb</option><option>B</option>
-                        </select>
-                    </label>
-                    <button id="classical-run"><span id="classical_run_btn">推荐衔接</span></button>
+                <div class="nav-group" role="presentation">
+                    <span class="nav-group-label" id="navgroup_jazz">爵士与即兴</span>
+                    <button class="feature-btn" data-feature="blues"><span id="nav_blues">布鲁斯工具箱</span></button>
+                    <button class="feature-btn" data-feature="cst"><span id="nav_cst">爵士工具箱</span></button>
+                    <button class="feature-btn" data-feature="lcc"><span id="nav_lcc">LCC概念实验室</span></button>
                 </div>
-                <div class="panel-body" id="panel-classical-body"></div>
-            </div>
-
-            <div id="panel-blues" class="panel" data-feature="blues" role="tabpanel">
-                <div class="panel-header">
-                    <label><span id="label_blues_example">示例和弦(布鲁斯) </span> <input id="blues-input" type="text"
-                            value="C7" /></label>
-                    <button id="blues-run"><span id="blues_run_btn">分析</span></button>
+                <div class="nav-group" role="presentation">
+                    <span class="nav-group-label" id="navgroup_compose">创作</span>
+                    <button class="feature-btn" data-feature="form"><span id="nav_form">曲式结构</span></button>
+                    <button class="feature-btn" data-feature="rhythm"><span id="nav_rhythm">节奏型工具箱</span></button>
                 </div>
-                <div class="panel-body" id="panel-blues-body"></div>
-            </div>
-
-            <div id="panel-lcc" class="panel" data-feature="lcc" role="tabpanel">
-                <div class="panel-header">
-                    <label><span id="label_lcc_example">示例和弦(LCC) </span> <input id="lcc-input" type="text"
-                            value="Cmaj7" /></label>
-                    <button id="lcc-run"><span id="lcc_run_btn">分析</span></button>
+                <div class="nav-group" role="presentation">
+                    <span class="nav-group-label" id="navgroup_lab">实验与参考</span>
+                    <button class="feature-btn" data-feature="micro"><span id="nav_micro">微分音工具箱</span></button>
+                    <button class="feature-btn" data-feature="ref"><span id="nav_ref">和弦音阶速查</span></button>
+                    <button class="feature-btn" data-feature="other"><span id="nav_other">其他工具</span></button>
                 </div>
-                <div class="panel-body" id="panel-lcc-body"></div>
-            </div>
-
-            <div id="panel-cst" class="panel" data-feature="cst" role="tabpanel">
-                <div class="panel-header">
-                    <label><span id="label_cst_example">和弦 </span> <input id="cst-input" type="text"
-                            value="Cmaj7" /></label>
-                    <button id="cst-run"><span id="cst_run_btn">查看</span></button>
+                <div class="nav-group nav-group-end" role="presentation">
+                    <button class="feature-btn" data-feature="about"><span id="nav_about">关于</span></button>
                 </div>
-                <div class="panel-body" id="panel-cst-body"></div>
-            </div>
+            </nav>
 
-            <!--div id="panel-rec" class="panel" data-feature="rec" role="tabpanel">
-                <div class="panel-header">
-                    <label><span id="nav_rec_example">示例和弦(衔接推荐) </span> <input id="rec-input" type="text"
-                            value="C7" /></label>
-                    <button id="rec-run"><span id="rec_run_btn">获取衔接推荐</span></button>
-                </div>
-                <div class="panel-body" id="panel-rec-body"></div>
-            </div-->
-
-            <div id="panel-other" class="panel" data-feature="other" role="tabpanel">
-                <div class="panel-header">
-                    <label><span id="label_other_example">示例和弦(其他) </span> <input id="other-input" type="text"
-                            value="Cmaj7" /></label>
-                    <!-- axis input for negative harmony mode -->
-                    <div id="negative-axis-row" style="display:none;">
-                        <label><span id="label_other_axis">轴 </span> <input id="other-axis-input" type="text"
-                                value="C" /></label>
-                    </div>
-                    <!-- dynamic chord inputs for key center mode -->
-                    <div id="keycenter-inputs" style="display:none; margin-top:8px;">
-                        <!-- entries will be injected by script -->
-                        <button id="add-keycenter-chord" type="button">+</button>
-                    </div>
-                    <button id="other-run"><span id="other_run_btn">分析</span></button>
-                </div>
-                <!-- action buttons will be injected here -->
-                <div id="other-action-row" class="panel-action-row"></div>
-                <div class="panel-body" id="panel-other-body"></div>
-            </div>
-
-            <div id="panel-neo" class="panel" data-feature="neo" role="tabpanel">
-                <div class="panel-header">
-                    <label><span id="label_neo_example">起始和弦 </span> <input id="neo-input" type="text"
-                            value="Cmaj" /></label>
-                    <button id="neo-run"><span id="neo_run_btn">分析</span></button>
-                </div>
-
-                <!-- 深度控制行 -->
-                <!-- 深度控制行 -->
-                <div class="panel-header"
-                    style="border-top: 1px solid rgba(255,255,255,0.06); margin-top:0; padding-top:10px;">
-                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                        <span style="color:var(--muted); font-size:0.85rem;" id="neo_depth_label">展开层数 </span>
-                        <input id="neo-depth-input" type="number" value="1" min="1" max="10"
-                            style="width:55px; padding:4px 8px; border-radius:4px; border:1px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.06); color:#fff; font-size:0.85rem; text-align:center;" />
-                        <button id="neo-depth-apply"
-                            style="padding:4px 12px; border-radius:4px; border:1px solid var(--accent-2); background:rgba(0,181,173,0.12); color:var(--accent-2); cursor:pointer; font-size:0.8rem;">应用</button>
-                        <span style="color:var(--muted); font-size:0.75rem; margin-left:2px;">间距 </span>
-                        <input id="neo-spacing-input" type="number" value="100" min="50" max="250" step="5"
-                            style="width:55px; padding:4px 6px; border-radius:4px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.04); color:#ccc; font-size:0.8rem; text-align:center;" />
-                        <span style="color:var(--muted); font-size:0.7rem;">px</span>
-                        <span style="color:var(--muted); font-size:0.75rem; margin-left:2px;">节点大小 </span>
-                        <input id="neo-node-size-input" type="range" min="12" max="36" value="22" step="1"
-                            style="width:70px; accent-color:var(--accent-2);" />
-                        <span id="neo-node-size-val" style="color:var(--muted); font-size:0.75rem;">22</span>
-                    </div>
-                    <div style="display:flex; gap:8px; align-items:center; margin-top:6px;">
-                        <span style="display:flex; gap:4px; align-items:center;">
-                            <span
-                                style="display:inline-block; width:12px; height:12px; border-radius:3px; background:var(--theme-line-strong);"></span>
-                            <span style="color:var(--muted); font-size:0.7rem;">PLRSN D1 (基本)</span>
-                        </span>
-                        <span style="display:flex; gap:4px; align-items:center; margin-left:8px;">
-                            <span
-                                style="display:inline-block; width:12px; height:12px; border-radius:3px; background:transparent; border:1px dashed var(--theme-line-strong);"></span>
-                            <span style="color:var(--muted); font-size:0.7rem;">扩展变换</span>
-                        </span>
-                        <span id="neo_pan_hint" style="color:var(--muted); font-size:0.75rem; margin-left:12px;">🖱
-                            左键拖拽画布 | 右键拖拽节点 | 滚轮缩放 | 双击重置</span>
-                        <button id="neo-reset-view"
-                            style="padding:4px 10px; border-radius:4px; border:1px solid rgba(255,255,255,0.15); background:transparent; color:var(--muted); cursor:pointer; font-size:0.8rem;">↺
-                            重置视图</button>
-                        <button id="neo-reset-positions"
-                            style="padding:4px 10px; border-radius:4px; border:1px solid rgba(255,255,255,0.15); background:transparent; color:var(--muted); cursor:pointer; font-size:0.8rem;">⟲
-                            重置位置</button>
+            <div class="rail-settings">
+                <div class="theme-switch segmented" role="group" aria-label="界面主题">
+                    <span class="control-label" id="label_theme">界面</span>
+                    <div class="segmented-track">
+                        <button class="theme-btn" type="button" data-theme-value="light" aria-pressed="false"><span id="theme_light">浅色</span></button>
+                        <button class="theme-btn" type="button" data-theme-value="dark" aria-pressed="false"><span id="theme_dark">深色</span></button>
                     </div>
                 </div>
-
-                <!-- 和弦连接路径查找 -->
-                <div class="panel-header" style="border-top: 1px solid rgba(255,255,255,0.06); margin-top: 0;">
-                    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-                        <label><span id="label_neo_path_from">从 </span> <input id="neo-path-from" type="text"
-                                value="Cmaj" style="min-width:80px;" /></label>
-                        <span style="color:var(--accent); font-size:1.2em;">→</span>
-                        <label><span id="label_neo_path_to">到 </span> <input id="neo-path-to" type="text" value="Am"
-                                style="min-width:80px;" /></label>
-                        <label><span id="label_neo_max_steps">最大步数 </span> <input id="neo-max-steps" type="number"
-                                value="8" min="1" max="20" style="min-width:50px; width:60px;" /></label>
-                        <button id="neo-path-run"><span id="neo_path_run_btn">查找路径</span></button>
+                <div class="notation-switch segmented" role="group" aria-label="音名记法">
+                    <span class="notation-label" id="label_notation">音名记法</span>
+                    <div class="segmented-track">
+                        <button class="notation-btn active" type="button" data-notation="flats" aria-pressed="true"><span id="notation_flats">♭ 降号</span></button>
+                        <button class="notation-btn" type="button" data-notation="sharps" aria-pressed="false"><span id="notation_sharps">♯ 升号</span></button>
                     </div>
                 </div>
-
-                <div class="panel-body" id="panel-neo-body"></div>
             </div>
+        </aside>
 
-            <div id="panel-ref" class="panel" data-feature="ref" role="tabpanel">
-                <div class="panel-header" style="flex-wrap:wrap; gap:12px;">
-                    <div id="ref-scale-section" style="display:flex; align-items:center; gap:8px;">
-                        <label><span id="label_ref_root">根音 </span>
-                            <select id="ref-root-select"></select>
+        <main class="workspace">
+            <section class="panels">
+                <header class="workspace-heading">
+                    <p class="workspace-index" id="workspace-index">和声</p>
+                    <h2 id="workspace-title">和弦转换</h2>
+                    <p id="workspace-description">从一个和弦开始 探索音符之间的关系</p>
+                </header>
+
+                <div id="panel-form" class="panel" data-feature="form" role="tabpanel"></div>
+                <div id="panel-rhythm" class="panel" data-feature="rhythm" role="tabpanel"></div>
+
+                <div id="panel-chord" class="panel" data-feature="chord" role="tabpanel">
+                    <div class="panel-header chord-toolbar">
+                        <label class="field-grow"><span id="label_chord_example">和弦或音符</span>
+                            <input id="chord-input" type="text" value="Cmaj7" autocomplete="off" spellcheck="false" aria-describedby="chord-input-help" />
                         </label>
-                        <label><span id="label_ref_scale">音阶 </span>
-                            <select id="ref-scale-select"></select>
-                        </label>
-                        <button id="ref-scale-run"><span id="ref_scale_run_btn">查询音阶</span></button>
+                        <button id="chord-run" class="btn btn-primary btn-lg"><span id="chord_run_btn">解析</span></button>
+                        <div class="chord-examples"><span id="chord-input-help">试试看</span><button type="button" data-chord-example="Cmaj7">Cmaj7</button><button type="button" data-chord-example="Dm9">Dm9</button><button type="button" data-chord-example="G7">G7</button><button type="button" data-chord-example="C, E, G, B">C E G B</button></div>
                     </div>
-                    <div id="ref-family-section" style="display:flex; align-items:center; gap:8px;">
-                        <label><span id="label_ref_family">和弦家族 </span>
-                            <select id="ref-family-select"></select>
-                        </label>
-                        <button id="ref-family-run"><span id="ref_family_run_btn">查询家族</span></button>
-                    </div>
+                    <div class="panel-body" id="panel-chord-body" aria-live="polite"></div>
                 </div>
-                <div class="panel-body" id="panel-ref-body"></div>
-            </div>
 
-            <div id="panel-circle" class="panel" data-feature="circle" role="tabpanel">
-                <div class="panel-header" style="flex-direction:column; align-items:stretch;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
-                        <span id="circle_instruction"
-                            style="font-size:0.85rem; color:var(--muted);">点击外环或内环扇区查看调性详情</span>
-                        <button id="circle-reset"
-                            style="padding:4px 12px; border-radius:4px; border:1px solid rgba(255,255,255,0.2); background:transparent; color:var(--muted); cursor:pointer;">↺
-                            Reset</button>
+                <div id="panel-classical" class="panel" data-feature="classical" role="tabpanel">
+                    <div class="panel-header classical-toolbar">
+                        <label><span id="label_classical_key">调性</span>
+                            <select id="classical-key">
+                                <option>C</option><option>Db</option><option>D</option><option>Eb</option><option>E</option>
+                                <option>F</option><option>Gb</option><option>G</option><option>Ab</option><option>A</option>
+                                <option>Bb</option><option>B</option>
+                            </select>
+                        </label>
+                        <label><span id="label_classical_mode">调式</span>
+                            <select id="classical-mode">
+                                <option value="all-generic" selected>/</option>
+                                <option value="major-generic">大调(不分)</option>
+                                <option value="minor-generic">小调(不分)</option>
+                                <option value="major">自然大调</option>
+                                <option value="harmonic-major">和声大调</option>
+                                <option value="melodic-major">旋律大调</option>
+                                <option value="minor">自然小调</option>
+                                <option value="harmonic-minor">和声小调</option>
+                                <option value="melodic-minor">旋律小调</option>
+                            </select>
+                        </label>
+                        <label class="classical-current"><span id="label_classical_chord">当前和弦</span>
+                            <input id="classical-input" type="text" value="" placeholder="输入和弦或点击功能组" autocomplete="off" />
+                        </label>
+                        <label><span>转调到</span>
+                            <select id="classical-mod-key">
+                                <option>C</option><option>Db</option><option>D</option><option>Eb</option><option>E</option>
+                                <option>F</option><option>Gb</option><option selected>G</option><option>Ab</option><option>A</option>
+                                <option>Bb</option><option>B</option>
+                            </select>
+                        </label>
+                        <label><span>目标调式</span>
+                            <select id="classical-mod-mode">
+                                <option value="all-generic">/ (列出全部可能性)</option>
+                                <option value="major-generic">大调(不分)</option>
+                                <option value="minor-generic">小调(不分)</option>
+                                <option value="major" selected>自然大调</option>
+                                <option value="harmonic-major">和声大调</option>
+                                <option value="melodic-major">旋律大调</option>
+                                <option value="minor">自然小调</option>
+                                <option value="harmonic-minor">和声小调</option>
+                                <option value="melodic-minor">旋律小调</option>
+                            </select>
+                        </label>
+                        <button id="classical-run" class="btn btn-primary"><span id="classical_run_btn">推荐衔接</span></button>
                     </div>
-                    <!-- 多调性控制区（按钮始终显示，面板初始隐藏） -->
-                    <div id="circle-multi-mode-controls" style="margin-top: 10px;">
-                        <button id="circle-multi-toggle" class="panel-action"
-                            style="background: var(--accent); border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer;">多调性模式</button>
-                        <div id="circle-multi-panel"
-                            style="display: none; flex-direction:column; gap: 8px; align-items: stretch; margin-top: 8px; padding: 6px 0; font-size: 0.85rem;">
-                            <!-- 主音选择已移除，使用画布点击设定 root -->
-                            <div
-                                style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:space-between; width:100%;">
-                                <div style="font-size:0.9rem; color:var(--muted);">调式: (点击卡片选择 颜色表示 温度/张力)</div>
-                                <button id="circle-mode-toggle"
-                                    style="padding:4px 10px; border-radius:6px; border:1px solid rgba(255,255,255,0.15); background:transparent; color:#fff; cursor:pointer;">展开调式</button>
+                    <div class="panel-body" id="panel-classical-body"></div>
+                </div>
+
+                <div id="panel-blues" class="panel" data-feature="blues" role="tabpanel">
+                    <div class="panel-header single-input-toolbar">
+                        <label class="field-grow"><span id="label_blues_example">示例和弦(布鲁斯)</span>
+                            <input id="blues-input" type="text" value="C7" />
+                        </label>
+                        <button id="blues-run" class="btn btn-primary"><span id="blues_run_btn">分析</span></button>
+                    </div>
+                    <div class="panel-body" id="panel-blues-body"></div>
+                </div>
+
+                <div id="panel-lcc" class="panel" data-feature="lcc" role="tabpanel">
+                    <div class="panel-header single-input-toolbar">
+                        <label class="field-grow"><span id="label_lcc_example">示例和弦(LCC)</span>
+                            <input id="lcc-input" type="text" value="Cmaj7" />
+                        </label>
+                        <button id="lcc-run" class="btn btn-primary"><span id="lcc_run_btn">分析</span></button>
+                    </div>
+                    <div class="panel-body" id="panel-lcc-body"></div>
+                </div>
+
+                <div id="panel-cst" class="panel" data-feature="cst" role="tabpanel">
+                    <div class="panel-header single-input-toolbar">
+                        <label class="field-grow"><span id="label_cst_example">和弦</span>
+                            <input id="cst-input" type="text" value="Cmaj7" />
+                        </label>
+                        <button id="cst-run" class="btn btn-primary"><span id="cst_run_btn">查看</span></button>
+                    </div>
+                    <div class="panel-body" id="panel-cst-body"></div>
+                </div>
+
+                <div id="panel-other" class="panel" data-feature="other" role="tabpanel">
+                    <div id="other-action-row" class="panel-action-row" role="group"></div>
+                    <div class="panel-header other-toolbar">
+                        <label class="field-grow other-main-field"><span id="label_other_example">示例和弦(其他)</span>
+                            <input id="other-input" type="text" value="Cmaj7" />
+                        </label>
+                        <div id="negative-axis-row" style="display:none;">
+                            <label><span id="label_other_axis">轴</span>
+                                <input id="other-axis-input" type="text" value="C" />
+                            </label>
+                        </div>
+                        <div id="keycenter-inputs" style="display:none;">
+                            <button id="add-keycenter-chord" type="button" aria-label="添加和弦">+</button>
+                        </div>
+                        <button id="other-run" class="btn btn-primary"><span id="other_run_btn">分析</span></button>
+                    </div>
+                    <div class="panel-body" id="panel-other-body"></div>
+                </div>
+
+                <div id="panel-neo" class="panel" data-feature="neo" role="tabpanel">
+                    <div class="panel-header single-input-toolbar">
+                        <label class="field-grow"><span id="label_neo_example">起始和弦</span>
+                            <input id="neo-input" type="text" value="Cmaj" />
+                        </label>
+                        <button id="neo-run" class="btn btn-primary"><span id="neo_run_btn">分析</span></button>
+                    </div>
+
+                    <div class="panel-header neo-toolbar">
+                        <div class="tool-row">
+                            <label class="field-inline"><span id="neo_depth_label">展开层数</span>
+                                <input id="neo-depth-input" class="input-compact" type="number" value="1" min="1" max="10" />
+                            </label>
+                            <button id="neo-depth-apply" class="btn btn-secondary btn-sm" type="button">应用</button>
+                            <label class="field-inline"><span>间距</span>
+                                <input id="neo-spacing-input" class="input-compact" type="number" value="100" min="50" max="250" step="5" />
+                                <span class="unit">px</span>
+                            </label>
+                            <label class="field-inline field-range"><span>节点大小</span>
+                                <input id="neo-node-size-input" type="range" min="12" max="36" value="22" step="1" />
+                                <span id="neo-node-size-val" class="range-value">22</span>
+                            </label>
+                        </div>
+                        <div class="tool-row tool-row-meta">
+                            <span class="legend-item"><i class="legend-line"></i>PLRSN D1（基本）</span>
+                            <span class="legend-item"><i class="legend-line is-dashed"></i>扩展变换</span>
+                            <span id="neo_pan_hint" class="tool-hint">左键拖拽画布 · 右键拖拽节点 · 滚轮缩放 · 双击重置</span>
+                            <span class="tool-row-actions">
+                                <button id="neo-reset-view" class="btn btn-ghost btn-sm" type="button">↺ 重置视图</button>
+                                <button id="neo-reset-positions" class="btn btn-ghost btn-sm" type="button">⟲ 重置位置</button>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="panel-header neo-path-toolbar">
+                        <label class="field-grow"><span id="label_neo_path_from">从</span>
+                            <input id="neo-path-from" type="text" value="Cmaj" />
+                        </label>
+                        <span class="path-arrow" aria-hidden="true">→</span>
+                        <label class="field-grow"><span id="label_neo_path_to">到</span>
+                            <input id="neo-path-to" type="text" value="Am" />
+                        </label>
+                        <label class="field-steps"><span id="label_neo_max_steps">最大步数</span>
+                            <input id="neo-max-steps" class="input-compact" type="number" value="8" min="1" max="20" />
+                        </label>
+                        <button id="neo-path-run" class="btn btn-secondary"><span id="neo_path_run_btn">查找路径</span></button>
+                    </div>
+
+                    <div class="panel-body" id="panel-neo-body"></div>
+                </div>
+
+                <div id="panel-ref" class="panel" data-feature="ref" role="tabpanel">
+                    <div class="panel-header ref-toolbar">
+                        <div id="ref-scale-section" class="ref-group">
+                            <label class="ref-root"><span id="label_ref_root">根音</span>
+                                <select id="ref-root-select"></select>
+                            </label>
+                            <label class="field-grow"><span id="label_ref_scale">音阶</span>
+                                <select id="ref-scale-select"></select>
+                            </label>
+                            <button id="ref-scale-run" class="btn btn-primary"><span id="ref_scale_run_btn">查询音阶</span></button>
+                        </div>
+                        <div id="ref-family-section" class="ref-group">
+                            <label class="field-grow"><span id="label_ref_family">和弦家族</span>
+                                <select id="ref-family-select"></select>
+                            </label>
+                            <button id="ref-family-run" class="btn btn-secondary"><span id="ref_family_run_btn">查询家族</span></button>
+                        </div>
+                    </div>
+                    <div class="panel-body" id="panel-ref-body"></div>
+                </div>
+
+                <div id="panel-circle" class="panel" data-feature="circle" role="tabpanel">
+                    <div class="panel-header circle-toolbar">
+                        <div class="circle-toolbar-row">
+                            <span id="circle_instruction" class="tool-hint">点击外环或内环扇区查看调性详情</span>
+                            <div class="circle-toolbar-actions">
+                                <button id="circle-multi-toggle" class="panel-action" type="button" aria-pressed="false">多调性模式</button>
+                                <button id="circle-reset" class="btn btn-ghost btn-sm" type="button">↺ Reset</button>
                             </div>
-                            <div id="circle-mode-dropdown"
-                                style="display:none; flex-direction:column; gap:8px; width:100%; margin-top:6px;">
-                                <input id="circle-mode-search" type="search" placeholder="搜索调式"
-                                    style="width:100%; padding:6px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.06); color:#fff;" />
-                                <div id="circle-mode-list"
-                                    style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-start; max-height:190px; overflow-y:auto; padding-right:4px;">
+                        </div>
+                        <div id="circle-multi-mode-controls">
+                            <div id="circle-multi-panel" style="display:none;">
+                                <div class="circle-mode-head">
+                                    <span class="tool-hint">调式：点击卡片选择 色条表示温度 深浅表示张力</span>
+                                    <button id="circle-mode-toggle" class="btn btn-secondary btn-sm" type="button">展开调式</button>
                                 </div>
-                            </div>
-                            <div class="circle-filter-row">
-                                <label class="filter-chip"><input type="checkbox" id="filter-normal-only" checked>
-                                    仅常规调式</label>
-                                <label class="filter-chip"><input type="checkbox" id="filter-natural-only" checked>
-                                    仅自然音阶</label>
-                                <div class="circle-sort-row">
-                                    <span>排序 </span>
-                                    <select id="circle-sort-type" class="circle-select">
-                                        <option value="tension">空间张力等级(1-10 越大越暗)</option>
-                                        <option value="temp">空间温度等级 -8 到 8 负值冷色 正值暖色</option>
-                                    </select>
-                                    <select id="circle-sort-order" class="circle-select">
-                                        <option value="asc">升序</option>
-                                        <option value="desc">降序</option>
-                                    </select>
+                                <div id="circle-mode-dropdown" style="display:none;">
+                                    <input id="circle-mode-search" type="search" placeholder="搜索调式" />
+                                    <div id="circle-mode-list"></div>
                                 </div>
-                                <button id="circle-apply-mode" class="panel-action circle-apply-btn">应用</button>
+                                <div class="circle-filter-row">
+                                    <label class="filter-chip"><input type="checkbox" id="filter-normal-only" checked> 仅常规调式</label>
+                                    <label class="filter-chip"><input type="checkbox" id="filter-natural-only" checked> 仅自然音阶</label>
+                                    <div class="circle-sort-row">
+                                        <span>排序</span>
+                                        <select id="circle-sort-type" class="circle-select">
+                                            <option value="tension">空间张力等级(1-10 越大越暗)</option>
+                                            <option value="temp">空间温度等级 -8 到 8 负值冷色 正值暖色</option>
+                                        </select>
+                                        <select id="circle-sort-order" class="circle-select">
+                                            <option value="asc">升序</option>
+                                            <option value="desc">降序</option>
+                                        </select>
+                                    </div>
+                                    <button id="circle-apply-mode" class="btn btn-primary btn-sm circle-apply-btn" type="button">应用</button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="panel-body" id="panel-circle-body"
-                        style="display:flex; flex-direction:column; align-items:center;">
-                        <!-- Canvas 五度圈 -->
-                        <div id="circle-canvas-container"
-                            style="width:100%; max-width:520px; aspect-ratio:1/1; position:relative;">
-                            <canvas id="circle-canvas" style="width:100%; height:100%; display:block;"></canvas>
+                    <div class="panel-body" id="panel-circle-body">
+                        <div id="circle-canvas-container">
+                            <canvas id="circle-canvas"></canvas>
                         </div>
-                        <!-- 调性对照表 -->
-                        <div id="circle-table-container" style="width:100%; margin-top:16px;"></div>
+                        <div id="circle-table-container"></div>
                     </div>
                 </div>
-            </div>
-                
-            <div id="panel-micro" class="panel" data-feature="micro" role="tabpanel">
-                <div class="panel-header micro-controls">
-                    <label><span id="micro-preset-label">和声构型</span>
-                        <select id="micro-preset">
-                            <option value="major">纯律大三和弦 · Ah–Chy–Ly</option>
-                            <option value="minor">纯律小三和弦</option>
-                            <option value="septimal">7 倍音构型 · Ah–Chy–My</option>
-                            <option value="undecimal">11 倍音构型 · Ah–Chy–Fuzi</option>
-                            <option value="majorScale">纯律大调音阶</option>
-                            <option value="custom">自定义频率比</option>
-                        </select>
-                    </label>
-                    <label><span id="micro-edo-label">平均律 · 1–93</span>
-                        <input id="micro-edo" type="number" min="1" max="93" step="1" value="41" inputmode="numeric" />
-                    </label>
-                    <label><span id="micro-method-label">量化方式</span>
-                        <select id="micro-method"><option value="generator">生成元</option><option value="direct">逐音就近</option></select>
-                    </label>
-                    <label><span id="micro-root-label">基准音 Hz</span>
-                        <input id="micro-root" type="number" min="20" max="2000" step="0.01" value="261.63" inputmode="decimal" />
-                    </label>
-                    <label class="micro-ratios-label"><span id="micro-ratios-label">频率比（空格或逗号分隔）</span>
-                        <input id="micro-ratios" type="text" value="1/1 5/4 3/2" spellcheck="false" autocomplete="off" />
-                    </label>
-                    <div class="micro-edo-presets" role="group" aria-label="EDO presets"><span id="micro-edo-quick-label">快捷选择</span><button type="button" data-edo="12">12</button><button type="button" data-edo="24">24</button><button type="button" data-edo="31">31</button><button type="button" data-edo="41">41</button><button type="button" data-edo="53">53</button></div>
-                </div>
-                <div class="panel-body" id="panel-micro-body" aria-live="polite"></div>
-            </div>
 
-            <div id="panel-about" class="panel" data-feature="about" role="tabpanel">
-                <div class="panel-body" id="panel-about-body"></div>
-            </div>
-            <footer class="workspace-footer"><span>JAZZ COMPASS</span><span id="workspace-footer-note">让理论回到音乐</span></footer>
-        </section>
-    </main>
+                <div id="panel-micro" class="panel" data-feature="micro" role="tabpanel">
+                    <div class="panel-header micro-controls">
+                        <label><span id="micro-preset-label">和声构型</span>
+                            <select id="micro-preset">
+                                <option value="major">纯律大三和弦 · Ah–Chy–Ly</option>
+                                <option value="minor">纯律小三和弦</option>
+                                <option value="septimal">7 倍音构型 · Ah–Chy–My</option>
+                                <option value="undecimal">11 倍音构型 · Ah–Chy–Fuzi</option>
+                                <option value="majorScale">纯律大调音阶</option>
+                                <option value="custom">自定义频率比</option>
+                            </select>
+                        </label>
+                        <label><span id="micro-edo-label">平均律 · 1–93</span>
+                            <input id="micro-edo" type="number" min="1" max="93" step="1" value="41" inputmode="numeric" />
+                        </label>
+                        <label><span id="micro-method-label">量化方式</span>
+                            <select id="micro-method"><option value="generator">生成元</option><option value="direct">逐音就近</option></select>
+                        </label>
+                        <label><span id="micro-root-label">基准音 Hz</span>
+                            <input id="micro-root" type="number" min="20" max="2000" step="0.01" value="261.63" inputmode="decimal" />
+                        </label>
+                        <label class="micro-ratios-label"><span id="micro-ratios-label">频率比（空格或逗号分隔）</span>
+                            <input id="micro-ratios" type="text" value="1/1 5/4 3/2" spellcheck="false" autocomplete="off" />
+                        </label>
+                        <div class="micro-edo-presets" role="group" aria-label="EDO presets"><span id="micro-edo-quick-label">快捷选择</span><button type="button" data-edo="12">12</button><button type="button" data-edo="24">24</button><button type="button" data-edo="31">31</button><button type="button" data-edo="41">41</button><button type="button" data-edo="53">53</button></div>
+                    </div>
+                    <div class="panel-body" id="panel-micro-body" aria-live="polite"></div>
+                </div>
+
+                <div id="panel-about" class="panel" data-feature="about" role="tabpanel">
+                    <div class="panel-body" id="panel-about-body"></div>
+                </div>
+
+                <footer class="workspace-footer"><span>Jazz Compass</span><span id="workspace-footer-note">让理论回到音乐</span></footer>
+            </section>
+        </main>
+    </div>
 </body>
 
 </html>

@@ -1,4 +1,6 @@
 import { lccPitchClass } from './lcc_concept.js';
+import { parsedAccompaniment } from './accompaniment_voicing.js';
+import { midiName } from './classical_voicing.js';
 import { BLUES_NOTES, BLUES_SCALES, bluesForm, bluesScaleNotes, bluesScaleMidi, bluesBentFrequency, bluesPhrase } from './blues_lab.js';
 
 const SOURCES = {
@@ -81,10 +83,8 @@ const link = (caption, href) => { const node = e('a', 'blues-source', caption); 
 const namesFrom = conv => conv.idxToNote || BLUES_NOTES;
 function chordNotes(conv, symbol) { try { return conv._ensureNotesAndRoot(symbol.trim()); } catch { return null; } }
 function pianoChord(conv, symbol, semitoneToFreq) {
-  const notes = chordNotes(conv, symbol);
-  if (!notes?.length) return [];
-  const root = lccPitchClass(notes[0]);
-  return [...new Set(notes.map(note => 48 + root + (lccPitchClass(note) - root + 12) % 12))].map(midi => frequency(midi, semitoneToFreq));
+  try { return parsedAccompaniment(conv,symbol).midi.map(midi=>frequency(midi,semitoneToFreq)); }
+  catch { return []; }
 }
 function playScale(midis, playChord, semitoneToFreq) {
   return midis.map((midi, index) => setTimeout(() => playChord([frequency(midi, semitoneToFreq)], .28, { interrupt: index === 0 }), index * 320));
@@ -106,6 +106,7 @@ function sourceRow(t, entries) {
 }
 
 export function mountBluesToolbox(target, chordInput, { brain, conv, playChord, semitoneToFreq }) {
+  target.stopBluesPlayback?.();
   const t = TEXT[locale()];
   target.replaceChildren();
   const head = e('div', 'blues-head');
@@ -114,6 +115,7 @@ export function mountBluesToolbox(target, chordInput, { brain, conv, playChord, 
   const tabs = e('div', 'blues-tabs'); tabs.setAttribute('role', 'tablist');
   const content = e('div', 'blues-tab-content'); target.append(tabs, content);
   let cleanup = () => {};
+  target.stopBluesPlayback=()=>cleanup();
   const contexts = { brain, conv, playChord, semitoneToFreq };
   const views = {
     form: () => renderForm(content, t, target, contexts),
@@ -176,6 +178,11 @@ function renderForm(content, t, target, { conv, playChord, semitoneToFreq }) {
     target.dataset.bluesTurnaround = turnaround.value; target.dataset.bluesGroove = groove.value;
     target.dataset.bluesTempo = tempo.value;
     bars = bluesForm(key.value, variant.value, turnaround.value, namesFrom(conv));
+    let previousVoicing = null;
+    bars.forEach(bar => bar.segments.forEach(segment => {
+      segment.playback = parsedAccompaniment(conv,segment.symbol,previousVoicing);
+      previousVoicing = segment.playback.midi;
+    }));
     chart.replaceChildren();
     bars.forEach(bar => {
       const card = e('article', 'blues-bar'); card.dataset.bar = String(bar.number);
@@ -184,11 +191,12 @@ function renderForm(content, t, target, { conv, playChord, semitoneToFreq }) {
       bar.segments.forEach(segment => {
         const row = e('div', 'blues-bar-chord');
         row.append(e('strong', '', segment.symbol), e('small', '', `${segment.role} · ${segment.beats} beat`));
+        row.append(e('small','blues-voicing',segment.playback.midi.map(midiName).join(' / ')));
         flow.appendChild(row);
       });
       card.appendChild(flow);
       const preview = e('button', 'blues-mini-play', '♪'); preview.type = 'button'; preview.title = `${t.bar} ${bar.number}: ${t.play}`;
-      preview.addEventListener('click', () => playChord(pianoChord(conv, bar.segments[0].symbol, semitoneToFreq), 1));
+      preview.addEventListener('click', () => { cancelPlayback();playChord(bar.segments[0].playback.midi.map(n=>frequency(n,semitoneToFreq)),1); });
       card.appendChild(preview); chart.appendChild(card);
     });
   }
@@ -207,18 +215,19 @@ function renderForm(content, t, target, { conv, playChord, semitoneToFreq }) {
       }, index * 4 * beatMs));
       bar.segments.forEach((segment, segmentIndex) => {
         const startBeat = index * 4 + segmentIndex * segment.beats;
-        const chordSound = pianoChord(conv, segment.symbol, semitoneToFreq);
+        const chordSound = segment.playback.midi.map(n=>frequency(n,semitoneToFreq));
         timers.push(setTimeout(() => playChord(chordSound, chordMs), startBeat * beatMs));
         const notes = chordNotes(conv, segment.symbol);
         if (!notes?.length) return;
         const root = lccPitchClass(notes[0]);
         for (let beat = 0; beat < segment.beats; beat += 1) {
           const bassInterval = [0, 7, 9, 7][beat % 4];
-          const bassMidi = 36 + root + bassInterval;
+          let bassMidi = segment.playback.midi[0] + bassInterval;
+          while(bassMidi >= segment.playback.midi[1]) bassMidi -= 12;
           timers.push(setTimeout(() => playChord([frequency(bassMidi, semitoneToFreq)], .24, { interrupt: false }), (startBeat + beat + .07) * beatMs));
           const offbeat = groove.value === 'shuffle' ? .67 : .5;
           timers.push(setTimeout(() => {
-            const guide = notes.slice(1, 3).map(note => 60 + root + (lccPitchClass(note) - root + 12) % 12);
+            const guide = segment.playback.midi.slice(1);
             if (guide.length) playChord(guide.map(midi => frequency(midi, semitoneToFreq)), .18, { interrupt: false });
           }, (startBeat + beat + offbeat) * beatMs));
         }
@@ -354,6 +363,11 @@ function renderChordColors(content, t, input, { brain, conv, playChord, semitone
   if (!notes?.length) { section.appendChild(e('p', 'input-error', t.badChord)); return; }
   const chordSet = new Set(notes.map(lccPitchClass));
   const current = e('div', 'blues-current-chord'); current.append(e('strong', '', symbol), noteRow(notes)); section.appendChild(current);
+  const voiced = parsedAccompaniment(conv,symbol);
+  current.append(e('small','blues-voicing',`低音 ${midiName(voiced.midi[0])} / 上方声部 ${voiced.midi.slice(1).map(midiName).join(' ')}`));
+  const hearChord = e('button','blues-outline','试听和弦与指定低音');hearChord.type='button';
+  hearChord.onclick=()=>playChord(voiced.midi.map(n=>frequency(n,semitoneToFreq)),1.4);current.append(hearChord);
+  const hearBass = e('button','blues-outline','仅听低音');hearBass.type='button';hearBass.onclick=()=>playChord([frequency(voiced.midi[0],semitoneToFreq)],1.4);current.append(hearBass);
   const basic = brain.blt.suggestForChord(symbol) || [];
   const basicNames = new Set(basic.map(item => item.name));
   const advanced = (brain.blt.suggestAdvanced(symbol) || []).filter(item => !basicNames.has(item.name));
@@ -372,9 +386,8 @@ function renderChordColors(content, t, input, { brain, conv, playChord, semitone
       card.appendChild(row);
       const preview = e('button', 'blues-outline', `♪ ${t.play}`); preview.type = 'button';
       preview.addEventListener('click', () => {
-        const root = lccPitchClass(notes[0]);
-        const pitches = [...new Set([...notes, ...item.notes.slice(0, 2)].map(lccPitchClass))];
-        playChord(pitches.map(pitch => frequency(48 + root + (pitch - root + 12) % 12, semitoneToFreq)), 1.4);
+        const colors = item.notes.slice(0,2).map(note=>72+lccPitchClass(note));
+        playChord([...voiced.midi,...colors].map(midi=>frequency(midi,semitoneToFreq)),1.4);
       });
       card.appendChild(preview); grid.appendChild(card);
     });

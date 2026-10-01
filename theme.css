@@ -233,8 +233,7 @@ body { background-image: none !important; }
     .theme-btn, .notation-btn { padding:7px 8px; }
     .classical-toolbar { grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; padding:10px; }
     .classical-toolbar .classical-current { grid-column:1 / -1; }
-    .classical-toolbar > label:nth-of-type(4) { grid-column:1; }
-    .classical-toolbar > button { grid-column:2; align-self:end; height:35px; }
+    .classical-toolbar > button { grid-column:1 / -1; align-self:end; height:35px; }
     .classical-toolbar label { gap:3px; font-size:.67rem; }
     .classical-toolbar select, .classical-toolbar input { padding:7px 8px; font-size:.76rem; }
     .panel-body#panel-classical-body { padding:10px; }

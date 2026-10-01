@@ -4,6 +4,7 @@
  */
 
 import { SPOSOBIN_DNA } from "./sposobin_data.js";
+import { solveVoicings, voicingCandidates } from './classical_voicing.js';
 import { LCC_NOTES, LCC_PRINCIPAL_SCALES, lccScaleNotes, lccChromaticOrder, analyzeLccParents, lccColorFamily } from "./lcc_concept.js";
 
 export class ChordConverter {
@@ -2113,20 +2114,30 @@ export class ClassicalHarmonyConnector {
             : (normalizedMode === "harmonic-major" ? { 9: 8 } : normalizedMode === "melodic-major" ? { 9: 8, 11: 10 } : {});
         const shift = this.converter.noteToIdx[normalizedKey];
         return Object.entries(db).map(([symbol, dna]) => {
-            const required = [...new Set((dna.required || []).map(pc => pcMap[pc] ?? pc))].sort((a, b) => a - b);
+            // Chromatic functional chords retain their own leading tones
+            const map = /^(D|N|It|Fr|Ger)/.test(symbol) ? {} : pcMap;
+            const required = [...new Set((dna.required || []).map(pc => map[pc] ?? pc))].sort((a, b) => a - b);
             let notes = required.map(pc => this.converter.idxToNote[(pc + shift) % 12]);
             if (/^It/.test(symbol)) notes = this._spellAugmentedSixthNotes(normalizedKey, normalizedMode, "It");
             else if (/^Fr/.test(symbol)) notes = this._spellAugmentedSixthNotes(normalizedKey, normalizedMode, "Fr");
             else if (/^Ger/.test(symbol)) notes = this._spellAugmentedSixthNotes(normalizedKey, normalizedMode, "Ger");
             const rawBassPc = (dna.bass_options?.[0] ?? required[0] ?? 0) % 12;
-            const bassPc = ((pcMap[rawBassPc] ?? rawBassPc) + shift) % 12;
+            const bassPc = ((map[rawBassPc] ?? rawBassPc) + shift) % 12;
             const bass = this.converter.idxToNote[bassPc];
             const voicing = this._voiceNotesFromBass(notes, bass);
             const roman = this._romanHarmonySymbol(symbol, normalizedMode);
             const chord = this._actualChordSymbol(symbol, normalizedKey, normalizedMode, required, bassPc);
-            return {
+            const rootRelPc = this._sposobinDegreeRoot(symbol, normalizedMode, required);
+            const rootPc = (rootRelPc + shift) % 12;
+            const pitchClasses = required.map(pc => (pc + shift) % 12);
+            const maxCounts = Object.fromEntries(Object.entries(dna.max_counts || {}).map(([pc,count]) => [((map[pc] ?? Number(pc)) + shift) % 12,count]));
+            const figuredBass = symbol.includes('₆₄') ? '6/4' : symbol.includes('₅₆') ? '6/5' : symbol.includes('₃₄') ? '4/3' : symbol.includes('₂') ? '4/2' : symbol.includes('₆') ? '6' : '';
+            const entry = {
                 symbol, baseSymbol: symbol, roman, chord, notes, voicing,
-                rootNotes: notes, bass, inversion: 0, figuredBass: "",
+                rootNotes: notes, bass, inversion: figuredBass==='6'||figuredBass==='6/5'?1:figuredBass==='6/4'||figuredBass==='4/3'?2:figuredBass==='4/2'?3:0, figuredBass,
+                pitchClasses, bassPc, maxCounts, tonicPc: shift,
+                seventhPc: /[₇₂]|₅₆|₃₄/.test(symbol) ? pitchClasses.find(pc => (/ᵥᵢᵢ/.test(symbol)?[9,10]:[10,11]).includes((pc-rootPc+12)%12)) : undefined,
+                leadingPc: /^Dᵥᵢᵢ/.test(symbol) ? rootPc : /^D/.test(symbol) && pitchClasses.includes((rootPc+4)%12) ? (rootPc+4)%12 : undefined,
                 quality: "classical harmony", function: this._sposobinFunction(symbol),
                 category: this._sposobinCategory(symbol),
                 resolution: "",
@@ -2139,8 +2150,12 @@ export class ClassicalHarmonyConnector {
                 ].filter(Boolean))], priority: /^D|^K/.test(symbol) ? 3 : 2,
                 next: [...(dna.next || [])], required, bassOptions: dna.bass_options || []
             };
+            entry.midiVoicing = voicingCandidates(entry)[0] || [];
+            return entry;
         });
     }
+
+    voiceSequence(entries) { return solveVoicings(entries); }
 
     _resolveCurrent(input, palette) {
         const normalizedExact = this._normalizeSposobinSymbol(input);
@@ -2177,10 +2192,12 @@ export class ClassicalHarmonyConnector {
         const unique = new Map();
         palette.forEach(candidate => {
             if (!targetSymbols.has(candidate.symbol)) return;
-            const movement = this._voiceLeadingDistance(current.notes, candidate.notes);
+            const connection = solveVoicings([current, candidate]);
+            if (!connection.ok) return;
+            const movement = connection.voices[1].reduce((sum,n,i)=>sum+Math.abs(n-connection.voices[0][i]),0)/4;
             const commonTones = current.notes.filter(note => candidate.notes.some(target => this.converter.noteToIdx[target] === this.converter.noteToIdx[note])).length;
             const score = Math.round(Math.max(0, Math.min(10, 7.4 - movement * 1.15 + commonTones * 0.45 + (candidate.priority || 0) * 0.18)) * 10) / 10;
-            const result = { ...candidate, score, commonTones, voiceLeading: Number(movement.toFixed(2)) };
+            const result = { ...candidate, midiVoicing: connection.voices[1], previousVoicing: connection.voices[0], score, commonTones, voiceLeading: Number(movement.toFixed(2)) };
             const keyValue = `${candidate.symbol}|${candidate.chord}|${candidate.bass}`;
             if (!unique.has(keyValue) || unique.get(keyValue).score < score) unique.set(keyValue, result);
         });
@@ -2264,11 +2281,15 @@ export class ClassicalHarmonyConnector {
                     : this._shortestSymbolPath(targetPalette, targetPivot.symbol, symbol => symbol === tonicSymbol, 5);
                 if (!targetPath) targetPath = [targetPivot.symbol, tonicSymbol];
                 const score = 20 - sourcePath.length * 1.3 - targetPath.length + (sourcePivot.function === targetPivot.function ? 1 : 0);
+                const sourceEntries = sourcePath.map(symbol => sourcePalette.find(entry => entry.symbol === symbol)).filter(Boolean);
+                const targetEntries = targetPath.map(symbol => targetPalette.find(entry => entry.symbol === symbol)).filter(Boolean);
+                const voiceLeading = this.voiceSequence([...sourceEntries, ...targetEntries]);
                 results.push({
                     fromKey: this._normalizeKey(fromKey), targetKey: this._normalizeKey(targetKey),
                     mode, targetMode, sourceSymbols: sourcePath, targetSymbols: targetPath,
                     pivot: { source: sourcePivot.symbol, target: targetPivot.symbol, chord: sourcePivot.chord },
-                    score: Number(score.toFixed(1))
+                    voiceLeadingOk: voiceLeading.ok,
+                    score: Number((score + (voiceLeading.ok ? 4 : 0)).toFixed(1))
                 });
             });
         });
@@ -2277,7 +2298,7 @@ export class ClassicalHarmonyConnector {
             const keyValue = `${route.sourceSymbols.join(">")}|${route.targetSymbols.join(">")}`;
             if (!unique.has(keyValue)) unique.set(keyValue, route);
         });
-        return [...unique.values()].slice(0, limit);
+        return [...unique.values()].filter(route => route.voiceLeadingOk).slice(0, limit);
     }
 }
 

@@ -63,7 +63,7 @@ npx serve .
 
 * **Pure Vanilla JS (ES6+)**: Zero dependencies. Modular architecture using ES Modules.
 * **i18n Support**: A robust system supporting **English, Chinese, and Japanese** via `lang.js`.
-* **Glassmorphism UI**: A modern, dark-themed interface optimized for both desktop and mobile.
+* **Themed UI**: One token-based stylesheet (`app.css`) with light and dark themes, a fixed tool rail on desktop and a scrolling tab bar on mobile.
 
 ## File Structure
 
@@ -72,7 +72,8 @@ npx serve .
 ├── jazz_compass.js     # Core logic (Chord parsing, LCC, CST, Negative Harmony)
 ├── script.js           # UI logic and event handling
 ├── lang.js             # Internationalization (i18n) dictionary
-└── style.css           # Custom dark-mode styles & layout
+├── app.css             # Design tokens, layout and shared components (light/dark)
+└── *.css               # Per-module styles that read the tokens from app.css
 ```
 
 ---
