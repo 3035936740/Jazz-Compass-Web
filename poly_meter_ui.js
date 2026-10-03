@@ -46,7 +46,7 @@ export function mountPolyMeter(host, audio) {
   const repeats = el('select'); [2, 4, 8].forEach((n) => repeats.appendChild(option(String(n), String(n)))); repeats.value = '4';
   const controls = el('div', 'mk-controls');
   controls.append(field(t.ratio, ratio), field(t.cycle, cycle), field(t.tempo, tempo), field(t.repeats, repeats));
-  const state = { muted: [false, false], accents: [new Set([0]), new Set([0])] };
+  const state = { muted: [false, false], accents: [new Set([0]), new Set([0])], polyPlayed: false, mmPlayed: false };
   const board = el('div', 'pm-board');
   const actions = el('div', 'mk-actions');
   actions.append(button('btn btn-primary btn-sm', t.play, () => playPoly()), button('btn btn-secondary btn-sm', t.stop, () => audio.stop()), el('span', 'mk-meta', t.accent));
@@ -94,6 +94,7 @@ export function mountPolyMeter(host, audio) {
     board.appendChild(row);
   }
   function playPoly() {
+    state.polyPlayed = true;
     const [a, b] = ab();
     const cyc = Number(cycle.value);
     const r = polyrhythm(a, b, { cycle: cyc, accents: state.accents.map((s) => [...s]), muted: state.muted, repeats: Number(repeats.value) });
@@ -121,6 +122,7 @@ export function mountPolyMeter(host, audio) {
     const line = el('span', 'pm-switch'); line.style.left = `${(res.switchAt / width) * 100}%`; mmTimeline.appendChild(line);
   }
   function playMM() {
+    state.mmPlayed = true;
     const { res } = currentMM();
     // 事件以秒计：bpm=60 时一拍就是一秒
     audio.play(res.events, 60, res.seconds, () => {});
@@ -130,5 +132,14 @@ export function mountPolyMeter(host, audio) {
   paintBoard();
   paintMM();
   host.addEventListener('toolbox-stop', () => audio.stop());
+  // Side-B 实操：@lab:<id>——挂上任务条；提交时交出比例、节拍调制的设置，以及是否真的播放过
+  host.addEventListener('toolbox-query', (event) => {
+    const q = String(event.detail ?? '');
+    if (!q.startsWith('@lab:')) return;
+    state.polyPlayed = false; state.mmPlayed = false;
+    import('./lab_banner.js?v=20261004-l6').then(({ mountLabBanner }) => mountLabBanner(host, q.slice(5), {
+      getSubmission: () => ({ ratio: ab(), polyPlayed: state.polyPlayed, mm: { preset: presetSel.value, oldTempo: Number(oldTempo.value), played: state.mmPlayed } }),
+    }));
+  });
   return { stop: () => audio.stop() };
 }

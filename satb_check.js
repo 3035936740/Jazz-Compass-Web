@@ -113,3 +113,31 @@ export function checkSATB(chords, key = { tonic: 0 }) {
   }
   return { issues, chords: info };
 }
+
+/**
+ * 从谱表里读出四部和弦：把各行谱表上同一时刻开始的音合在一起，正好 4 个音就是一个四部和弦（从低到高 = 男低、男高、女中、女高）。
+ * 上下两行怎么分配都可以（2 + 2、3 + 1、全写在一行），被连音线连过来的延续音不算新的起音。
+ * @param {Array<Array<{ beat: number, beats: number, midis: number[], source: number, tiedIn?: boolean, rest?: boolean }>>} staves 每行谱表的事件
+ * @returns {{ chords: number[][], refs: Array<{ beat, beats, parts: Array<{ staff, source, rank }> }>, problems: Array<{ beat, count }> }}
+ *   refs[i].parts[p]：第 i 个和弦第 p 个声部来自哪一行谱表的哪个事件、是这个事件里从低往高第几个音（画标记用）
+ */
+export function groupFourPart(staves) {
+  const onsets = [];
+  staves.forEach((events, staff) => events.forEach((e) => {
+    if (e.rest || e.tiedIn || !e.midis?.length) return;
+    let group = onsets.find((g) => Math.abs(g.beat - e.beat) < 1e-6);
+    if (!group) { group = { beat: e.beat, beats: e.beats, notes: [] }; onsets.push(group); }
+    group.beats = Math.min(group.beats, e.beats);
+    const sorted = [...e.midis].sort((a, b) => a - b);
+    sorted.forEach((midi, rank) => group.notes.push({ midi, staff, source: e.source, rank }));
+  }));
+  onsets.sort((a, b) => a.beat - b.beat);
+  const chords = []; const refs = []; const problems = [];
+  onsets.forEach((g) => {
+    if (g.notes.length !== 4) { problems.push({ beat: g.beat, count: g.notes.length }); return; }
+    const parts = [...g.notes].sort((a, b) => a.midi - b.midi || a.staff - b.staff);
+    chords.push(parts.map((p) => p.midi));
+    refs.push({ beat: g.beat, beats: g.beats, parts: parts.map(({ staff, source, rank }) => ({ staff, source, rank })) });
+  });
+  return { chords, refs, problems };
+}

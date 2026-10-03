@@ -2,7 +2,8 @@
 // 依据汇总（由 scripts/annotate-learn.mjs 生成）：
 //   ref:omt2e-row-naming ref:omt2e-normal-order ref:omt2e-pitch-class ref:omt2e-integer-intervals
 //   ref:omt2e-collections ref:wiki-messiaen-modes ref:omt2e-prime-form ref:omt2e-ic-vector ref:omt2e-twelve-tone
-//   ref:wiki-pythagorean ref:wiki-turkish-makam ref:wiki-arabic-maqam ref:wiki-neutral-third ref:lamplight-chalaxata
+//   ref:wiki-pythagorean ref:wiki-turkish-makam ref:wiki-arabic-maqam ref:wiki-neutral-third ref:wiki-limit
+//   ref:hf-intervals ref:gann-ji
 // @refs-end
 
 const t = (zh, ja, en) => ({ zh, ja, en });
@@ -224,36 +225,36 @@ const ALL = [
   },
   {
     id: 'microharmony', section: 'modern', feature: 'micro', icon: '11/9',
-    title: t('微分音和声：中立三和弦与 LΛMPLIGHT', '微分音の和声：中立三和音と LΛMPLIGHT', 'Microtonal harmony: neutral triads and LΛMPLIGHT'),
-    blurb: t('不大不小的三和弦；按质数维度给频率比起名字', '長でも短でもない三和音、素数の次元で比に名前をつける', 'A triad neither major nor minor; naming ratios by prime dimension'),
+    title: t('微分音和声：中立三和弦与质数极限', '微分音の和声：中立三和音と素数リミット', 'Microtonal harmony: neutral triads and prime limits'),
+    blurb: t('不大不小的三和弦；按最大质数给纯律音程分类', '長でも短でもない三和音、最大の素数で純正音程を分類', 'A triad neither major nor minor; sorting just intervals by their largest prime'),
     cards: [
-      { type: 'guide', ref: ['wiki-neutral-third', 'lamplight-chalaxata'], tool: { feature: 'micro' }, demo: { play: [[60, 64, 67], [60, 63, 67], [60, 63.5, 67]] },
+      { type: 'guide', ref: ['wiki-neutral-third', 'wiki-limit', 'hf-intervals'], tool: { feature: 'micro' }, demo: { play: [[60, 64, 67], [60, 63, 67], [60, 63.5, 67]] },
         title: t('在大三度和小三度之间', '長 3 度と短 3 度の間', 'Between the major and minor third'),
         steps: [
           t('中立三度比小三度宽、比大三度窄：24 平均里是 350 音分，纯律里常取 11:9（约 347.41 音分），它和大三度、小三度都差约四分之一音。', '中立 3 度は短 3 度より広く長 3 度より狭い：24 平均で 350 セント、純正では 11:9（約 347.41 セント）。長・短 3 度からそれぞれ約四分音離れる。', 'A neutral third is wider than minor and narrower than major: 350 cents in 24-TET, often 11:9 (about 347.41 cents) in just intonation — roughly a quarter tone from each.'),
           t('两个中立三度叠成的三和弦既不大也不小：C、E 降四分之一音（E½♭）、G。十二平均律里弹不出来，24 平均、31 平均里有。听：大三、小三、中立三和弦。', '中立 3 度を 2 つ重ねた三和音は長でも短でもない：C・四分音低い E（E½♭）・G。12 平均律では弾けず、24 平均や 31 平均にはある。聴いて：長三・短三・中立三和音。', 'Two neutral thirds make a triad that is neither major nor minor: C, E a quarter tone flat (E½♭), G. It isn’t in 12-tone equal temperament but exists in 24- and 31-TET. Listen: major, minor, neutral.'),
-          t('微分音和声也有自己的体系。LΛMPLIGHT 按频率比里出现的最大质数分"维度"：3 → 2D，5 → 3D，7 → 4D，11 → 5D，并给每个比起名字：3/2 = Chy，5/4 = Ly，7/4 = My，11/8 = Zy，11/9 = Schuzi。工具里的预设 Ah–Chy–Ly 就是 1/1、3/2、5/4 组成的纯律大三和弦。', '微分音の和声にも体系がある。LΛMPLIGHT は比に出てくる最大の素数で「次元」を分ける：3 → 2D・5 → 3D・7 → 4D・11 → 5D。比に名前もつける：3/2 = Chy・5/4 = Ly・7/4 = My・11/8 = Zy・11/9 = Schuzi。ツールのプリセット Ah–Chy–Ly は 1/1・3/2・5/4 の純正長三和音。', 'Microtonal harmony has its own systems. LΛMPLIGHT sorts ratios into “dimensions” by their largest prime — 3 → 2D, 5 → 3D, 7 → 4D, 11 → 5D — and names them: 3/2 = Chy, 5/4 = Ly, 7/4 = My, 11/8 = Zy, 11/9 = Schuzi. The tool’s preset Ah–Chy–Ly is the just major triad of 1/1, 3/2, 5/4.'),
+          t('纯律音程可以按频率比里出现的最大质数分类，叫质数极限（prime limit，Harry Partch 提出）：只用 2、3 是 3-limit，用到 5 是 5-limit，用到 7 是 7-limit（septimal），用到 11 是 11-limit（undecimal）。11:9 属于 11-limit，标准名称是 undecimal neutral third。', '純正音程は比に出てくる最大の素数で分類できる。これを素数リミット（prime limit、Harry Partch が提唱）という：2・3 だけなら 3-limit、5 まで使えば 5-limit、7 なら 7-limit（septimal）、11 なら 11-limit（undecimal）。11:9 は 11-limit で、標準名は undecimal neutral third。', 'Just intervals can be sorted by the largest prime in their ratio — the prime limit, a term coined by Harry Partch: only 2 and 3 is 3-limit, using 5 is 5-limit, 7 is 7-limit (septimal), 11 is 11-limit (undecimal). 11:9 is 11-limit; its standard name is the undecimal neutral third.'),
         ] },
       { type: 'choice', ref: 'wiki-neutral-third', audio: { notes: [60, 63.5, 67], mode: 'harmonic' },
         prompt: t('听：C、E½♭、G。这个三和弦是？', '聴いて：C・E½♭・G。この三和音は？', 'Listen: C, E½♭, G. This triad is…'),
         options: [t('中立三和弦', '中立三和音', 'a neutral triad'), t('大三和弦', '長三和音', 'a major triad'), t('小三和弦', '短三和音', 'a minor triad')], answer: 0,
         hint: t('三音正好在大小三度中间。', '3 度がちょうど長短の中間。', 'The third sits right between major and minor.'),
         explain: t('两个约 350 音分的中立三度叠成，既不大也不小。', '約 350 セントの中立 3 度 2 つで、長でも短でもない。', 'Two neutral thirds of about 350 cents: neither major nor minor.') },
-      { type: 'choice', ref: 'wiki-neutral-third',
+      { type: 'choice', ref: ['wiki-neutral-third', 'gann-ji'],
         prompt: t('纯律的中立三度 11:9 大约多少音分？', '純正の中立 3 度 11:9 は約何セント？', 'About how many cents is the just neutral third 11:9?'),
         options: ['347', '386', '316'], answer: 0,
         hint: t('在 316（小三度 6:5）和 386（大三度 5:4）中间。', '316（短 3 度 6:5）と 386（長 3 度 5:4）の間。', 'Between 316 (6:5) and 386 (5:4).'),
         explain: t('11:9 ≈ 347.41 音分；24 平均的中立三度是 350 音分，两者听起来几乎分不出来。', '11:9 ≈ 347.41 セント、24 平均は 350 セントでほとんど区別できない。', '11:9 ≈ 347.41 cents; 24-TET’s neutral third is 350, nearly indistinguishable.') },
-      { type: 'match', ref: 'lamplight-chalaxata',
-        prompt: t('LΛMPLIGHT 的名字 ↔ 频率比', 'LΛMPLIGHT の名前 ↔ 比', 'LΛMPLIGHT name ↔ ratio'),
-        pairs: [['Chy', '3/2'], ['Ly', '5/4'], ['My', '7/4'], ['Zy', '11/8']],
-        hint: t('2D、3D、4D、5D 各一个。', '2D・3D・4D・5D から 1 つずつ。', 'One each from 2D, 3D, 4D, 5D.'),
-        explain: t('Chy = 3/2（2D），Ly = 5/4（3D），My = 7/4（4D），Zy = 11/8（5D）。', 'Chy = 3/2（2D）・Ly = 5/4（3D）・My = 7/4（4D）・Zy = 11/8（5D）。', 'Chy = 3/2 (2D), Ly = 5/4 (3D), My = 7/4 (4D), Zy = 11/8 (5D).') },
-      { type: 'choice', ref: 'lamplight-chalaxata',
-        prompt: t('7/4 在 LΛMPLIGHT 里属于哪个维度？', '7/4 は LΛMPLIGHT で何次元？', 'Which LΛMPLIGHT dimension is 7/4?'),
-        options: ['4D', '3D', '5D'], answer: 0,
-        hint: t('最大质数是 7。', '最大の素数は 7。', 'Its largest prime is 7.'),
-        explain: t('3 → 2D，5 → 3D，7 → 4D，11 → 5D：7/4 是 4D，名字叫 My。', '3 → 2D・5 → 3D・7 → 4D・11 → 5D：7/4 は 4D の My。', '3 → 2D, 5 → 3D, 7 → 4D, 11 → 5D: 7/4 is 4D, named My.') },
+      { type: 'match', ref: 'hf-intervals',
+        prompt: t('频率比 ↔ 标准音程名（Huygens-Fokker 音程表）', '比 ↔ 標準の音程名（Huygens-Fokker の音程表）', 'Ratio ↔ standard interval name (Huygens-Fokker list)'),
+        pairs: [['3/2', t('perfect fifth（纯五度）', 'perfect fifth（完全 5 度）', 'perfect fifth')], ['5/4', t('major third（大三度）', 'major third（長 3 度）', 'major third')], ['7/4', t('harmonic seventh（泛音七度）', 'harmonic seventh（ハーモニック・セブンス）', 'harmonic seventh')], ['11/9', t('undecimal neutral third（十一限中立三度）', 'undecimal neutral third（11 リミットの中立 3 度）', 'undecimal neutral third')]],
+        hint: t('3-limit、5-limit、7-limit、11-limit 各一个。', '3・5・7・11-limit から 1 つずつ。', 'One each from the 3-, 5-, 7- and 11-limit.'),
+        explain: t('3/2 = perfect fifth，5/4 = major third，7/4 = harmonic seventh（第 7 泛音），11/9 = undecimal neutral third。', '3/2 = perfect fifth、5/4 = major third、7/4 = harmonic seventh（第 7 倍音）、11/9 = undecimal neutral third。', '3/2 = perfect fifth, 5/4 = major third, 7/4 = harmonic seventh (the 7th harmonic), 11/9 = undecimal neutral third.') },
+      { type: 'choice', ref: ['wiki-limit', 'hf-intervals'],
+        prompt: t('7/4 属于哪个质数极限？', '7/4 はどの素数リミット？', 'Which prime limit is 7/4?'),
+        options: ['7-limit', '5-limit', '11-limit', '3-limit'], answer: 0,
+        hint: t('看比里最大的质数。', '比の中の最大の素数。', 'Look at the largest prime in the ratio.'),
+        explain: t('最大质数是 7，所以是 7-limit（septimal）；7/4 的标准名称是 harmonic seventh。', '最大の素数は 7 なので 7-limit（septimal）。7/4 の標準名は harmonic seventh。', 'Its largest prime is 7, so it is 7-limit (septimal); 7/4 is called the harmonic seventh.') },
     ],
   },
 ];

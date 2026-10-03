@@ -3,8 +3,8 @@
 // 依据汇总（由 scripts/annotate-learn.mjs 生成）：
 //   ref:omt2e-pitch-class ref:omt2e-integer-intervals ref:omt2e-normal-order ref:omt2e-prime-form ref:omt2e-ic-vector
 //   ref:wiki-set-classes ref:omt2e-collections ref:wiki-messiaen-modes ref:omt2e-neo-riemannian ref:omt2e-twelve-tone
-//   ref:omt2e-row-naming ref:wiki-arabic-maqam ref:wiki-pythagorean ref:wiki-harmonic-series ref:lamplight-chalaxata
-//   ref:wiki-neutral-third ref:wiki-turkish-makam
+//   ref:omt2e-row-naming ref:wiki-arabic-maqam ref:wiki-pythagorean ref:wiki-harmonic-series ref:hf-intervals
+//   ref:wiki-limit ref:wiki-neutral-third ref:wiki-turkish-makam ref:gann-ji
 // @refs-end
 
 const t = (zh, ja, en) => ({ zh, ja, en });
@@ -291,10 +291,10 @@ export const BRANCHES = {
       G('edoCents', 3),
     ]),
     L(t('七度泛音的和声', '第 7 倍音の和声', 'Harmony with the 7th harmonic'), [
-      { type: 'guide', ref: ['wiki-harmonic-series', 'lamplight-chalaxata'], tool: { feature: 'micro' }, demo: { play: [[48, 52, 55, 58], [48, 51.86, 55.02, 57.69]] },
+      { type: 'guide', ref: ['wiki-harmonic-series', 'hf-intervals', 'wiki-limit'], tool: { feature: 'micro' }, demo: { play: [[48, 52, 55, 58], [48, 51.86, 55.02, 57.69]] },
         title: t('比平均律的小七度窄得多', '平均律の短 7 度よりずっと狭い', 'Much narrower than a tempered minor seventh'),
         steps: [
-          t('第 7 泛音和第 4 泛音的比是 7:4，约 969 音分，比平均律的小七度（1000 音分）窄约 31 音分。LΛMPLIGHT 叫它 My（4D）。', '第 7 倍音と第 4 倍音の比 7:4 は約 969 セントで、平均律の短 7 度（1000）より約 31 セント狭い。LΛMPLIGHT では My（4D）。', 'The 7th harmonic against the 4th is 7:4, about 969 cents — some 31 cents narrower than the tempered minor seventh (1000). LΛMPLIGHT calls it My (4D).'),
+          t('第 7 泛音和第 4 泛音的比是 7:4，约 969 音分，比平均律的小七度（1000 音分）窄约 31 音分。它的标准名称是 harmonic seventh，用到质数 7，属于 7-limit（septimal）。', '第 7 倍音と第 4 倍音の比 7:4 は約 969 セントで、平均律の短 7 度（1000）より約 31 セント狭い。標準名は harmonic seventh、素数 7 を使うので 7-limit（septimal）。', 'The 7th harmonic against the 4th is 7:4, about 969 cents — some 31 cents narrower than the tempered minor seventh (1000). Its standard name is the harmonic seventh; it uses the prime 7, so it is 7-limit (septimal).'),
           t('听：先是平均律的 C7，再是按泛音 4:5:6:7 调的"和谐七和弦"——它更融合、几乎不晃动。', '聴いて：平均律の C7、次に倍音 4:5:6:7 で調律した七の和音——より溶け合い、ほとんど揺れない。', 'Listen: an equal-tempered C7, then a 4:5:6:7 “harmonic seventh” chord tuned to the overtones — smoother, with almost no beating.'),
         ] },
       { type: 'choice', ref: 'wiki-harmonic-series',
@@ -302,7 +302,7 @@ export const BRANCHES = {
         options: ['969', '1000', '1088'], answer: 0,
         hint: t('比平均律小七度（1000）窄一些。', '平均律の短 7 度（1000）より少し狭い。', 'A bit narrower than the tempered minor seventh (1000).'),
         explain: t('1200 × log₂(1.75) ≈ 969 音分。', '1200 × log₂(1.75) ≈ 969 セント。', '1200 × log₂(1.75) ≈ 969 cents.') },
-      G('lamplight', 3),
+      G('primeLimit', 3),
     ]),
     L(t('四分之一音、koma 与中立三度', '四分音・コマ・中立 3 度', 'Quarter tones, commas and neutral thirds'), [
       { type: 'guide', ref: ['wiki-neutral-third', 'wiki-turkish-makam'], demo: { play: [[60, 64], [60, 63.5], [60, 63]] },
@@ -324,7 +324,7 @@ export const BRANCHES = {
         steps: [
           t('不管是平均律、koma 还是纯律比例，都可以换算成音分来比较：音分 = 1200 × log₂(频率比)。', '平均律・コマ・純正の比、どれもセントに換算して比べられる：セント = 1200 × log₂(比)。', 'EDO steps, commas or just ratios can all be compared in cents: cents = 1200 × log₂(ratio).'),
         ] },
-      G('edoCents', 2), G('ratioCents', 2), G('lamplight', 1),
+      G('edoCents', 2), G('ratioCents', 2), G('primeLimit', 1),
     ]),
   ],
 
@@ -337,46 +337,46 @@ export const BRANCHES = {
         ] },
       G('neutralTriad', 5),
     ]),
-    L(t('LΛMPLIGHT 的维度', 'LΛMPLIGHT の次元', 'LΛMPLIGHT dimensions'), [
-      { type: 'guide', ref: 'lamplight-chalaxata', tool: { feature: 'micro' },
-        title: t('最大质数决定维度', '最大の素数が次元を決める', 'The largest prime sets the dimension'),
+    L(t('质数极限', '素数リミット', 'Prime limits'), [
+      { type: 'guide', ref: 'wiki-limit', tool: { feature: 'micro' },
+        title: t('最大质数决定"极限"', '最大の素数が「リミット」を決める', 'The largest prime sets the limit'),
         steps: [
-          t('只含 2 和 3 的比（3/2、4/3、9/8）是 2D；含 5 的（5/4、6/5、5/3）是 3D；含 7 的（7/4、7/6、8/7）是 4D；含 11 的（11/8、11/9、11/6）是 5D。', '2 と 3 だけの比（3/2・4/3・9/8）は 2D、5 を含む（5/4・6/5・5/3）は 3D、7 を含む（7/4・7/6・8/7）は 4D、11 を含む（11/8・11/9・11/6）は 5D。', 'Ratios using only 2 and 3 (3/2, 4/3, 9/8) are 2D; with 5 (5/4, 6/5, 5/3) 3D; with 7 (7/4, 7/6, 8/7) 4D; with 11 (11/8, 11/9, 11/6) 5D.'),
-          t('页面还给出 Colorspeak 名称：5/4 = yo 3rd，6/5 = gu 3rd，7/4 = zo 7th，11/8 = lo 4th。', 'ページには Colorspeak の名前も：5/4 = yo 3rd・6/5 = gu 3rd・7/4 = zo 7th・11/8 = lo 4th。', 'The page also lists Colorspeak names: 5/4 = yo 3rd, 6/5 = gu 3rd, 7/4 = zo 7th, 11/8 = lo 4th.'),
+          t('只含 2 和 3 的比（3/2、4/3、9/8）是 3-limit（也就是毕达哥拉斯律）；含 5 的（5/4、6/5、5/3）是 5-limit；含 7 的（7/4、7/6、8/7）是 7-limit，又叫 septimal；含 11 的（11/8、11/9、11/6）是 11-limit，又叫 undecimal。', '2 と 3 だけの比（3/2・4/3・9/8）は 3-limit（ピタゴラス音律）、5 を含む（5/4・6/5・5/3）は 5-limit、7 を含む（7/4・7/6・8/7）は 7-limit で septimal とも、11 を含む（11/8・11/9・11/6）は 11-limit で undecimal とも呼ぶ。', 'Ratios using only 2 and 3 (3/2, 4/3, 9/8) are 3-limit (Pythagorean tuning); with 5 (5/4, 6/5, 5/3) 5-limit; with 7 (7/4, 7/6, 8/7) 7-limit, also called septimal; with 11 (11/8, 11/9, 11/6) 11-limit, also called undecimal.'),
+          t('这个概念来自 Harry Partch。十二平均律的基本极限是 5，足够写出所有基本三和弦；Partch 在自己的音乐里把质数上限定在 11。', 'この考え方は Harry Partch に由来する。平均律の基本リミットは 5 で、基本的な三和音はすべて書ける。Partch は自作で素数の上限を 11 にした。', 'The idea comes from Harry Partch. The essential limit of equal temperament is 5, enough for all the basic triads; in his own music Partch capped the prime at 11.'),
         ] },
-      { type: 'match', ref: 'lamplight-chalaxata',
-        prompt: t('频率比 ↔ 维度', '比 ↔ 次元', 'Ratio ↔ dimension'),
-        pairs: [['9/8', '2D'], ['6/5', '3D'], ['8/7', '4D'], ['11/6', '5D']],
+      { type: 'match', ref: 'wiki-limit',
+        prompt: t('频率比 ↔ 质数极限', '比 ↔ 素数リミット', 'Ratio ↔ prime limit'),
+        pairs: [['9/8', '3-limit'], ['6/5', '5-limit'], ['8/7', '7-limit'], ['11/6', '11-limit']],
         hint: t('找比里最大的质数。', '比の中の最大の素数。', 'Find the largest prime in the ratio.'),
         explain: t('9/8 只有 2、3；6/5 有 5；8/7 有 7；11/6 有 11。', '9/8 は 2・3、6/5 は 5、8/7 は 7、11/6 は 11。', '9/8 has only 2 and 3; 6/5 has 5; 8/7 has 7; 11/6 has 11.') },
-      G('lamplight', 4),
+      G('primeLimit', 4),
     ]),
-    L(t('工具里的三种构型', 'ツールの 3 つの構成', 'The tool’s three configurations'), [
-      { type: 'guide', ref: ['lamplight-chalaxata', 'wiki-harmonic-series'], tool: { feature: 'micro' }, demo: { play: [[48, 55.02, 51.86], [48, 55.02, 57.69], [48, 55.02, 58.49]] },
-        title: t('Ah–Chy–Ly、Ah–Chy–My、Ah–Chy–Fuzi', 'Ah–Chy–Ly・Ah–Chy–My・Ah–Chy–Fuzi', 'Ah–Chy–Ly, Ah–Chy–My, Ah–Chy–Fuzi'),
+    L(t('三种纯律和弦：5、7、11-limit', '3 つの純正和音：5・7・11-limit', 'Three just chords: 5-, 7- and 11-limit'), [
+      { type: 'guide', ref: ['hf-intervals', 'gann-ji', 'wiki-harmonic-series'], tool: { feature: 'micro' }, demo: { play: [[48, 55.02, 51.86], [48, 55.02, 57.69], [48, 55.02, 58.49]] },
+        title: t('1/1–3/2 上面换一个音', '1/1–3/2 の上の 1 音を替える', 'Change one note above 1/1–3/2'),
         steps: [
-          t('微分音工具的预设：Ah–Chy–Ly = 1/1、3/2、5/4（纯律大三和弦，3D）；Ah–Chy–My = 1/1、3/2、7/4（4D）；Ah–Chy–Fuzi = 1/1、3/2、11/6（5D）。听：三种依次。', '微分音ツールのプリセット：Ah–Chy–Ly = 1/1・3/2・5/4（純正長三和音、3D）、Ah–Chy–My = 1/1・3/2・7/4（4D）、Ah–Chy–Fuzi = 1/1・3/2・11/6（5D）。聴いて：3 つを順に。', 'The microtonal tool’s presets: Ah–Chy–Ly = 1/1, 3/2, 5/4 (just major triad, 3D); Ah–Chy–My = 1/1, 3/2, 7/4 (4D); Ah–Chy–Fuzi = 1/1, 3/2, 11/6 (5D). Listen to all three.'),
-          t('维度越高，用到的质数越大，声音也越"陌生"。', '次元が高いほど大きな素数を使い、響きは「見慣れない」ものに。', 'The higher the dimension, the larger the prime and the stranger the sound.'),
+          t('微分音工具的三个预设：1/1、5/4、3/2 是纯律大三和弦（5-limit）；1/1、3/2、7/4 用到 7（7-limit），7/4 的标准名称是 harmonic seventh；1/1、3/2、11/6 用到 11（11-limit），11/6 叫 undecimal neutral seventh。听：三种依次。', '微分音ツールの 3 つのプリセット：1/1・5/4・3/2 は純正長三和音（5-limit）、1/1・3/2・7/4 は 7 を使う（7-limit）、7/4 の標準名は harmonic seventh。1/1・3/2・11/6 は 11 を使う（11-limit）、11/6 は undecimal neutral seventh。聴いて：3 つを順に。', 'The microtonal tool’s three presets: 1/1, 5/4, 3/2 is the just major triad (5-limit); 1/1, 3/2, 7/4 uses 7 (7-limit), and 7/4 is called the harmonic seventh; 1/1, 3/2, 11/6 uses 11 (11-limit), and 11/6 is the undecimal neutral seventh. Listen to all three.'),
+          t('Kyle Gann 的说明：以 C 为基音时，第 7 泛音比平均律的降 B "低"约 31 音分；第 11 泛音正好落在 F 和 F♯ 中间。', 'Kyle Gann の説明：C を基音にすると、第 7 倍音は平均律の B♭ より約 31 セント「低く」、第 11 倍音は F と F♯ のちょうど中間に来る。', 'As Kyle Gann puts it: over C, the 7th harmonic is about 31 cents “flat” of the tempered B♭, and the 11th harmonic falls halfway between F and F♯.'),
         ] },
-      { type: 'choice', ref: 'lamplight-chalaxata',
-        prompt: t('Ah–Chy–Fuzi 里的 Fuzi 是哪个比？', 'Ah–Chy–Fuzi の Fuzi はどの比？', 'In Ah–Chy–Fuzi, which ratio is Fuzi?'),
-        options: ['11/6', '11/8', '7/4'], answer: 0,
-        hint: t('它在 5D，接近一个七度。', '5D で 7 度に近い。', 'It is 5D, near a seventh.'),
-        explain: t('Fuzi = 11/6（Colorspeak 里叫 lo 7th）。', 'Fuzi = 11/6（Colorspeak では lo 7th）。', 'Fuzi = 11/6 (lo 7th in Colorspeak).') },
-      { type: 'choice', ref: 'lamplight-chalaxata',
-        prompt: t('Ah–Chy–Ly 是什么和弦？', 'Ah–Chy–Ly はどんな和音？', 'What chord is Ah–Chy–Ly?'),
-        options: [t('纯律大三和弦（1/1、3/2、5/4）', '純正長三和音（1/1・3/2・5/4）', 'a just major triad (1/1, 3/2, 5/4)'), t('中立三和弦', '中立三和音', 'a neutral triad'), t('七度泛音和弦', '第 7 倍音の和音', 'a harmonic-seventh chord')], answer: 0,
-        hint: t('Chy = 3/2，Ly = 5/4。', 'Chy = 3/2・Ly = 5/4。', 'Chy = 3/2, Ly = 5/4.'),
-        explain: t('1/1 + 5/4 + 3/2 = 纯律大三和弦（3D）。', '1/1 + 5/4 + 3/2 = 純正長三和音（3D）。', '1/1 + 5/4 + 3/2 = a just major triad (3D).') },
-      G('lamplight', 2),
+      { type: 'choice', ref: 'hf-intervals',
+        prompt: t('11-limit 预设里的 11/6，标准名称是？', '11-limit のプリセットにある 11/6 の標準名は？', 'In the 11-limit preset, what is 11/6 called?'),
+        options: [t('undecimal neutral seventh（十一限中立七度）', 'undecimal neutral seventh（11 リミットの中立 7 度）', 'undecimal neutral seventh'), t('harmonic seventh（泛音七度）', 'harmonic seventh（ハーモニック・セブンス）', 'harmonic seventh'), t('undecimal semi-augmented fourth（十一限半增四度）', 'undecimal semi-augmented fourth（11 リミットの半増 4 度）', 'undecimal semi-augmented fourth'), t('major sixth（大六度）', 'major sixth（長 6 度）', 'major sixth')], answer: 0,
+        hint: t('它用到 11，比小七度窄一点。', '11 を使い、短 7 度より少し狭い。', 'It uses 11 and is a little narrower than a minor seventh.'),
+        explain: t('11/6 = undecimal neutral seventh；7/4 是 harmonic seventh，11/8 是 undecimal semi-augmented fourth。', '11/6 = undecimal neutral seventh。7/4 は harmonic seventh、11/8 は undecimal semi-augmented fourth。', '11/6 = undecimal neutral seventh; 7/4 is the harmonic seventh and 11/8 the undecimal semi-augmented fourth.') },
+      { type: 'choice', ref: ['hf-intervals', 'wiki-limit'],
+        prompt: t('1/1、5/4、3/2 是什么和弦？', '1/1・5/4・3/2 はどんな和音？', 'What chord is 1/1, 5/4, 3/2?'),
+        options: [t('纯律大三和弦（5-limit）', '純正長三和音（5-limit）', 'a just major triad (5-limit)'), t('中立三和弦', '中立三和音', 'a neutral triad'), t('带泛音七度的和弦（7-limit）', 'ハーモニック・セブンスの和音（7-limit）', 'a harmonic-seventh chord (7-limit)'), t('纯律小三和弦（5-limit）', '純正短三和音（5-limit）', 'a just minor triad (5-limit)')], answer: 0,
+        hint: t('5/4 是大三度，3/2 是纯五度。', '5/4 は長 3 度、3/2 は完全 5 度。', '5/4 is a major third, 3/2 a perfect fifth.'),
+        explain: t('1/1 + 5/4（major third）+ 3/2（perfect fifth）= 纯律大三和弦；最大质数是 5，属于 5-limit。纯律小三和弦是 1/1、6/5、3/2。', '1/1 + 5/4（major third）+ 3/2（perfect fifth）= 純正長三和音、最大の素数 5 で 5-limit。純正短三和音は 1/1・6/5・3/2。', '1/1 + 5/4 (major third) + 3/2 (perfect fifth) = the just major triad; its largest prime is 5, so 5-limit. The just minor triad is 1/1, 6/5, 3/2.') },
+      G('jiInterval', 2),
     ]),
     L(t('微分音和声综合', '微分音の和声の総合', 'Microtonal harmony review'), [
-      { type: 'guide', ref: ['wiki-neutral-third', 'lamplight-chalaxata'], tool: { feature: 'micro' },
-        title: t('新的颜色，新的名字', '新しい色、新しい名前', 'New colours, new names'),
+      { type: 'guide', ref: ['wiki-neutral-third', 'wiki-limit', 'hf-intervals'], tool: { feature: 'micro' },
+        title: t('新的颜色，标准的名字', '新しい色、標準の名前', 'New colours, standard names'),
         steps: [
-          t('中立三和弦是 24 平均、31 平均里的新颜色；LΛMPLIGHT 用维度和名字把纯律的比整理成一个体系。', '中立三和音は 24 平均・31 平均の新しい色。LΛMPLIGHT は次元と名前で純正の比を体系化する。', 'Neutral triads are a new colour in 24- and 31-TET; LΛMPLIGHT organises just ratios into a system of dimensions and names.'),
+          t('中立三和弦是 24 平均、31 平均里的新颜色；质数极限按最大质数给纯律音程分类，Huygens-Fokker 微分音中心的音程表给每个比一个标准的英文名称。', '中立三和音は 24 平均・31 平均の新しい色。素数リミットは最大の素数で純正音程を分類し、Huygens-Fokker 微分音センターの音程表は各比に標準の英語名を与える。', 'Neutral triads are a new colour in 24- and 31-TET; prime limits sort just intervals by their largest prime, and the Huygens-Fokker Foundation’s list gives each ratio a standard English name.'),
         ] },
-      G('neutralTriad', 2), G('lamplight', 2), G('ratioCents', 1),
+      G('neutralTriad', 2), G('primeLimit', 1), G('jiInterval', 1), G('ratioCents', 1),
     ]),
   ],
 };

@@ -7,9 +7,9 @@
 //   ref:omt2e-major-scales ref:omt2e-minor ref:wiki-key-signature ref:wiki-accidental ref:omt2e-rhythm ref:omt2e-simple-meter ref:omt2e-compound-meter ref:wiki-cent
 import {
   CLEFS, CLEF_ORDER, MNEMONICS, positionToPitch, pitchToPosition, describePosition, lineLetters, spaceLetters, pitchMidi, pitchLabel, LETTERS,
-  keySignatureLayout, KEY_NAMES, durationBeats, measureBeats, beamGroupBeats, layoutMeasures, resolveMeasure, spellInKey, centsFrequency, keyAlterations,
+  keySignatureLayout, KEY_NAMES, durationBeats, measureBeats, beamGroupBeats, layoutMeasures, resolveMeasure, spellInKey, centsFrequency, keyAlterations, decompose,
 } from './staff_reading.js';
-import { checkSATB } from './satb_check.js?v=20261003-r31';
+import { checkSATB, groupFourPart } from './satb_check.js?v=20261004-r32';
 import { issueList, drawIssueMarks, RULES as SATB_RULES, PART_NAMES as SATB_PARTS } from './satb_marks.js?v=20261003-r31';
 import { recordToolMistake, tri } from './tool_review.js';
 import {
@@ -30,7 +30,7 @@ const SLOT = { w: 46, h: 38, q: 32, e: 27, s: 23 };
 
 const TEXT = {
   zh: {
-    satbTitle: '四部和声检查', satbHint: '在大谱表上写四部和声：每个和弦上行谱表写女中和女高两个音，下行谱表写男低和男高两个音。检查平行五八度、声部交叉、间距、超越、音域、导音与七音的解决，并在谱上标出来。', satbNeedGrand: '先把谱表切换成大谱表。', satbKey: '按哪个调检查', satbMajor: '大调', satbMinor: '小调', satbRun: '检查', satbSolo: '单独试听', satbParts: ['男低', '男高', '女中', '女高'], satbAll: '四部一起', satbEmpty: '没有找到两行谱表同时开始、各有两个音的和弦。', satbFigures: (f) => `转位（数字低音）：${f}`, satbSaved: (n) => `其中 ${n} 个问题已放进学习页的错题本。`,
+    satbTitle: '四部和声检查', satbHint: '在大谱表上写四部和声：每个和弦 4 个音同时开始，上下两行怎么分都可以（常见的是上行女中、女高，下行男低、男高）。检查平行五八度、声部交叉、间距、超越、音域、导音与七音的解决，并在谱上标出来。', satbNeedGrand: '先把谱表切换成大谱表。', satbKey: '按哪个调检查', satbMajor: '大调', satbMinor: '小调', satbRun: '检查', satbSolo: '单独试听', satbParts: ['男低', '男高', '女中', '女高'], satbAll: '四部一起', satbEmpty: '还没有找到 4 个音同时开始的和弦。', satbCount: (w, c) => `${w}：同时有 ${c} 个音（四部和声要 4 个），这一拍没有检查。`, satbBeat: (m, b) => `第 ${m} 小节第 ${b} 拍`, satbFigures: (f) => `转位（数字低音）：${f}`, satbSaved: (n) => `其中 ${n} 个问题已放进学习页的错题本。`,
     kicker: '读谱与记谱', title: '五线谱',
     intro: '在谱表上点线或间写音，或者按下面的琴键。选好时值再写；打开"和弦"后，再点的音会叠到选中的那个音符上。写满一小节会自动加小节线，写不下的部分会拆开并用连音线连起来。',
     clefs: { treble: '高音谱号', bass: '低音谱号', alto: '中音谱号', tenor: '次中音谱号', grand: '大谱表' },
@@ -49,7 +49,7 @@ const TEXT = {
     cents: '音分偏移', centsHint: '给接下来写的音加上音分偏移（一个八度 1200 音分；±50 就是四分之一音），谱上会在符头旁标出。',
     restOn: '休止符写在', upper: '上谱表', lower: '下谱表',
     play: '► 播放', undo: '撤销', remove: '删除选中', clear: '清空', names: '在线和间旁标出音名',
-    hint: '快捷键：1–5 选时值，. 附点，R 休止符，T 连音线，C 和弦，P 播放，Delete 删除，Ctrl+Z 撤销。点谱上的音符可以选中它，再改时值、附点或连音线。',
+    hint: '快捷键：1–5 选时值，. 附点，R 休止符，T 连音线，C 和弦，P 播放，Delete 删除，Ctrl+Z 撤销。点谱上的音符可以选中它，再改时值、附点或连音线。长按谱上的某个音、或亮着的琴键，可以把这个音从和弦里取消。大谱表上同一拍的上下两行算一个和弦：一起选中、一起改时值、一起删除；和弦模式下加的音会按音高自动放进上行或下行的同一拍。', removedNote: (n) => `已取消 ${n}`, cantAlign: '另一行这一拍在一个长音的中间，没法合成同一个和弦，已写在那一行的末尾。',
     empty: '还没有写音——点谱表或琴键试试。',
     selected: '选中', restLabel: '休止', tied: '连到下一个音',
     position: (d) => (d.number ? `第 ${d.number} ${d.onLine ? '线' : '间'}` : d.below ? (d.onLine ? `下方第 ${d.ledgers} 条加线上` : d.ledgers ? `下方第 ${d.ledgers} 条加线的下面` : '第一线下面的间') : (d.onLine ? `上方第 ${d.ledgers} 条加线上` : d.ledgers ? `上方第 ${d.ledgers} 条加线的上面` : '第五线上面的间')),
@@ -71,7 +71,7 @@ const TEXT = {
     streak: (n, best) => `连对 ${n} 题 · 最好 ${best}`, quizClef: '练习用的谱号', ledger: '包含加线',
   },
   ja: {
-    satbTitle: '4 声体チェック', satbHint: '大譜表に 4 声体を書きます。各和音、ト音譜表にアルトとソプラノ、ヘ音譜表にバスとテノールの 2 音ずつ。連続 5・8 度、交差、間隔、超越、音域、導音と第 7 音の解決を調べ、譜面に印を付けます。', satbNeedGrand: 'まず大譜表に切り替えてください。', satbKey: '調', satbMajor: '長調', satbMinor: '短調', satbRun: 'チェック', satbSolo: '声部ごとに試聴', satbParts: ['バス', 'テノール', 'アルト', 'ソプラノ'], satbAll: '4 声いっしょに', satbEmpty: '2 段が同時に始まり各 2 音ある和音が見つかりません。', satbFigures: (f) => `転回（数字）：${f}`, satbSaved: (n) => `うち ${n} 件を学習ページの復習ノートに入れました。`,
+    satbTitle: '4 声体チェック', satbHint: '大譜表に 4 声体を書きます。各和音は 4 音が同時に始まり、上下 2 段への分け方は自由（よくあるのはト音譜表にアルトとソプラノ、ヘ音譜表にバスとテノール）。連続 5・8 度、交差、間隔、超越、音域、導音と第 7 音の解決を調べ、譜面に印を付けます。', satbNeedGrand: 'まず大譜表に切り替えてください。', satbKey: '調', satbMajor: '長調', satbMinor: '短調', satbRun: 'チェック', satbSolo: '声部ごとに試聴', satbParts: ['バス', 'テノール', 'アルト', 'ソプラノ'], satbAll: '4 声いっしょに', satbEmpty: '4 音が同時に始まる和音がまだ見つかりません。', satbCount: (w, c) => `${w}：同時に ${c} 音（4 声体は 4 音）。この拍はチェックしていません。`, satbBeat: (m, b) => `${m} 小節目 ${b} 拍目`, satbFigures: (f) => `転回（数字）：${f}`, satbSaved: (n) => `うち ${n} 件を学習ページの復習ノートに入れました。`,
     kicker: '読譜と記譜', title: '五線譜',
     intro: '譜表の線や間をクリックするか、下の鍵盤を押して音を書きます。先に音価を選び、「和音」をオンにすると、選んだ音符に音を重ねられます。1 小節が埋まると小節線が入り、収まらない分は分けてタイでつなぎます。',
     clefs: { treble: 'ト音記号', bass: 'ヘ音記号', alto: 'アルト記号', tenor: 'テノール記号', grand: '大譜表' },
@@ -90,7 +90,7 @@ const TEXT = {
     cents: 'セント', centsHint: 'これから書く音にセントのずれを加えます（1 オクターヴ = 1200 セント、±50 で 4 分音）。符頭の横に表示されます。',
     restOn: '休符を書く段', upper: '上段', lower: '下段',
     play: '► 再生', undo: '元に戻す', remove: '選択を削除', clear: 'クリア', names: '線と間の横に音名を表示',
-    hint: 'ショートカット：1–5 音価、. 付点、R 休符、T タイ、C 和音、P 再生、Delete 削除、Ctrl+Z 元に戻す。譜面の音符をクリックすると選択でき、音価・付点・タイを変えられます。',
+    hint: 'ショートカット：1–5 音価、. 付点、R 休符、T タイ、C 和音、P 再生、Delete 削除、Ctrl+Z 元に戻す。譜面の音符をクリックすると選択でき、音価・付点・タイを変えられます。譜面の音や光っている鍵盤を長押しすると、その音を和音から取り消せます。大譜表では同じ拍の上下 2 段を 1 つの和音として扱い、いっしょに選択・音価変更・削除します。和音モードで加えた音は音高に応じて上段か下段の同じ拍に入ります。', removedNote: (n) => `${n} を取り消しました`, cantAlign: 'もう一方の段のこの拍は長い音の途中なので、同じ和音にできません。その段の末尾に書きました。',
     empty: 'まだ音がありません。譜表か鍵盤をクリックしてみましょう。',
     selected: '選択中', restLabel: '休符', tied: '次の音へタイ',
     position: (d) => (d.number ? `第 ${d.number} ${d.onLine ? '線' : '間'}` : d.below ? (d.onLine ? `下の第 ${d.ledgers} 加線上` : d.ledgers ? `下の第 ${d.ledgers} 加線の下` : '第 1 線の下の間') : (d.onLine ? `上の第 ${d.ledgers} 加線上` : d.ledgers ? `上の第 ${d.ledgers} 加線の上` : '第 5 線の上の間')),
@@ -112,7 +112,7 @@ const TEXT = {
     streak: (n, best) => `連続 ${n} 問 · 最高 ${best}`, quizClef: '練習する音部記号', ledger: '加線も出す',
   },
   en: {
-    satbTitle: 'Four-part checker', satbHint: 'Write four-part harmony on the grand staff: for each chord, alto and soprano on the treble staff, bass and tenor on the bass staff. Checks parallel fifths and octaves, crossing, spacing, overlap, range and the resolution of leading tones and sevenths, and marks problems on the staff.', satbNeedGrand: 'Switch to the grand staff first.', satbKey: 'Key', satbMajor: 'major', satbMinor: 'minor', satbRun: 'Check', satbSolo: 'Hear one voice', satbParts: ['bass', 'tenor', 'alto', 'soprano'], satbAll: 'All four', satbEmpty: 'No chords found with two notes on each staff starting together.', satbFigures: (f) => `Inversions (figures): ${f}`, satbSaved: (n) => `${n} of these went into the review box on the Learn page.`,
+    satbTitle: 'Four-part checker', satbHint: 'Write four-part harmony on the grand staff: each chord is 4 notes starting together, split between the staves any way you like (usually alto and soprano on the treble staff, bass and tenor on the bass staff). Checks parallel fifths and octaves, crossing, spacing, overlap, range and the resolution of leading tones and sevenths, and marks problems on the staff.', satbNeedGrand: 'Switch to the grand staff first.', satbKey: 'Key', satbMajor: 'major', satbMinor: 'minor', satbRun: 'Check', satbSolo: 'Hear one voice', satbParts: ['bass', 'tenor', 'alto', 'soprano'], satbAll: 'All four', satbEmpty: 'No chords with 4 notes starting together yet.', satbCount: (w, c) => `${w}: ${c} notes start together (four-part harmony needs 4); not checked.`, satbBeat: (m, b) => `bar ${m}, beat ${b}`, satbFigures: (f) => `Inversions (figures): ${f}`, satbSaved: (n) => `${n} of these went into the review box on the Learn page.`,
     kicker: 'Reading & writing', title: 'Staff',
     intro: 'Click a line or space (or a key below) to write a note. Pick a duration first; with “Chord” on, the next notes stack onto the selected note. Barlines appear as bars fill up, and anything that does not fit is split and tied.',
     clefs: { treble: 'Treble clef', bass: 'Bass clef', alto: 'Alto clef', tenor: 'Tenor clef', grand: 'Grand staff' },
@@ -131,7 +131,7 @@ const TEXT = {
     cents: 'Cents', centsHint: 'Offset the next notes by some cents (1200 cents to the octave; ±50 is a quarter tone). The offset is printed beside the notehead.',
     restOn: 'Rests go on', upper: 'Upper staff', lower: 'Lower staff',
     play: '► Play', undo: 'Undo', remove: 'Delete selected', clear: 'Clear', names: 'Show note names beside lines and spaces',
-    hint: 'Shortcuts: 1–5 durations, . dot, R rest, T tie, C chord, P play, Delete delete, Ctrl+Z undo. Click a note on the staff to select it and change its duration, dot or tie.',
+    hint: 'Shortcuts: 1–5 durations, . dot, R rest, T tie, C chord, P play, Delete delete, Ctrl+Z undo. Click a note on the staff to select it and change its duration, dot or tie. Long-press a note on the staff, or a lit key, to remove that note from the chord. On the grand staff both staves at the same beat count as one chord: selected, re-timed and deleted together; in chord mode a new note goes to the upper or lower staff at that beat by pitch.', removedNote: (n) => `Removed ${n}`, cantAlign: 'That beat falls in the middle of a long note on the other staff, so it cannot join this chord; the note went to the end of that staff.',
     empty: 'No notes yet — click the staff or a key.',
     selected: 'Selected', restLabel: 'rest', tied: 'tied to the next note',
     position: (d) => (d.number ? `${d.onLine ? 'line' : 'space'} ${d.number}` : d.below ? (d.onLine ? `ledger line ${d.ledgers} below` : d.ledgers ? `under ledger line ${d.ledgers} below` : 'the space below line 1') : (d.onLine ? `ledger line ${d.ledgers} above` : d.ledgers ? `over ledger line ${d.ledgers} above` : 'the space above line 5')),
@@ -180,6 +180,92 @@ export function mountStaffReading(target, { playChord }) {
   const selectedEvent = () => (state.selected ? state.voices[state.selected.voice]?.[state.selected.index] : null);
   /** 只有用鼠标点选过的音符，才会被时值、附点、连音线按钮修改；刚写下的音只是"当前位置"（用来叠和弦） */
   const pickedEvent = () => (state.picked ? selectedEvent() : null);
+  // ---------- 大谱表：上下两行同一拍开始的音合成一个和弦一起编辑 ----------
+  const lengthOf = (e) => durationBeats(e.duration, e.dots);
+  /** 一个事件在自己那一行的起拍（四分音符 = 1） */
+  const onsetOf = (voice, index) => state.voices[voice].slice(0, index).reduce((sum, e) => sum + lengthOf(e), 0);
+  const voiceLength = (voice) => state.voices[voice].reduce((sum, e) => sum + lengthOf(e), 0);
+  /** 这一行里正好在 beat 开始的事件（没有就 -1） */
+  function eventAtBeat(voice, beat) {
+    let at = 0;
+    const list = state.voices[voice];
+    for (let i = 0; i < list.length; i += 1) {
+      if (Math.abs(at - beat) < 1e-6) return i;
+      at += lengthOf(list[i]);
+      if (at > beat + 1e-6) return -1;
+    }
+    return -1;
+  }
+  /** 和 sel 同一拍开始的另一行事件（只在大谱表上） */
+  function partnerOf(sel = state.selected) {
+    if (state.clef !== 'grand' || !sel || !state.voices[sel.voice]?.[sel.index]) return null;
+    const other = 1 - sel.voice;
+    const index = eventAtBeat(other, onsetOf(sel.voice, sel.index));
+    return index >= 0 ? { voice: other, index } : null;
+  }
+  /** 选中的"和弦"：选中的事件 + 另一行同一拍的事件 */
+  const selectedGroup = () => [state.selected, partnerOf()].filter(Boolean);
+  // ---------- 长按：把一个音从和弦里取消 ----------
+  let longPressed = false; // 长按之后紧跟着的那次 click 不再当成点击
+  function onLongPress(node, fire, ms = 550) {
+    let timer = null; let start = null;
+    const cancel = () => { clearTimeout(timer); timer = null; node.classList.remove('is-pressing'); };
+    node.addEventListener('pointerdown', (e) => {
+      if (e.button > 0) return;
+      start = { x: e.clientX, y: e.clientY };
+      node.classList.add('is-pressing');
+      // 按下的那一刻就记住按在哪里（计时结束时事件对象里的 target 可能已经被清掉）
+      const at = { target: e.target, clientX: e.clientX, clientY: e.clientY };
+      timer = setTimeout(() => {
+        timer = null;
+        node.classList.remove('is-pressing');
+        longPressed = true;
+        setTimeout(() => { longPressed = false; }, 900); // 没有跟着来的 click 时，别吞掉下一次正常点击
+        fire(at);
+      }, ms);
+    });
+    node.addEventListener('pointermove', (e) => { if (timer && start && Math.hypot((e.clientX ?? 0) - start.x, (e.clientY ?? 0) - start.y) > 8) cancel(); });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach((type) => node.addEventListener(type, cancel));
+    // 手机上长按会弹出系统菜单：拦掉
+    node.addEventListener('contextmenu', (e) => { if (timer || longPressed) e.preventDefault(); });
+  }
+  const noteName = (n) => `${n.letter}${(n.alter ?? 0) > 0 ? '♯'.repeat(n.alter) : (n.alter ?? 0) < 0 ? '♭'.repeat(-n.alter) : ''}${n.octave}`;
+  /** 从 voice / index 的事件里去掉第 k 个音；去光了：另一行同一拍还有音就补成同样时值的休止符（保持两行对齐），否则删掉这个事件 */
+  function removeNoteAt(voice, index, k) {
+    const event = state.voices[voice]?.[index];
+    if (!event || event.rest || !event.notes[k]) return;
+    const partner = partnerOf({ voice, index });
+    snapshot();
+    const [gone] = event.notes.splice(k, 1);
+    if (!event.notes.length) {
+      const keepAligned = partner && state.voices[partner.voice][partner.index] && !state.voices[partner.voice][partner.index].rest;
+      if (keepAligned) {
+        state.voices[voice][index] = { rest: true, duration: event.duration, dots: event.dots, tie: false, notes: [] };
+        state.selected = partner;
+        state.picked = true;
+      } else {
+        state.voices[voice].splice(index, 1);
+        state.selected = partner;
+        state.picked = Boolean(partner);
+      }
+    } else {
+      state.selected = { voice, index };
+      state.picked = true;
+    }
+    state.status = t.removedNote(noteName(gone));
+    save();
+    renderAll();
+    if (state.selected) playEventAt(state.selected.voice, state.selected.index);
+  }
+  /** 长按亮着的琴键：在选中的和弦（两行）里找到这个音高并去掉 */
+  function removeMidiFromSelection(midi) {
+    for (const sel of selectedGroup()) {
+      const event = state.voices[sel.voice]?.[sel.index];
+      if (!event || event.rest) continue;
+      const k = event.notes.findIndex((n) => pitchMidi(n.letter, n.octave, n.alter ?? keyAlterations(state.key)[n.letter]) === midi || pitchMidi(n.letter, n.octave, n.alter ?? 0) === midi);
+      if (k >= 0) { removeNoteAt(sel.voice, sel.index, k); return; }
+    }
+  }
   const stop = () => { timers.forEach(clearTimeout); timers = []; target.querySelectorAll('.is-playing').forEach((n) => n.classList.remove('is-playing')); };
   target.addEventListener('toolbox-stop', stop);
 
@@ -317,6 +403,8 @@ export function mountStaffReading(target, { playChord }) {
   const scoreHolder = el('div', 'staff-canvas');
   const readout = el('div', 'staff-readout');
   const keysHolder = el('div', 'staff-keys');
+  // 长按琴键之后紧跟着的 click 不再写音（在捕获阶段拦下，琴键自己的 click 收不到）
+  keysHolder.addEventListener('click', (e) => { if (longPressed) { longPressed = false; e.stopPropagation(); e.preventDefault(); } }, true);
   const hints = el('details', 'staff-hints');
   hints.append(el('summary', '', t.hintTitle), el('p', 'mk-meta staff-hint', t.hint), el('p', 'mk-meta staff-hint', t.midiInput), el('p', 'mk-meta staff-hint', t.midiNote));
   board.append(toolbar, settingsBox, scoreHolder, readout, keysHolder, hints);
@@ -357,6 +445,26 @@ export function mountStaffReading(target, { playChord }) {
     if (chord && current && !current.rest && state.selected.voice === voice) {
       const existing = current.notes.find((n) => samePitch(n, note));
       if (existing) Object.assign(existing, note); else current.notes.push(note);
+    } else if (chord && current && !current.rest && state.clef === 'grand') {
+      // 大谱表的和弦模式：音落在另一行时，写进那一行的同一拍（没有就补休止符对齐后再写），两行合成一个和弦
+      const beat = onsetOf(state.selected.voice, state.selected.index);
+      const list = state.voices[voice];
+      const at = eventAtBeat(voice, beat);
+      if (at >= 0 && !list[at].rest) {
+        const existing = list[at].notes.find((n) => samePitch(n, note));
+        if (existing) Object.assign(existing, note); else list[at].notes.push(note);
+      } else if (at >= 0) {
+        list[at] = { rest: false, duration: list[at].duration, dots: list[at].dots, tie: false, notes: [note] };
+      } else if (voiceLength(voice) <= beat + 1e-6) {
+        decompose(beat - voiceLength(voice)).forEach((part) => list.push({ rest: true, duration: part.duration, dots: part.dots, tie: false, notes: [] }));
+        list.push({ rest: false, duration: current.duration, dots: current.dots, tie: false, notes: [note] });
+      } else {
+        // 这一拍在另一行一个长音的中间：没法对齐，照常写在那一行的末尾
+        state.status = t.cantAlign;
+        list.push({ rest: false, duration: state.duration, dots: state.dots, tie: false, notes: [note] });
+        state.selected = { voice, index: list.length - 1 };
+        state.picked = false;
+      }
     } else {
       state.voices[voice].push({ rest: false, duration: state.duration, dots: state.dots, tie: false, notes: [note] });
       state.selected = { voice, index: state.voices[voice].length - 1 };
@@ -425,20 +533,35 @@ export function mountStaffReading(target, { playChord }) {
     save();
     renderAll();
   }
+  /** 选中的和弦里时值相同的事件（两行一起改，保持对齐） */
+  function pickedGroup() {
+    const event = pickedEvent();
+    if (!event) return [];
+    const partner = partnerOf();
+    const other = partner ? state.voices[partner.voice][partner.index] : null;
+    return other && lengthOf(other) === lengthOf(event) ? [event, other] : [event];
+  }
   function setDuration(duration) {
     state.duration = duration;
-    const event = pickedEvent();
-    if (event) { snapshot(); event.duration = duration; save(); renderAll(); }
+    const group = pickedGroup();
+    if (group.length) { snapshot(); group.forEach((e) => { e.duration = duration; }); save(); renderAll(); }
   }
   function setDots(dots) {
     state.dots = dots;
-    const event = pickedEvent();
-    if (event) { snapshot(); event.dots = dots; save(); renderAll(); }
+    const group = pickedGroup();
+    if (group.length) { snapshot(); group.forEach((e) => { e.dots = dots; }); save(); renderAll(); }
   }
   function toggleTie() {
     const event = selectedEvent();
     if (!event || event.rest) return;
-    snapshot(); event.tie = !event.tie; save(); renderAll();
+    snapshot();
+    const tie = !event.tie;
+    event.tie = tie;
+    // 另一行同一拍的音一起连
+    const partner = partnerOf();
+    const other = partner ? state.voices[partner.voice][partner.index] : null;
+    if (other && !other.rest && lengthOf(other) === lengthOf(event)) other.tie = tie;
+    save(); renderAll();
   }
   function removeSelected() {
     let { selected } = state;
@@ -448,6 +571,9 @@ export function mountStaffReading(target, { playChord }) {
       selected = { voice, index: state.voices[voice].length - 1 };
     }
     snapshot();
+    // 大谱表：另一行同一拍、同样时值的事件一起删掉（两行保持对齐）
+    const partner = partnerOf(selected);
+    if (partner && lengthOf(state.voices[partner.voice][partner.index]) === lengthOf(state.voices[selected.voice][selected.index])) state.voices[partner.voice].splice(partner.index, 1);
     state.voices[selected.voice].splice(selected.index, 1);
     const left = state.voices[selected.voice].length;
     state.selected = left ? { voice: selected.voice, index: Math.min(selected.index, left - 1) } : null;
@@ -484,6 +610,7 @@ export function mountStaffReading(target, { playChord }) {
   }
 
   function renderScore() {
+    const partnerSel = state.picked ? partnerOf() : null;
     stop();
     const voices = layoutVoices();
     const clefs = voices.map((v) => v.clef);
@@ -588,7 +715,7 @@ export function mountStaffReading(target, { playChord }) {
           const stemsByGroup = new Map();
           events.forEach((e, i) => {
             const ex = slotX.get(e.onset);
-            const isSelected = state.picked && state.selected && state.selected.voice === voice && state.selected.index === e.source;
+            const isSelected = state.picked && ((state.selected && state.selected.voice === voice && state.selected.index === e.source) || (partnerSel && partnerSel.voice === voice && partnerSel.index === e.source));
             const cls = `${isSelected ? 'is-selected' : ''}`;
             let result;
             if (e.rest) {
@@ -606,8 +733,28 @@ export function mountStaffReading(target, { playChord }) {
             }
             result.el.dataset.voice = String(voice);
             result.el.dataset.source = String(e.source);
+            // 长按某个音：把它从和弦里取消
+            if (!e.rest) {
+              const clefId = v.clef;
+              onLongPress(result.el, (ev) => {
+                const heads = [...result.el.querySelectorAll('ellipse')];
+                let h = heads.indexOf(ev.target);
+                if (h < 0 && heads.length > 1 && typeof heads[0].getBoundingClientRect === 'function') {
+                  const dist = heads.map((x) => { const r = x.getBoundingClientRect(); return Math.abs(r.top + r.height / 2 - (ev.clientY ?? 0)); });
+                  h = dist.indexOf(Math.min(...dist));
+                }
+                if (h < 0) h = heads.length - 1;
+                // 符头按音位从低到高画：第 h 个符头对应音位排第 h 的那个音
+                const order = e.notes.map((n, k) => ({ k, pos: pitchToPosition(clefId, n.letter, n.octave) })).sort((a, b) => a.pos - b.pos);
+                const pressed = e.notes[order[Math.min(h, order.length - 1)].k];
+                const source = state.voices[voice][e.source];
+                const k = source?.notes.findIndex((n) => n.letter === pressed.letter && n.octave === pressed.octave && (n.alter ?? null) === (pressed.alter ?? null));
+                removeNoteAt(voice, e.source, k >= 0 ? k : source.notes.findIndex((n) => n.letter === pressed.letter && n.octave === pressed.octave));
+              });
+            }
             result.el.addEventListener('click', (event) => {
               event.stopPropagation();
+              if (longPressed) { longPressed = false; return; }
               const same = state.picked && state.selected?.voice === voice && state.selected?.index === e.source;
               // 再点一次已选中的音符就取消选择
               state.selected = same ? null : { voice, index: e.source };
@@ -735,9 +882,12 @@ export function mountStaffReading(target, { playChord }) {
   /** 写音或点选时试听这一个时值（和弦就一起响） */
   function playEventAt(voice, index) {
     const event = state.voices[voice]?.[index];
-    if (!event || event.rest) return;
-    const item = timeline().find((i) => i.voice === voice && i.source === index && i.notes.length);
-    if (item) playChord(item.notes.map((n) => centsFrequency(n.midi, n.cents)), 0.9);
+    if (!event) return;
+    const items = timeline();
+    const partner = partnerOf({ voice, index });
+    // 大谱表：同一拍的两行一起响
+    const notes = [{ voice, index }, partner].filter(Boolean).flatMap((sel) => items.find((i) => i.voice === sel.voice && i.source === sel.index && i.notes.length)?.notes || []);
+    if (notes.length) playChord(notes.map((n) => centsFrequency(n.midi, n.cents)), 0.9);
   }
   function midiTracks() {
     return clefList().map((clef, voice) => ({
@@ -770,9 +920,21 @@ export function mountStaffReading(target, { playChord }) {
   }
 
   function renderKeys() {
-    const lit = (selectedEvent()?.notes || []).map((n) => pitchMidi(n.letter, n.octave, n.alter ?? 0));
-    const keyboard = renderVisual({ kind: 'piano', from: 36, to: 84, lit, names: 'c' }, { play: ([midi]) => writeFromKey(midi) });
-    if (keyboard) keysHolder.replaceChildren(keyboard);
+    // 大谱表：上下两行同一拍的音一起亮
+    const sig = keyAlterations(state.key);
+    const lit = selectedGroup().flatMap((sel) => state.voices[sel.voice]?.[sel.index]?.notes || []).map((n) => pitchMidi(n.letter, n.octave, n.alter ?? sig[n.letter] ?? 0));
+    // 长按之后琴键会重画，紧跟着的 click 可能落在已经换掉的琴键上：在写音这里统一拦下
+    const keyboard = renderVisual({ kind: 'piano', from: 36, to: 84, lit, names: 'c' }, { play: ([midi]) => { if (longPressed) { longPressed = false; return; } writeFromKey(midi); } });
+    if (!keyboard) return;
+    // 长按亮着的琴键：把这个音从选中的和弦里取消
+    // 琴键按顺序画：白键是 36–84 里的白键，黑键是其中的黑键（和 learn_visuals 的画法一致）
+    const isBlack = (m) => [1, 3, 6, 8, 10].includes(m % 12);
+    const range = Array.from({ length: 84 - 36 + 1 }, (_, i) => 36 + i);
+    const midiOfKey = new Map();
+    keyboard.querySelectorAll('.lv-key.white').forEach((key, i) => midiOfKey.set(key, range.filter((m) => !isBlack(m))[i]));
+    keyboard.querySelectorAll('.lv-key.black').forEach((key, i) => midiOfKey.set(key, range.filter(isBlack)[i]));
+    keyboard.querySelectorAll('.lv-key.is-lit').forEach((key) => onLongPress(key, () => removeMidiFromSelection(midiOfKey.get(key))));
+    keysHolder.replaceChildren(keyboard);
   }
 
   function renderClefInfo() {
@@ -853,24 +1015,32 @@ export function mountStaffReading(target, { playChord }) {
   }
 
   // ---------------- 四部和声检查 ----------------
-  /** 从大谱表里读出四部和声：上行谱表最低、最高的音 = 女中、女高；下行谱表 = 男低、男高（两行同时开始、各至少两个音才算一个和弦） */
+  /**
+   * 从大谱表里读出四部和声：同一时刻开始的音合在一起，正好 4 个就是一个和弦（从低到高 = 男低、男高、女中、女高）；
+   * 上下两行怎么分配都可以（2 + 2、3 + 1、全写在一行），被连音线连过来的音不算新的起音（satb_check.groupFourPart）
+   */
   function satbChords() {
-    if (state.clef !== 'grand') return { chords: [], refs: [] };
+    if (state.clef !== 'grand') return { chords: [], refs: [], problems: [] };
     const sig = keyAlterations(state.key);
-    const timeline = (events) => { let beat = 0; return events.map((e, index) => { const item = { beat, e, index }; beat += durationBeats(e.duration, e.dots); return item; }); };
-    const up = timeline(state.voices[0] || []); const low = timeline(state.voices[1] || []);
     const midiOf = (n) => pitchMidi(n.letter, n.octave, n.alter ?? sig[n.letter]);
-    const chords = []; const refs = [];
-    up.forEach((u) => {
-      if (u.e.rest || u.e.notes.length < 2) return;
-      const l = low.find((x) => Math.abs(x.beat - u.beat) < 1e-6 && !x.e.rest && x.e.notes.length >= 2);
-      if (!l) return;
-      const upper = u.e.notes.map(midiOf).sort((a, b) => a - b); const lower = l.e.notes.map(midiOf).sort((a, b) => a - b);
-      chords.push([lower[0], lower[lower.length - 1], upper[0], upper[upper.length - 1]]);
-      refs.push({ up: u.index, low: l.index, beats: durationBeats(u.e.duration, u.e.dots) });
-    });
-    return { chords, refs };
+    const staff = (events) => {
+      let beat = 0; let prev = null;
+      return events.map((e, index) => {
+        const midis = e.rest ? [] : e.notes.map(midiOf);
+        const item = { beat, beats: durationBeats(e.duration, e.dots), midis, source: index, rest: e.rest, tiedIn: Boolean(prev?.tie && midis.length && midis.every((m) => prev.midis.includes(m))) };
+        prev = { tie: !e.rest && e.tie, midis };
+        beat += item.beats;
+        return item;
+      });
+    };
+    return groupFourPart([staff(state.voices[0] || []), staff(state.voices[1] || [])]);
   }
+  /** 拍位：第几小节第几拍 */
+  const beatLabel = (beat) => {
+    const bar = (state.meter[0] * 4) / state.meter[1];
+    const m = Math.floor(beat / bar + 1e-6);
+    return t.satbBeat(m + 1, Math.round(((beat - m * bar) / (4 / state.meter[1])) * 100) / 100 + 1);
+  };
   const satbTonic = () => ((7 * state.key) % 12 + 12 + (state.satbMinor ? 9 : 0)) % 12;
   function drawSatbMarks() {
     const svg = scoreHolder.querySelector('svg');
@@ -878,18 +1048,19 @@ export function mountStaffReading(target, { playChord }) {
     if (!state.satbResult) { svg.querySelector('.satb-marks')?.remove(); return; }
     const { issues, refs } = state.satbResult;
     drawIssueMarks(svg, issues, (index, part) => {
-      const ref = refs[index];
-      if (!ref) return null;
-      const voice = part < 2 ? 1 : 0;
-      const group = svg.querySelector(`.sd-event[data-voice="${voice}"][data-source="${part < 2 ? ref.low : ref.up}"]`);
+      const where = refs[index]?.parts?.[part];
+      if (!where) return null;
+      const group = svg.querySelector(`.sd-event[data-voice="${where.staff}"][data-source="${where.source}"]`);
+      // 符头按纵坐标从下往上排：第 rank 个（从低往高）就是这个声部
       const heads = [...(group?.querySelectorAll('ellipse') || [])].map((e) => ({ x: Number(e.getAttribute('cx')), y: Number(e.getAttribute('cy')) })).sort((a, b) => b.y - a.y);
-      if (!heads.length) return null;
-      return part % 2 === 0 ? heads[0] : heads[heads.length - 1];
+      return heads[Math.min(where.rank, heads.length - 1)] || null;
     });
   }
   function playSatbVoice(part) {
     stop();
-    const { chords, refs } = satbChords();
+    const { chords, refs, problems } = satbChords();
+    // 没认出和弦时不要默默没声音：显示原因（哪一拍上的音不是 4 个）
+    if (!chords.length) { state.satbResult = { issues: [], refs: [], empty: true, problems }; renderSatb(); return; }
     const secondsPerBeat = 60 / state.bpm;
     let at = 0;
     chords.forEach((chord, i) => {
@@ -934,8 +1105,8 @@ export function mountStaffReading(target, { playChord }) {
     [[false, `${KEY_NAMES[state.key][0]} ${t.satbMajor}`], [true, `${KEY_NAMES[state.key][1]} ${t.satbMinor}`]].forEach(([v, text]) => { const o = el('option', '', text); o.value = v ? '1' : '0'; if (Boolean(state.satbMinor) === v) o.selected = true; mode.appendChild(o); });
     mode.addEventListener('change', () => { state.satbMinor = mode.value === '1'; state.satbResult = null; renderSatb(); drawSatbMarks(); });
     controls.append(el('span', 'mk-meta', t.satbKey), mode, button('mk-btn', t.satbRun, () => {
-      const { chords, refs } = satbChords();
-      state.satbResult = chords.length ? { ...checkSATB(chords, { tonic: satbTonic(), minor: state.satbMinor }), refs } : { issues: [], refs: [], empty: true };
+      const { chords, refs, problems } = satbChords();
+      state.satbResult = chords.length ? { ...checkSATB(chords, { tonic: satbTonic(), minor: state.satbMinor }), refs, problems } : { issues: [], refs: [], empty: true, problems };
       if (chords.length) state.satbResult.saved = saveSatbMistakes(state.satbResult.issues, chords);
       renderSatb();
       drawSatbMarks();
@@ -950,6 +1121,8 @@ export function mountStaffReading(target, { playChord }) {
       satbBox.appendChild(issueList(state.satbResult.issues, lang, (id) => cite(SATB_SOURCES, id)));
       if (state.satbResult.saved) satbBox.appendChild(el('p', 'mk-meta satb-saved', t.satbSaved(state.satbResult.saved)));
     }
+    // 哪些拍上同时开始的音不是 4 个（这些拍没有算进检查）
+    (state.satbResult?.problems || []).slice(0, 4).forEach((p) => satbBox.appendChild(el('p', 'mk-meta satb-problem', t.satbCount(beatLabel(p.beat), p.count))));
   }
 
   function renderAll() {
@@ -1019,6 +1192,23 @@ export function mountStaffReading(target, { playChord }) {
   /** 链接参数：#staff?q=bass、#staff?q=alto:C4、#staff?q=grand；#staff?q=@import 从其他工具送来的谱 */
   function applyQuery(q) {
     if (!q) return;
+    // Side-B 实操：#staff?q=@lab:<id>[@chapter|@ex]——第一次打开时按任务准备谱表（之后保留玩家写到一半的内容，回来接着改），
+    // 挂上任务条（检查 / 提交时把当前的谱交给评分器）
+    if (String(q).startsWith('@lab:')) {
+      const ref = String(q).slice(5);
+      import('./lab_banner.js?v=20261004-l6').then(({ mountLabBanner, isFirstVisit }) => import('./sideb_labs.js?v=20261004-l3').then(({ LABS, parseLabRef }) => {
+        const setup = LABS[parseLabRef(ref).id]?.setup;
+        if (setup) {
+          snapshot();
+          const fresh = setup.clear && isFirstVisit(ref);
+          Object.assign(state, { clef: setup.clef || state.clef, key: setup.key ?? state.key, meter: setup.meter || state.meter, selected: null, picked: false, ...(fresh ? { voices: [[], []] } : {}) });
+          save();
+          renderAll();
+        }
+        mountLabBanner(target, ref, { getSubmission: () => ({ voices: clone(state.voices), key: state.key, meter: state.meter, clef: state.clef }) });
+      }));
+      return;
+    }
     if (q === '@import') {
       let incoming = null;
       try { incoming = JSON.parse(globalThis.localStorage?.getItem('jc-staff-import') || 'null'); globalThis.localStorage?.removeItem('jc-staff-import'); } catch (_) { incoming = null; }

@@ -34,6 +34,8 @@ const i18n = {
     nav_learn: { zh: "乐理闯关", ja: "音楽理論チャレンジ", en: "Theory Quest" },
     intro_learn: { zh: "像玩游戏一样学乐理：从简到难，每一关几分钟，对应工具箱的每个功能", ja: "ゲーム感覚で音楽理論：やさしい所から、1 ステージ数分。各ツールに対応", en: "Learn theory like a game: easy to hard, a few minutes per level, one for every tool" },
     return_tutorial: { zh: "回到教程", ja: "チュートリアルに戻る", en: "Back to tutorial" },
+    return_sideb: { zh: "回到 Side-B", ja: "Side-B に戻る", en: "Back to Side-B" },
+    return_sideb_title: { zh: "回到 Side-B 没做完的关卡：{code} {title}（{part}）", ja: "Side-B の途中のステージに戻る：{code} {title}（{part}）", en: "Return to your unfinished Side-B level: {code} {title} ({part})" },
     return_tutorial_title: { zh: "回到没做完的关卡：{title}（第 {n} / {m} 题）", ja: "途中のステージに戻る：{title}（{n} / {m} 問目）", en: "Return to your unfinished level: {title} (question {n} / {m})" },
     learn_confirm_title: { zh: "你还有一关没做完", ja: "途中のステージがあります", en: "You have an unfinished level" },
     learn_confirm_body: { zh: "「{title}」做到第 {n} / {m} 题。打开新的教程会放弃这一关的进度。想回到之前那一关，请选「回到之前的关卡」。", ja: "「{title}」は {n} / {m} 問目まで進んでいます。新しいチュートリアルを開くとこの進み具合は失われます。前のステージに戻るなら「前のステージに戻る」を選んでください。", en: "“{title}” is at question {n} / {m}. Opening a new tutorial discards that progress. To go back to it, choose “Back to my level”." },

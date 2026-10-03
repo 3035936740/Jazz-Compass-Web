@@ -1,10 +1,11 @@
 /** Ratio-first microtonal calculations. EDO is a quantization of JI, not JI itself. */
+// limit：质数极限（频率比里最大的质数，Harry Partch 的概念）  ref:wiki-limit
 export const MICRO_PRESETS = Object.freeze({
-  major: { ratios: ["1/1", "5/4", "3/2"], dimension: "3D" },
-  minor: { ratios: ["1/1", "6/5", "3/2"], dimension: "3D" },
-  septimal: { ratios: ["1/1", "3/2", "7/4"], dimension: "4D" },
-  undecimal: { ratios: ["1/1", "3/2", "11/6"], dimension: "5D" },
-  majorScale: { ratios: ["1/1", "9/8", "5/4", "4/3", "3/2", "5/3", "15/8", "2/1"], dimension: "3D" },
+  major: { ratios: ["1/1", "5/4", "3/2"], limit: "5-limit" },
+  minor: { ratios: ["1/1", "6/5", "3/2"], limit: "5-limit" },
+  septimal: { ratios: ["1/1", "3/2", "7/4"], limit: "7-limit" },
+  undecimal: { ratios: ["1/1", "3/2", "11/6"], limit: "11-limit" },
+  majorScale: { ratios: ["1/1", "9/8", "5/4", "4/3", "3/2", "5/3", "15/8", "2/1"], limit: "5-limit" },
 });
 
 const PRIMES = [2, 3, 5, 7, 11, 13];

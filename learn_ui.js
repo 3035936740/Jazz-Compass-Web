@@ -1,7 +1,7 @@
 // 乐理闯关界面：关卡地图（主关 + 进阶分支 + 综合测验 + 结业挑战）、关卡播放器（引导卡 / 选择 / 填空 / 连线）、
 // 图示、提示与解析、去工具里看看（带学习记录，回来时还是同一题）、结算
 // 题目与依据见 learn_content.js / learn_units_*.js / learn_branches_*.js；生成题见 learn_generators.js；规则见 learn_engine.js
-import { UNITS, SECTIONS, SIDES } from './learn_content.js?v=20261003-s7';
+import { UNITS, SECTIONS, SIDES } from './learn_content.js?v=20261004-s8';
 import {
   createSession, currentItem, answer, advance, isFinished, progressRatio, loadProgress, saveProgress, completeUnit, isUnlocked, nextUnitIndex, shuffle,
   levelKey, parseLevelKey, isLevelUnlocked, isDone, MIX_SLOT, buildMixedCards, buildFinalCards, FINAL_KEY, FINAL_EX_KEY, finalUnlocked, finalExUnlocked,
@@ -9,7 +9,7 @@ import {
   saveResume, loadResume, clearResume, unitLevelKeys, setLevelStars, emptyProgress,
   loadReview, saveReview, recordMistake, recordReviewAnswer, dueReview, exportProgress, importProgress, starsFor, isSideLevelUnlocked, unitFullyDone,
 } from './learn_engine.js?v=20261003-s3';
-import { expandCards } from './learn_generators.js?v=20261003-g2';
+import { expandCards } from './learn_generators.js?v=20261004-g3';
 import { worksheetHTML, openWorksheet, printable } from './worksheet.js?v=20261003-w1';
 import { renderVisual } from './learn_visuals.js?v=20261003-r31';
 import { el, button, language, midiToFrequency, cite } from './module_kit.js';
@@ -39,6 +39,7 @@ const TEXT = {
   zh: {
     title: '乐理闯关', subtitle: '一关只要几分钟。每个关卡下面还有 4 个进阶关和 1 个综合测验；看不懂工具时，来这里玩一关就明白了。',
     streak: (n) => `连续 ${n} 天`, stars: (n) => `${n} 颗星`, xp: (n) => `${n} 经验`, done: (a, b) => `主关已完成 ${a} / ${b}`, branchDone: (a, b) => `进阶 ${a} / ${b}`,
+    sideB: '翻面 · Side-B',
     continue: '继续闯关', start: '开始', replay: '再玩一次', locked: '先完成前一关就能解锁', unlockAll: '我有基础，全部解锁', relock: '恢复按顺序解锁',
     tool: (name) => `去工具：${name}`, openTool: (name) => `打开「${name}」看看`, close: '退出', sfxOn: '答题音效：开（点一下关闭）', sfxOff: '答题音效：关（点一下打开）', check: '检查', next: '继续', more: '嗯，然后呢？', gotIt: '明白了，继续',
     hint: '提示', explain: '看解析', right: ['答对了！', '漂亮！', '没错！', '很棒！'], wrong: '差一点——答案是：', why: '为什么？',
@@ -60,6 +61,7 @@ const TEXT = {
   ja: {
     title: '音楽理論チャレンジ', subtitle: '1 ステージ数分。各ステージには 4 つの発展ステージと総合テストがあります。ツールがわからないときは、ここで 1 つ遊べばすぐわかります。',
     streak: (n) => `${n} 日連続`, stars: (n) => `星 ${n}`, xp: (n) => `${n} XP`, done: (a, b) => `メイン ${a} / ${b} クリア`, branchDone: (a, b) => `発展 ${a} / ${b}`,
+    sideB: '裏返す · Side-B',
     continue: '続きから', start: 'スタート', replay: 'もう一度', locked: '前のステージをクリアすると解放', unlockAll: '経験者なのですべて解放', relock: '順番どおりに戻す',
     tool: (name) => `ツールへ：${name}`, openTool: (name) => `「${name}」を開いてみる`, close: '終了', sfxOn: '効果音：オン（クリックでオフ）', sfxOff: '効果音：オフ（クリックでオン）', check: 'チェック', next: '次へ', more: 'うん、それで？', gotIt: 'わかった、次へ',
     hint: 'ヒント', explain: '解説を見る', right: ['正解！', 'すばらしい！', 'その通り！', 'お見事！'], wrong: 'おしい——正解は：', why: 'どうして？',
@@ -81,6 +83,7 @@ const TEXT = {
   en: {
     title: 'Theory Quest', subtitle: 'Each level takes a few minutes, and each has 4 advanced levels plus a mixed test. Stuck on a tool? Play a level here and it will click.',
     streak: (n) => `${n}-day streak`, stars: (n) => `${n} stars`, xp: (n) => `${n} XP`, done: (a, b) => `${a} / ${b} main levels`, branchDone: (a, b) => `Advanced ${a} / ${b}`,
+    sideB: 'Flip to Side-B',
     continue: 'Continue', start: 'Start', replay: 'Play again', locked: 'Finish the previous level to unlock', unlockAll: 'I know the basics — unlock all', relock: 'Back to step-by-step',
     tool: (name) => `Open tool: ${name}`, openTool: (name) => `Open “${name}” to see it`, close: 'Quit', sfxOn: 'Answer sounds: on (click to mute)', sfxOff: 'Answer sounds: off (click to turn on)', check: 'Check', next: 'Continue', more: 'And then?', gotIt: 'Got it, continue',
     hint: 'Hint', explain: 'Explanation', right: ['Correct!', 'Nice!', 'Exactly!', 'Great!'], wrong: 'Almost — the answer is:', why: 'Why?',
@@ -208,7 +211,13 @@ export function mountLearn(target, { playChord }) {
   const dt = DEBUG_TEXT[lang];
   /** 解锁判断用的进度：调试模式下全部开放（包括 EX 结业挑战） */
   const unlockView = () => (debugEnabled() ? { ...progress, unlockAll: true } : progress);
-  debugListeners.add(() => { if (!root.isConnected && root.parentNode !== target) return; if (session && !isFinished(session)) renderCard(); else renderMap(); });
+  const SIDE_KEY = 'jc-learn-side';
+  let sideB = null;
+  /** Side-B 开放：只有 EX 结业挑战通关，或者调试模式（class_debug(true)）；A 面的"全部解锁"不开放 Side-B */
+  const sideBOpen = () => debugEnabled() || isDone(progress, FINAL_EX_KEY);
+  /** 给 Side-B 用的进度：只有调试模式才全部开放（A 面的"全部解锁"只管 A 面） */
+  const sideBView = () => ({ ...progress, unlockAll: debugEnabled() });
+  debugListeners.add(() => { if (!root.isConnected && root.parentNode !== target) return; if (sideB) { if (sideBOpen()) sideB.refresh(); else flipBack(); return; } if (session && !isFinished(session)) renderCard(); else renderMap(); });
   target.appendChild(root);
 
   // ---------------- 关卡数据 ----------------
@@ -273,6 +282,8 @@ export function mountLearn(target, { playChord }) {
       button('learn-btn primary', doneCount === UNITS.length ? t.replay : `${t.continue} · ${tx(UNITS[next].title)}`, () => startLevel(UNITS[next].id)),
       button('learn-link', progress.unlockAll ? t.relock : t.unlockAll, () => { progress = { ...progress, unlockAll: !progress.unlockAll }; saveProgress(progress); renderMap(); }),
     );
+    // 翻面 · Side-B：默认隐藏，EX 结业挑战通关后（或调试模式下）才出现
+    if (sideBOpen()) actions.appendChild(withIcon(button('learn-btn sideb-entry', '', () => showSideB()), 'sparkle', t.sideB));
     const record = loadResume();
     if (record?.session) {
       const resume = withIcon(button('learn-btn resume wide', '', () => target.resume()), 'replay', t.resumeLabel(record.title, (record.position ?? 0) + 1, record.total ?? '?'));
@@ -1204,6 +1215,12 @@ export function mountLearn(target, { playChord }) {
 
   /** 供外部（工具面板的"看不懂？玩教程"按钮、链接）直接打开某一关；从工具跳来时即使没解锁也可以玩 */
   target.openUnit = (id) => {
+    // Side-B 的链接：#learn?q=@sideb、@sideb-resume（从工具回到课程）、@lab-return:<id>（提交了实操）、b:<关卡>
+    if (id === '@sideb') { showSideB(); return; }
+    if (id === '@sideb-resume') { showSideB((b) => b.resume()); return; }
+    if (String(id).startsWith('@lab-return:')) { showSideB((b) => b.labReturn(String(id).slice(12))); return; }
+    if (/^b:/.test(id)) { showSideB((b) => b.openLevel(id.slice(2))); return; }
+    if (sideB) flipBack(false);
     if (id === FINAL_KEY || id === FINAL_EX_KEY || parseChapterKey(id)) { startLevel(id); return; }
     const { unitId } = parseLevelKey(id);
     if (unitIndex(unitId) < 0 && !SIDES.some((side) => side.id === unitId)) { renderMap(); return; }
@@ -1212,7 +1229,10 @@ export function mountLearn(target, { playChord }) {
   /** 回到学习记录里的那一关、那一题 */
   /** 当前题卡（只读；测试脚本用来自动作答） */
   target.currentCard = () => (session && !isFinished(session) ? currentItem(session).card : null);
+  /** Side-B 当前的关卡进度（只读；测试脚本用） */
+  target.sideBSession = () => sideB?.session ?? null;
   target.resume = () => {
+    if (sideB) flipBack(false);
     const record = loadResume();
     if (!record?.session) { renderMap(); return false; }
     level = levelInfo(record.key);
@@ -1220,5 +1240,49 @@ export function mountLearn(target, { playChord }) {
     renderCard();
     return true;
   };
-  renderMap();
+  // ---------------- 翻面：Side-B ----------------
+  /** 上次停在哪一面（和 sideb_engine.loadSide 同一个键） */
+  const readSide = () => { try { return JSON.parse(globalThis.localStorage?.getItem(SIDE_KEY) || '"a"') === 'b' ? 'b' : 'a'; } catch (_) { return 'a'; } };
+  const writeSide = (side) => { try { globalThis.localStorage?.setItem(SIDE_KEY, JSON.stringify(side)); } catch (_) { /* 无痕模式等 */ } };
+  /** 整张地图翻过去：先转到侧面，换成另一面的内容，再转回来（减少动态效果时直接切换） */
+  function flipTo(render) {
+    const animate = !reducedMotion() && root.isConnected;
+    if (!animate) { render(); return Promise.resolve(); }
+    root.classList.add('flip-out');
+    return new Promise((done) => setTimeout(() => {
+      Promise.resolve(render()).then(() => {
+        root.classList.remove('flip-out');
+        root.classList.add('flip-in');
+        setTimeout(() => { root.classList.remove('flip-in'); done(); }, 320);
+      });
+    }, 220));
+  }
+  function showSideB(then, { animate = true } = {}) {
+    if (!sideBOpen()) { renderMap(); return; }
+    stop(); closeSheets();
+    const mount = () => import('./sideb_ui.js?v=20261004-v9').then(({ mountSideB }) => {
+      writeSide('b');
+      root.classList.add('is-side-b');
+      sideB = mountSideB(root, {
+        playChord,
+        onFlipBack: () => flipTo(() => flipBack()),
+        openA: (id) => { flipBack(false); target.openUnit(id); },
+        aTitle: (id) => tx((UNITS.find((u) => u.id === id) || SIDES.find((side) => side.id === id))?.title) || id,
+        progressView: () => { progress = loadProgress(); return sideBView(); },
+      });
+      then?.(sideB);
+    });
+    if (sideB || !animate) { mount(); return; }
+    flipTo(mount);
+  }
+  function flipBack(render = true) {
+    sideB?.stop?.();
+    sideB = null;
+    writeSide('a');
+    root.classList.remove('is-side-b');
+    progress = loadProgress();
+    if (render) renderMap();
+  }
+  // 上次停在 B 面：直接打开 B 面（不播翻面动画）
+  if (readSide() === 'b' && sideBOpen()) showSideB(null, { animate: false }); else renderMap();
 }

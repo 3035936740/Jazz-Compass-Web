@@ -1,10 +1,10 @@
-import { MICRO_PRESETS, parseRatio, ratioLabel, ratioBetween, centsFromRatio, octavePosition, foldRatioToOctave, extendedJustRatios, quantizeRatio, frequencyForRatio, harmonicSeries, syntonicComma, centsToKeyboardPercent, keyboardPercentToCents, piano88Notes, midiNoteLabel, midiPositionFrequency, decodeMidiMessage, syncPianoVoices } from "./microtonal.js?v=20260915-2";
+import { MICRO_PRESETS, parseRatio, ratioLabel, ratioBetween, centsFromRatio, octavePosition, foldRatioToOctave, extendedJustRatios, quantizeRatio, frequencyForRatio, harmonicSeries, syntonicComma, centsToKeyboardPercent, keyboardPercentToCents, piano88Notes, midiNoteLabel, midiPositionFrequency, decodeMidiMessage, syncPianoVoices } from "./microtonal.js?v=20261004-m1";
 
 const COPY = {
   zh: {
     preset: "和声构型", edo: "平均律 · 1–93", quick: "快捷选择", method: "量化方式", root: "基准音 Hz", ratios: "频率比（空格或逗号分隔）",
-    generator: "生成元", direct: "逐音就近", major: "纯律大三和弦 · Ah–Chy–Ly", minor: "纯律小三和弦",
-    septimal: "7 倍音构型 · Ah–Chy–My", undecimal: "11 倍音构型 · Ah–Chy–Fuzi", majorScale: "纯律大调音阶", custom: "自定义频率比",
+    generator: "生成元", direct: "逐音就近", major: "纯律大三和弦 · 1/1 5/4 3/2（5-limit）", minor: "纯律小三和弦 · 1/1 6/5 3/2（5-limit）",
+    septimal: "泛音七度 · 1/1 3/2 7/4（7-limit）", undecimal: "十一限中立七度 · 1/1 3/2 11/6（11-limit）", majorScale: "纯律大调音阶（5-limit）", custom: "自定义频率比",
     ji: "纯律", tempered: "平均律", playJi: "播放纯律", playEdo: "播放平均律", playNote: "试听", ratio: "频率比", cents: "纯律音分", step: "步数", error: "偏差", hz: "频率",
     compareTitle: "音程与量化", compareHelp: "细点为整数比位置，实点为平均律位置；横轴为一个八度。正偏差表示平均律偏高。",
     relationTitle: "和声内部关系", relationHelp: "逐对比较当前构型中的音。平均律音程按各音量化后的步数相减，因此保留当前构型的内部关系。", fromTo: "音对", interval: "纯律音程",
@@ -13,15 +13,15 @@ const COPY = {
     pianoHint: "点比率标记，或直接点钢琴任意位置（包括键缝）试听。← / → 每次移动 10¢，Shift 为 1¢。", pianoReadout: "当前音高", pianoRelative: "相对最近 12 平均律", pianoAnchor: "键盘按 C–C 排列；改变基准 Hz 只改变试听频率。", pianoRatio: "频率比",
     fullPianoTitle: "88 键钢琴卷帘", fullPianoHelp: "A0–C8 全音域。左右拖动或滚轮横移，Ctrl/⌘ + 滚轮缩放；琴缝是相邻音中间的 +50¢。全部输入使用钢琴音色。", zoom: "缩放", midiOffset: "MIDI 音分偏移", midiConnect: "连接 MIDI 键盘", midiWaiting: "MIDI 未连接", midiConnecting: "正在请求 MIDI…", midiReady: "MIDI 已连接", midiUnavailable: "浏览器不支持 Web MIDI", midiDenied: "MIDI 连接失败", midiPitchBend: "弯音", chordLatch: "和声保持", clearChord: "清除和声", chordNotes: "和声音",
     commaTitle: "音差观察 · 81/80", commaText: "句法逗号约 21.51 音分。12 EDO 将它合并为 0 步，41 EDO 的生成元映射保留为 1 步。",
-    sourceTitle: "理论边界与资料", sourceText: "这里是频率比、平均律和基础和声的实验台，不是沙沙夫式音乐理论的完整实现。3D / 4D / 5D 只标注示例构型；不自动推断功能式、和音名或和音图。11/6 是 11/3 折回一个八度的同音类。",
-    sourceAuthor: "LΛMPLIGHT · Chalaxata", sourceAnswer: "LΛMPLIGHT · 两种量化方式的说明", sourceEditor: "GitHub · 和音图编辑器", sourceSequencer: "GitHub · Nafchanaphata 音序器", sourceNotes: "GitHub · 理论笔记（第三方）",
+    sourceTitle: "理论边界与资料", sourceText: "这里是频率比、平均律和基础和声的实验台。预设按质数极限标注（频率比里最大的质数：5-limit、7-limit、11-limit，Harry Partch 的概念）；音程名称用 Huygens-Fokker 微分音中心音程表里的标准英文名（7/4 = harmonic seventh，11/6 = undecimal neutral seventh）。11/6 是 11/3 折回一个八度的同音类。",
+    sourceLimit: "Wikipedia · 质数极限（Limit）", sourceNames: "Huygens-Fokker 微分音中心 · 音程表", sourceGann: "Kyle Gann · Just Intonation Explained", sourceAnswer: "LΛMPLIGHT · 两种量化方式的说明",
     rootNote: "基准音使用 12 EDO 的 C4≈261.63 Hz 作为默认值；它只锚定绝对音高，纯律音程仍由整数比决定。",
     fallback: "含 13 以外质因数的比值会自动用逐音就近方式。", inputError: "请输入 1–24 个有效频率比，格式如 1/1 5/4 3/2。",
   },
   ja: {
     preset: "和声の構成", edo: "平均律 · 1–93", quick: "クイック選択", method: "量子化方式", root: "基準音 Hz", ratios: "周波数比（空白・カンマ区切り）",
-    generator: "生成元", direct: "各音を最近傍へ", major: "純正長三和音 · Ah–Chy–Ly", minor: "純正短三和音",
-    septimal: "7 倍音 · Ah–Chy–My", undecimal: "11 倍音 · Ah–Chy–Fuzi", majorScale: "純正長音階", custom: "カスタム比率",
+    generator: "生成元", direct: "各音を最近傍へ", major: "純正長三和音 · 1/1 5/4 3/2（5-limit）", minor: "純正短三和音 · 1/1 6/5 3/2（5-limit）",
+    septimal: "ハーモニック・セブンス · 1/1 3/2 7/4（7-limit）", undecimal: "11 リミットの中立 7 度 · 1/1 3/2 11/6（11-limit）", majorScale: "純正長音階（5-limit）", custom: "カスタム比率",
     ji: "純正律", tempered: "平均律", playJi: "純正律を再生", playEdo: "平均律を再生", playNote: "試聴", ratio: "周波数比", cents: "純正セント", step: "ステップ", error: "誤差", hz: "周波数",
     compareTitle: "音程と量子化", compareHelp: "細い点は整数比、塗りつぶし点は平均律。横軸は1オクターブ。正の誤差は平均律が高いことを示します。",
     relationTitle: "和声内の関係", relationHelp: "現在の構成音をペアで比較します。平均律の音程は量子化済みステップの差です。", fromTo: "音のペア", interval: "純正音程",
@@ -30,15 +30,15 @@ const COPY = {
     pianoHint: "比率の印、または鍵盤のどこでも（鍵の隙間も）クリックして試聴。← / → は 10¢、Shift は 1¢ 移動。", pianoReadout: "現在の音高", pianoRelative: "最も近い 12 平均律から", pianoAnchor: "鍵盤は C–C 配列。基準 Hz の変更は再生周波数のみ変えます。", pianoRatio: "周波数比",
     fullPianoTitle: "88鍵ピアノロール", fullPianoHelp: "A0–C8。ドラッグまたはホイールで横移動、Ctrl/⌘ + ホイールでズーム。鍵間は隣接音の +50¢、すべてピアノ音色です。", zoom: "ズーム", midiOffset: "MIDI セントオフセット", midiConnect: "MIDI キーボードを接続", midiWaiting: "MIDI 未接続", midiConnecting: "MIDI を要求中…", midiReady: "MIDI 接続済み", midiUnavailable: "Web MIDI 非対応", midiDenied: "MIDI 接続に失敗", midiPitchBend: "ピッチベンド", chordLatch: "和音保持", clearChord: "和音を消去", chordNotes: "和音",
     commaTitle: "コンマ · 81/80", commaText: "シントニック・コンマは約 21.51 セント。12 EDO では 0 ステップ、41 EDO の生成元写像では 1 ステップ。",
-    sourceTitle: "理論上の範囲と資料", sourceText: "これは周波数比・平均律・基本和声の実験台であり、シャサフ式音楽理論の完全な実装ではありません。3D / 4D / 5D は例示のみで、機能式・和音名・和音図を自動推定しません。11/6 は 11/3 のオクターブ同値です。",
-    sourceAuthor: "LΛMPLIGHT · Chalaxata", sourceAnswer: "LΛMPLIGHT · 量子化方式の説明", sourceEditor: "GitHub · 和音図エディター", sourceSequencer: "GitHub · Nafchanaphata", sourceNotes: "GitHub · 理論メモ（第三者）",
+    sourceTitle: "理論上の範囲と資料", sourceText: "周波数比・平均律・基本和声の実験台です。プリセットは素数リミット（比に出てくる最大の素数：5-limit・7-limit・11-limit、Harry Partch の概念）で表示し、音程名は Huygens-Fokker 微分音センターの音程表の標準的な英語名（7/4 = harmonic seventh、11/6 = undecimal neutral seventh）を使います。11/6 は 11/3 のオクターヴ同値です。",
+    sourceLimit: "Wikipedia · 素数リミット（Limit）", sourceNames: "Huygens-Fokker 微分音センター · 音程表", sourceGann: "Kyle Gann · Just Intonation Explained", sourceAnswer: "LΛMPLIGHT · 量子化方式の説明",
     rootNote: "基準音の初期値は 12 EDO の C4≈261.63 Hz。絶対音高の基点だけで、純正音程は整数比から決まります。",
     fallback: "13より大きい素因数を含む比率は最近傍方式に切り替えます。", inputError: "1～24個の比率を入力してください（例: 1/1 5/4 3/2）。",
   },
   en: {
     preset: "Harmony shape", edo: "Equal temperament · 1–93", quick: "Quick picks", method: "Quantization", root: "Reference Hz", ratios: "Ratios (space or comma separated)",
-    generator: "Generator mapping", direct: "Nearest pitch", major: "Just major · Ah–Chy–Ly", minor: "Just minor",
-    septimal: "7-limit · Ah–Chy–My", undecimal: "11-limit · Ah–Chy–Fuzi", majorScale: "Just major scale", custom: "Custom ratios",
+    generator: "Generator mapping", direct: "Nearest pitch", major: "Just major triad · 1/1 5/4 3/2 (5-limit)", minor: "Just minor triad · 1/1 6/5 3/2 (5-limit)",
+    septimal: "Harmonic seventh · 1/1 3/2 7/4 (7-limit)", undecimal: "Undecimal neutral seventh · 1/1 3/2 11/6 (11-limit)", majorScale: "Just major scale (5-limit)", custom: "Custom ratios",
     ji: "Just intonation", tempered: "Equal temperament", playJi: "Play just intonation", playEdo: "Play equal temperament", playNote: "Hear", ratio: "Ratio", cents: "JI cents", step: "Steps", error: "Error", hz: "Frequency",
     compareTitle: "Intervals & quantization", compareHelp: "Open dots mark integer ratios; filled dots mark EDO pitches. The axis spans one octave. Positive error means EDO is sharp.",
     relationTitle: "Internal harmony", relationHelp: "Compare every pair in the current shape. EDO intervals subtract the mapped steps of each pitch, preserving the shape's internal mapping.", fromTo: "Pair", interval: "Just interval",
@@ -47,20 +47,20 @@ const COPY = {
     pianoHint: "Click a ratio marker or anywhere on the keyboard—even between keys—to hear it. ← / → move 10¢, or 1¢ with Shift.", pianoReadout: "Current pitch", pianoRelative: "From nearest 12 EDO", pianoAnchor: "The keyboard is laid out C–C; changing reference Hz changes playback pitch only.", pianoRatio: "Frequency ratio",
     fullPianoTitle: "88-key piano roll", fullPianoHelp: "Full A0–C8 range. Drag or wheel to pan, Ctrl/⌘ + wheel to zoom. Key seams play the +50¢ midpoint; every input uses the piano timbre.", zoom: "Zoom", midiOffset: "MIDI cent offset", midiConnect: "Connect MIDI keyboard", midiWaiting: "MIDI not connected", midiConnecting: "Requesting MIDI…", midiReady: "MIDI connected", midiUnavailable: "Web MIDI is unavailable", midiDenied: "MIDI connection failed", midiPitchBend: "Pitch bend", chordLatch: "Chord latch", clearChord: "Clear chord", chordNotes: "Chord tones",
     commaTitle: "Syntonic comma · 81/80", commaText: "The syntonic comma is about 21.51 cents. 12 EDO maps it to 0 steps; 41 EDO generator mapping preserves 1 step.",
-    sourceTitle: "Scope & sources", sourceText: "This is a lab for ratios, EDOs and basic harmony—not a complete implementation of Shasavistic music theory. 3D / 4D / 5D label example shapes only; it does not infer functoglyphs, harmononyms or chord diagrams. 11/6 is the octave-equivalent of 11/3.",
-    sourceAuthor: "LΛMPLIGHT · Chalaxata", sourceAnswer: "LΛMPLIGHT · on quantization methods", sourceEditor: "GitHub · chord diagram editor", sourceSequencer: "GitHub · Nafchanaphata sequencer", sourceNotes: "GitHub · theory notes (third party)",
+    sourceTitle: "Scope & sources", sourceText: "A lab for ratios, EDOs and basic harmony. Presets are labelled by prime limit (the largest prime in the ratio: 5-, 7-, 11-limit — Harry Partch’s concept); interval names follow the standard English names in the Huygens-Fokker Foundation’s list of intervals (7/4 = harmonic seventh, 11/6 = undecimal neutral seventh). 11/6 is the octave-equivalent of 11/3.",
+    sourceLimit: "Wikipedia · Limit (music)", sourceNames: "Huygens-Fokker Foundation · List of intervals", sourceGann: "Kyle Gann · Just Intonation Explained", sourceAnswer: "LΛMPLIGHT · on quantization methods",
     rootNote: "The default reference is C4≈261.63 Hz in 12 EDO. It anchors absolute pitch only; JI intervals still come from integer ratios.",
     fallback: "Ratios with prime factors above 13 fall back to nearest-pitch mapping.", inputError: "Enter 1–24 valid ratios, e.g. 1/1 5/4 3/2.",
   },
 };
 
-// ref:lamplight-chalaxata ref:lamplight-requests ref:shasavistic-editor ref:nafchanaphata ref:haleyhalcyon-notes
+// ref:wiki-limit ref:hf-intervals ref:gann-ji ref:lamplight-requests
+// 量化方式（生成元映射 / 逐音就近）的比较沿用 LΛMPLIGHT 的说明；质数极限与音程名称用标准术语
 const SOURCE_LINKS = [
-  ["sourceAuthor", "https://lamplight0.sakura.ne.jp/en/a/music/chalaxata.php?mode=%E5%B9%B3%E5%9D%87%E5%BE%8B"],
+  ["sourceLimit", "https://en.wikipedia.org/wiki/Limit_(music)"],
+  ["sourceNames", "https://www.huygens-fokker.org/docs/intervals.html"],
+  ["sourceGann", "https://www.kylegann.com/tuning.html"],
   ["sourceAnswer", "https://lamplight0.sakura.ne.jp/a/requests.php"],
-  ["sourceEditor", "https://github.com/MrZ626/shasavistic-chord-diagram-editor"],
-  ["sourceSequencer", "https://github.com/Rtt398/nafchanaphata"],
-  ["sourceNotes", "https://gist.github.com/HaleyHalcyon/9507005979ce6bbd4e93bdd298cb5d5e"],
 ];
 
 function languageCopy() { return COPY[window.__lang] || COPY.en; }
@@ -282,7 +282,7 @@ export function mountMicrotonal(playChord, createHeldPianoVoice) {
       const comma41 = quantizeRatio(comma, 41).steps;
       const fallback = ratios.some(ratio => quantizeRatio(ratio, edo, method).appliedMethod !== method && method === "generator");
       body.innerHTML = `
-        <div class="micro-summary"><div><span class="micro-kicker">RATIO LAB / ${MICRO_PRESETS[preset.value]?.dimension || "JI"}</span><h3>${copy.compareTitle}</h3><p>${copy.compareHelp}</p></div><div class="micro-play-actions"><button type="button" id="micro-play-ji">► ${copy.playJi}</button><button type="button" id="micro-play-edo">► ${copy.playEdo}</button></div></div>
+        <div class="micro-summary"><div><span class="micro-kicker">RATIO LAB / ${(MICRO_PRESETS[preset.value]?.limit || "JI").toUpperCase()}</span><h3>${copy.compareTitle}</h3><p>${copy.compareHelp}</p></div><div class="micro-play-actions"><button type="button" id="micro-play-ji">► ${copy.playJi}</button><button type="button" id="micro-play-edo">► ${copy.playEdo}</button></div></div>
         <div class="micro-legend"><span><i class="micro-legend-ji"></i>${copy.ji}</span><span><i class="micro-legend-edo"></i>${edo} EDO</span></div>
         <div class="micro-table-scroll"><table class="micro-table"><thead><tr><th>${copy.ratio}</th><th>${copy.cents}</th><th>${edo} EDO ${copy.step}</th><th>${copy.error}</th><th>${copy.hz} · JI / EDO</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
         <p class="micro-footnote">${copy.rootNote}${fallback ? ` ${copy.fallback}` : ""}</p>

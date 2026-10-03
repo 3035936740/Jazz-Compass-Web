@@ -1148,15 +1148,15 @@ export const MORE_TOURS = {
     tour: [m('t1', t('离大、小三度都约差四分之一音', '長短どちらとも約 4 分音違い', 'about a quarter tone from each'))],
   },
   'microharmony:2#0': {
-    visual: { kind: 'blocks', rows: [{ cells: [{ text: '2D', sub: '3/2 · 4/3 · 9/8' }, { text: '3D', sub: '5/4 · 6/5 · 5/3' }] }, { cells: [{ text: '4D', sub: '7/4 · 7/6 · 8/7' }, { text: '5D', sub: '11/8 · 11/9 · 11/6' }] }] },
-    tour: [m(['row0', 'row1'], t('最大质数决定维度', '最大の素数が次元を決める', 'the largest prime sets the dimension')), m('row0', t('Colorspeak：5/4 = yo 3rd', 'Colorspeak：5/4 = yo 3rd', 'Colorspeak: 5/4 = yo 3rd'))],
+    visual: { kind: 'blocks', rows: [{ cells: [{ text: '3-limit', sub: '3/2 · 4/3 · 9/8' }, { text: '5-limit', sub: '5/4 · 6/5 · 5/3' }] }, { cells: [{ text: '7-limit', sub: '7/4 · 7/6 · 8/7' }, { text: '11-limit', sub: '11/8 · 11/9 · 11/6' }] }] },
+    tour: [m(['row0', 'row1'], t('最大质数决定极限', '最大の素数がリミットを決める', 'the largest prime sets the limit')), m('row1', t('septimal、undecimal', 'septimal・undecimal', 'septimal, undecimal'), 'below')],
   },
   'microharmony:3#0': {
-    visual: { kind: 'blocks', rows: [{ cells: [{ text: 'Ah–Chy–Ly', sub: '1/1 · 3/2 · 5/4 · 3D' }, { text: 'Ah–Chy–My', sub: '1/1 · 3/2 · 7/4 · 4D' }, { text: 'Ah–Chy–Fuzi', sub: '1/1 · 3/2 · 11/6 · 5D' }] }] },
-    tour: [m('row0', t('三种预设依次听', '3 つのプリセット', 'the three presets in turn')), m('c0-2', t('维度越高越陌生', '次元が高いほど耳慣れない', 'higher dimension, stranger sound'), 'below')],
+    visual: { kind: 'blocks', rows: [{ cells: [{ text: '1/1 · 5/4 · 3/2', sub: '5-limit' }, { text: '1/1 · 3/2 · 7/4', sub: '7-limit' }, { text: '1/1 · 3/2 · 11/6', sub: '11-limit' }] }] },
+    tour: [m('row0', t('三种预设依次听', '3 つのプリセットを順に', 'the three presets in turn')), m('c0-1', t('7/4 = harmonic seventh', '7/4 = harmonic seventh', '7/4 = harmonic seventh'), 'below')],
   },
   'microharmony:4#0': {
-    visual: { kind: 'blocks', rows: [{ cells: [{ text: t('中立三和弦', '中立三和音', 'neutral triad'), sub: t('24 / 31 平均', '24 / 31 平均律', '24 / 31 EDO') }, { text: 'LΛMPLIGHT', sub: t('维度 + 名字', '次元 + 名前', 'dimensions + names') }] }] },
-    tour: [m('row0', t('新的颜色，新的名字', '新しい色、新しい名前', 'new colours, new names'))],
+    visual: { kind: 'blocks', rows: [{ cells: [{ text: t('中立三和弦', '中立三和音', 'neutral triad'), sub: t('24 / 31 平均', '24 / 31 平均律', '24 / 31 EDO') }, { text: t('质数极限', '素数リミット', 'prime limit'), sub: t('最大质数', '最大の素数', 'largest prime') }] }] },
+    tour: [m('row0', t('新的颜色，标准的名字', '新しい色、標準の名前', 'new colours, standard names'))],
   },
 };

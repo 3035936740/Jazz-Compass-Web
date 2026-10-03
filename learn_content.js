@@ -6,7 +6,7 @@ import { UNITS as HARMONY } from './learn_units_harmony.js?v=20261002-r20';
 import { UNITS as MELODY } from './learn_units_melody.js?v=20261002-r20';
 import { UNITS as JAZZ } from './learn_units_jazz.js?v=20261002-r20';
 import { UNITS as WORLD } from './learn_units_world.js?v=20261002-r20';
-import { UNITS as MODERN } from './learn_units_modern.js?v=20261002-r20';
+import { UNITS as MODERN } from './learn_units_modern.js?v=20261004-m1';
 import { UNITS as SIDE_HARMONY_A } from './learn_units_side.js?v=20261003-s2';
 import { UNITS as SIDE_BASICS } from './learn_units_sidebasics.js?v=20261003-s3';
 import { UNITS as SIDE_HARMONY } from './learn_units_sideharmony.js?v=20261003-s3';
@@ -37,10 +37,10 @@ import { BRANCHES as B_HARMONY } from './learn_branches_harmony.js?v=20261002-r2
 import { BRANCHES as B_MELODY } from './learn_branches_melody.js?v=20261002-r20';
 import { BRANCHES as B_JAZZ } from './learn_branches_jazz.js?v=20261002-r20';
 import { BRANCHES as B_WORLD } from './learn_branches_world.js?v=20261002-r20';
-import { BRANCHES as B_MODERN } from './learn_branches_modern.js?v=20261002-r20';
+import { BRANCHES as B_MODERN } from './learn_branches_modern.js?v=20261004-m1';
 import { TOURS } from './learn_tours.js?v=20261002-r19';
-import { MORE_TOURS } from './learn_tours_more.js?v=20261002-r19';
-import { withDecoys } from './learn_decoys.js?v=20261003-d1';
+import { MORE_TOURS } from './learn_tours_more.js?v=20261004-m1';
+import { withDecoys } from './learn_decoys.js?v=20261004-d2';
 
 const BRANCHES = { ...B_BASICS, ...B_HARMONY, ...B_MELODY, ...B_JAZZ, ...B_WORLD, ...B_MODERN };
 

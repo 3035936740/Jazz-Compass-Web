@@ -1,7 +1,7 @@
 // 应用外壳：全局音量与停止按钮、全局 MIDI 输入、PWA 注册、五线谱导出、键盘快捷键
 // 从 script.js 拆出；需要的面板状态由 initAppShell 的参数传入。
 import { getMasterVolume, setMasterVolume, createHeldPianoVoice } from './audio_engine.js?v=20261003-a3';
-import { decodeMidiMessage } from './microtonal.js?v=20260915-2';
+import { decodeMidiMessage } from './microtonal.js?v=20261004-m1';
 
 /**
  * @param {{ stopAllPlayback: () => void, navButtons: HTMLElement[], noteName: (pc: number) => string, reverseFormulas: () => Record<string, string> }} deps

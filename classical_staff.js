@@ -3,7 +3,7 @@
 // 返回 { drawn, satb }：drawn 表示谱表画出来了（上面那排和弦卡片就不用再显示），satb 是拼写好的四部和声（"送到五线谱"用）
 import { renderVisual as renderStaffVisual } from "./learn_visuals.js?v=20261003-r31";
 import { keyFifths } from "./staff_musicxml.js?v=20261003-x1";
-import { checkSATB } from "./satb_check.js?v=20261003-r31";
+import { checkSATB } from "./satb_check.js?v=20261004-r32";
 import { issueList, drawIssueMarks } from "./satb_marks.js?v=20261003-r31";
 
 export function drawClassicalStaff(ctx, container, displaySymbol = (x) => x, after = null, { onPlay, onPick } = {}) {

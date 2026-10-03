@@ -8,19 +8,19 @@
         try { document.documentElement.dataset.theme = localStorage.getItem('jazz-compass-theme') || 'light'; }
         catch { document.documentElement.dataset.theme = 'light'; }
     </script>
-    <script type="module" src="./script.js?v=20261003-r52"></script>
+    <script type="module" src="./script.js?v=20261004-r66"></script>
     <title>Music Theory Toolbox</title>
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="icon" href="./icon.svg" type="image/svg+xml">
     <meta name="theme-color" content="#10162e">
-    <link rel="stylesheet" href="./app.css?v=20261003-r40">
+    <link rel="stylesheet" href="./app.css?v=20261004-r42">
     <link rel="stylesheet" href="./microtonal.css?v=20261001-ui">
     <link rel="stylesheet" href="./lcc.css?v=20261001-ui">
     <link rel="stylesheet" href="./blues.css?v=20261001-ui">
     <link rel="stylesheet" href="./jazz_toolbox.css?v=20261001-ui">
     <link rel="stylesheet" href="./harmony_connections.css?v=20261001-ui">
     <link rel="stylesheet" href="./composition.css?v=20261001-ui">
-    <link rel="stylesheet" href="./learn.css?v=20261003-r31">
+    <link rel="stylesheet" href="./learn.css?v=20261004-r40">
 </head>
 
 <body>
@@ -153,6 +153,7 @@
                     <div class="workspace-actions">
                     <span class="learn-jump">
                         <button type="button" class="tutorial-btn return-btn" id="return-tutorial" hidden><svg class="ui-icon" viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true" focusable="false"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3M4.5 4.5v4h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="return_tutorial">回到教程</span></button>
+                        <button type="button" class="tutorial-btn return-btn return-sideb" id="return-sideb" hidden><svg class="ui-icon" viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true" focusable="false"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3M4.5 4.5v4h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="return_sideb">回到 Side-B</span></button>
                         <button type="button" class="tutorial-btn" id="tutorial-link" hidden><svg class="ui-icon" viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true" focusable="false"><path d="M9 4.5 3.5 6.5v13L9 17.5l6 2 5.5-2v-13L15 6.5zM9 4.5v13M15 6.5v13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="tutorial_link">看不懂？玩教程</span></button>
                     </span>
                     <button type="button" class="share-btn" id="share-link" title="复制指向当前面板的链接" data-i18n-attr="title:ui_share_title"><span id="share_link">复制链接</span></button>
@@ -410,11 +411,11 @@
                     <div class="panel-header micro-controls">
                         <label><span id="micro-preset-label">和声构型</span>
                             <select id="micro-preset">
-                                <option value="major">纯律大三和弦 · Ah–Chy–Ly</option>
-                                <option value="minor">纯律小三和弦</option>
-                                <option value="septimal">7 倍音构型 · Ah–Chy–My</option>
-                                <option value="undecimal">11 倍音构型 · Ah–Chy–Fuzi</option>
-                                <option value="majorScale">纯律大调音阶</option>
+                                <option value="major">纯律大三和弦 · 1/1 5/4 3/2（5-limit）</option>
+                                <option value="minor">纯律小三和弦 · 1/1 6/5 3/2（5-limit）</option>
+                                <option value="septimal">泛音七度 · 1/1 3/2 7/4（7-limit）</option>
+                                <option value="undecimal">十一限中立七度 · 1/1 3/2 11/6（11-limit）</option>
+                                <option value="majorScale">纯律大调音阶（5-limit）</option>
                                 <option value="custom">自定义频率比</option>
                             </select>
                         </label>

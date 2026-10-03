@@ -11,7 +11,7 @@
 //   ref:wiki-harmonic-series ref:omt2e-pitch-class ref:omt2e-integer-intervals ref:omt2e-normal-order ref:omt2e-prime-form
 //   ref:omt2e-ic-vector ref:omt2e-twelve-tone ref:musictheory-net-cadences ref:omt2e-embellishing ref:omt2e-blues-scale
 //   ref:wiki-bebop-scale ref:wiki-jazz-minor ref:wiki-harmonic-minor ref:wiki-harmonic-major ref:wiki-whole-tone
-//   ref:wiki-octatonic ref:wiki-neapolitan-scale ref:wiki-double-harmonic ref:wiki-altered-scale ref:lamplight-chalaxata
+//   ref:wiki-octatonic ref:wiki-neapolitan-scale ref:wiki-double-harmonic ref:wiki-altered-scale ref:wiki-limit ref:hf-intervals
 //   ref:wiki-turkish-makam ref:wiki-metre ref:omt2e-rhythm-more ref:wiki-neutral-third ref:omt-species2 ref:omt-species4 ref:mto-mcclimon ref:guitar-chord-drop ref:omt2e-20c-rhythm
 import { spellAbove, spellHeptatonic, parsePitch, parseNote, intervalBetween, simplestName } from './pitch_spelling.js';
 import { primeForm, intervalVector, transpose, invert, mod12, formatSet } from './post_tonal.js';
@@ -164,6 +164,14 @@ export function nameChord(pcs, preferFlats = true) {
   }
   return null;
 }
+
+/** 纯律音程：[比, 最大质数, Huygens-Fokker 标准英文名, 中文直译, 日文直译]  ref:hf-intervals ref:wiki-limit */
+const JI_INTERVALS = [
+  ['3/2', 3, 'perfect fifth', '纯五度', '完全 5 度'], ['4/3', 3, 'perfect fourth', '纯四度', '完全 4 度'], ['9/8', 3, 'major whole tone', '大全音', '大全音'],
+  ['5/4', 5, 'major third', '大三度', '長 3 度'], ['6/5', 5, 'minor third', '小三度', '短 3 度'], ['5/3', 5, 'major sixth', '大六度', '長 6 度'], ['8/5', 5, 'minor sixth', '小六度', '短 6 度'],
+  ['7/4', 7, 'harmonic seventh', '泛音七度', 'ハーモニック・セブンス'], ['7/6', 7, 'septimal minor third', '七限小三度', '7 リミットの短 3 度'], ['8/7', 7, 'septimal whole tone', '七限全音', '7 リミットの全音'],
+  ['11/8', 11, 'undecimal semi-augmented fourth', '十一限半增四度', '11 リミットの半増 4 度'], ['11/9', 11, 'undecimal neutral third', '十一限中立三度', '11 リミットの中立 3 度'], ['11/6', 11, 'undecimal neutral seventh', '十一限中立七度', '11 リミットの中立 7 度'],
+];
 
 // ---------- 生成器 ----------
 export const GENERATORS = {
@@ -848,20 +856,30 @@ export const GENERATORS = {
       hint: t('频率比 n:(n−1)：2:1 八度，3:2 五度，4:3 四度。', '比 n:(n−1)：2:1 オクターヴ、3:2 は 5 度、4:3 は 4 度。', 'The ratio n:(n−1): 2:1 octave, 3:2 fifth, 4:3 fourth.'),
       explain: fmt(t('{n}:{m} = {l}。', '{n}:{m} = {l}。', '{n}:{m} = {l}.'), { n, m: n - 1, l: label }) });
   } },
-  lamplight: { ref: 'lamplight-chalaxata', make(rng) {
-    const items = [['3/2', 'Chy', '2D'], ['4/3', 'Fu', '2D'], ['9/8', 'Scy', '2D'], ['5/4', 'Ly', '3D'], ['6/5', 'Chys', '3D'], ['8/5', 'Su', '3D'], ['5/3', 'Fuli', '3D'], ['7/4', 'My', '4D'], ['7/6', 'Fumi', '4D'], ['8/7', 'Pu', '4D'], ['11/8', 'Zy', '5D'], ['11/9', 'Schuzi', '5D'], ['11/6', 'Fuzi', '5D']];
-    const [ratio, name, dim] = pick(rng, items);
-    if (rng() < 0.5) {
-      return choice(rng, { ref: 'lamplight-chalaxata', prompt: fmt(t('LΛMPLIGHT 体系里，{r} 属于哪个维度？', 'LΛMPLIGHT の体系で {r} は何次元？', 'In the LΛMPLIGHT system, which dimension is {r}?'), { r: ratio }),
-        correct: dim, wrong: ['2D', '3D', '4D', '5D'], n: 4,
-        hint: t('看比值里出现的最大质数：3 → 2D，5 → 3D，7 → 4D，11 → 5D。', '比に出てくる最大の素数：3 → 2D、5 → 3D、7 → 4D、11 → 5D。', 'Look at the largest prime: 3 → 2D, 5 → 3D, 7 → 4D, 11 → 5D.'),
-        explain: fmt(t('{r}（{n}）是 {d}。', '{r}（{n}）は {d}。', '{r} ({n}) is {d}.'), { r: ratio, n: name, d: dim }) });
-    }
-    return choice(rng, { ref: 'lamplight-chalaxata', prompt: fmt(t('LΛMPLIGHT 的名字（harmononym）"{n}"对应哪个频率比？', 'LΛMPLIGHT の名前「{n}」はどの比？', 'Which ratio is the LΛMPLIGHT harmononym “{n}”?'), { n: name }),
-      correct: ratio, wrong: items.filter((i) => i[0] !== ratio).map((i) => i[0]),
+  // 纯律音程：比、最大质数（质数极限）与 Huygens-Fokker 音程表的标准英文名称（中日文为对英文名的直译说明）
+  primeLimit: { ref: 'wiki-limit', make(rng) {
+    const [ratio, limit] = pick(rng, JI_INTERVALS.map((i) => [i[0], i[1]]));
+    return choice(rng, { ref: 'wiki-limit', prompt: fmt(t('{r} 属于哪个质数极限？', '{r} はどの素数リミット？', 'Which prime limit is {r}?'), { r: ratio }),
+      correct: `${limit}-limit`, wrong: ['3-limit', '5-limit', '7-limit', '11-limit'], n: 4,
       audio: { notes: [60, 60 + 12 * Math.log2(Number(ratio.split('/')[0]) / Number(ratio.split('/')[1]))], mode: 'harmonic' },
-      hint: t('Chy = 3/2，Ly = 5/4，My = 7/4，Zy = 11/8。', 'Chy = 3/2、Ly = 5/4、My = 7/4、Zy = 11/8。', 'Chy = 3/2, Ly = 5/4, My = 7/4, Zy = 11/8.'),
-      explain: fmt(t('{n} = {r}（{d}）。', '{n} = {r}（{d}）。', '{n} = {r} ({d}).'), { n: name, r: ratio, d: dim }) });
+      hint: t('分子、分母里出现的最大质数（2 不算"极限"的主角，只表示八度）。', '分子・分母に出てくる最大の素数（2 はオクターヴを表すだけ）。', 'The largest prime in numerator or denominator (2 only means octaves).'),
+      explain: fmt(t('{r} 的最大质数是 {p}：{p}-limit。7-limit 也叫 septimal，11-limit 也叫 undecimal。', '{r} の最大の素数は {p}：{p}-limit。7-limit は septimal、11-limit は undecimal とも。', '{r}’s largest prime is {p}: {p}-limit. 7-limit is also called septimal, 11-limit undecimal.'), { r: ratio, p: limit }) });
+  } },
+  jiInterval: { ref: 'hf-intervals', make(rng) {
+    const item = pick(rng, JI_INTERVALS);
+    const [ratio, , name] = item;
+    const label = (i) => t(`${i[2]}（${i[3]}）`, `${i[2]}（${i[4]}）`, i[2]);
+    const audio = { notes: [60, 60 + 12 * Math.log2(Number(ratio.split('/')[0]) / Number(ratio.split('/')[1]))], mode: 'harmonic' };
+    if (rng() < 0.5) {
+      return choice(rng, { ref: 'hf-intervals', prompt: fmt(t('频率比 {r} 的标准音程名称是？', '比 {r} の標準的な音程名は？', 'What is the standard name of the ratio {r}?'), { r: ratio }),
+        correct: label(item), wrong: JI_INTERVALS.filter((i) => i !== item).map(label), audio,
+        hint: t('先看最大质数：7 的叫 septimal（或 harmonic seventh），11 的叫 undecimal。', 'まず最大の素数：7 なら septimal（または harmonic seventh）、11 なら undecimal。', 'Check the largest prime first: 7 gives septimal (or harmonic seventh), 11 gives undecimal.'),
+        explain: fmt(t('{r} = {n}（Huygens-Fokker 音程表）。', '{r} = {n}（Huygens-Fokker の音程表）。', '{r} = {n} (Huygens-Fokker list of intervals).'), { r: ratio, n: name }) });
+    }
+    return choice(rng, { ref: 'hf-intervals', prompt: fmt(t('"{n}"是哪个频率比？', '「{n}」はどの比？', 'Which ratio is the “{n}”?'), { n: name }),
+      correct: ratio, wrong: JI_INTERVALS.filter((i) => i !== item).map((i) => i[0]), audio,
+      hint: t('septimal = 用到 7，undecimal = 用到 11。', 'septimal = 7 を使う、undecimal = 11 を使う。', 'Septimal uses 7; undecimal uses 11.'),
+      explain: fmt(t('{n} = {r}。', '{n} = {r}。', '{n} = {r}.'), { n: name, r: ratio }) });
   } },
   turkishKoma: { ref: 'wiki-turkish-makam', make(rng) {
     const items = [['bakiye', '4'], ['küçük mücenneb', '5'], ['büyük mücenneb', '8'], ['tanîni', '9']];

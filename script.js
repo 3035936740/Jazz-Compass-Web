@@ -1,5 +1,5 @@
 import { midiName } from './classical_voicing.js';
-import { initAppShell } from "./app_shell.js?v=20261003-r25";
+import { initAppShell } from "./app_shell.js?v=20261004-r26";
 import { noteToFrequency, noteToSemitoneValue, semitoneToFreq, semitoneToMidi, resolveRootOctave, chordNotesToFrequencies } from "./note_frequency.js?v=20261002-split";
 import { getAudioContext, interruptPlayback, interruptIfActive, connectOutput, suppressQueued, playChord, createHeldPianoVoice, createPianoTone, createSimpleTone } from "./audio_engine.js?v=20261003-a3";
 import { parsePitch } from "./pitch_spelling.js";
@@ -9,8 +9,8 @@ import { mountSiteSearch } from "./site_search.js?v=20261003-s4";
 import { satbToVoices, sendToStaff } from "./staff_handoff.js?v=20261003-h1";
 import { loadResume, clearResume } from "./learn_engine.js?v=20261003-s3";
 import { EnhancedChordConverter, JazzBrain, ClassicalHarmonyConnector } from "./jazz_compass.js?v=20261002-no";
-import * as lang from "./lang.js?v=20261003-r43";
-import { drawClassicalStaff } from "./classical_staff.js?v=20261003-a1";
+import * as lang from "./lang.js?v=20261004-r44";
+import { drawClassicalStaff } from "./classical_staff.js?v=20261004-a2";
 import { renderChordConversion } from "./chord_convert_panel.js?v=20261003-v3";
 
 /**
@@ -45,7 +45,7 @@ function loadingNote() {
 const load_composition_ui = () => import("./composition_ui.js?v=20261003-c4");
 const mountComposition = lazy(load_composition_ui, 'mountComposition');
 const mountRhythm = lazy(load_composition_ui, 'mountRhythm');
-const load_microtonal_ui = () => import("./microtonal_ui.js?v=20261002-quest");
+const load_microtonal_ui = () => import("./microtonal_ui.js?v=20261004-m1");
 const mountMicrotonal = lazy(load_microtonal_ui, 'mountMicrotonal');
 const load_chinese_modes_ui = () => import("./chinese_modes_ui.js?v=20261002-tour");
 const mountChineseModes = lazy(load_chinese_modes_ui, 'mountChineseModes');
@@ -73,7 +73,7 @@ const load_progression_ui = () => import("./progression_ui.js?v=20261003-p5");
 const mountProgression = lazy(load_progression_ui, 'mountProgression');
 const load_motif_phrase_ui = () => import("./motif_phrase_ui.js?v=20261003-t3");
 const mountMotifPhrase = lazy(load_motif_phrase_ui, 'mountMotifPhrase');
-const load_poly_meter_ui = () => import("./poly_meter_ui.js?v=20261003-t3");
+const load_poly_meter_ui = () => import("./poly_meter_ui.js?v=20261004-t9");
 const mountPolyMeter = lazy(load_poly_meter_ui, 'mountPolyMeter');
 const load_canon_ui = () => import("./canon_ui.js?v=20261003-t3");
 const mountCanon = lazy(load_canon_ui, 'mountCanon');
@@ -87,9 +87,9 @@ const load_ear_training_ui = () => import("./ear_training_ui.js?v=20261002-quest
 const mountEarTraining = lazy(load_ear_training_ui, 'mountEarTraining');
 const load_chord_symbols_ui = () => import("./chord_symbols_ui.js?v=20261003-r32");
 const mountChordSymbols = lazy(load_chord_symbols_ui, 'mountChordSymbols');
-const load_staff_reading_ui = () => import("./staff_reading_ui.js?v=20261003-s4");
+const load_staff_reading_ui = () => import("./staff_reading_ui.js?v=20261004-s13");
 const mountStaffReading = lazy(load_staff_reading_ui, 'mountStaffReading');
-const load_learn_ui = () => import("./learn_ui.js?v=20261003-s15");
+const load_learn_ui = () => import("./learn_ui.js?v=20261004-s25");
 const mountLearn = lazy(load_learn_ui, 'mountLearn');
 const load_lcc_ui = () => import("./lcc_ui.js?v=20261002-i18n");
 const mountLccExplorer = lazy(load_lcc_ui, 'mountLccExplorer');
@@ -475,7 +475,7 @@ document.addEventListener("DOMContentLoaded", () => {
       id, name: window.__(`nav_${id}`) || id, intro: window.__(`intro_${id}`) || '',
       allNames: Object.values(window.__all?.(`nav_${id}`) || {}).join(' '),
     })),
-    units: () => import("./learn_content.js?v=20261003-s7").then((m) => [...m.UNITS, ...m.SIDES]), lang: window.__lang, anchor: document.getElementById('share-link'),
+    units: () => import("./learn_content.js?v=20261004-s8").then((m) => [...m.UNITS, ...m.SIDES]), lang: window.__lang, anchor: document.getElementById('share-link'),
   });
 
   const conv = new EnhancedChordConverter();
@@ -655,7 +655,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (feature === 'rhythm' && isFirstMount(document.getElementById('panel-rhythm'))) {
       mountSubPages(document.getElementById('panel-rhythm'), [
         { id: 'patterns', label: { zh: '节奏型', ja: 'リズム・パターン', en: 'Rhythm patterns' }, mount: (box) => mountRhythm(box, compositionAudio) },
-        { id: 'poly', label: { zh: '复节奏与节拍调制', ja: 'ポリリズムとメトリック・モジュレーション', en: 'Polyrhythm & metric modulation' }, padded: true, mount: (box) => mountPolyMeter(box, compositionAudio) },
+        { id: 'poly', label: { zh: '复节奏与节拍调制', ja: 'ポリリズムとメトリック・モジュレーション', en: 'Polyrhythm & metric modulation' }, padded: true, mount: (box) => mountPolyMeter(box, compositionAudio), accepts: (q) => /^@lab:poly-/.test(q) },
       ], { padded: true });
       dispatchInitialQuery('rhythm', 'panel-rhythm');
     }
@@ -721,6 +721,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const record = anyResume();
     button.hidden = !record || currentLearnFeature === 'learn';
     if (record) button.title = window.__f('return_tutorial_title', { title: record.title, n: (record.position ?? 0) + 1, m: record.total ?? '?' });
+    // Side-B 有没做完的关卡（包括去工具里做实操的时候）：显示"回到 Side-B"
+    const sideb = document.getElementById('return-sideb');
+    if (sideb) {
+      const b = sidebResume();
+      sideb.hidden = !b || currentLearnFeature === 'learn';
+      if (b) {
+        const pick = (v) => (typeof v === 'string' ? v : v?.[window.__lang] ?? v?.en ?? '');
+        sideb.title = window.__f('return_sideb_title', { code: b.levelId, title: pick(b.title), part: pick(b.part) });
+      }
+    }
+  }
+  /** Side-B 的学习记录（sideb_engine 的 jc-sideb-resume；不在这里引入 Side-B 模块，保持首屏轻量） */
+  function sidebResume() {
+    try {
+      const record = JSON.parse(globalThis.localStorage?.getItem('jc-sideb-resume') || 'null');
+      return record?.levelId && record.session ? record : null;
+    } catch (_) { return null; }
   }
   window.addEventListener('learn-resume-change', updateReturnTutorial);
   /** 任何没做完的关卡（含平时的自动保存）：显示"回到教程"，误点"看不懂？玩教程"时先提示 */
@@ -2762,6 +2779,10 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("return-tutorial")?.addEventListener("click", () => {
     if (location.hash === "#learn?q=%40resume") openLearnUnit("@resume");
     else location.hash = "#learn?q=%40resume";
+  });
+  document.getElementById("return-sideb")?.addEventListener("click", () => {
+    if (location.hash === "#learn?q=%40sideb-resume") openLearnUnit("@sideb-resume");
+    else location.hash = "#learn?q=%40sideb-resume";
   });
   window.addEventListener("hashchange", () => {
     const { feature, q } = parseLocationHash();
