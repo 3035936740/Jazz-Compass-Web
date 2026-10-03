@@ -1,0 +1,15 @@
+{
+  "name": "乐理工具箱 · Music Theory Toolbox",
+  "short_name": "乐理工具箱",
+  "description": "和弦、音阶、和声、对位、律学与世界调式的交互式乐理工具",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#eceef3",
+  "theme_color": "#10162e",
+  "lang": "zh-CN",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

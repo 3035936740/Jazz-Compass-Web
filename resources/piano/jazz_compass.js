@@ -1,0 +1,2936 @@
+/**
+ * Jazz Compass Core Logic - ES Modules Version
+ * 1:1 Translation from Python to JavaScript
+ */
+
+import { SPOSOBIN_DNA } from "./sposobin_data.js";
+import { solveVoicings, voicingCandidates } from './classical_voicing.js';
+import { LCC_NOTES, LCC_PRINCIPAL_SCALES, lccScaleNotes, lccChromaticOrder, analyzeLccParents, lccColorFamily } from "./lcc_concept.js";
+
+export class ChordConverter {
+    constructor() {
+        this.noteToIdx = {
+            'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3, 'E': 4,
+            'F': 5, 'F#': 6, 'Gb': 6, 'G': 7, 'G#': 8, 'Ab': 8, 'A': 9,
+            'A#': 10, 'Bb': 10, 'B': 11, 'Cb': 11, 'E#': 5, 'Fb': 4, 'B#': 0
+        };
+        this.idxToNote = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+
+        this.chordFormulas = {
+            "5": [0, 7], "maj": [0, 4, 7], "major": [0, 4, 7], "M": [0, 4, 7], "": [0, 4, 7], "minor": [0, 3, 7], "min": [0, 3, 7], "m": [0, 3, 7],
+            "aug": [0, 4, 8], "dim": [0, 3, 6], "sus2": [0, 2, 7], "sus4": [0, 5, 7],
+            "p4": [0, 5, 10], "t4": [0, 5, 11], "majB5": [0, 4, 6], "Mb5": [0, 4, 6],
+            "6": [0, 4, 7, 9], "m6": [0, 3, 7, 9], "6add9": [0, 4, 7, 9, 14],
+            "m6add9": [0, 3, 7, 9, 14], "6sus4": [0, 5, 7, 9],
+            "6/9": [0, 4, 7, 9, 14], "69": [0, 4, 7, 9, 14], "m6/9": [0, 3, 7, 9, 14], "m69": [0, 3, 7, 9, 14],
+            "7": [0, 4, 7, 10], "m7": [0, 3, 7, 10], "M7": [0, 4, 7, 11],
+            "maj7": [0, 4, 7, 11], "m-maj7": [0, 3, 7, 11], "m-M7": [0, 3, 7, 11],
+            "7sus4": [0, 5, 7, 10], "dim7": [0, 3, 6, 9], "m7b5": [0, 3, 6, 10],
+            "m7b9": [0, 3, 7, 10, 13], "7b5": [0, 4, 6, 10], "7#5": [0, 4, 8, 10],
+            "7b9": [0, 4, 7, 10, 13], "7#9": [0, 4, 7, 10, 15], "7#11": [0, 4, 7, 10, 18],
+            "7add11": [0, 4, 7, 10, 17], "7add13": [0, 4, 7, 10, 21], "7#5b9": [0, 4, 8, 10, 13],
+            "7#5#9": [0, 4, 8, 10, 15], "7b5b9": [0, 4, 6, 10, 13],
+            "9": [0, 4, 7, 10, 14], "m9": [0, 3, 7, 10, 14], "maj9": [0, 4, 7, 11, 14],
+            "M9": [0, 4, 7, 11, 14], "m9-maj7": [0, 3, 7, 11, 14], "m9-M7": [0, 3, 7, 11, 14],
+            "9sus4": [0, 5, 7, 10, 14], "9b5": [0, 4, 6, 10, 14], "m9b5": [0, 3, 6, 10, 14],
+            "9#5": [0, 4, 8, 10, 14], "9#11": [0, 4, 7, 10, 14, 18], "9b13": [0, 4, 7, 10, 14, 20],
+            "add9": [0, 4, 7, 14], "madd9": [0, 3, 7, 14],
+            "11": [0, 4, 7, 10, 14, 17], "m11": [0, 3, 7, 10, 14, 17], "maj11": [0, 4, 7, 11, 14, 17],
+            "M11": [0, 4, 7, 11, 14, 17], "11b9": [0, 4, 7, 10, 13, 17],
+            "13": [0, 4, 7, 10, 14, 17, 21], "m13": [0, 3, 7, 10, 14, 17, 21],
+            "maj13": [0, 4, 7, 11, 14, 17, 21], "M13": [0, 4, 7, 11, 14, 17, 21],
+            "13b9": [0, 4, 7, 10, 13, 17, 21], "13#9": [0, 4, 7, 10, 15, 17, 21],
+            "13b5b9": [0, 4, 6, 10, 13, 17, 21],
+            "maj7#5": [0, 4, 8, 11], "maj7#11": [0, 4, 7, 11, 18], "maj7b5": [0, 4, 6, 11],
+            "maj7add13": [0, 4, 7, 11, 21], "maj9#5": [0, 4, 8, 11, 14], "maj9#11": [0, 4, 7, 11, 14, 18],
+            "maj9sus4": [0, 5, 7, 11, 14], "M7#5": [0, 4, 8, 11], "M7#11": [0, 4, 7, 11, 18],
+            "M7b5": [0, 4, 6, 11], "M7add13": [0, 4, 7, 11, 21], "M9#5": [0, 4, 8, 11, 14],
+            "M9#11": [0, 4, 7, 11, 14, 18], "M9sus4": [0, 5, 7, 11, 14], "m7add11": [0, 3, 7, 10, 17],
+            "m7add13": [0, 3, 7, 10, 21], "m-maj7add11": [0, 3, 7, 11, 17], "m-maj7add13": [0, 3, 7, 11, 21],
+            "m-maj11": [0, 3, 7, 11, 14, 17], "m-maj13": [0, 3, 7, 11, 14, 17, 21], "m-M7add11": [0, 3, 7, 11, 17],
+            "m-M7add13": [0, 3, 7, 11, 21], "m-M11": [0, 3, 7, 11, 14, 17], "m-M13": [0, 3, 7, 11, 14, 17, 21],
+            // Blackadder（Cblk = C D F♯ B♭）：aug 和弦加上其根音全音之上的低音，以低音命名  ref:soundquest-blk
+            "blk": [0, 2, 6, 10],
+        };
+
+        this.reverseFormulas = Object.entries(this.chordFormulas).reduce((acc, [key, value]) => {
+            // 对数组进行排序，然后用 join 创建键名（因为 JavaScript 对象键不能是数组）
+            const sortedKey = [...value].sort((a, b) => a - b).join(',');
+            acc[sortedKey] = key;
+            return acc;
+        }, {});
+    }
+
+    parse(inputStr) {
+        const result = this.parseAndGetNotes(inputStr);
+        return typeof result === 'string' ? result : result.notes;
+    }
+
+    /** 斜杠后面是音名时才是斜杠和弦（C/E）；C6/9 的 /9 是加音写法 */
+    _hasBassNote(inputStr) {
+        const slash = String(inputStr).lastIndexOf("/");
+        return slash > 0 && /^\s*[A-G]/.test(String(inputStr).slice(slash + 1));
+    }
+
+    parseSlashChord(inputStr) {
+        if (!inputStr.includes("/")) return null;
+        const slashIndex = inputStr.lastIndexOf("/");
+        const chordPart = inputStr.slice(0, slashIndex).trim();
+        const bassPart = inputStr.slice(slashIndex + 1).trim();
+        const upperRes = this.parseAndGetNotes(chordPart);
+        if (typeof upperRes === 'string') return upperRes;
+        if (!(bassPart in this.noteToIdx)) throw new Error(`Invalid bass note: ${bassPart}`);
+
+        const stdBass = this.idxToNote[this.noteToIdx[bassPart]];
+        const voicing = [stdBass, ...upperRes.notes.filter(n => this.idxToNote[this.noteToIdx[n]] !== stdBass)];
+
+        return {
+            chord: inputStr,
+            notes: [...upperRes.notes],
+            voicing,
+            offsets: [...upperRes.offsets],
+            isSlash: true,
+            root: upperRes.root || chordPart.match(/^([A-G][#b]?)/)?.[1],
+            bass: stdBass,
+            quality: upperRes.quality ?? (chordPart.replace(/^([A-G][#b]?)/, "") || "maj")
+        };
+    }
+
+    parseAndGetNotes(inputStr) {
+        if (this._hasBassNote(inputStr)) return this.parseSlashChord(inputStr);
+        // "Cblk" 的 b 不是降号
+        const blk = inputStr.trim().match(/^([A-G](?:#|b)?)blk$/i);
+        if (blk) return this.getChordNotes(blk[1], "blk");
+        const alt = inputStr.trim().match(/^([A-G](?:#|b)?)(?:7alt|alt7|alt)$/);
+        if (alt) return this.getAltChordNotes(alt[1]);
+        const match = inputStr.match(/^([A-G][#b]?)(.*)$/);
+        if (!match) throw new Error(`Unable to parse: ${inputStr}`);
+        return this.getChordNotes(match[1], match[2] || "maj");
+    }
+
+    /**
+     * alt 和弦（C7alt）：和弦音不固定，每次解析随机取根音、大三度、小七度 + 2～3 个变化音（♭9／♯9、♭5／♯11、♯5／♭13 中各组至多一个）
+     * ref:wiki-altered-scale
+     */
+    getAltChordNotes(root, rng = Math.random) {
+        if (!(root in this.noteToIdx)) return "Invalid root";
+        const groups = [[13], [15], [6, 18], [8, 20]];
+        const order = [0, 1, 2, 3].sort(() => rng() - 0.5).slice(0, rng() < 0.5 ? 2 : 3);
+        const offsets = [0, 4, 10, ...order.map(g => groups[g][Math.floor(rng() * groups[g].length)])];
+        const rootIdx = this.noteToIdx[root];
+        const absIndices = offsets.map(o => (rootIdx + o) % 12);
+        return { chord: `${root}7alt`, notes: absIndices.map(i => this.idxToNote[i]), offsets: absIndices, isSlash: false, root, bass: root, quality: "7alt", random: true };
+    }
+
+    getChordNotes(root, chordType = "maj") {
+        if (!(root in this.noteToIdx)) return "Invalid root";
+        const rootIdx = this.noteToIdx[root];
+        const offsets = this.chordFormulas[chordType] || [0, 4, 7];
+        const absIndices = offsets.map(o => (rootIdx + o) % 12);
+        const noteNames = absIndices.map(i => this.idxToNote[i]);
+        return { chord: `${root}${chordType}`, notes: noteNames, offsets: absIndices, isSlash: false, root, bass: root, quality: chordType };
+    }
+
+    /** 统一处理输入：返回音符列表 */
+    _ensureNotes(chordInput) {
+        if (typeof chordInput === 'string') {
+            const s = chordInput.trim();
+
+            // 支持逗号分隔的音符列表："C, E, G, B"
+            if (s.includes(',')) {
+                const parts = s.split(',').map(p => p.trim()).filter(p => p.length > 0);
+                const valid = parts.every(p => p in this.noteToIdx);
+                if (valid) return parts.map(p => this.idxToNote[this.noteToIdx[p]]);
+            }
+
+            // 支持以空格分隔的纯音符列表："C E G B"
+            const spaceParts = s.split(/\s+/).filter(p => p.length > 0);
+            if (spaceParts.length > 1) {
+                const validSpace = spaceParts.every(p => p in this.noteToIdx);
+                if (validSpace) return spaceParts.map(p => this.idxToNote[this.noteToIdx[p]]);
+            }
+
+            // 否则尝试按和弦字符串解析 (如 Cmaj7, Am7 等)
+            try {
+                const data = this.parseAndGetNotes(s);
+                return data.notes;
+            } catch (e) {
+                return null;
+            }
+        } else if (Array.isArray(chordInput)) {
+            return chordInput;
+        }
+        return null;
+    }
+}
+
+export class MusicScale {
+    constructor() {
+        this.scaleMode = [
+            {
+                "id": "lydian_sharp_5",
+                "scale_name": ["Lydian #5/Lydian Augmented", "Lydian #5", "Lydian Augmented", "利底亚升五音阶", "利底亚升5音阶", "利底亚增音阶", "增利底亚音阶"],
+                "family": "Augment M7",
+                "intervals": [0, 2, 4, 6, 8, 9, 11],
+                "avoid_intervals_ids": [5],
+                "related_strong": ["ionian_sharp_5"],
+                "related_weak": ["lydian_sharp_2", "lydian"]
+            },
+            {
+                "id": "ionian_sharp_5",
+                "scale_name": ["Ionian #5/Ionian Augmented", "Ionian #5", "Ionian Augmented", "伊奥尼亚升五音阶", "伊奥尼亚升5音阶", "伊奥尼亚增音阶", "增伊奥尼亚音阶"],
+                "family": "Augment M7",
+                "intervals": [0, 2, 4, 5, 8, 9, 11],
+                "avoid_intervals_ids": [3, 5],
+                "related_strong": ["lydian_sharp_5"],
+                "related_weak": ["ionian"]
+            },
+            {
+                "id": "wholetone",
+                "scale_name": ["Wholetone", "全音音阶", "全音阶"],
+                "family": "Augment 7",
+                "intervals": [0, 2, 4, 6, 8, 10],
+                "avoid_intervals_ids": [],
+                "related_strong": [],
+                "related_weak": ["lydian_dominant"]
+            },
+            {
+                "id": "lydian",
+                "scale_name": ["Lydian", "利底亚音阶", "利底亚调式"],
+                "family": "Major Seventh",
+                "intervals": [0, 2, 4, 6, 7, 9, 11],
+                "avoid_intervals_ids": [],
+                "related_strong": ["lydian_sharp_2", "ionian"],
+                "related_weak": ["lydian_sharp_5"]
+            },
+            {
+                "id": "lydian_dominant",
+                "scale_name": ["Lydian Dominant/Lydian b7", "Lydian Dominant", "Lydian b7", "利底亚属音阶", "利底亚降七音阶", "利底亚降7音阶"],
+                "family": "Dominant Seventh",
+                "intervals": [0, 2, 4, 6, 7, 9, 10],
+                "avoid_intervals_ids": [],
+                "related_strong": ["mixlydian"],
+                "related_weak": ["wholetone", "dorian_sharp_4"]
+            },
+            {
+                "id": "lydian_sharp_2",
+                "scale_name": ["Lydian #2", "利底亚升二音阶", "利底亚增二音阶", "利底亚升2音阶", "利底亚增2音阶"],
+                "family": "Major Seventh",
+                "intervals": [0, 3, 4, 6, 7, 9, 11],
+                "avoid_intervals_ids": [],
+                "related_strong": ["lydian"],
+                "related_weak": ["lydian_sharp_5", "neapolitan_major"]
+            },
+            {
+                "id": "ionian",
+                "scale_name": ["Natural Major", "Major", "Ionian", "自然大调", "大调", "大调音阶", "伊奥尼亚调式"],
+                "family": "Major Seventh",
+                "intervals": [0, 2, 4, 5, 7, 9, 11],
+                "avoid_intervals_ids": [3],
+                "related_strong": ["lydian", "harmonic_major"],
+                "related_weak": ["ionian_sharp_5", "mixlydian", "melodic_minor", "blues_major"]
+            },
+            {
+                "id": "harmonic_major",
+                "scale_name": ["Harmonic Major", "Ionian b6", "和声大调", "伊奥尼亚降六音阶", "伊奥尼亚降6音阶"],
+                "family": "Major Seventh",
+                "intervals": [0, 2, 4, 5, 7, 8, 11],
+                "avoid_intervals_ids": [3, 5],
+                "related_strong": ["ionian", "arabic"],
+                "related_weak": ["harmonic_minor"]
+            },
+            {
+                "id": "arabic",
+                "scale_name": ["Arabic", "阿拉伯音阶"],
+                "family": "Major Seventh",
+                "intervals": [0, 1, 4, 5, 7, 8, 11],
+                "avoid_intervals_ids": [1, 3, 5],
+                "related_strong": ["harmonic_major", "neapolitan_major"],
+                "related_weak": []
+            },
+            {
+                "id": "mixlydian",
+                "scale_name": ["Mixlydian", "混合利底亚音阶", "混合利底亚调式", "米克索利底亚音阶"],
+                "family": "Dominant Seventh",
+                "intervals": [0, 2, 4, 5, 7, 9, 10],
+                "avoid_intervals_ids": [3],
+                "related_strong": ["lydian_dominant", "aeolian_dominant", "blues_major"],
+                "related_weak": ["ionian", "blues_minor"]
+            },
+            {
+                "id": "phrygian_dominant",
+                "scale_name": ["Phrygian Dominant(HmP5b)", "Phrygian Dominant", "HmP5b", "Phrygian #3", "弗里几亚属音阶", "弗里几亚升三音阶", "弗里几亚升3音阶", "西班牙音阶"],
+                "family": "Dominant Seventh",
+                "intervals": [0, 1, 4, 5, 7, 8, 10],
+                "avoid_intervals_ids": [3],
+                "related_strong": ["altered_dominant", "aeolian_dominant"],
+                "related_weak": ["dominant_diminished", "phrygian"]
+            },
+            {
+                "id": "aeolian_dominant",
+                "scale_name": ["Mixlydian b6/Aeolian Dominant", "Mixlydian b6", "Aeolian Dominant", "Aeolian b3", "Melodic Major", "混合利底亚降六音阶", "混合利底亚降6音阶", "爱奥利亚属音阶", "旋律大调音阶"],
+                "family": "Dominant Seventh",
+                "intervals": [0, 2, 4, 5, 7, 8, 10],
+                "avoid_intervals_ids": [3],
+                "related_strong": ["mixlydian", "phrygian_dominant"],
+                "related_weak": []
+            },
+            {
+                "id": "melodic_minor",
+                "scale_name": ["Melodic Minor", "Jazz Minor", "旋律小调", "爵士小调"],
+                "family": "Minor Major Seventh",
+                "intervals": [0, 2, 3, 5, 7, 9, 11],
+                "avoid_intervals_ids": [],
+                "related_strong": ["harmonic_minor", "neapolitan_major"],
+                "related_weak": ["ionian"]
+            },
+            {
+                "id": "harmonic_minor",
+                "scale_name": ["Harmonic Minor", "和声小调"],
+                "family": "Minor Major Seventh",
+                "intervals": [0, 2, 3, 5, 7, 8, 11],
+                "avoid_intervals_ids": [5],
+                "related_strong": ["melodic_minor", "neapolitan_minor"],
+                "related_weak": ["harmonic_major", "aeolian"]
+            },
+            {
+                "id": "dorian",
+                "scale_name": ["Dorian", "多利亚音阶", "多利亚调式"],
+                "family": "Minor Seventh",
+                "intervals": [0, 2, 3, 5, 7, 9, 10],
+                "avoid_intervals_ids": [5],
+                "related_strong": ["dorian_sharp_4", "aeolian", "dorian_flat_2"],
+                "related_weak": ["blues_minor"]
+            },
+            {
+                "id": "dorian_sharp_4",
+                "scale_name": ["Dorian #4", "多利亚升四音阶", "多利亚增四音阶", "多利亚升4音阶", "多利亚增4音阶"],
+                "family": "Minor Seventh",
+                "intervals": [0, 2, 3, 6, 7, 9, 10],
+                "avoid_intervals_ids": [],
+                "related_strong": ["dorian"],
+                "related_weak": ["lydian_dominant", "dorian_flat_2"]
+            },
+            {
+                "id": "aeolian",
+                "scale_name": ["Natural Minor", "Minor", "Aeolian", "自然小调", "小调音阶", "小调", "爱奥利亚调式"],
+                "family": "Minor Seventh",
+                "intervals": [0, 2, 3, 5, 7, 8, 10],
+                "avoid_intervals_ids": [5],
+                "related_strong": ["dorian", "phrygian"],
+                "related_weak": ["harmonic_minor", "aeolian_flat_5", "neapolitan_minor"]
+            },
+            {
+                "id": "dorian_flat_2",
+                "scale_name": ["Dorian b2/Phrygian ♮6", "Dorian b2", "Phrygian ♮6", "Phrygian #6", "多利亚降二音阶", "弗里几亚还原六音阶", "多利亚降2音阶", "弗里几亚还原6音阶"],
+                "family": "Minor Seventh",
+                "intervals": [0, 1, 3, 5, 7, 9, 10],
+                "avoid_intervals_ids": [1, 5],
+                "related_strong": ["dorian", "phrygian", "neapolitan_major"],
+                "related_weak": ["dorian_sharp_4", "neapolitan_minor"]
+            },
+            {
+                "id": "phrygian",
+                "scale_name": ["Phrygian", "弗里几亚音阶", "弗里几亚调式"],
+                "family": "Minor Seventh",
+                "intervals": [0, 1, 3, 5, 7, 8, 10],
+                "avoid_intervals_ids": [1, 5],
+                "related_strong": ["dorian_flat_2", "aeolian", "neapolitan_minor"],
+                "related_weak": ["phrygian_dominant"]
+            },
+            {
+                "id": "aeolian_flat_5",
+                "scale_name": ["Aeolian b5/Locrian ♮2", "Aeolian b5", "Locrian ♮2", "Locrian #2", "爱奥利亚降五音阶", "洛克里亚还原二音阶", "爱奥利亚降5音阶", "洛克里亚还原2音阶"],
+                "family": "Half Diminished Seventh",
+                "intervals": [0, 2, 3, 5, 6, 8, 10],
+                "avoid_intervals_ids": [],
+                "related_strong": ["locrian"],
+                "related_weak": ["aeolian"]
+            },
+            {
+                "id": "locrian",
+                "scale_name": ["Locrian", "洛克里亚音阶", "洛克里亚调式"],
+                "family": "Half Diminished Seventh",
+                "intervals": [0, 1, 3, 5, 6, 8, 10],
+                "avoid_intervals_ids": [1],
+                "related_strong": ["aeolian_flat_5", "super_locrian"],
+                "related_weak": ["phrygian"]
+            },
+            {
+                "id": "super_locrian",
+                "scale_name": ["Super Locrian", "Locrian b4", "超级洛克里亚音阶", "洛克里亚降四音阶", "洛克里亚降4音阶"],
+                "family": "Half Diminished Seventh",
+                "intervals": [0, 1, 3, 4, 6, 8, 10],
+                "avoid_intervals_ids": [1, 3],
+                "related_strong": ["locrian", "locrian_natural_6"],
+                "related_weak": []
+            },
+            {
+                "id": "locrian_natural_6",
+                "scale_name": ["Locrian ♮6", "Locrian #6", "洛克里亚还原六音阶"],
+                "family": "Half Diminished Seventh",
+                "intervals": [0, 1, 3, 5, 6, 9, 10],
+                "avoid_intervals_ids": [1],
+                "related_strong": ["super_locrian"],
+                "related_weak": []
+            },
+            {
+                "id": "altered_dominant",
+                "scale_name": ["Altered Dominant", "变化属音阶", "变更属音阶"],
+                "family": "Dominant Seventh",
+                "intervals": [0, 1, 3, 4, 6, 8, 10],
+                "avoid_intervals_ids": [],
+                "related_strong": ["phrygian_dominant"],
+                "related_weak": ["dominant_diminished"]
+            },
+            {
+                "id": "dominant_diminished",
+                "scale_name": ["Dominant Diminished(H-W)", "属减音阶", "属减缩音阶(半全)"],
+                "family": "Dominant Seventh",
+                "intervals": [0, 1, 3, 4, 6, 7, 9, 10],
+                "avoid_intervals_ids": [],
+                "related_strong": ["dominant_diminished_as_dim"],
+                "related_weak": ["altered_dominant", "phrygian_dominant"]
+            },
+            {
+                "id": "dominant_diminished_as_dim",
+                "scale_name": ["Dominant Diminished(H-W)(as dim)", "属减缩音阶(减和弦视角)"],
+                "family": "Diminished Seventh",
+                "intervals": [0, 1, 3, 4, 6, 7, 9, 10],
+                "avoid_intervals_ids": [1, 3, 5, 7],
+                "related_strong": ["dominant_diminished", "diminished"],
+                "related_weak": []
+            },
+            {
+                "id": "diminished",
+                "scale_name": ["Diminished(W-H)", "减音阶", "减缩音阶(全半)"],
+                "family": "Diminished Seventh",
+                "intervals": [0, 2, 3, 5, 6, 8, 9, 11],
+                "avoid_intervals_ids": [1, 3, 5, 7],
+                "related_strong": ["dominant_diminished", "dominant_diminished_as_dim", "altered_super_locrian"],
+                "related_weak": []
+            },
+            {
+                "id": "altered_super_locrian",
+                "scale_name": ["Altered Super Locrian", "Super Locrian b7", "Locrian b4 b7", "变化超级洛克里亚音阶", "超级洛克里亚降七音阶", "洛克里亚降四降七音阶", "超级洛克里亚降7音阶", "洛克里亚降4降7音阶"],
+                "family": "Diminished Seventh",
+                "intervals": [0, 1, 3, 4, 6, 8, 9],
+                "avoid_intervals_ids": [1, 3],
+                "related_strong": ["diminished"],
+                "related_weak": []
+            },
+            {
+                "id": "neapolitan_major",
+                "scale_name": ["Neapolitan Major", "Melodic Minor b2", "那不勒斯大调", "拿坡里大调", "旋律小调降二音阶", "旋律小调降2音阶"],
+                "family": "Minor Major Seventh",
+                "intervals": [0, 1, 3, 5, 7, 9, 11],
+                "avoid_intervals_ids": [1],
+                "related_strong": ["melodic_minor", "lydian_sharp_2"],
+                "related_weak": ["dorian_flat_2"]
+            },
+            {
+                "id": "neapolitan_minor",
+                "scale_name": ["Neapolitan Minor", "Harmonic Minor b2", "那不勒斯小调", "拿坡里小调", "和声小调降二音阶", "和声小调降2音阶"],
+                "family": "Minor Major Seventh",
+                "intervals": [0, 1, 3, 5, 7, 8, 11],
+                "avoid_intervals_ids": [1, 5],
+                "related_strong": ["harmonic_minor", "phrygian"],
+                "related_weak": ["aeolian", "dorian_flat_2"]
+            },
+            {
+                "id": "blues_major",
+                "scale_name": ["Blues Major", "Major Blues", "大调布鲁斯音阶", "大布鲁斯音阶"],
+                "family": "Major Sixth",
+                "intervals": [0, 2, 3, 4, 7, 9],
+                "avoid_intervals_ids": [2],
+                "related_strong": ["mixlydian"],
+                "related_weak": ["ionian", "blues_minor"]
+            },
+            {
+                "id": "blues_minor",
+                "scale_name": ["Blues Minor", "Minor Blues", "小调布鲁斯音阶", "小布鲁斯音阶", "布鲁斯音阶"],
+                "family": "Minor Seventh",
+                "intervals": [0, 3, 5, 6, 7, 10],
+                "avoid_intervals_ids": [3],
+                "related_strong": ["aeolian"],
+                "related_weak": ["dorian", "mixlydian"]
+            }
+        ];
+
+        this.chordFamily = {
+            "Augment M7": [0, 4, 8, 11],
+            "Augment 7": [0, 4, 8, 10],
+            "Major Seventh": [0, 4, 7, 11],
+            "Dominant Seventh": [0, 4, 7, 10],
+            "Minor Major Seventh": [0, 3, 7, 11],
+            "Minor Seventh": [0, 3, 7, 10],
+            "Half Diminished Seventh": [0, 3, 6, 10],
+            "Diminished Seventh": [0, 3, 6, 9],
+            "Major Sixth": [0, 4, 7, 9],
+        };
+    }
+
+    // ===================== 实用工具函数 =====================
+
+    /**
+     * 根据和弦家族名称，查询所有匹配的音阶
+     * @param {string} family_name - 和弦家族名(如 "Major Seventh")
+     * @returns {Array} 音阶列表
+     */
+    get_scales_by_chord_family(family_name) {
+        return this.scaleMode.filter(scale => scale.family === family_name);
+    }
+
+    /**
+     * 根据ID精确查询音阶
+     * @param {string} scale_id - 音阶ID
+     * @returns {Object|null} 音阶对象
+     */
+    get_scale_by_id(scale_id) {
+        return this.scaleMode.find(scale => scale.id === scale_id) || null;
+    }
+
+    /**
+     * 查询和弦家族对应的音程
+     * @param {string} family_name - 和弦家族名
+     * @returns {Array|null} 音程列表
+     */
+    get_chord_by_family(family_name) {
+        return this.chordFamily[family_name] || null;
+    }
+
+    /**
+     * 生成具体音符（MIDI数字）
+     * @param {number} root_note - 根音MIDI（如C4=60）
+     * @param {Array} scale_intervals - 音阶音程列表
+     * @returns {Array} 实际音符列表
+     */
+    generate_scale_notes(root_note, scale_intervals) {
+        return scale_intervals.map(interval => root_note + interval);
+    }
+
+    /**
+     * 列出所有和弦家族
+     * @returns {Array} 和弦家族列表
+     */
+    list_all_families() {
+        return Object.keys(this.chordFamily);
+    }
+
+    /**
+     * 列出所有音阶ID
+     * @returns {Array} 音阶ID列表
+     */
+    list_all_scales() {
+        return this.scaleMode.map(scale => scale.id);
+    }
+
+    /**
+     * 音阶匹配查询
+     * @param {string} query - 查询字符串
+     * @param {boolean} is_nocase - 是否忽略大小写（默认true）
+     * @param {boolean} is_fuzzy - 是否模糊匹配（默认true）
+     * @returns {Array} 匹配结果列表
+     */
+    match_scale(query, is_nocase = true, is_fuzzy = true) {
+        // 转换查询为小写，方便匹配
+        let searchQuery = is_nocase ? query.toLowerCase() : query;
+
+        // 存储匹配的结果
+        let matches = [];
+
+        // 遍历数组，进行模糊匹配
+        for (const scale of this.scaleMode) {
+            let complete_match = false;
+            let found_match = false;
+            const info = { id: scale.id, scale_names: [] };
+
+            for (let scale_name of scale.scale_name) {
+                const compareName = is_nocase ? scale_name.toLowerCase() : scale_name;
+
+                if (searchQuery === compareName) {
+                    found_match = true;
+                    info.scale_names.push(scale_name);
+                    complete_match = true;
+                    break; // 精确匹配到一个名称就可以了
+                }
+
+                if (is_fuzzy) {
+                    if (compareName.includes(searchQuery)) {
+                        found_match = true;
+                        info.scale_names.push(scale_name);
+                    }
+                } else {
+                    if (searchQuery === compareName) {
+                        found_match = true;
+                        info.scale_names.push(scale_name);
+                    }
+                }
+            }
+
+            if (found_match) {
+                matches.push(info);
+            }
+
+            if (complete_match) {
+                // 如果有完全匹配的结果，清除之前的模糊匹配结果，优先返回精确匹配
+                matches = [info];
+                break;
+            }
+        }
+
+        return matches;
+    }
+}
+
+// 导出类（如果使用模块化）
+// export default MusicScale;
+
+export class EnhancedChordConverter extends ChordConverter {
+    constructor() {
+        super();
+        this.intervalMap = {
+            '1': 0, 'b2': 1, '2b': 1, '2': 2, '#2': 3, '2#': 3, 'b3': 3, '3b': 3, '3': 4,
+            '4': 5, '#4': 6, '4#': 6, 'b5': 6, '5b': 6, '5': 7, '#5': 8, '5#': 8, 'b6': 8, '6b': 8,
+            '6': 9, 'bb7': 9, '7bb': 9, '#6': 10, '6#': 10, 'b7': 10, '7b': 10, '7': 11, 'maj7': 11, '7maj': 11,
+            '9': 14, 'b9': 13, '9b': 13, '#9': 15, '9#': 15, '11': 17, '#11': 18, '11#': 18, '13': 21, 'b13': 20, '13b': 20
+        };
+    }
+
+    /**
+     * 解析和弦字符串并获取音符信息
+     * @param {string} inputStr - 例如 "Cm add9", "A# maj7 omit 5"
+     */
+    parseAndGetNotes(inputStr) {
+        // 0. 处理斜杠和弦 (Slash Chord)；6/9 中的 /9 不是低音
+        if (this._hasBassNote(inputStr)) {
+            return this.parseSlashChord(inputStr);
+        }
+
+        // Blackadder："Cblk"、"Bbblk"（blk 的 b 不是降号）  ref:soundquest-blk
+        const blkMatch = inputStr.trim().match(/^([A-G](?:#|b)?)blk$/i);
+        if (blkMatch) return this.getChordNotes(blkMatch[1], "blk");
+        // alt：每次解析得到一组不同的变化音  ref:wiki-altered-scale
+        const altMatch = inputStr.trim().match(/^([A-G](?:#|b)?)(?:7alt|alt7|alt)$/);
+        if (altMatch) return this.getAltChordNotes(altMatch[1]);
+
+        // 1. 提取根音 (A-G + #/b)
+        // 正则解释: ^([A-G][#b]?) 匹配开头的根音, (.*)$ 匹配剩余部分
+        const rootMatch = inputStr.match(/^([A-G][#b]?)(.*)$/);
+        if (!rootMatch) {
+            throw new Error(`Invalid root in: ${inputStr}`);
+        }
+
+        const root = rootMatch[1];
+        // 括号只是分组（C7(no3)、Cm7(b5)）；"no" 与 "omit" 同义（C7no3）；序数后缀（no3rd）去掉  ref:wiki-chord-notation
+        const remaining = rootMatch[2]
+            .replace(/[()]/g, " ")
+            .replace(/\bno\s*(?=[#b]?\d)|(?<=[\d\s)])no\s*(?=[#b]?\d)|^no\s*(?=[#b]?\d)/g, "omit")
+            .replace(/(\d)(?:st|nd|rd|th)\b/g, "$1")
+            .trim();
+
+        // 2. 提取修饰符 (add/omit)
+        // 使用全局匹配模式 'g' 来模拟 re.findall
+        const modifierRegex = /(add|omit)\s*([#b]?\d+)/g;
+        let modifiers = [];
+        let match;
+        while ((match = modifierRegex.exec(remaining)) !== null) {
+            modifiers.push({ action: match[1], interval: match[2] });
+        }
+
+        // 3. 确定主和弦类型 (Main Chord Type)
+        // 逻辑：以 add 或 omit 为分隔符拆分，取第一部分
+        // 例如 "m7 add9" -> "m7"
+        let mainTypePart = remaining.split(/add|omit/)[0].replace(/\s+/g, "");
+        if (!mainTypePart) {
+            mainTypePart = "maj"; // 默认为大三和弦
+        }
+
+        // 获取初始偏移量 (Offsets)；不认识的和弦类型直接报错，而不是悄悄当成大三和弦
+        if (!this.chordFormulas[mainTypePart]) {
+            throw new Error(`Unknown chord type: ${mainTypePart}`);
+        }
+        let offsets = [...this.chordFormulas[mainTypePart]];
+
+        // 4. 处理修饰符 (Add / Omit 逻辑)
+        for (const { action, interval } of modifiers) {
+            // 标准化音程格式 (例如 7b -> b7) 并转换为半音数
+            const normInterval = this._normalizeInterval(interval);
+            const semitone = this.intervalMap[normInterval];
+
+            if (semitone === undefined) continue;
+
+            if (action === "add") {
+                // 如果该音程（八度内）不在当前和弦中，则添加
+                const exists = offsets.some(o => (o % 12) === (semitone % 12));
+                if (!exists) {
+                    offsets.push(semitone);
+                }
+            } else if (action === "omit") {
+                // 过滤掉所有在八度内匹配该半音的偏移量
+                offsets = offsets.filter(o => (o % 12) !== (semitone % 12));
+            }
+        }
+
+        // 5. 构建最终结果（该方法在你之前的逻辑中已定义）
+        return this._buildResult(root, mainTypePart, offsets, inputStr);
+    }
+
+    /**
+     * 规范化音程格式：将 7b 转换为 b7
+     */
+    _normalizeInterval(interval) {
+        if (interval.length > 1 && (interval.endsWith('#') || interval.endsWith('b'))) {
+            return interval.slice(-1) + interval.slice(0, -1);
+        }
+        return interval;
+    }
+
+    /**
+     * 构建最终的 JSON 结果
+     */
+    _buildResult(root, chordType, offsets, originalStr) {
+        const rootIdx = this.noteToIdx[root];
+
+        // 1. 计算绝对索引并去重 (保持相对于根音的偏移顺序)
+        // 我们不直接全局 sort，而是根据 offsets 的原始逻辑或半音程关系排列
+        const uniqueOffsets = [...new Set(offsets)].sort((a, b) => a - b);
+
+        // 2. 映射为绝对音符索引，并确保根音（偏移量为 0 的音）排在最前
+        // 如果 offsets 里没有 0（理论上不会，但为了健壮性考虑），我们手动补上
+        const absIndices = uniqueOffsets.map(o => (rootIdx + o) % 12);
+
+        // 3. 转换为音符名称
+        const noteNames = absIndices.map(i => this.idxToNote[i]);
+
+        return {
+            "chord": originalStr,
+            "notes": noteNames,    // 这里的第一个音现在确定是 root 了
+            "offsets": absIndices, // 对应的绝对索引
+            "is_slash": false,
+            "root": root,
+            "quality": chordType
+        };
+    }
+
+    /**
+     * 统一输入处理：返回音符列表 / 以及识别出的和弦信息
+     * - 字符串可以是「和弦名」(Cmaj7) 也可以是「音列表」(C, E, G, B)
+     * - 数组则直接视为音名数组 ["C","E","G","B"]
+     */
+    _ensureNotesAndRoot(chordInput, isDetailed = false) {
+        let result = null;
+
+        if (typeof chordInput === 'string') {
+            if (chordInput.includes("/")) {
+                const parsed = this.parseAndGetNotes(chordInput.trim());
+                if (!parsed) return null;
+                if (!isDetailed) return parsed.notes;
+                return {
+                    chord: parsed.chord,
+                    notes: [...parsed.notes],
+                    voicing: [...(parsed.voicing || parsed.notes)],
+                    offsets: [...parsed.offsets],
+                    isSlash: true,
+                    is_slash: true,
+                    root: parsed.root,
+                    bass: parsed.bass,
+                    quality: parsed.quality,
+                };
+            }
+            // 先复用 _ensureNotes：它已经支持逗号/空格分隔的音列表
+            const notes = this._ensureNotes(chordInput);
+            if (!notes) return null;
+
+            if (!isDetailed) {
+                // 只要音符列表
+                result = notes;
+            } else {
+                // 走数组分支的和弦识别逻辑
+                return this._ensureNotesAndRoot(notes, true);
+            }
+        } else if (Array.isArray(chordInput)) {
+            if (isDetailed) {
+                const rootNote = chordInput[0];
+                const notesIndex = chordInput.map((n) => this.noteToIdx[n]);
+                const rtIndexV = notesIndex[0];
+
+                const notesIndexNew = [];
+                let lastValue = null;
+
+                for (const idx of notesIndex) {
+                    let adjustedIdx = idx;
+                    if (lastValue !== null && adjustedIdx < lastValue) {
+                        adjustedIdx += 12; // Adjust for octave wraparound
+                    }
+                    notesIndexNew.push(adjustedIdx - rtIndexV);
+                    lastValue = adjustedIdx;
+                }
+
+                // 排序并创建键（需要转为字符串，因为JavaScript对象键不能是数组）
+                const targetTuple = [...notesIndexNew].sort((a, b) => a - b).join(',');
+
+                const identified = this.identifyChord(notesIndexNew);
+                const key = identified?.quality || "maj";
+
+                /*
+                let key = null;
+                if (targetTuple in this.reverseFormulas) {
+                    key = this.reverseFormulas[targetTuple];
+                } else {
+                    throw new Error(
+                        `Unable to identify chord for notes: ${chordInput} with offsets: ${notesIndexNew}`,
+                    );
+                }
+                */
+
+                const chord = `${rootNote}${key}`;
+                result = {
+                    chord: chord,
+                    notes: [...chordInput],
+                    voicing: [...chordInput],
+                    offsets: notesIndexNew,
+                    isSlash: false,
+                    root: rootNote,
+                    quality: key,
+                };
+            } else {
+                result = [...chordInput];
+            }
+        }
+
+        return result;
+    }
+
+    identifyChord(indices) {
+        if (!indices || indices.length === 0) return null;
+
+        const rootIdx = indices[0] % 12;
+        const rootName = this.idxToNote[rootIdx];
+        // Keep the written voicing order available. A ninth and a second are
+        // enharmonically identical in pitch-class sets, but their voicing
+        // order is musically meaningful: C-E-G-B-D is add9, C-D-E-G-B is add2.
+        const orderedOffsets = indices.map((value) => value - indices[0]);
+        const inputOffsets = [...new Set(indices.map(i => (i - indices[0] + 12) % 12))].sort((a, b) => a - b);
+        const inputSet = new Set(inputOffsets);
+
+        if (inputOffsets.join(",") === "0,2,4,7,11") {
+            const extension = (orderedOffsets[1] % 12) === 2 ? "2" : "9";
+            return {
+                chord: `${rootName}maj7 add ${extension}`,
+                quality: `maj7 add ${extension}`,
+                root: rootName,
+            };
+        }
+
+        // 1. 尝试精确匹配（保留你原来的逻辑）
+        const offsetsKey = inputOffsets.join(',');
+        if (this.reverseFormulas[offsetsKey]) {
+            return {
+                chord: `${rootName}${this.reverseFormulas[offsetsKey] || ""}`,
+                quality: this.reverseFormulas[offsetsKey]
+            };
+        }
+
+        // 2. 寻找最接近的标准和弦 (Fuzzy Matching)
+        let bestMatch = { quality: "maj", score: 0, omit: [], add: [] };
+
+        // 遍历你定义的公式库 (e.g., {"maj": [0,4,7], "m7": [0,3,7,10]...})
+        for (const [quality, templateOffsets] of Object.entries(this.chordFormulas)) {
+            const normalizedTemplateOffsets = [...new Set(templateOffsets.map(x => x % 12))];
+            const templateSet = new Set(normalizedTemplateOffsets);
+
+            // 计算交集：输入中匹配模板的音
+            const intersection = normalizedTemplateOffsets.filter(x => inputSet.has(x));
+
+            // 计算 Omit：模板里有，但输入里没有的 (重点！)
+            const omit = normalizedTemplateOffsets.filter(x => !inputSet.has(x));
+
+            // 计算 Add：输入里有，但模板里没有的
+            const add = inputOffsets.filter(x => !templateSet.has(x) && x !== 0);
+
+            // 评分机制：匹配的音越多评分越高，冲突越少分越高
+            // 这里的评分逻辑可以根据需求调整
+            let score = intersection.length * 2 - omit.length - add.length;
+
+            if (score > bestMatch.score) {
+                bestMatch = { quality, score, omit, add };
+            }
+        }
+
+        // 3. 构建字符串
+        let qualityStr = bestMatch.quality === "maj" ? "" : bestMatch.quality;
+        let modifierParts = [];
+
+        if (bestMatch.omit.length > 0) {
+            // 将半音转回数字名称（如 4 -> 3, 7 -> 5）
+            const omitLabels = bestMatch.omit.map(o => this.semitoneToIntervalName(o, bestMatch.quality));
+            modifierParts.push(`omit ${omitLabels.join(',')}`);
+        }
+
+        if (bestMatch.add.length > 0) {
+            const addLabels = bestMatch.add.map(a => {
+                if (a === 2) return (orderedOffsets[1] % 12) === 2 ? "2" : "9";
+                if (a === 5) return (orderedOffsets[1] % 12) === 5 ? "4" : "11";
+                if (a === 9) return "13";
+                return this.semitoneToIntervalName(a);
+            });
+            modifierParts.push(`add ${addLabels.join(',')}`);
+        }
+
+        const finalQuality = `${qualityStr} ${modifierParts.join(' ')}`.trim();
+
+        return {
+            chord: `${rootName}${finalQuality}`,
+            quality: finalQuality,
+            root: rootName
+        };
+    }
+
+    // 辅助函数：将半音偏移转为音程名称
+    semitoneToIntervalName(s, chordQuality = "") {
+        if (/13/.test(chordQuality) && s === 9) return "13";
+        if (/(?:11|13)/.test(chordQuality) && s === 5) return "11";
+        if (/(?:9|11|13)/.test(chordQuality) && s === 2) return "9";
+        const map = { 1: "b2", 2: "2", 3: "b3", 4: "3", 5: "4", 6: "b5", 7: "5", 8: "b6", 9: "6", 10: "b7", 11: "7" };
+        return map[s] || s;
+    }
+}
+
+export class BluesToolkit {
+    constructor() {
+        this.scaleMetadata = {
+            "Minor Blues": {
+                "intervals": [0, 3, 5, 6, 7, 10],
+                "blue_notes": [3, 6, 10]
+            },
+            "Major Blues": {
+                "intervals": [0, 2, 3, 4, 7, 9],
+                "blue_notes": [3]
+            },
+            "Mixolydian Blues": {
+                "intervals": [0, 2, 3, 4, 5, 7, 9, 10],
+                "blue_notes": [3, 10]
+            },
+            "Lydian Dominant": {
+                "intervals": [0, 2, 4, 6, 7, 9, 10],
+                "blue_notes": [6]
+            },
+            "Major Pentatonic": {
+                "intervals": [0, 2, 4, 7, 9],
+                "blue_notes": []
+            },
+            "Minor Pentatonic": {
+                "intervals": [0, 3, 5, 7, 10],
+                "blue_notes": []
+            },
+        };
+    }
+
+    /**
+    * 增强版：计算音阶音符,并标注它们与当前和弦的关系
+    */
+    _getScaleDetails(root, scaleName, chordOffsets) {
+        const converter = new EnhancedChordConverter();
+        const meta = this.scaleMetadata[scaleName] || { "intervals": [] };
+        const rootIdx = converter.noteToIdx[root];
+
+        const detailedNotes = [];
+        const intervals = meta["intervals"] || [];
+        const blueNotes = meta["blue_notes"] || [];
+
+        for (const i of intervals) {
+            // 计算音符名称
+            const noteName = converter.idxToNote[(rootIdx + i) % 12];
+            const tags = [];
+
+            // 标注：蓝调音 (BLUE)
+            if (blueNotes.includes(i)) {
+                tags.push("BLUE");
+            }
+
+            // 标注：和弦内音 (CHORD_TONE) 或 张力音 (TENSION)
+            if (chordOffsets.has(i)) {
+                tags.push("CHORD_TONE");
+            } else {
+                tags.push("TENSION");
+            }
+
+            detailedNotes.push({
+                "note": noteName,
+                "role": tags.join("/")
+            });
+        }
+        return detailedNotes;
+    }
+
+    /**
+     * 根据根音和音阶名称计算具体的音符名称
+     */
+    _calculateScaleNotes(root, scaleName) {
+        const converter = new EnhancedChordConverter();
+
+        // 检查音阶名称是否存在于元数据中
+        if (!this.scaleMetadata[scaleName]) {
+            return [];
+        }
+
+        const rootIdx = converter.noteToIdx[root];
+        const intervals = this.scaleMetadata[scaleName].intervals;
+
+        // 将半音程转换为具体的音符名称 (通过取模 12 确保在八度循环内)
+        return intervals.map(i => {
+            const noteIdx = (rootIdx + i) % 12;
+            return converter.idxToNote[noteIdx];
+        });
+    }
+
+    /**
+     * 推荐调性音阶,包括具体的音符
+     * 返回格式: [{ name: "音阶名", reason: "推荐原因", notes: [音符列表] }]
+     */
+    suggestForChord(chordInput) {
+        const converter = new EnhancedChordConverter();
+        const notes = converter._ensureNotesAndRoot(chordInput);
+        if (!notes || notes.length === 0) return [];
+
+        const root = notes[0];
+        const rootIdx = converter.noteToIdx[root];
+
+        // 计算相对于根音的半音偏移量集合
+        const chordOffsets = new Set(notes.map(n => (converter.noteToIdx[n] - rootIdx + 12) % 12));
+
+        // 计算关系小调根音 (减去3个半音)
+        const relMinorRootIdx = (rootIdx - 3 + 12) % 12;
+        const relMinorRoot = converter.idxToNote[relMinorRootIdx];
+
+        const rawSuggestions = [];
+
+        // 逻辑特征判断
+        const hasMajor3rd = chordOffsets.has(4);
+        const hasB7 = chordOffsets.has(10);
+        const hasMinor3rd = chordOffsets.has(3);
+
+        if (hasMajor3rd && hasB7) {
+            // 属七和弦的情况 (Dominant 7th)
+            rawSuggestions.push([root, "Mixolydian Blues", "Parallel: Classic jazz-blues sound", 5]);
+            rawSuggestions.push([root, "Minor Blues", "Parallel: 'Blue' tension over major chord", 4]);
+            rawSuggestions.push([relMinorRoot, "Minor Pentatonic", "Relative: Sweet country-blues color", 3]);
+        } else if (hasMinor3rd) {
+            // 小调和弦的情况 (Minor chord)
+            rawSuggestions.push([root, "Minor Blues", "Parallel: Standard minor blues", 0]);
+            rawSuggestions.push([root, "Minor Pentatonic", "Parallel: Pure minor sound", 1]);
+        } else {
+            // 其他情况 (默认大调/中性)
+            rawSuggestions.push([root, "Major Pentatonic", "Neutral: Bright and open", 2]);
+        }
+
+        // 封装最终结果,包含音符预览
+        return rawSuggestions.map(([sRoot, sType, reason, reasonId]) => {
+            const scaleNotes = this._calculateScaleNotes(sRoot, sType);
+            return {
+                "name": `${sRoot} ${sType}`,
+                "reason": reason,
+                "notes": scaleNotes,
+                "reasonId": reasonId
+            };
+        });
+    }
+
+    /**
+     * 进阶建议：在基础推荐的基础上,增加“进阶替代”五声音阶
+     * 例如：在 Cmaj7 上推荐 G 大调五声音阶以获取 Lydian (#11) 色彩
+     */
+    suggestAdvanced(chordInput) {
+        const converter = new EnhancedChordConverter();
+        const notes = converter._ensureNotesAndRoot(chordInput);
+        if (!notes || notes.length === 0) return [];
+
+        const root = notes[0];
+        const rootIdx = converter.noteToIdx[root];
+
+        // 计算偏移量集合
+        const chordOffsets = new Set(notes.map(n => (converter.noteToIdx[n] - rootIdx + 12) % 12));
+
+        // 获取现有的基础推荐
+        let recommendations = this.suggestForChord(chordInput);
+
+        // --- 添加进阶爵士五声音阶替代逻辑 ---
+
+        // 1. 大七和弦 (Major 7th chord)
+        if (chordOffsets.has(11)) {
+            // 推荐从五级开始的大调五声音阶 (如 Cmaj7 弹 G Pent) -> 产生 9, #11, 13 效果
+            const gRootIdx = (rootIdx + 7) % 12;
+            const gRoot = converter.idxToNote[gRootIdx];
+            recommendations.push({
+                "name": `${gRoot} Major Pentatonic`,
+                "reason": "Substitution: Provides Lydian (#11) color",
+                "notes": this._calculateScaleNotes(gRoot, "Major Pentatonic"),
+                "reasonId": 6
+            });
+        }
+
+        // 2. 小七和弦 (Minor 7th chord)
+        else if (chordOffsets.has(3) && chordOffsets.has(10)) {
+            // 推荐从三级开始的大调五声音阶 (如 Am7 弹 C Pent) -> 产生自然小调 (Aeolian) 质感
+            const b3RootIdx = (rootIdx + 3) % 12;
+            const b3Root = converter.idxToNote[b3RootIdx];
+            recommendations.push({
+                "name": `${b3Root} Major Pentatonic`,
+                "reason": "Substitution: Smooth Aeolian texture",
+                "notes": this._calculateScaleNotes(b3Root, "Major Pentatonic"),
+                "reasonId": 7
+            });
+        }
+
+        return recommendations;
+    }
+
+    /**
+     * 分析音阶在特定和弦上的听感风格
+     * @param {Array} scaleNotes - 推荐音阶中的音符列表
+     * @param {Array} chordNotes - 当前和弦中的音符列表
+     */
+    analyzeImprovFeel(scaleNotes, chordNotes) {
+        const scaleSet = new Set(scaleNotes);
+        const chordSet = new Set(chordNotes);
+
+        // 1. 识别音阶中的“张力音”(不在和弦内的音符)
+        const tensions = [...scaleSet].filter(note => !chordSet.has(note));
+
+        // 2. 计算张力得分
+        const tensionScore = tensions.length;
+
+        // 3. 评价逻辑
+        let feeling = "";
+        let description = "";
+        let descriptionId = 0;
+
+        if (tensionScore <= 1) {
+            feeling = "Safe & Sweet";
+            description = "Consonant and sweet — well suited for pop and folk-blues.";
+            descriptionId = 1;
+        } else if (tensionScore <= 3) {
+            feeling = "Soulful & Balanced";
+            description = "Classic blues character — tension and resolution are well balanced.";
+            descriptionId = 2;
+        } else if (tensionScore <= 5) {
+            feeling = "Spicy & Jazzy";
+            description = "Higher tension — evokes bebop and modern jazz-blues characteristics.";
+            descriptionId = 3;
+        } else {
+            feeling = "Experimental / Outside";
+            description = "Highly dissonant and edgy — creates strong outside colors and tension.";
+            descriptionId = 4;
+        }
+
+        return {
+            "feeling": feeling,
+            "spiciness_level": tensionScore,
+            "description": description,
+            "descriptionId": descriptionId,
+            "tension_notes": tensions
+        };
+    }
+
+    /**
+     * 带有感知分析的完整推荐
+     * @param {string|Array} chordInput - 和弦输入
+     */
+    suggestWithFeel(chordInput) {
+        const converter = new EnhancedChordConverter();
+        const notes = converter._ensureNotesAndRoot(chordInput);
+        if (!notes || notes.length === 0) return [];
+
+        const root = notes[0];
+
+        // 假设这里我们推荐几种不同风格的音阶
+        const suggestions = [
+            [root, "Major Pentatonic"],
+            [root, "Minor Blues"],
+            [root, "Lydian Dominant"]
+        ];
+
+        const report = [];
+        for (const [sRoot, sName] of suggestions) {
+            if (this.scaleMetadata[sName]) {
+                const sNotes = this._calculateScaleNotes(sRoot, sName);
+                const feel = this.analyzeImprovFeel(sNotes, notes);
+
+                report.push({
+                    "scale": `${sRoot} ${sName}`,
+                    "notes": sNotes,
+                    "feel": feel
+                });
+            }
+        }
+        return report;
+    }
+}
+
+export class CSTAnalyzer extends MusicScale {
+    constructor() {
+        super();
+        this.handleNotes = { "Cb": "B", "C#": "Db", "D#": "Eb", "E#": "F", "Fb": "E", "F#": "Gb", "G#": "Ab", "A#": "Bb", "B#": "C" };
+        this.notes = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+        this.noteToVal = Object.fromEntries(this.notes.map((n, i) => [n, i]));
+        this.circleOfFifths = ['Gb', 'Db', 'Ab', 'Eb', 'Bb', 'F', 'C', 'G', 'D', 'A', 'E', 'B'];
+
+        this.scaleDefinitions = {
+            "Bebop Dominant": [0, 2, 4, 5, 7, 9, 10, 11], "Bebop Major": [0, 2, 4, 5, 7, 8, 9, 11],
+            "Gong Mode (Gong)": [0, 2, 4, 7, 9], "Shang Mode (Shang)": [0, 2, 5, 7, 10], "Jue Mode (Jue)": [0, 3, 5, 8, 10],
+            "Zhi Mode (Zhi)": [0, 2, 5, 7, 9], "Yu Mode (Yu)": [0, 3, 5, 7, 10], "Japan Major": [0, 1, 5, 7, 10],
+            "Japan Minor": [0, 2, 3, 7, 8], "Hungarian Minor": [0, 2, 3, 6, 7, 8, 11], "Egypt Scale": [0, 1, 3, 4, 7, 8, 10]
+        };
+
+        for (const scaleInfo of this.scaleMode) {
+            const scale_name = scaleInfo.scale_name[0];
+            const intervals = scaleInfo.intervals;
+            this.scaleDefinitions[scale_name] = intervals;
+        }
+
+    }
+
+    scaleNotes(...args) {
+        let root, scaleName;
+        if (args.length === 1) [root, scaleName] = args[0].split(/ (.*)/).filter(item => item !== "");
+        else[root, scaleName] = args;
+
+        if (!(scaleName in this.scaleDefinitions)) throw new Error(`Scale ${scaleName} not found`);
+        return this.getScaleNotes(this.handleNotes[root] || root, this.scaleDefinitions[scaleName]);
+    }
+
+    _getRelativeFifthsPos(root, note) {
+        const r = this.handleNotes[root] || root;
+        const n = this.handleNotes[note] || note;
+        const rootPos = this.circleOfFifths.indexOf(r);
+        const notePos = this.circleOfFifths.indexOf(n);
+        if (rootPos < 0 || notePos < 0) return 0;
+        const delta = notePos - rootPos;
+        return ((delta + 6 + 12) % 12) - 6;
+    }
+
+    getScaleNotes(root, intervals) {
+        const normalizedRoot = this.handleNotes[root] || root;
+        const rootIdx = this.notes.indexOf(normalizedRoot);
+        if (rootIdx < 0) throw new Error(`Invalid scale root: ${root}`);
+        return new Set(intervals.map(i => this.notes[(rootIdx + i) % 12]));
+    }
+
+    analyzeTensions(chordNotes, scaleFullName) {
+        const sNotes = this.scaleNotes(scaleFullName);
+        const normalizedChord = chordNotes.map(n => this.handleNotes[n] || n);
+        const chordSet = new Set(normalizedChord);
+        const chordVals = normalizedChord.map(n => this.noteToVal[n]).filter(Number.isFinite);
+        const results = { tensions: [], avoid: [] };
+
+        sNotes.forEach(sNote => {
+            if (chordSet.has(sNote)) return;
+            const sVal = this.noteToVal[this.handleNotes[sNote] || sNote];
+            const isAvoid = chordVals.some(cVal => (sVal - cVal + 12) % 12 === 1);
+            if (isAvoid) results.avoid.push(sNote);
+            else results.tensions.push(sNote);
+        });
+        return results;
+    }
+
+    calculateBrightness(root, scaleNotes) {
+        let totalPos = 0, hasMajor3rd = false;
+        const normalizedRoot = this.handleNotes[root] || root;
+        const rootVal = this.noteToVal[normalizedRoot];
+        if (!Number.isFinite(rootVal) || !scaleNotes?.size) return 0;
+        scaleNotes.forEach(n => {
+            totalPos += this._getRelativeFifthsPos(normalizedRoot, n);
+            if ((this.noteToVal[this.handleNotes[n] || n] - rootVal + 12) % 12 === 4) hasMajor3rd = true;
+        });
+        let score = totalPos / scaleNotes.size;
+        if (hasMajor3rd) score += 5.0;
+        return Number(score.toFixed(2));
+    }
+
+    analyzeCST(chordNotes) {
+        const normalizedChord = chordNotes.map(n => this.handleNotes[n] || n);
+        const chordSet = new Set(normalizedChord);
+        const results = [];
+        this.notes.forEach(root => {
+            Object.entries(this.scaleDefinitions).forEach(([name, intervals]) => {
+                const sNotes = this.getScaleNotes(root, intervals);
+                if ([...chordSet].every(n => sNotes.has(n))) results.push(`${root} ${name}`);
+            });
+        });
+        return results;
+    }
+}
+
+export class LCCAnalyzer {
+    constructor() {
+        this.handleNotes = { "Cb": "B", "C#": "Db", "D#": "Eb", "E#": "F", "Fb": "E", "F#": "Gb", "G#": "Ab", "A#": "Bb", "B#": "C" };
+        this.notes = [...LCC_NOTES];
+        this.noteToVal = Object.fromEntries(this.notes.map((n, i) => [n, i]));
+
+        // LCC 核心音阶定义
+        this.lccScales = Object.fromEntries(LCC_PRINCIPAL_SCALES.map(({ name, intervals }) => [name, [...intervals]]));
+    }
+
+    /**
+     * Backward-compatible scaleNotes signatures; scale data and spelling live in lcc_concept.js.
+     * 支持两种调用：
+     * 1. scaleNotes("C Lydian (Fundamental)")
+     * 2. scaleNotes("C", "Lydian (Fundamental)")
+     */
+    scaleNotes(...args) {
+        let parent, scaleName;
+
+        if (args.length === 1) {
+            // 模仿 Python 的 split(" ", 1)
+            // 找到第一个空格的位置,只切分一次
+            const firstSpaceIndex = args[0].indexOf(" ");
+            if (firstSpaceIndex === -1) {
+                throw new Error("Invalid input format. Please use 'root scale_name' format");
+            }
+            parent = args[0].substring(0, firstSpaceIndex);
+            scaleName = args[0].substring(firstSpaceIndex + 1);
+        } else if (args.length === 2) {
+            [parent, scaleName] = args;
+        } else {
+            throw new TypeError("scaleNotes() takes 1 or 2 positional arguments");
+        }
+
+        return lccScaleNotes(parent, scaleName);
+    }
+
+    chromaticOrder(parent) {
+        return lccChromaticOrder(parent);
+    }
+
+    colorFamily(parent, chordNotes = []) {
+        return lccColorFamily(parent, chordNotes);
+    }
+
+    analyzeLCC(chordNotes, options = {}) {
+        return analyzeLccParents(chordNotes, options);
+    }
+}
+
+class NeoRiemannianToolkit {
+    constructor() {
+        // 传入 EnhancedChordConverter 的实例
+        this.converter = new EnhancedChordConverter();
+        this.formulas = this.converter.chordFormulas;
+    }
+
+    /**
+     * 通用 Dn 转换算法 (五度循环偏移)
+     */
+    getDnTransform(chordInput, chordForm = [0, 4, 7], n = 1) {
+        const info = this.converter.parseAndGetNotes(chordInput);
+        const rootOffset = this.converter.noteToIdx[info.notes[0]];
+
+        const shift = (5 * n) % 12;
+        const dnIndices = chordForm.map(x => (x + rootOffset + shift) % 12);
+
+        const identified = this.converter.identifyChord(dnIndices);
+
+        return {
+            [`D${n}`]: {
+                chord: identified.chord,
+                notes: dnIndices.map(i => this.converter.idxToNote[i]),
+                offsets: dnIndices
+            }
+        };
+    }
+
+    /**
+     * 音网图 (Tonnetz) 核心转换逻辑
+     */
+    getTriadTransform(chordInput) {
+        const info = this.converter.parseAndGetNotes(chordInput);
+        const { notes, offsets } = info;
+
+        const idResult = this.converter.identifyChord(offsets);
+        const quality = idResult.quality;
+
+        if (notes.length < 3) return null;
+
+        const rootOffset = offsets[0];
+
+        // 性质判定
+        const isMajor = ["", "maj", "major", "M"].includes(quality);
+        const isMinor = ["min", "m", "minor"].includes(quality);
+        const isAug = quality === "aug";
+        const isDim = quality === "dim";
+        const isSus4 = quality === "sus4";
+        const isSus2 = quality === "sus2";
+
+        const f = this.converter.chordFormulas;
+        let rawOps = {};
+
+        // 统一取模工具函数，处理 JS 负数取模问题
+        const mod = n => (n % 12 + 12) % 12;
+
+        if (isDim) {
+            rawOps["s1_r"] = f.major.map(x => mod(x + rootOffset - 1));
+            rawOps["p1_t_p1_f"] = f.major.map(x => mod(x + rootOffset));
+            rawOps["p1_f"] = f.minor.map(x => mod(x + rootOffset));
+            rawOps["s2_r"] = f.minor.map(x => mod(x + rootOffset + 3));
+            rawOps["dim"] = f.dim.map(x => mod(x + rootOffset + 6));
+        }
+        else if (isSus4) {
+            rawOps["Resolve_P_Maj"] = f.major.map(x => mod(x + rootOffset));
+            rawOps["Resolve_P_Min"] = f.minor.map(x => mod(x + rootOffset));
+            rawOps["To_sus2"] = f.sus2.map(x => mod(x + rootOffset));
+            rawOps["To_IV"] = f.major.map(x => mod(x + rootOffset + 5));
+        }
+        else if (isSus2) {
+            rawOps["Resolve_P_Maj"] = f.major.map(x => mod(x + rootOffset));
+            rawOps["Resolve_P_Min"] = f.minor.map(x => mod(x + rootOffset));
+            rawOps["To_sus4"] = f.sus4.map(x => mod(x + rootOffset));
+            rawOps["To_V"] = f.major.map(x => mod(x + rootOffset + 7));
+        }
+        else if (isAug) {
+            rawOps["s1_f"] = f.major.map(x => mod(x + rootOffset));
+            rawOps["s1_t"] = f.major.map(x => mod(x + rootOffset + 4));
+            rawOps["s1_r"] = f.major.map(x => mod(x + rootOffset - 4));
+            rawOps["p1_f"] = f.minor.map(x => mod(x + rootOffset + 1));
+            rawOps["p1_t"] = f.minor.map(x => mod(x + rootOffset + 5));
+            rawOps["p1_r"] = f.minor.map(x => mod(x + rootOffset - 3));
+        }
+        else if (isMajor) {
+            Object.assign(rawOps, {
+                "P": f.minor.map(x => mod(x + rootOffset)),
+                "L": f.minor.map(x => mod(x + rootOffset + 4)),
+                "R": f.minor.map(x => mod(x + rootOffset - 3)),
+                "S": f.minor.map(x => mod(x + rootOffset + 1)),
+                "N": f.minor.map(x => mod(x + rootOffset + 5)),
+                "ToAug": f.aug.map(x => mod(x + rootOffset)),
+                "ToSus4": f.sus4.map(x => mod(x + rootOffset)),
+                "ToSus2": f.sus2.map(x => mod(x + rootOffset)),
+                "ToDim": f.dim.map(x => mod(x + rootOffset + 1)),
+            });
+            for (let n = 1; n <= 1; n++) {
+                rawOps[`D${n}`] = this.getDnTransform(chordInput, f.major, n)[`D${n}`].offsets;
+            }
+        }
+        else if (isMinor) {
+            Object.assign(rawOps, {
+                "P": f.major.map(x => mod(x + rootOffset)),
+                "L": f.major.map(x => mod(x + rootOffset - 4)),
+                "R": f.major.map(x => mod(x + rootOffset + 3)),
+                "S": f.major.map(x => mod(x + rootOffset - 1)),
+                "N": f.major.map(x => mod(x + rootOffset + 7)),
+                "ToAug": f.aug.map(x => mod(x + rootOffset - 1)),
+                "ToSus4": f.sus4.map(x => mod(x + rootOffset)),
+                "ToSus2": f.sus2.map(x => mod(x + rootOffset)),
+                "ToDim": f.dim.map(x => mod(x + rootOffset)),
+            });
+            for (let n = 1; n <= 1; n++) {
+                rawOps[`D${n}`] = this.getDnTransform(chordInput, f.minor, n)[`D${n}`].offsets;
+            }
+        }
+
+        let finalResults = {};
+        for (let [op, idxs] of Object.entries(rawOps)) {
+            const res = this.converter.identifyChord(idxs);
+            finalResults[op] = {
+                chord: res.chord,
+                notes: idxs.map(i => this.converter.idxToNote[i])
+            };
+        }
+        return finalResults;
+    }
+
+    _build(rootIdx, quality) {
+        const rootName = this.converter.idxToNote[(rootIdx % 12 + 12) % 12];
+        const q = this.formulas[quality] ? quality : "";
+        return `${rootName}${q}`;
+    }
+
+    /**
+     * 八度音阶塔 (Octatonic Tower) 转换
+     */
+    getOctatonicNeighbors(chordInput) {
+        const info = this.converter.parseAndGetNotes(chordInput);
+        const root = info.offsets[0];
+        const q = this.converter.identifyChord(info.offsets).quality;
+
+        let neighbors = [];
+        if (q === "m7b5") {
+            neighbors.push(this._build(root, "m7"), this._build(root + 3, "m7"),
+                this._build(root - 1, "maj7"), this._build(root, "dim7"));
+        } else if (q === "dim7") {
+            [-6, -3, 0, 3].forEach(s => neighbors.push(this._build(root + s, "m7b5")));
+            [-1, -4, 2, 5].forEach(s => neighbors.push(this._build(root + s, "7")));
+        } else if (q === "maj7") {
+            neighbors.push(this._build(root, "7"), this._build(root + 1, "m7b5"));
+        } else if (q === "7") {
+            neighbors.push(this._build(root - 5, "dim7"), this._build(root, "m7"),
+                this._build(root - 3, "m7"), this._build(root, "maj7"));
+        } else if (q === "m7") {
+            neighbors.push(this._build(root, "7"), this._build(root - 3, "m7b5"),
+                this._build(root, "m7b5"), this._build(root + 3, "7"));
+        }
+
+        return [...new Set(neighbors)].filter(n => n !== chordInput);
+    }
+
+    /**
+     * 几何近邻综合查询
+     */
+    getGeometricNeighbors(chordInput) {
+        const info = this.converter.parseAndGetNotes(chordInput);
+        const uniqueOffsets = new Set(info.offsets);
+
+        let results = {
+            Tonnetz_PLRSND: {},
+            Octatonic_Tower: [],
+            candidates: []
+        };
+
+        if (uniqueOffsets.size === 3) {
+            results.Tonnetz_PLRSND = this.getTriadTransform(chordInput);
+        }
+
+        if (uniqueOffsets.size >= 4) {
+            results.Octatonic_Tower = this.getOctatonicNeighbors(chordInput);
+        }
+
+        // 收集所有候选和弦名称
+        for (let key in results.Tonnetz_PLRSND) {
+            results.candidates.push(results.Tonnetz_PLRSND[key].chord);
+        }
+        results.Octatonic_Tower.forEach(name => results.candidates.push(name));
+
+        return results;
+    }
+
+    /**
+ * 获取音网几何结构数据 — 供可视化使用
+ * 每个变换操作独立展示，即使产生相同和弦也分别渲染
+ */
+    getTonnetzGraph(chordInput) {
+        const centerData = this.getTriadTransform(chordInput);
+        if (!centerData || Object.keys(centerData).length === 0) return null;
+
+        const nodes = [];
+        const edges = [];
+
+        // 中心节点
+        const centerInfo = this.converter.parseAndGetNotes(chordInput);
+        nodes.push({
+            id: 0,
+            chord: chordInput,
+            notes: centerInfo.notes,
+            label: "中心",
+            x: 0,
+            y: 0,
+            group: "center"
+        });
+
+        // 六边形排列 (P, L, R, S, N, D1)——共 6 个基本方向
+        const mainOps = ["P", "L", "R", "S", "N", "D1"];
+        const angleStep = (2 * Math.PI) / 6;
+
+        let idx = 1;
+        const placedMainOps = []; // 记录已放置的主操作
+
+        // 第一轮：放置明确属于主方向的变换
+        for (const op of mainOps) {
+            if (centerData[op]) {
+                const result = centerData[op];
+                const dirIdx = mainOps.indexOf(op);
+                const angle = dirIdx * angleStep - Math.PI / 2;
+                const radius = 140;
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+
+                nodes.push({
+                    id: idx,
+                    chord: result.chord,
+                    notes: result.notes || [],
+                    label: op,
+                    x: Math.round(x),
+                    y: Math.round(y),
+                    group: "transform"
+                });
+                edges.push({ source: 0, target: idx, label: op });
+                placedMainOps.push(op);
+                idx++;
+            }
+        }
+
+        // 第二轮：放置 Aug、Sus4、Sus2 等特殊变换，放置在稍微偏移的位置
+        const specialOps = [];
+        for (const [op, result] of Object.entries(centerData)) {
+            if (!mainOps.includes(op) && !op.startsWith("D")) {
+                specialOps.push(op);
+            }
+        }
+        // 第二批 D 变换 (D2 - D6)
+        const dOps = [];
+        for (const [op, result] of Object.entries(centerData)) {
+            if (op.startsWith("D") && !mainOps.includes(op)) {
+                dOps.push(op);
+            }
+        }
+
+        // 将特殊操作分布在内圈（较小半径，交错角度）
+        const allSecondaryOps = [...specialOps, ...dOps];
+        if (allSecondaryOps.length > 0) {
+            const innerRadius = 100;
+            const secondaryAngleStep = (2 * Math.PI) / allSecondaryOps.length;
+            const offsetAngle = Math.PI / 12; // 偏移以避免完全对齐
+
+            allSecondaryOps.forEach((op, i) => {
+                const result = centerData[op];
+                const angle = i * secondaryAngleStep - Math.PI / 2 + offsetAngle;
+                const x = Math.cos(angle) * innerRadius;
+                const y = Math.sin(angle) * innerRadius;
+
+                nodes.push({
+                    id: idx,
+                    chord: result.chord,
+                    notes: result.notes || [],
+                    label: op,
+                    x: Math.round(x),
+                    y: Math.round(y),
+                    group: "secondary"
+                });
+                edges.push({ source: 0, target: idx, label: op });
+                idx++;
+            });
+        }
+
+        return { nodes, edges, center: chordInput };
+    }
+
+    /**
+ * 获取八度音阶塔结构数据 — 供可视化使用
+ */
+    getOctatonicGraph(chordInput) {
+        const neighbors = this.getOctatonicNeighbors(chordInput);
+        if (!neighbors || neighbors.length === 0) return null;
+
+        const nodes = [];
+        const edges = [];
+
+        // 中心节点
+        const centerInfo = this.converter.parseAndGetNotes(chordInput);
+        nodes.push({
+            id: 0,
+            chord: chordInput,
+            notes: centerInfo.notes,
+            label: "Root",
+            x: 0,
+            y: 0,
+            group: "center"
+        });
+
+        // 邻居节点呈圆形排列
+        const radius = 120;
+        const angleStep = (2 * Math.PI) / neighbors.length;
+
+        neighbors.forEach((neighbor, i) => {
+            const angle = i * angleStep - Math.PI / 2;
+            const x = Math.cos(angle) * radius;
+            const y = Math.sin(angle) * radius;
+
+            let notes = [];
+            try {
+                const parsed = this.converter._ensureNotesAndRoot(neighbor, true);
+                notes = parsed.notes || [];
+            } catch (e) { }
+
+            nodes.push({
+                id: i + 1,
+                chord: neighbor,
+                notes: notes,
+                label: "",
+                x: Math.round(x),
+                y: Math.round(y),
+                group: "octatonic"
+            });
+            edges.push({ source: 0, target: i + 1, label: "" });
+        });
+
+        return { nodes, edges, center: chordInput };
+    }
+
+    /**
+     * 查找从和弦A到和弦B的新里曼变换路径（优化版）
+     * @param {string} chordA - 起始和弦
+     * @param {string} chordB - 目标和弦
+     * @param {number} maxSteps - 最大搜索步数，默认8
+     * @returns {Array} 路径列表，按步数排序
+     */
+    findPath(chordA, chordB, maxSteps = 8) {
+        const targetNorm = this._normalizeChord(chordB);
+        const visited = new Set();
+        const paths = [];
+
+        // BFS 查找多条路径
+        const queue = [{ chord: chordA, path: [], steps: 0 }];
+        visited.add(this._normalizeChord(chordA));
+
+        while (queue.length > 0) {
+            const { chord, path, steps } = queue.shift();
+
+            if (steps > maxSteps) continue;
+
+            // 直接使用 getGeometricNeighbors 获取所有邻居
+            const geo = this.getGeometricNeighbors(chord);
+            const allNeighbors = {};
+
+            // 合并三和弦变换
+            if (geo.Tonnetz_PLRSND) {
+                Object.entries(geo.Tonnetz_PLRSND).forEach(([op, result]) => {
+                    if (result.chord) allNeighbors[op] = result.chord;
+                });
+            }
+
+            // 合并八度音阶塔邻居
+            if (geo.Octatonic_Tower) {
+                geo.Octatonic_Tower.forEach((neighbor, i) => {
+                    if (neighbor) allNeighbors[`Oct${i + 1}`] = neighbor;
+                });
+            }
+
+            for (const [op, neighbor] of Object.entries(allNeighbors)) {
+                const normNeighbor = this._normalizeChord(neighbor);
+
+                // 找到目标
+                if (normNeighbor === targetNorm) {
+                    paths.push({
+                        path: [...path, { from: chord, to: neighbor, operation: op }],
+                        steps: steps + 1,
+                        chords: [chordA, ...path.map(p => p.to), neighbor]
+                    });
+                    continue;
+                }
+
+                // 未访问过且步数未超限
+                if (!visited.has(normNeighbor) && steps + 1 < maxSteps) {
+                    visited.add(normNeighbor);
+                    queue.push({
+                        chord: neighbor,
+                        path: [...path, { from: chord, to: neighbor, operation: op }],
+                        steps: steps + 1
+                    });
+                }
+            }
+        }
+
+        return paths.sort((a, b) => a.steps - b.steps);
+    }
+
+    /**
+     * 标准化和弦名用于比较（音符排序后逗号分隔）
+     */
+    _normalizeChord(chord) {
+        try {
+            const notes = this.converter._ensureNotesAndRoot(chord);
+            if (notes && notes.length) {
+                return [...notes].sort().join(',');
+            }
+        } catch (e) { }
+        return chord;
+    }
+}
+
+export class ClassicalHarmonyConnector {
+    constructor() {
+        this.converter = new EnhancedChordConverter();
+        this.naturalPitch = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+        this.letters = ["C", "D", "E", "F", "G", "A", "B"];
+        this.modeIntervals = {
+            major: [0, 2, 4, 5, 7, 9, 11],
+            "harmonic-major": [0, 2, 4, 5, 7, 8, 11],
+            "melodic-major": [0, 2, 4, 5, 7, 8, 10],
+            minor: [0, 2, 3, 5, 7, 8, 10],
+            "harmonic-minor": [0, 2, 3, 5, 7, 8, 11],
+            "melodic-minor": [0, 2, 3, 5, 7, 9, 11]
+        };
+    }
+
+    _normalizeKey(key) {
+        const value = typeof key === "string" ? key.trim().replace("♭", "b").replace("♯", "#") : "";
+        if (!(value in this.converter.noteToIdx)) throw new Error(`Invalid key: ${key}`);
+        return value;
+    }
+
+    _accidentalForDiff(diff) {
+        const normalized = ((diff + 6) % 12) - 6;
+        return ({ "-2": "bb", "-1": "b", "0": "", "1": "#", "2": "##" })[normalized] ?? "";
+    }
+
+    _spellDegree(key, mode, degree, alteration = 0) {
+        const root = this._normalizeKey(key);
+        const intervals = this.modeIntervals[mode] || this.modeIntervals.major;
+        const zeroDegree = ((degree - 1) % 7 + 7) % 7;
+        const rootLetterIndex = this.letters.indexOf(root[0]);
+        const letter = this.letters[(rootLetterIndex + zeroDegree) % 7];
+        const targetPc = (this.converter.noteToIdx[root] + intervals[zeroDegree] + alteration + 12) % 12;
+        return `${letter}${this._accidentalForDiff(targetPc - this.naturalPitch[letter])}`;
+    }
+
+    _spellChord(rootName, intervals) {
+        const rootLetterIndex = this.letters.indexOf(rootName[0]);
+        const rootPc = this.converter.noteToIdx[rootName];
+        return intervals.map((interval, index) => {
+            const letter = this.letters[(rootLetterIndex + index * 2) % 7];
+            const targetPc = (rootPc + interval) % 12;
+            return `${letter}${this._accidentalForDiff(targetPc - this.naturalPitch[letter])}`;
+        });
+    }
+
+    _quality(intervals) {
+        const key = [...new Set(intervals.map(interval => ((interval % 12) + 12) % 12))].sort((a, b) => a - b).join(",");
+        return ({
+            "0,4,7": { suffix: "", quality: "major triad" },
+            "0,3,7": { suffix: "m", quality: "minor triad" },
+            "0,3,6": { suffix: "dim", quality: "diminished triad" },
+            "0,4,8": { suffix: "aug", quality: "augmented triad" },
+            "0,4,7,11": { suffix: "maj7", quality: "major seventh" },
+            "0,4,7,10": { suffix: "7", quality: "dominant seventh" },
+            "0,3,7,10": { suffix: "m7", quality: "minor seventh" },
+            "0,3,6,10": { suffix: "m7b5", quality: "half-diminished seventh" },
+            "0,3,6,9": { suffix: "dim7", quality: "diminished seventh" },
+            "0,2,4,7,10": { suffix: "9", quality: "dominant ninth" },
+            "0,2,4,7,11": { suffix: "maj9", quality: "major ninth" },
+            "0,2,3,7,10": { suffix: "m9", quality: "minor ninth" }
+        })[key] || { suffix: "", quality: "tertian chord" };
+    }
+
+    _makeEntry({ symbol, root, intervals, functionName, category, resolution, inversion = 0, aliases = [], priority = 0 }) {
+        const quality = this._quality(intervals);
+        const rootNotes = this._spellChord(root, intervals);
+        const bassIndex = Math.min(Math.max(inversion, 0), rootNotes.length - 1);
+        const notes = [...rootNotes.slice(bassIndex), ...rootNotes.slice(0, bassIndex)];
+        const figures = rootNotes.length === 3 ? ["", "6", "64"] : ["7", "65", "43", "42"];
+        const figuredBass = figures[bassIndex] || figures[0];
+        const chordName = `${root}${quality.suffix}${bassIndex ? `/${rootNotes[bassIndex]}` : ""}`;
+        const needsFigure = !/[0-9/]/.test(symbol) && !symbol.includes("+") && (rootNotes.length === 4 || inversion > 0);
+        const displaySymbol = needsFigure ? `${symbol}${figuredBass}` : symbol;
+        return {
+            symbol: displaySymbol,
+            baseSymbol: symbol,
+            chord: chordName,
+            notes,
+            rootNotes,
+            bass: rootNotes[bassIndex],
+            inversion: bassIndex,
+            figuredBass,
+            quality: quality.quality,
+            function: functionName,
+            category,
+            resolution,
+            aliases: [symbol, chordName, ...aliases],
+            priority
+        };
+    }
+
+    _diatonicEntry(key, mode, degree, size, inversion = 0) {
+        const scale = this.modeIntervals[mode];
+        const rootScaleIndex = degree - 1;
+        const chordOffsets = Array.from({ length: size }, (_, index) => {
+            const scaleIndex = rootScaleIndex + index * 2;
+            const octave = Math.floor(scaleIndex / 7) * 12;
+            return scale[scaleIndex % 7] + octave;
+        });
+        const intervals = chordOffsets.map(offset => (offset - chordOffsets[0] + 12) % 12);
+        const romanMajor = ["I", "II", "III", "IV", "V", "VI", "VII"];
+        const romanMinor = ["i", "ii", "iii", "iv", "v", "vi", "vii"];
+        const quality = this._quality(intervals);
+        let roman = quality.quality.startsWith("major") || quality.quality.startsWith("dominant") || quality.quality.startsWith("augmented")
+            ? romanMajor[degree - 1]
+            : romanMinor[degree - 1];
+        if (quality.quality.includes("half-diminished")) roman += "ø";
+        else if (quality.quality.includes("diminished")) roman += "°";
+        else if (quality.quality.includes("augmented")) roman += "+";
+        const functionName = [1, 3, 6].includes(degree) ? "T" : [2, 4].includes(degree) ? "S" : "D";
+        return this._makeEntry({
+            symbol: roman,
+            root: this._spellDegree(key, mode, degree),
+            intervals,
+            functionName,
+                category: size === 3 ? "diatonic triad" : (quality.quality.includes("ninth") ? "diatonic ninth" : "diatonic seventh"),
+            resolution: functionName === "D" ? "Resolve toward the tonic; raise the leading tone in minor." : "Continue by functional contrast or common-tone prolongation.",
+            inversion,
+            priority: functionName === "D" ? 2 : 1
+        });
+    }
+
+    getPalette(key = "C", mode = "major") {
+        const normalizedKey = this._normalizeKey(key);
+        const normalizedMode = mode === "minor" ? "minor" : "major";
+        const entries = [];
+        for (let degree = 1; degree <= 7; degree++) {
+            for (let inversion = 0; inversion < 3; inversion++) entries.push(this._diatonicEntry(normalizedKey, normalizedMode, degree, 3, inversion));
+            for (let inversion = 0; inversion < 4; inversion++) entries.push(this._diatonicEntry(normalizedKey, normalizedMode, degree, 4, inversion));
+        }
+
+        const tonic = this._spellDegree(normalizedKey, normalizedMode, 1);
+        const dominant = this._spellDegree(normalizedKey, normalizedMode, 5);
+        const dominantIntervals = [0, 4, 7, 10];
+        const tonic64 = this._makeEntry({
+            symbol: "K64", root: tonic, intervals: [0, 4, 7], functionName: "D",
+            category: "cadential six-four", resolution: "Bass remains on scale degree 5; 6-5 and 4-3 resolve into V or V7.", inversion: 2,
+            aliases: ["cadential 64", "I64"], priority: 10
+        });
+        tonic64.bass = dominant;
+        tonic64.notes = [dominant, tonic64.rootNotes[0], tonic64.rootNotes[1]];
+        tonic64.chord = `${tonic}/${dominant}`;
+        entries.push(tonic64);
+
+        const dominantNinth = this._makeEntry({
+            symbol: normalizedMode === "minor" ? "V7(b9)" : "V9", root: dominant,
+            intervals: normalizedMode === "minor" ? [0, 4, 7, 10, 13] : [0, 4, 7, 10, 14],
+            functionName: "D", category: "dominant ninth", resolution: "Resolve the seventh downward and the leading tone upward; the ninth resolves downward.", priority: 7
+        });
+        entries.push(dominantNinth);
+
+        const flatTwo = this._spellDegree(normalizedKey, normalizedMode, 2, -1);
+        entries.push(this._makeEntry({
+            symbol: "N", root: flatTwo, intervals: [0, 4, 7], functionName: "S",
+            category: "Neapolitan sixth", resolution: "Use first inversion (N6), then move to K64 or V; double the bass is usually preferred.", inversion: 1,
+            aliases: ["N6", "bII6"], priority: 9
+        }));
+
+        const secondaryTargets = [2, 4, 5, 6];
+        secondaryTargets.forEach(targetDegree => {
+            const targetRoot = this._spellDegree(normalizedKey, normalizedMode, targetDegree);
+            const targetPc = this.converter.noteToIdx[targetRoot];
+            const secondaryRootPc = (targetPc + 7) % 12;
+            const targetLetterIndex = this.letters.indexOf(targetRoot[0]);
+            const secondaryLetter = this.letters[(targetLetterIndex + 4) % 7];
+            const secondaryRoot = `${secondaryLetter}${this._accidentalForDiff(secondaryRootPc - this.naturalPitch[secondaryLetter])}`;
+            const targetRoman = ["I", "ii", "iii", "IV", "V", "vi", "vii°"][targetDegree - 1];
+            entries.push(this._makeEntry({
+                symbol: `V7/${targetRoman}`, root: secondaryRoot, intervals: dominantIntervals, functionName: "D",
+                category: targetDegree === 5 ? "double dominant" : "secondary dominant",
+                resolution: `Resolve to ${targetRoman} (${targetRoot}); retain common tones and resolve the temporary leading tone upward.`,
+                aliases: targetDegree === 5 ? ["DD", "V/V", "V7/V"] : [], priority: targetDegree === 5 ? 9 : 7
+            }));
+        });
+
+        const b6 = this._spellDegree(normalizedKey, normalizedMode, 6, -1);
+        const one = this._spellDegree(normalizedKey, normalizedMode, 1);
+        const sharp4 = this._spellDegree(normalizedKey, normalizedMode, 4, 1);
+        const two = this._spellDegree(normalizedKey, normalizedMode, 2);
+        const flat3 = this._spellDegree(normalizedKey, normalizedMode, 3, -1);
+        [
+            { symbol: "It+6", notes: [b6, one, sharp4], label: "Italian augmented sixth" },
+            { symbol: "Fr+6", notes: [b6, one, two, sharp4], label: "French augmented sixth" },
+            { symbol: "Ger+6", notes: [b6, one, flat3, sharp4], label: "German augmented sixth" }
+        ].forEach(item => entries.push({
+            symbol: item.symbol, baseSymbol: item.symbol, chord: item.symbol, notes: item.notes, rootNotes: item.notes,
+            bass: b6, inversion: 0, figuredBass: "+6", quality: item.label, function: "S-D", category: item.label,
+            resolution: item.symbol === "Ger+6"
+                ? "Resolve through K64 to avoid parallel fifths, then continue to V."
+                : "Resolve the augmented sixth outward by semitone to scale degree 5, then continue to V.",
+            aliases: [item.symbol, item.label], priority: 10
+        }));
+        return entries;
+    }
+
+    _pitchSet(notes) {
+        return [...new Set(notes.map(note => this.converter.noteToIdx[note]).filter(Number.isFinite))].sort((a, b) => a - b).join(",");
+    }
+
+    _resolveCurrent(input, palette) {
+        const normalized = String(input || "").trim().toLowerCase().replace(/\s+/g, "");
+        const symbolic = palette.find(entry => entry.aliases.some(alias => alias.toLowerCase().replace(/\s+/g, "") === normalized));
+        if (symbolic) return symbolic;
+        let notes;
+        try {
+            notes = this.converter._ensureNotesAndRoot(input);
+        } catch (error) {
+            return null;
+        }
+        if (!notes?.length) return null;
+        const set = this._pitchSet(notes);
+        return palette.find(entry => this._pitchSet(entry.notes) === set) || {
+            symbol: input, chord: input, notes, function: "unknown", category: "unclassified", aliases: []
+        };
+    }
+
+    _voiceLeadingDistance(fromNotes, toNotes) {
+        const from = [...new Set(fromNotes.map(note => this.converter.noteToIdx[note]))];
+        const to = [...new Set(toNotes.map(note => this.converter.noteToIdx[note]))];
+        const distance = (a, b) => Math.min(Math.abs(a - b), 12 - Math.abs(a - b));
+        return from.reduce((sum, note) => sum + Math.min(...to.map(target => distance(note, target))), 0) / Math.max(1, from.length);
+    }
+
+    recommend(currentInput, key = "C", mode = "major", limit = 12) {
+        const palette = this.getPalette(key, mode);
+        const current = this._resolveCurrent(currentInput, palette);
+        if (!current) throw new Error(`Unable to parse classical harmony input: ${currentInput}`);
+        const targetSymbols = new Set();
+        const currentSymbol = current.baseSymbol || current.symbol || "";
+
+        if (currentSymbol === "K64") ["V", "V7"].forEach(symbol => targetSymbols.add(symbol));
+        else if (currentSymbol === "N") ["K64", "V", "V7"].forEach(symbol => targetSymbols.add(symbol));
+        else if (["It+6", "Fr+6", "Ger+6"].includes(currentSymbol)) ["V", "V7", "K64"].forEach(symbol => targetSymbols.add(symbol));
+        else if (currentSymbol.startsWith("V7/")) targetSymbols.add(currentSymbol.slice(3));
+        else if (current.function === "T") ["ii", "ii°", "IV", "iv", "N", "V", "V7", "V7/V", "K64", "vi"].forEach(symbol => targetSymbols.add(symbol));
+        else if (current.function === "S" || current.function === "S-D") ["K64", "V", "V7", "vii°", "vii°7"].forEach(symbol => targetSymbols.add(symbol));
+        else if (current.function === "D") ["I", "i", "I6", "i6", "vi", "VI"].forEach(symbol => targetSymbols.add(symbol));
+        else ["I", "i", "IV", "iv", "V", "V7"].forEach(symbol => targetSymbols.add(symbol));
+
+        const unique = new Map();
+        palette.forEach(candidate => {
+            const base = candidate.baseSymbol || candidate.symbol;
+            if (!targetSymbols.has(base) && !targetSymbols.has(candidate.symbol)) return;
+            const movement = this._voiceLeadingDistance(current.notes, candidate.notes);
+            const commonTones = current.notes.filter(note => candidate.notes.some(target => this.converter.noteToIdx[target] === this.converter.noteToIdx[note])).length;
+            let score = 7.4 - movement * 1.15 + commonTones * 0.45 + (candidate.priority || 0) * 0.18;
+            if (candidate.inversion > 1 && !["K64"].includes(base)) score -= 0.5;
+            const keyValue = `${candidate.symbol}|${candidate.bass}`;
+            const result = { ...candidate, score: Math.round(Math.max(0, Math.min(10, score)) * 10) / 10, commonTones, voiceLeading: Number(movement.toFixed(2)) };
+            if (!unique.has(keyValue) || unique.get(keyValue).score < result.score) unique.set(keyValue, result);
+        });
+        return {
+            key: this._normalizeKey(key), mode: mode === "minor" ? "minor" : "major", current,
+            recommendations: [...unique.values()].sort((a, b) => b.score - a.score).slice(0, limit),
+            constraints: "Classical tertian harmony: triads and seventh chords; only the dominant may use a ninth."
+        };
+    }
+
+    // Sposobin's functional DNA database is kept as a separate data module.
+    // This override preserves the legacy palette helpers above while making
+    // the public connector follow the reference project's exact next graph.
+    _normalizeSposobinSymbol(value) {
+        return String(value || "").trim().replace(/\s+/g, "")
+            .replace(/[₀₁₂₃₄₅₆₇₈₉]/g, c => "0123456789"["₀₁₂₃₄₅₆₇₈₉".indexOf(c)])
+            .replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g, c => "0123456789"["⁰¹²³⁴⁵⁶⁷⁸⁹".indexOf(c)])
+            .replace(/ᵥ/g, "v").replace(/ᵢ/g, "i").replace(/♭/g, "b").replace(/♯/g, "#").replace(/⁺/g, "+");
+    }
+
+    _sposobinCategory(symbol) {
+        if (/^(It|Fr|Ger|N)/.test(symbol)) return "altered chord group";
+        if (/^DD/.test(symbol)) return "double dominant";
+        if (/^D[^/]*\/.+/.test(symbol)) return "secondary dominant";
+        if (/^(Dᵥᵢᵢ|D[vV]|VII)/.test(symbol)) return "leading-tone group";
+        if (/^(T|t|DT)/.test(symbol)) return "tonic group";
+        if (/^(S|s|VI)/.test(symbol)) return "subdominant group";
+        if (/^(D|K)/.test(symbol)) return "dominant group";
+        return "unclassified";
+    }
+
+    _sposobinFunction(symbol) {
+        const category = this._sposobinCategory(symbol);
+        if (category === "tonic group") return "T";
+        if (category === "subdominant group") return "S";
+        if (category === "altered chord group") return "S-D";
+        if (["leading-tone group", "dominant group", "double dominant", "secondary dominant"].includes(category)) return "D";
+        return "unknown";
+    }
+
+    _sposobinDegreeRoot(symbol, mode, required) {
+        const intervals = this.modeIntervals[mode] || this.modeIntervals.major;
+        const degreePc = degree => intervals[degree - 1] ?? this.modeIntervals.major[degree - 1];
+        const suffixTarget = symbol.match(/\/(II|III|IV|VI|VII|iv)$/)?.[1];
+        const targetDegrees = { II: 2, III: 3, IV: 4, iv: 4, VI: 6, VII: 7 };
+        if (suffixTarget) {
+            const targetPc = degreePc(targetDegrees[suffixTarget]);
+            return symbol.startsWith("Dᵥᵢᵢ") ? (targetPc + 11) % 12 : (targetPc + 7) % 12;
+        }
+        if (/^DD/.test(symbol)) return degreePc(2);
+        if (/^Dᵥᵢᵢ/.test(symbol)) return 11;
+        if (/^DTᵢᵢᵢ/.test(symbol)) return degreePc(3);
+        if (/^[Ss]ᵢᵢ/.test(symbol)) return degreePc(2);
+        if (/^[TtK]/.test(symbol)) return 0;
+        if (/^[Ss]/.test(symbol)) return degreePc(4);
+        if (/^D/.test(symbol)) return 7;
+        if (/^VI/.test(symbol)) return degreePc(6);
+        if (/^VII/.test(symbol)) return degreePc(7);
+        if (/^N/.test(symbol)) return 1;
+        return required[0] ?? 0;
+    }
+
+    _romanHarmonySymbol(symbol, mode) {
+        const figure = symbol.match(/[₀₁₂₃₄₅₆₇₈₉]+/)?.[0] || "";
+        const target = symbol.includes("/") ? `/${symbol.split("/")[1]}` : "";
+        if (symbol === "K₆₄") return "I⁶₄";
+        if (/^N/.test(symbol)) return "♭II⁶";
+        if (/^It/.test(symbol)) return "It⁺⁶";
+        if (/^Fr/.test(symbol)) return "Fr⁺⁶";
+        if (/^Ger/.test(symbol)) return "Ger⁺⁶";
+        if (/^DD/.test(symbol)) return `V${figure}/V`;
+        if (/^Dᵥᵢᵢ/.test(symbol)) {
+            const diminished = symbol.includes("♭") ? "°" : (symbol.includes("₇") || symbol.includes("₅₆") || symbol.includes("₃₄") || symbol.includes("₂") ? "ø" : "°");
+            return `vii${diminished}${figure}${target}`;
+        }
+        if (/^DTᵢᵢᵢ/.test(symbol)) return `${mode.includes("minor") ? "III" : "iii"}${figure}`;
+        if (/^T/.test(symbol)) return `I${figure}`;
+        if (/^t/.test(symbol)) return `i${figure}`;
+        if (/^Sᵢᵢ/.test(symbol)) return `ii${figure}`;
+        if (/^sᵢᵢ/.test(symbol)) return `ii°${figure}`;
+        if (/^S/.test(symbol)) return `IV${figure}`;
+        if (/^s/.test(symbol)) return `iv${figure}`;
+        if (/^D/.test(symbol)) return `V${figure}${target}`;
+        if (/^VI/.test(symbol)) return `${mode.includes("minor") ? "VI" : "vi"}${figure}`;
+        if (/^VII/.test(symbol)) return `${mode.includes("minor") ? "VII" : "vii°"}${figure}`;
+        return symbol;
+    }
+
+    _actualChordSymbol(symbol, key, mode, required, bassPc) {
+        const rootRelPc = this._sposobinDegreeRoot(symbol, mode, required);
+        if (/^It/.test(symbol)) return this._spellAugmentedSixthChordName(key, mode, "It");
+        if (/^Fr/.test(symbol)) return this._spellAugmentedSixthChordName(key, mode, "Fr");
+        if (/^Ger/.test(symbol)) return this._spellAugmentedSixthChordName(key, mode, "Ger");
+        const rootPc = (this.converter.noteToIdx[key] + rootRelPc) % 12;
+        const rootName = this.converter.idxToNote[rootPc];
+        if (/^D[₇₅₆₃₄₂]*不完全(?:\/|$)/.test(symbol)) {
+            const bassName = this.converter.idxToNote[bassPc];
+            return `${rootName}7(no5)${bassPc !== rootPc ? `/${bassName}` : ""}`;
+        }
+        const intervals = [...new Set(required.map(pc => (pc - rootRelPc + 12) % 12))].sort((a, b) => a - b);
+        const quality = this._quality(intervals);
+        const suffix = quality.quality === "tertian chord" ? "" : quality.suffix;
+        const bassName = this.converter.idxToNote[bassPc];
+        return `${rootName}${suffix}${bassPc !== rootPc ? `/${bassName}` : ""}`;
+    }
+
+    _spellAugmentedSixthChordName(key, mode, family) {
+        const names = this._spellAugmentedSixthNotes(key, mode, family);
+        return `${family}+6(${names.join("-")})`;
+    }
+
+    _spellAugmentedSixthNotes(key, mode, family) {
+        const names = [
+            this._spellDegree(key, mode, 6, -1),
+            this._spellDegree(key, mode, 1),
+        ];
+        if (family === "Fr") names.push(this._spellDegree(key, mode, 2));
+        if (family === "Ger") names.push(this._spellDegree(key, mode, 3, -1));
+        names.push(this._spellDegree(key, mode, 4, 1));
+        return names;
+    }
+
+    _voiceNotesFromBass(notes, bass) {
+        if (!bass) return [...notes];
+        const bassPc = this.converter.noteToIdx[bass];
+        const rest = notes.filter(note => this.converter.noteToIdx[note] !== bassPc);
+        return [bass, ...rest];
+    }
+
+    _sposobinAliases(symbol) {
+        const aliases = [symbol, this._normalizeSposobinSymbol(symbol)];
+        if (symbol === "T") aliases.push("I");
+        if (symbol === "t") aliases.push("i", "Im");
+        if (symbol === "T₆" || symbol === "t₆") aliases.push("I6", "i6");
+        if (symbol === "T₆₄" || symbol === "t₆₄") aliases.push("I64", "i64");
+        if (symbol === "S" || symbol === "s") aliases.push("IV", "iv");
+        if (symbol === "D") aliases.push("V", "v");
+        if (symbol === "D₇") aliases.push("V7", "v7");
+        if (symbol === "K₆₄") aliases.push("K64");
+        if (symbol === "DD") aliases.push("V/V", "V7/V");
+        if (symbol === "N₆") aliases.push("N", "bII6");
+        if (symbol === "Sᵢᵢ" || symbol === "sᵢᵢ") aliases.push("ii", "ii°", "ii dim", "IIdim");
+        if (symbol === "Sᵢᵢ₆" || symbol === "sᵢᵢ₆") aliases.push("ii6", "ii°6", "IIdim", "IIdim6", "ii dim");
+        if (symbol === "Sᵢᵢ₇" || symbol === "sᵢᵢ₇") aliases.push("ii7", "ii°7", "IIdim7");
+        if (symbol === "D₇") aliases.push("V77");
+        if (symbol === "K⁶₄") aliases.push("K64", "I64");
+        if (symbol === "It⁺⁶") aliases.push("It+6");
+        if (symbol === "Fr⁺⁶") aliases.push("Fr+6");
+        if (symbol === "Ger⁺⁶") aliases.push("Ger+6");
+        return [...new Set(aliases)];
+    }
+
+    getPalette(key = "C", mode = "major") {
+        const normalizedKey = this._normalizeKey(key);
+        if (mode === "all-generic") {
+            const unique = new Map();
+            [...this.getPalette(normalizedKey, "major-generic"), ...this.getPalette(normalizedKey, "minor-generic")]
+                .forEach(entry => {
+                    const keyValue = `${entry.symbol}|${entry.roman}|${entry.chord}|${entry.bass}`;
+                    if (!unique.has(keyValue)) unique.set(keyValue, entry);
+                });
+            return [...unique.values()];
+        }
+        const normalizedMode = mode === "minor-generic" ? "minor" : mode === "major-generic" ? "major" : (this.modeIntervals[mode] ? mode : "major");
+        const isMinorFamily = normalizedMode.includes("minor");
+        const db = SPOSOBIN_DNA[isMinorFamily ? "MINOR_DNA" : "MAJOR_DNA"];
+        const pcMap = isMinorFamily
+            ? (normalizedMode === "minor" ? { 11: 10 } : normalizedMode === "melodic-minor" ? { 8: 9 } : {})
+            : (normalizedMode === "harmonic-major" ? { 9: 8 } : normalizedMode === "melodic-major" ? { 9: 8, 11: 10 } : {});
+        const shift = this.converter.noteToIdx[normalizedKey];
+        return Object.entries(db).map(([symbol, dna]) => {
+            // Chromatic functional chords retain their own leading tones
+            const map = /^(D|N|It|Fr|Ger)/.test(symbol) ? {} : pcMap;
+            const required = [...new Set((dna.required || []).map(pc => map[pc] ?? pc))].sort((a, b) => a - b);
+            let notes = required.map(pc => this.converter.idxToNote[(pc + shift) % 12]);
+            if (/^It/.test(symbol)) notes = this._spellAugmentedSixthNotes(normalizedKey, normalizedMode, "It");
+            else if (/^Fr/.test(symbol)) notes = this._spellAugmentedSixthNotes(normalizedKey, normalizedMode, "Fr");
+            else if (/^Ger/.test(symbol)) notes = this._spellAugmentedSixthNotes(normalizedKey, normalizedMode, "Ger");
+            const rawBassPc = (dna.bass_options?.[0] ?? required[0] ?? 0) % 12;
+            const bassPc = ((map[rawBassPc] ?? rawBassPc) + shift) % 12;
+            const bass = this.converter.idxToNote[bassPc];
+            const voicing = this._voiceNotesFromBass(notes, bass);
+            const roman = this._romanHarmonySymbol(symbol, normalizedMode);
+            const chord = this._actualChordSymbol(symbol, normalizedKey, normalizedMode, required, bassPc);
+            const rootRelPc = this._sposobinDegreeRoot(symbol, normalizedMode, required);
+            const rootPc = (rootRelPc + shift) % 12;
+            const pitchClasses = required.map(pc => (pc + shift) % 12);
+            const maxCounts = Object.fromEntries(Object.entries(dna.max_counts || {}).map(([pc,count]) => [((map[pc] ?? Number(pc)) + shift) % 12,count]));
+            const figuredBass = symbol.includes('₆₄') ? '6/4' : symbol.includes('₅₆') ? '6/5' : symbol.includes('₃₄') ? '4/3' : symbol.includes('₂') ? '4/2' : symbol.includes('₆') ? '6' : '';
+            const entry = {
+                symbol, baseSymbol: symbol, roman, chord, notes, voicing,
+                rootNotes: notes, bass, inversion: figuredBass==='6'||figuredBass==='6/5'?1:figuredBass==='6/4'||figuredBass==='4/3'?2:figuredBass==='4/2'?3:0, figuredBass,
+                pitchClasses, bassPc, maxCounts, tonicPc: shift,
+                seventhPc: /[₇₂]|₅₆|₃₄/.test(symbol) ? pitchClasses.find(pc => (/ᵥᵢᵢ/.test(symbol)?[9,10]:[10,11]).includes((pc-rootPc+12)%12)) : undefined,
+                leadingPc: /^Dᵥᵢᵢ/.test(symbol) ? rootPc : /^D/.test(symbol) && pitchClasses.includes((rootPc+4)%12) ? (rootPc+4)%12 : undefined,
+                quality: "classical harmony", function: this._sposobinFunction(symbol),
+                category: this._sposobinCategory(symbol),
+                resolution: "",
+                aliases: [...new Set([
+                    ...this._sposobinAliases(symbol),
+                    roman,
+                    chord,
+                    symbol === "K₆₄" ? "K46" : "",
+                    symbol === "Dᵥᵢᵢ₇♭" ? "vii°7" : ""
+                ].filter(Boolean))], priority: /^D|^K/.test(symbol) ? 3 : 2,
+                next: [...(dna.next || [])], required, bassOptions: dna.bass_options || []
+            };
+            entry.midiVoicing = voicingCandidates(entry)[0] || [];
+            return entry;
+        });
+    }
+
+    voiceSequence(entries) { return solveVoicings(entries); }
+
+    _resolveCurrent(input, palette) {
+        const normalizedExact = this._normalizeSposobinSymbol(input);
+        const normalizedLoose = normalizedExact.toLowerCase();
+        const normalizeExact = value => this._normalizeSposobinSymbol(value);
+        const normalizeLoose = value => normalizeExact(value).toLowerCase();
+        // Sposobin function letters are case-sensitive: S/s and T/t are
+        // different harmonic functions and must never collapse together.
+        const symbolic = palette.find(entry => normalizeExact(entry.symbol) === normalizedExact)
+            || palette.find(entry => normalizeExact(entry.roman) === normalizedExact)
+            || palette.find(entry => this._sposobinAliases(entry.symbol).some(alias => normalizeExact(alias) === normalizedExact))
+            || palette.find(entry => normalizeLoose(entry.chord) === normalizedLoose)
+            || palette.find(entry => entry.aliases.some(alias => normalizeLoose(alias) === normalizedLoose));
+        if (symbolic) return symbolic;
+        let notes;
+        try { notes = this.converter._ensureNotesAndRoot(input); } catch (error) { return null; }
+        if (!notes?.length) return null;
+        const set = this._pitchSet(notes);
+        return palette.find(entry => this._pitchSet(entry.notes) === set) || {
+            symbol: input, baseSymbol: input, chord: input, notes, function: "unknown", category: "unclassified", aliases: [], next: []
+        };
+    }
+
+    recommend(currentInput, key = "C", mode = "major", limit = 12) {
+        const palette = this.getPalette(key, mode);
+        const current = this._resolveCurrent(currentInput, palette);
+        if (!current) throw new Error(`Unable to parse classical harmony input: ${currentInput}`);
+        const targetSymbols = new Set(current.next || []);
+        if (!targetSymbols.size) {
+            if (current.function === "T") ["S", "D", "T₆", "S₆", "VI", "DD", "N₆"].forEach(s => targetSymbols.add(s));
+            else if (current.function === "S" || current.function === "S-D") ["D", "K⁶₄", "D₇"].forEach(s => targetSymbols.add(s));
+            else if (current.function === "D") ["T", "t", "VI", "S"].forEach(s => targetSymbols.add(s));
+        }
+        const unique = new Map();
+        palette.forEach(candidate => {
+            if (!targetSymbols.has(candidate.symbol)) return;
+            const connection = solveVoicings([current, candidate]);
+            if (!connection.ok) return;
+            const movement = connection.voices[1].reduce((sum,n,i)=>sum+Math.abs(n-connection.voices[0][i]),0)/4;
+            const commonTones = current.notes.filter(note => candidate.notes.some(target => this.converter.noteToIdx[target] === this.converter.noteToIdx[note])).length;
+            const score = Math.round(Math.max(0, Math.min(10, 7.4 - movement * 1.15 + commonTones * 0.45 + (candidate.priority || 0) * 0.18)) * 10) / 10;
+            const result = { ...candidate, midiVoicing: connection.voices[1], previousVoicing: connection.voices[0], score, commonTones, voiceLeading: Number(movement.toFixed(2)) };
+            const keyValue = `${candidate.symbol}|${candidate.chord}|${candidate.bass}`;
+            if (!unique.has(keyValue) || unique.get(keyValue).score < score) unique.set(keyValue, result);
+        });
+        return {
+            key: this._normalizeKey(key), mode: mode || "major-generic", current,
+            recommendations: [...unique.values()].sort((a, b) => b.score - a.score).slice(0, limit),
+            constraints: "Sposobin functional DNA: recommendations follow the reference project's next-chord graph."
+        };
+    }
+
+    findPaths(currentInput, key = "C", mode = "major", maxDepth = 4, limit = 8) {
+        const palette = this.getPalette(key, mode);
+        const bySymbol = new Map(palette.map(entry => [entry.symbol, entry]));
+        const start = this._resolveCurrent(currentInput, palette);
+        if (!start) throw new Error(`Unable to parse classical harmony input: ${currentInput}`);
+        let frontier = [{ entry: start, symbols: [start.symbol], score: 0 }];
+        const completed = [];
+        for (let depth = 0; depth < maxDepth; depth++) {
+            const nextFrontier = [];
+            for (const state of frontier) {
+                for (const nextSymbol of state.entry.next || []) {
+                    const next = bySymbol.get(nextSymbol);
+                    if (!next || state.symbols.includes(nextSymbol)) continue;
+                    const movement = this._voiceLeadingDistance(state.entry.notes, next.notes);
+                    const commonTones = state.entry.notes.filter(note => next.notes.some(target => this.converter.noteToIdx[target] === this.converter.noteToIdx[note])).length;
+                    let edgeScore = 7.4 - movement * 1.15 + commonTones * 0.45 + (next.priority || 0) * 0.18;
+                    if ((next.symbol === "T" || next.symbol === "t") && depth === maxDepth - 1) edgeScore += 2;
+                    nextFrontier.push({ entry: next, symbols: [...state.symbols, nextSymbol], score: state.score + edgeScore });
+                }
+            }
+            nextFrontier.sort((a, b) => b.score - a.score);
+            frontier = nextFrontier.slice(0, 64);
+            completed.push(...frontier);
+            if (!frontier.length) break;
+        }
+        return completed.sort((a, b) => b.symbols.length - a.symbols.length || b.score - a.score)
+            .slice(0, limit).map(path => ({ symbols: path.symbols, score: Number(path.score.toFixed(2)) }));
+    }
+
+    _shortestSymbolPath(palette, startSymbol, predicate, maxDepth = 4) {
+        const bySymbol = new Map(palette.map(entry => [entry.symbol, entry]));
+        const queue = [[startSymbol]];
+        const visited = new Set([startSymbol]);
+        while (queue.length) {
+            const path = queue.shift();
+            const last = path[path.length - 1];
+            if (path.length > 1 && predicate(last)) return path;
+            if (path.length - 1 >= maxDepth) continue;
+            for (const next of bySymbol.get(last)?.next || []) {
+                if (!bySymbol.has(next) || visited.has(next)) continue;
+                visited.add(next);
+                queue.push([...path, next]);
+            }
+        }
+        return null;
+    }
+
+    suggestModulations(currentInput, fromKey = "C", mode = "major-generic", targetKey = "G", targetMode = mode, limit = 8) {
+        const sourcePalette = this.getPalette(fromKey, mode);
+        const targetPalette = this.getPalette(targetKey, targetMode);
+        const current = this._resolveCurrent(currentInput, sourcePalette);
+        if (!current) throw new Error(`Unable to parse classical harmony input: ${currentInput}`);
+        const sourceBySet = new Map();
+        sourcePalette.filter(entry => !entry.symbol.includes("/") && !entry.symbol.includes("不完全"))
+            .forEach(entry => {
+                const set = this._pitchSet(entry.notes);
+                if (!sourceBySet.has(set)) sourceBySet.set(set, []);
+                sourceBySet.get(set).push(entry);
+            });
+        const tonicSymbol = targetMode.includes("minor") ? "t" : "T";
+        const results = [];
+        targetPalette.filter(entry => !entry.symbol.includes("/") && !entry.symbol.includes("不完全")).forEach(targetPivot => {
+            const matches = sourceBySet.get(this._pitchSet(targetPivot.notes)) || [];
+            matches.forEach(sourcePivot => {
+                const sourcePath = sourcePivot.symbol === current.symbol
+                    ? [current.symbol]
+                    : this._shortestSymbolPath(sourcePalette, current.symbol, symbol => symbol === sourcePivot.symbol, 4);
+                if (!sourcePath) return;
+                let targetPath = targetPivot.symbol === tonicSymbol
+                    ? [targetPivot.symbol]
+                    : this._shortestSymbolPath(targetPalette, targetPivot.symbol, symbol => symbol === tonicSymbol, 5);
+                if (!targetPath) targetPath = [targetPivot.symbol, tonicSymbol];
+                const score = 20 - sourcePath.length * 1.3 - targetPath.length + (sourcePivot.function === targetPivot.function ? 1 : 0);
+                const sourceEntries = sourcePath.map(symbol => sourcePalette.find(entry => entry.symbol === symbol)).filter(Boolean);
+                const targetEntries = targetPath.map(symbol => targetPalette.find(entry => entry.symbol === symbol)).filter(Boolean);
+                const voiceLeading = this.voiceSequence([...sourceEntries, ...targetEntries]);
+                results.push({
+                    fromKey: this._normalizeKey(fromKey), targetKey: this._normalizeKey(targetKey),
+                    mode, targetMode, sourceSymbols: sourcePath, targetSymbols: targetPath,
+                    pivot: { source: sourcePivot.symbol, target: targetPivot.symbol, chord: sourcePivot.chord },
+                    voiceLeadingOk: voiceLeading.ok,
+                    score: Number((score + (voiceLeading.ok ? 4 : 0)).toFixed(1))
+                });
+            });
+        });
+        const unique = new Map();
+        results.sort((a, b) => b.score - a.score).forEach(route => {
+            const keyValue = `${route.sourceSymbols.join(">")}|${route.targetSymbols.join(">")}`;
+            if (!unique.has(keyValue)) unique.set(keyValue, route);
+        });
+        return [...unique.values()].filter(route => route.voiceLeadingOk).slice(0, limit);
+    }
+}
+
+export class JazzBrain {
+    constructor() {
+        this.converter = new EnhancedChordConverter();
+        this.cst = new CSTAnalyzer();
+        this.lcc = new LCCAnalyzer();
+        this.blt = new BluesToolkit();
+        this.nrt = new NeoRiemannianToolkit();
+    }
+
+    /**
+     * 分析和弦进行 (功能性分析)
+     * 识别 ii-V-I 以及基于五度循环的强功能进行
+     */
+    analyzeProgression(progression) {
+        if (!Array.isArray(progression)) return [];
+
+        const results = [];
+
+        for (let i = 0; i < progression.length - 1; i++) {
+            const current = progression[i];
+            const nextChord = progression[i + 1];
+
+            // 提取根音
+            const currentInfo = this._getChordToneInfo(current);
+            const nextInfo = this._getChordToneInfo(nextChord);
+
+            if (!currentInfo || !nextInfo) continue;
+
+            const rootCurrent = currentInfo.root;
+            const rootNext = nextInfo.root;
+
+            // 获取根音在半音阶中的索引
+            const r1 = this.converter.noteToIdx[rootCurrent];
+            const r2 = this.converter.noteToIdx[rootNext];
+
+            /**
+             * 逻辑：判断是否为强功能进行 (Dominant Motion)
+             * (r2 - r1 + 12) % 12 === 5 意味着向上移动了 5 个半音(纯四度)
+             * 比如 D (2) -> G (7)： (7 - 2) = 5
+             * 比如 G (7) -> C (0)： (0 - 7 + 12) = 5
+             */
+            if ((r2 - r1 + 12) % 12 === 5 && currentInfo.intervals.has(4) && currentInfo.intervals.has(10)) {
+                results.push(`${current} -> ${nextChord}: Strong functional progression (Dominant Motion)`);
+            } else if ((r2 - r1 + 12) % 12 === 5) {
+                results.push(`${current} -> ${nextChord}: Descending-fifth root motion (non-dominant)`);
+            }
+        }
+
+        return results;
+    }
+
+    /** 核心方法：获取即兴建议报告 */
+    getAdvice(chordInput) {
+        const notes = this.converter._ensureNotesAndRoot(chordInput);
+        if (!notes) return "Invalid input";
+
+        const chordStr = typeof chordInput === 'string' ? chordInput : "Custom Chord";
+        const chordRoot = notes[0];
+
+        // 1. CST 分析 (按亮度排序)
+        const cstResults = this.cst.analyzeCST(notes);
+
+        // 2. LCC parent/color shortlist (not a formal tonal-gravity score)
+        const lccResults = this.lcc.analyzeLCC(notes);
+
+        // 3. 生成报告
+        console.log(`--- Suggested improv approaches for ${chordStr} ---`);
+        const topCST = cstResults[0];
+        const cstScaleNotes = this.cst.scaleNotes(topCST);
+        const brightness = this.cst.calculateBrightness(chordRoot, cstScaleNotes);
+
+        console.log(`Most stable (CST): ${topCST} (brightness: ${brightness})`);
+        if (lccResults[0]) console.log(`LCC parent candidate: ${lccResults[0].parent} ${lccResults[0].scale} (root tonal rank: ${lccResults[0].rootToneOrder})`);
+
+        return { cstResults, lccResults };
+    }
+
+    /** 自动和弦排列 (Voicing Generator) */
+    getVoicing(chord, type = "shell") {
+        const info = this._getChordToneInfo(chord);
+        if (!info) return [];
+        const notes = info.notes;
+        if (type === "shell") {
+            const third = [3, 4].find(interval => info.intervals.has(interval));
+            const seventh = [10, 11, 9].find(interval => info.intervals.has(interval));
+            const fifth = [7, 6, 8].find(interval => info.intervals.has(interval));
+            return [0, third, seventh ?? fifth]
+                .filter((interval, index, values) => interval !== undefined && values.indexOf(interval) === index)
+                .map(interval => this.converter.idxToNote[(info.rootIdx + interval) % 12]);
+        }
+        if (type === "drop2" && notes.length >= 4) {
+            const closed = [...info.intervals].sort((a, b) => a - b);
+            const dropped = closed.map((interval, index) => index === closed.length - 2 ? interval - 12 : interval);
+            return dropped
+                .sort((a, b) => a - b)
+                .map(interval => this.converter.idxToNote[(info.rootIdx + interval + 12) % 12]);
+        }
+        return notes;
+    }
+
+    _getChordToneInfo(chordInput) {
+        let detailed;
+        try {
+            detailed = this.converter._ensureNotesAndRoot(chordInput, true);
+        } catch (error) {
+            return null;
+        }
+        if (!detailed?.notes?.length || !(detailed.root in this.converter.noteToIdx)) return null;
+        const rootIdx = this.converter.noteToIdx[detailed.root];
+        const notes = detailed.notes.map(note => this.converter.idxToNote[this.converter.noteToIdx[note]]);
+        return {
+            ...detailed,
+            notes,
+            root: this.converter.idxToNote[rootIdx],
+            rootIdx,
+            intervals: new Set(notes.map(note => (this.converter.noteToIdx[note] - rootIdx + 12) % 12))
+        };
+    }
+
+    /**
+     * 和弦替代建议 (Substitution Suggestions)
+     * 基于和弦音程结构(而非仅靠字符串名称)提供替代方案
+     */
+    getSubstitutions(chordInput) {
+        // 1. 统一解析音符并提取根音
+        const notes = this.converter._ensureNotesAndRoot(chordInput);
+        if (!notes || notes.length === 0) return [];
+
+        const root = notes[0];
+        const rootIdx = this.converter.noteToIdx[root];
+
+        // 2. 计算相对于根音的半音偏移量(用于判断和弦属性)
+        const offsets = new Set(notes.map(n =>
+            (this.converter.noteToIdx[n] - rootIdx + 12) % 12
+        ));
+
+        const subs = [];
+
+        // 确定特征音
+        const hasMajor3rd = offsets.has(4);
+        const hasMinor3rd = offsets.has(3);
+        const hasB7 = offsets.has(10);
+        const hasMaj7 = offsets.has(11);
+
+        // --- 三全音替代 (Tritone Substitution) ---
+        // 逻辑：必须包含三全音特征(属七和弦特征：大三度 + 小七度)
+        if (hasMajor3rd && hasB7) {
+            const tritoneRootIdx = (rootIdx + 6) % 12;
+            const tritoneRoot = this.converter.idxToNote[tritoneRootIdx];
+            subs.push({
+                name: `${tritoneRoot}7`,
+                type: "Tritone Sub",
+                description: "Substitute using the same tritone interval, commonly found in ii-V-I resolutions",
+                descriptionId: 1
+            });
+        }
+
+        // --- 关系大小调替代 (Relative Major/Minor Substitution) ---
+        // 逻辑：如果是小和弦,推荐其关系大调
+        if (hasMinor3rd) {
+            const relRootIdx = (rootIdx + 3) % 12;
+            const relRoot = this.converter.idxToNote[relRootIdx];
+            subs.push({
+                name: `${relRoot}maj7`,
+                type: "Relative Major Sub",
+                description: "Shares many common notes, providing a brighter color",
+                descriptionId: 2
+            });
+        }
+        // 逻辑：如果是大和弦,推荐其关系小调
+        else if (hasMajor3rd) {
+            const relRootIdx = (rootIdx - 3 + 12) % 12;
+            const relRoot = this.converter.idxToNote[relRootIdx];
+            subs.push({
+                name: `${relRoot}m7`,
+                type: "Relative Minor Sub",
+                description: "Share many of the same notes, resulting in a softer or more melancholic color.",
+                descriptionId: 3
+            });
+        }
+
+        return subs;
+    }
+
+    /** 专业调性中心识别 (The Heavy Lifter) */
+    findKeyCenterPro(progression, returnAll = false) {
+        if (!Array.isArray(progression) || progression.length === 0) {
+            return returnAll ? [] : "No key center: empty progression";
+        }
+        const chords = progression.map(chord => this._getChordToneInfo(chord)).filter(Boolean);
+        if (chords.length === 0) return returnAll ? [] : "No key center: invalid progression";
+
+        // 调性系统权重配置
+        const systems = {
+            "Ionian (Major)": { intervals: [0, 2, 4, 5, 7, 9, 11], priority: 1.5, tonicThird: 4 },
+            "Jazz Minor": { intervals: [0, 2, 3, 5, 7, 9, 11], priority: 0.5, tonicThird: 3 },
+            "Harmonic Minor": { intervals: [0, 2, 3, 5, 7, 8, 11], priority: 1.0, tonicThird: 3 }
+        };
+
+        let results = [];
+
+        this.cst.notes.forEach(keyRoot => {
+            const keyIdx = this.converter.noteToIdx[keyRoot];
+
+            Object.entries(systems).forEach(([sysName, config]) => {
+                const scalePcs = new Set(config.intervals.map(interval => (keyIdx + interval) % 12));
+                let score = config.priority;
+
+                chords.forEach(chord => {
+                    const chordPcs = chord.notes.map(note => this.converter.noteToIdx[note]);
+                    const inside = chordPcs.filter(pc => scalePcs.has(pc)).length;
+                    const outside = chordPcs.length - inside;
+                    score += inside * 1.25 - outside * 3.25;
+                    if (scalePcs.has(chord.rootIdx)) score += 0.75;
+
+                    const degree = config.intervals.indexOf((chord.rootIdx - keyIdx + 12) % 12);
+                    if (degree >= 0) {
+                        const tertian = [0, 2, 4, 6].map(step => {
+                            const scaleIndex = degree + step;
+                            const octave = Math.floor(scaleIndex / 7) * 12;
+                            return config.intervals[scaleIndex % 7] + octave;
+                        });
+                        const expected = new Set(tertian.map(value => (value - tertian[0] + 12) % 12));
+                        const triadFits = [...chord.intervals].filter(i => i !== 10 && i !== 11 && i !== 9).every(i => expected.has(i));
+                        if (triadFits) score += 2;
+                        if ([9, 10, 11].some(i => chord.intervals.has(i)) && [...chord.intervals].every(i => expected.has(i))) score += 2;
+                    }
+                });
+
+                const last = chords[chords.length - 1];
+                if (last.rootIdx === keyIdx && last.intervals.has(config.tonicThird)) score += 7;
+
+                for (let i = 0; i < chords.length - 1; i++) {
+                    const current = chords[i];
+                    const next = chords[i + 1];
+                    const dominant = current.intervals.has(4) && current.intervals.has(10);
+                    if (dominant && (next.rootIdx - current.rootIdx + 12) % 12 === 5) score += 4;
+                }
+
+                for (let i = 0; i < chords.length - 2; i++) {
+                    const [ii, dominant, tonic] = chords.slice(i, i + 3);
+                    const iiDegree = (ii.rootIdx - keyIdx + 12) % 12;
+                    const vDegree = (dominant.rootIdx - keyIdx + 12) % 12;
+                    const iDegree = (tonic.rootIdx - keyIdx + 12) % 12;
+                    const iiQualityFits = sysName === "Ionian (Major)"
+                        ? ii.intervals.has(3) && ii.intervals.has(10)
+                        : ii.intervals.has(3) && ii.intervals.has(6);
+                    if (iiDegree === 2 && vDegree === 7 && iDegree === 0 && iiQualityFits && dominant.intervals.has(4) && dominant.intervals.has(10)) {
+                        score += 14;
+                    }
+                }
+
+                results.push({ name: `${keyRoot} ${sysName}`, score: parseFloat(score.toFixed(2)) });
+            });
+        });
+
+        results.sort((a, b) => b.score - a.score);
+        return returnAll ? results : `Recommended Key: ${results[0].name}`;
+    }
+
+    /** 负和声转换 (Negative Harmony) */
+    toNegative(chordInput, axis = "C") {
+        const normalizedAxis = typeof axis === "string" ? axis.trim() : "";
+        if (!(normalizedAxis in this.converter.noteToIdx)) throw new Error(`Invalid negative-harmony axis: ${axis}`);
+        // C-G 轴在半音阶中的中心点是 3.5 (E/Eb 之间)
+        const axisVal = this.converter.noteToIdx[normalizedAxis] + 3.5;
+        const notes = this.converter._ensureNotesAndRoot(chordInput);
+        if (!notes?.length) throw new Error(`Invalid chord: ${chordInput}`);
+
+        return notes.map(n => {
+            const val = this.converter.noteToIdx[n];
+            const negVal = Math.round((2 * axisVal - val + 12) % 12);
+            return this.converter.idxToNote[negVal];
+        });
+    }
+
+    /**
+     * 节奏伴奏生成 (Rhythmic Comping)
+     * 将和弦音符与特定的爵士律动结合
+     */
+    getRhythmicVoicing(chordInput, style = "Charleston") {
+        const notes = this.converter._ensureNotesAndRoot(chordInput);
+        if (!notes) return [];
+
+        // 获取 Shell Voicing 作为节奏伴奏的基础音底
+        const voicing = this.getVoicing(chordInput, "shell");
+
+        // 爵士经典节奏模式定义 (1nd = 1拍, 0.5 = 半拍)
+        const patterns = {
+            "Charleston": [
+                { time: "1.0", duration: "dotted-quarter" }, // 第1拍
+                { time: "2.5", duration: "eighth" }          // 第2拍的后半拍 (Off-beat)
+            ],
+            "Red Garland": [
+                { time: "1.5", duration: "eighth" },         // 1的后半拍
+                { time: "2.5", duration: "eighth" },         // 2的后半拍
+                { time: "3.5", duration: "eighth" },         // 3的后半拍
+                { time: "4.5", duration: "eighth" }          // 4的后半拍
+            ],
+            "Four on the Floor": [
+                { time: "1.0", duration: "quarter" },
+                { time: "2.0", duration: "quarter" },
+                { time: "3.0", duration: "quarter" },
+                { time: "4.0", duration: "quarter" }
+            ]
+        };
+
+        const selectedPattern = patterns[style] || patterns["Charleston"];
+
+        return {
+            chord: chordInput,
+            voicing: voicing,
+            patternName: style,
+            rhythm: selectedPattern
+        };
+    }
+
+    /**
+     * 计算和弦进行中各和弦的导音（Guide Tones）路径。
+     * 导音通常指和弦中的 3音和 7音，是体现爵士乐和声连接（Voice Leading）的关键。
+     * @param {Array} progression - 和弦进行列表 (例如: ["Dm7", "G7", "Cmaj7"])
+     * @returns {Array} 导音路径列表 (例如: [["F", "C"], ["F", "B"], ["E", "B"]])
+     */
+    getGuideTonePath(progression) {
+        const path = [];
+
+        for (const c of progression) {
+            const info = this._getChordToneInfo(c);
+            if (!info) continue;
+            const third = [3, 4].find(interval => info.intervals.has(interval));
+            const seventh = [10, 11, 9].find(interval => info.intervals.has(interval));
+            const fallback = [6, 7, 8].find(interval => info.intervals.has(interval));
+            const guideIntervals = [third, seventh ?? fallback].filter(interval => interval !== undefined);
+            if (guideIntervals.length) path.push(guideIntervals.map(interval => this.converter.idxToNote[(info.rootIdx + interval) % 12]));
+        }
+        return path;
+    }
+
+    /**
+     * 生成完整的爵士乐理分析报告
+     * 整合了可视化、和弦排列、替代方案以及 CST/LCC 即兴建议
+     */
+    getFullReport(chordStr) {
+        // 1. 获取基础音符
+        const notes = this.converter._ensureNotesAndRoot(chordStr);
+        if (!notes) return null;
+
+        console.log(`=== ${chordStr} Jazz Report ===`);
+
+        // 2. 调用可视化 (终端/控制台输出)
+        this.drawPiano(notes);
+
+        // 3. 获取声部建议 (Voicings)
+        const shellVoicing = this.getVoicing(chordStr, "shell");
+        const drop2Voicing = this.getVoicing(chordStr, "drop2");
+
+        // 4. 获取替代和弦 (Substitutions)
+        const subs = this.getSubstitutions(chordStr);
+
+        // 5. 获取即兴建议 (CST & LCC)
+        // 注意：getAdvice 内部已经打印了 Most Stable / Most Modern
+        const advice = this.getAdvice(chordStr);
+
+        // 返回一个对象,方便前端 UI 渲染
+        return {
+            chordName: chordStr,
+            notes: notes,
+            voicings: {
+                shell: shellVoicing,
+                drop2: drop2Voicing,
+                rhythmic1: this.getRhythmicVoicing(chordStr, "Charleston"),
+                rhythmic2: this.getRhythmicVoicing(chordStr, "Red Garland"),
+                rhythmic3: this.getRhythmicVoicing(chordStr, "Four on the Floor")
+            },
+            substitutions: subs,
+            cstAdvice: advice.cstResults,
+            lccAdvice: advice.lccResults
+        };
+    }
+
+    /** 简易键盘可视化 (控制台输出) */
+    drawPiano(notes) {
+        const noteIndices = new Set(notes.map(n => this.converter.noteToIdx[n]));
+        let keys = "";
+        let labels = "";
+        this.cst.notes.forEach((n, i) => {
+            keys += noteIndices.has(i) ? " ● " : " - ";
+            labels += n.padEnd(3, " ");
+        });
+        console.log("\nPiano Visualization:");
+        console.log(labels);
+        console.log(keys);
+    }
+
+    /**
+     * 获取和弦推荐列表
+     * 基于稳定性(Stability)、紧张度(Tension)和明亮度(Brightness)进行综合评分
+     */
+    getChordRecommendations(chordInput) {
+        const currInfo = this.converter.parseAndGetNotes(chordInput);
+        const currRoot = currInfo.offsets[0];
+        const currNotesSet = new Set(currInfo.offsets);
+
+        let rawCandidates = [];
+        // 用于物理音符去重（防止 Cmaj7 和 E/C 被重复计算）
+        const seenStructures = new Set();
+        seenStructures.add([...currNotesSet].sort((a, b) => a - b).join(','));
+
+        // 1. 提取所有唯一的公式结构 (去重逻辑)
+        const uniqueFormulas = new Map();
+        for (const [fName, fOffsets] of Object.entries(this.converter.chordFormulas)) {
+            const fKey = [...new Set(fOffsets.map(offset => (offset % 12 + 12) % 12))].sort((a, b) => a - b).join(',');
+            if (!uniqueFormulas.has(fKey)) {
+                uniqueFormulas.set(fKey, fName);
+            }
+        }
+
+        // 2. 遍历 12 个根音，生成所有可能的公式和弦
+        for (let rOffset = 0; rOffset < 12; rOffset++) {
+            const rootName = this.converter.idxToNote[rOffset];
+            for (const [fKey, fName] of uniqueFormulas.entries()) {
+                const fSet = fKey.split(',').map(Number);
+                // 转换为绝对半音索引并排序
+                const absOffsets = fSet.map(x => (x + rOffset) % 12).sort((a, b) => a - b);
+                const absKey = absOffsets.join(',');
+
+                if (!seenStructures.has(absKey)) {
+                    const stability = this._calculateStability(currNotesSet, new Set(absOffsets));
+                    // 过滤掉完全无关的噪音和弦
+                    if (stability > 3.0) {
+                        rawCandidates.push({
+                            chord: `${rootName}${fName}`,
+                            source: "Formula",
+                            offsets: absOffsets,
+                            root: rOffset,
+                            stability: stability
+                        });
+                        seenStructures.add(absKey);
+                    }
+                }
+            }
+        }
+
+        // 3. 动态创建和弦 (变异逻辑: Add/Omit)
+        let mutations = [];
+        // 对前 15 个最稳定的候选者进行变异
+        const topCandidates = [...rawCandidates]
+            .sort((a, b) => b.stability - a.stability)
+            .slice(0, 15);
+
+        for (const cand of topCandidates) {
+            const cRoot = cand.root;
+            const cOffsets = cand.offsets;
+
+            // --- 变异 A: Omit 5 (爵士核心：移除纯五度让声部更透明) ---
+            const fifthVal = (cRoot + 7) % 12;
+            if (cOffsets.includes(fifthVal)) {
+                const no5Offsets = cOffsets.filter(n => n !== fifthVal).sort((a, b) => a - b);
+                const no5Key = no5Offsets.join(',');
+                if (!seenStructures.has(no5Key)) {
+                    mutations.push({
+                        chord: `${cand.chord}(no5)`,
+                        source: "Creative(Omit)",
+                        offsets: no5Offsets,
+                        root: cRoot,
+                        stability: this._calculateStability(currNotesSet, new Set(no5Offsets))
+                    });
+                    seenStructures.add(no5Key);
+                }
+            }
+
+            // --- 变异 B: Add 9 / Add 11 (增加色彩) ---
+            for (const extInterval of [2, 5]) { // 9音, 11音
+                const extVal = (cRoot + extInterval) % 12;
+                if (!cOffsets.includes(extVal)) {
+                    const extOffsets = [...cOffsets, extVal].sort((a, b) => a - b);
+                    const extKey = extOffsets.join(',');
+                    if (!seenStructures.has(extKey)) {
+                        const label = extInterval === 2 ? "add9" : "add11";
+                        mutations.push({
+                            chord: `${cand.chord}${label}`,
+                            source: "Creative(Add)",
+                            offsets: extOffsets,
+                            root: cRoot,
+                            stability: this._calculateStability(currNotesSet, new Set(extOffsets))
+                        });
+                        seenStructures.add(extKey);
+                    }
+                }
+            }
+        }
+
+        rawCandidates.push(...mutations);
+
+        // 4. 最终评分与指标计算
+        const finalResults = rawCandidates.map(item => {
+            const itemSet = new Set(item.offsets);
+            const stability = this._calculateStability(currNotesSet, itemSet);
+            const brightness = this._calculateBrightness(currRoot, item.root, item.offsets);
+            const tension = this._calculateTension(item.root, item.offsets, item.source);
+
+            // 综合推荐评分算法 (Score)
+            // 考虑稳定性平衡 + 适度的紧张度奖励
+            const usefulTension = Math.max(0, 10 - Math.abs(tension - 3.5) * 1.55);
+            let recScore = (stability * 0.78) + (usefulTension * 0.22);
+
+            return {
+                chord: item.chord,
+                source: item.source,
+                score: Math.round(Math.max(0, Math.min(10, recScore)) * 10) / 10,
+                stability: stability,
+                tension: tension,
+                brightness: brightness,
+                notes: item.offsets.map(n => this.converter.idxToNote[n])
+            };
+        });
+
+        // 排序：优先展示 Score 最高的音乐连接
+        return finalResults.sort((a, b) => b.score - a.score);
+    }
+
+    /**
+     * 计算紧张度 (Tension) [0-10]
+     */
+    _calculateTension(root, offsets, source) {
+        let tension = 0.0;
+        const intervals = offsets.map(n => (n - root + 12) % 12).sort((a, b) => a - b);
+
+        // 1. 内部音程冲突检测
+        for (let i = 0; i < intervals.length; i++) {
+            for (let j = i + 1; j < intervals.length; j++) {
+                const diff = Math.abs(intervals[i] - intervals[j]) % 12;
+                if (diff === 6) tension += 3.0;    // 三全音 (Tritone)
+                if (diff === 1) tension += 2.5;    // 小二度 (m2) - 极高紧张
+                if (diff === 11) tension += 1.5;   // 大七度 (M7)
+            }
+        }
+
+        // 2. 延伸音丰富度
+        const extensions = intervals.filter(n => [1, 2, 5, 6, 8, 10].includes(n));
+        tension += extensions.length * 0.8;
+
+        // 3. 来源奖励
+        if (source.startsWith("Creative")) tension += 1.0;
+        if (source === "Negative") tension += 1.5; // 负和声通常带有神秘感
+
+        return Math.round(Math.max(0, Math.min(10, tension)) * 10) / 10;
+    }
+
+    /**
+     * 计算声部连接稳定性 (Voice-leading Stability)
+     */
+    _calculateStability(set1, set2) {
+        if (!set1?.size || !set2?.size) return 0;
+        const circularDistance = (a, b) => {
+            const distance = Math.abs(a - b) % 12;
+            return Math.min(distance, 12 - distance);
+        };
+        const directedAverage = (from, to) => [...from].reduce((sum, note) => {
+            return sum + Math.min(...[...to].map(target => circularDistance(note, target)));
+        }, 0) / from.size;
+        const voiceDistance = (directedAverage(set1, set2) + directedAverage(set2, set1)) / 2;
+        const common = [...set1].filter(note => set2.has(note)).length;
+        const commonRatio = common / Math.max(set1.size, set2.size);
+        const proximity = Math.max(0, 1 - voiceDistance / 6);
+        const value = Math.max(0, Math.min(10, commonRatio * 6 + proximity * 4));
+        return Math.round(value * 10) / 10;
+    }
+
+    /**
+     * 基于五度圈位移和音程性质计算明亮度 (Brightness)
+     */
+    _calculateBrightness(currRoot, nextRoot, nextOffsets) {
+        const getCirclePos = (idx) => (idx * 7) % 12;
+
+        // 五度圈上的相对位移
+        const shift = ((getCirclePos(nextRoot) - getCirclePos(currRoot) + 6 + 12) % 12) - 6;
+
+        // 性质修正奖励
+        let bias = 0;
+        const relNotes = nextOffsets.map(n => (n - nextRoot + 12) % 12);
+        if (relNotes.includes(4)) bias += 1;  // 大三度 - 明亮
+        if (relNotes.includes(3)) bias -= 2;  // 小三度 - 黯淡
+        if (relNotes.includes(11)) bias += 1; // 大七度 - 明亮
+        if (relNotes.includes(6)) bias -= 1;  // 三全音 - 不稳定
+        if (relNotes.includes(2)) bias += 1;  // 九音 - 明亮
+
+        return Math.floor(Math.max(-10, Math.min(10, shift + bias)));
+    }
+}

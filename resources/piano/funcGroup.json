@@ -1,0 +1,30 @@
+{
+  "6sIdx": 9,
+  "5sIdx": 4,
+  "4sIdx": 11,
+  "3sIdx": 6,
+  "ssIdx": 1,
+  "sIdx": 8,
+  "tIdx": [
+    0,
+    3
+  ],
+  "dIdx": 10,
+  "tonicIdx": [
+    0,
+    2,
+    5,
+    7
+  ],
+  "SIdx": 9,
+  "TIdx": [
+    0,
+    4
+  ],
+  "DIdx": 11,
+  "DDIdx": 6,
+  "3DIdx": 1,
+  "4DIdx": 8,
+  "5DIdx": 3,
+  "6DIdx": 10
+}
