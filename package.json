@@ -1,0 +1,10 @@
+{
+  "name": "jazz-compass-web",
+  "private": true,
+  "type": "module",
+  "description": "Music theory toolbox: chords, scales, harmony, improvisation",
+  "scripts": {
+    "test": "node --test $(ls *.test.mjs tests/*.test.mjs 2>/dev/null | grep -v browser)",
+    "serve": "python3 -m http.server 8000 --bind 127.0.0.1"
+  }
+}

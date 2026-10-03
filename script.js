@@ -1,14 +1,90 @@
-import { mountNeoCanvas } from "./neo_canvas.js?v=20261001-ui";
-import { mountComposition, mountRhythm } from './composition_ui.js?v=20260921-1';
 import { midiName } from './classical_voicing.js';
-import { mountHarmonyWheel } from "./harmony_connections_ui.js?v=20260915-2";
-import { harmonyNeighborhood, mergeConnectionGraphs } from "./harmony_connections.js?v=20260915-2";
-import { mountMicrotonal } from "./microtonal_ui.js?v=20260915-2";
-import { mountLccExplorer } from "./lcc_ui.js?v=20260915-lab1";
-import { mountJazzToolbox } from "./jazz_toolbox_ui.js?v=20260915-1";
-import { mountBluesToolbox } from "./blues_ui.js?v=20260915-1";
-import { EnhancedChordConverter, JazzBrain, ClassicalHarmonyConnector } from "./jazz_compass.js?v=20260921-modulation2";
-import * as lang from "./lang.js?v=20261001-ui";
+import { initAppShell } from "./app_shell.js?v=20261003-r24";
+import { noteToFrequency, noteToSemitoneValue, semitoneToFreq, semitoneToMidi, resolveRootOctave, chordNotesToFrequencies } from "./note_frequency.js?v=20261002-split";
+import { getAudioContext, interruptPlayback, interruptIfActive, connectOutput, suppressQueued, playChord, createHeldPianoVoice, createPianoTone, createSimpleTone } from "./audio_engine.js?v=20261003-a2";
+import { parsePitch } from "./pitch_spelling.js";
+import { mountSubPages } from "./sub_pages.js?v=20261003-u2";
+import { FEATURE_UNIT } from "./learn_feature_unit.js?v=20261003-f1";
+import { mountSiteSearch } from "./site_search.js?v=20261003-s4";
+import { satbToVoices, sendToStaff } from "./staff_handoff.js?v=20261003-h1";
+import { loadResume, clearResume } from "./learn_engine.js?v=20261003-s3";
+import { EnhancedChordConverter, JazzBrain, ClassicalHarmonyConnector } from "./jazz_compass.js?v=20261002-no";
+import * as lang from "./lang.js?v=20261003-r42";
+import { drawClassicalStaff } from "./classical_staff.js?v=20261003-a1";
+import { renderChordConversion } from "./chord_convert_panel.js?v=20261003-v2";
+
+/**
+ * 按需载入：各个工具面板的代码第一次用到时才下载（手机上首屏只下载必要的代码，打开快很多）。
+ * 返回的函数和原来的 mount 函数用法一样，只是返回一个 Promise：模块载入、mount 执行完以后才 resolve。
+ */
+function lazy(load, name) {
+  let pending = null;
+  return (...args) => {
+    pending ||= load();
+    return pending.then((m) => m[name](...args)).catch((error) => { pending = null; console.error(error); });
+  };
+}
+const load_composition_ui = () => import("./composition_ui.js?v=20261003-c4");
+const mountComposition = lazy(load_composition_ui, 'mountComposition');
+const mountRhythm = lazy(load_composition_ui, 'mountRhythm');
+const load_microtonal_ui = () => import("./microtonal_ui.js?v=20261002-quest");
+const mountMicrotonal = lazy(load_microtonal_ui, 'mountMicrotonal');
+const load_chinese_modes_ui = () => import("./chinese_modes_ui.js?v=20261002-tour");
+const mountChineseModes = lazy(load_chinese_modes_ui, 'mountChineseModes');
+const load_counterpoint_ui = () => import("./counterpoint_ui.js?v=20261002-quest");
+const mountCounterpoint = lazy(load_counterpoint_ui, 'mountCounterpoint');
+const load_nonchord_ui = () => import("./nonchord_ui.js?v=20261002-quest");
+const mountNonChordTones = lazy(load_nonchord_ui, 'mountNonChordTones');
+const load_harmonize_ui = () => import("./harmonize_ui.js?v=20261002-quest");
+const mountHarmonizer = lazy(load_harmonize_ui, 'mountHarmonizer');
+const load_figured_bass_ui = () => import("./figured_bass_ui.js?v=20261002-quest");
+const mountFiguredBass = lazy(load_figured_bass_ui, 'mountFiguredBass');
+const load_jazz_more_ui = () => import("./jazz_more_ui.js?v=20261002-quest");
+const mountJazzMore = lazy(load_jazz_more_ui, 'mountJazzMore');
+const load_post_tonal_ui = () => import("./post_tonal_ui.js?v=20261002-quest");
+const mountPostTonal = lazy(load_post_tonal_ui, 'mountPostTonal');
+const load_temperaments_ui = () => import("./temperaments_ui.js?v=20261002-quest");
+const mountTemperaments = lazy(load_temperaments_ui, 'mountTemperaments');
+const load_world_modes_ui = () => import("./world_modes_ui.js?v=20261002-quest");
+const mountWorldModes = lazy(load_world_modes_ui, 'mountWorldModes');
+const load_instruments_ui = () => import("./instruments_ui.js?v=20261002-quest");
+const mountInstruments = lazy(load_instruments_ui, 'mountInstruments');
+const load_fretboard_ui = () => import("./fretboard_ui.js?v=20261002-quest");
+const mountFretboard = lazy(load_fretboard_ui, 'mountFretboard');
+const load_progression_ui = () => import("./progression_ui.js?v=20261003-p5");
+const mountProgression = lazy(load_progression_ui, 'mountProgression');
+const load_motif_phrase_ui = () => import("./motif_phrase_ui.js?v=20261003-t3");
+const mountMotifPhrase = lazy(load_motif_phrase_ui, 'mountMotifPhrase');
+const load_poly_meter_ui = () => import("./poly_meter_ui.js?v=20261003-t3");
+const mountPolyMeter = lazy(load_poly_meter_ui, 'mountPolyMeter');
+const load_canon_ui = () => import("./canon_ui.js?v=20261003-t3");
+const mountCanon = lazy(load_canon_ui, 'mountCanon');
+const load_dictation_ui = () => import("./dictation_ui.js?v=20261003-t4");
+const mountDictation = lazy(load_dictation_ui, 'mountDictation');
+const load_prog_quiz_ui = () => import("./prog_quiz_ui.js?v=20261003-q1");
+const mountProgQuiz = lazy(load_prog_quiz_ui, 'mountProgQuiz');
+const load_reharm_ui = () => import("./reharm_ui.js?v=20261003-t3");
+const mountReharm = lazy(load_reharm_ui, 'mountReharm');
+const load_ear_training_ui = () => import("./ear_training_ui.js?v=20261002-quest");
+const mountEarTraining = lazy(load_ear_training_ui, 'mountEarTraining');
+const load_chord_symbols_ui = () => import("./chord_symbols_ui.js?v=20261003-r32");
+const mountChordSymbols = lazy(load_chord_symbols_ui, 'mountChordSymbols');
+const load_staff_reading_ui = () => import("./staff_reading_ui.js?v=20261003-s3");
+const mountStaffReading = lazy(load_staff_reading_ui, 'mountStaffReading');
+const load_learn_ui = () => import("./learn_ui.js?v=20261003-s13");
+const mountLearn = lazy(load_learn_ui, 'mountLearn');
+const load_lcc_ui = () => import("./lcc_ui.js?v=20261002-i18n");
+const mountLccExplorer = lazy(load_lcc_ui, 'mountLccExplorer');
+const load_jazz_toolbox_ui = () => import("./jazz_toolbox_ui.js?v=20261002-i18n");
+const mountJazzToolbox = lazy(load_jazz_toolbox_ui, 'mountJazzToolbox');
+const load_blues_ui = () => import("./blues_ui.js?v=20261002-i18n");
+const mountBluesToolbox = lazy(load_blues_ui, 'mountBluesToolbox');
+const load_about_page = () => import("./about_page.js?v=20261003-a1");
+const showAbout = lazy(load_about_page, 'showAbout');
+const load_neo_panel = () => import("./neo_panel.js?v=20261003-n1");
+const initNeoPanel = lazy(load_neo_panel, 'initNeoPanel');
+const load_circle_panel = () => import("./circle_panel.js?v=20261003-c4");
+const createCirclePanel = lazy(load_circle_panel, 'createCirclePanel');
 
 // Canvas colours come from the CSS theme tokens so drawings follow light/dark.
 function canvasPalette() {
@@ -44,427 +120,12 @@ function loadJsonFiles() {
   });
 }
 document.addEventListener("DOMContentLoaded", () => {
-  loadJsonFiles().then(() => {
-    initMultiModeCircle();
-    // 原有的初始化代码...
-    // 注意：需要等待 json 加载完成后再初始化五度圈控制面板
-  });
+  // modes.json（约 240 KB）只给五度圈的多调式模式用：第一次打开五度圈时和面板代码一起载入（见 createCirclePanelNow）
 
 
-  let circleCurrentKey = null; // 当前选中的调性
-  let audioCtx = null;
-  let audioMaster = null;
-  let audioDryBus = null;
-  let audioWetBus = null;
-  let audioReverb = null;
-  /** 当前会话中的振荡器，再次播放时 stop() 立即静音 */
-  let activeSources = [];
+  let circle = null; // 五度圈面板（circle_panel.js），初始化后才有
 
-  function getAudioContext() {
-    if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      setupAudioBus(audioCtx);
-    }
-    if (audioCtx.state === "suspended") {
-      audioCtx.resume().catch(() => { });
-    }
-    return audioCtx;
-  }
 
-  /** 全局音频总线（只连一次 destination，避免多次播放叠加爆音） */
-  function setupAudioBus(ctx) {
-    if (audioMaster) return;
-
-    audioMaster = ctx.createGain();
-    audioMaster.gain.value = 0.2;
-
-    const compressor = ctx.createDynamicsCompressor();
-    compressor.threshold.setValueAtTime(-22, ctx.currentTime);
-    compressor.knee.setValueAtTime(8, ctx.currentTime);
-    compressor.ratio.setValueAtTime(6, ctx.currentTime);
-    compressor.attack.setValueAtTime(0.003, ctx.currentTime);
-    compressor.release.setValueAtTime(0.2, ctx.currentTime);
-
-    audioReverb = createReverb(ctx, 1.2);
-    audioReverb.connect(audioMaster);
-    audioMaster.connect(compressor);
-    compressor.connect(ctx.destination);
-
-    audioDryBus = ctx.createGain();
-    audioWetBus = ctx.createGain();
-    audioDryBus.gain.value = 1;
-    audioWetBus.gain.value = 0.1;
-    audioDryBus.connect(audioMaster);
-    audioWetBus.connect(audioReverb);
-  }
-
-  function trackSource(node) {
-    if (node && typeof node.stop === "function") {
-      activeSources.push(node);
-    }
-  }
-
-  /** 立即打断上一轮：停振荡器、静音总线、重建干/湿输入 */
-  function interruptPlayback(ctx) {
-    const t = ctx.currentTime;
-    activeSources.forEach((src) => {
-      try {
-        src.stop(t);
-      } catch (_) { }
-    });
-    activeSources = [];
-
-    if (audioDryBus) {
-      try {
-        audioDryBus.gain.cancelScheduledValues(t);
-        audioDryBus.gain.setValueAtTime(0, t);
-        audioDryBus.disconnect();
-      } catch (_) { }
-    }
-    if (audioWetBus) {
-      try {
-        audioWetBus.gain.cancelScheduledValues(t);
-        audioWetBus.gain.setValueAtTime(0, t);
-        audioWetBus.disconnect();
-      } catch (_) { }
-    }
-    if (audioMaster) {
-      try {
-        audioMaster.gain.cancelScheduledValues(t);
-        audioMaster.gain.setValueAtTime(0, t);
-        audioMaster.gain.setValueAtTime(0.2, t + 0.01);
-      } catch (_) { }
-    }
-
-    audioDryBus = ctx.createGain();
-    audioWetBus = ctx.createGain();
-    audioDryBus.gain.value = 1;
-    audioWetBus.gain.value = 0.1;
-    audioDryBus.connect(audioMaster);
-    audioWetBus.connect(audioReverb);
-  }
-
-  /**
-   * 钢琴风格的 ADSR 包络
-   */
-  function applyPianoEnvelope(gainNode, time, duration) {
-    const now = time;
-    // 确保 gainNode 是 AudioParam
-    const gain = gainNode.gain;
-    gain.setValueAtTime(0, now);
-    // 快速起音（钢琴锤击弦）
-    gain.linearRampToValueAtTime(1, now + 0.003);
-    // 衰减到持续电平
-    gain.linearRampToValueAtTime(0.4, now + 0.08);
-    // 持续
-    gain.setValueAtTime(0.35, now + 0.15);
-    // 缓慢释放（模拟延音踏板）
-    gain.exponentialRampToValueAtTime(0.001, now + duration * 1.5);
-  }
-
-  /**
-   * 播放单个音符的钢琴音色
-   */
-  /** 音阶等快速连播：单振荡器，减轻 CPU 与卡顿 */
-  function createSimpleTone(ctx, freq, time, duration, peakGain = 0.12) {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(freq, time);
-    const end = time + duration;
-    gain.gain.setValueAtTime(0, time);
-    gain.gain.linearRampToValueAtTime(peakGain, time + 0.008);
-    gain.gain.exponentialRampToValueAtTime(0.001, end);
-    osc.connect(gain);
-    trackSource(osc);
-    osc.start(time);
-    osc.stop(end + 0.05);
-    return gain;
-  }
-
-  /** 和弦：少量谐波，不用 waveshaper，避免削波 */
-  function createPianoTone(ctx, freq, time, duration) {
-    const masterGain = ctx.createGain();
-    masterGain.gain.setValueAtTime(1, time);
-
-    const harmonics = [
-      { ratio: 1, amp: 0.2 },
-      { ratio: 2, amp: 0.08 },
-      { ratio: 3, amp: 0.04 },
-    ];
-
-    const stopAt = time + duration * 1.2;
-    harmonics.forEach(({ ratio, amp }) => {
-      const osc = ctx.createOscillator();
-      const harmonicGain = ctx.createGain();
-      osc.type = "triangle";
-      osc.frequency.setValueAtTime(freq * ratio, time);
-      harmonicGain.gain.setValueAtTime(0, time);
-      harmonicGain.gain.linearRampToValueAtTime(amp, time + 0.004);
-      harmonicGain.gain.exponentialRampToValueAtTime(0.001, stopAt);
-      osc.connect(harmonicGain);
-      harmonicGain.connect(masterGain);
-      trackSource(osc);
-      osc.start(time);
-      osc.stop(stopAt + 0.02);
-    });
-
-    return masterGain;
-  }
-
-  /**
-   * 简单的混响效果
-   */
-  function createReverb(ctx, duration) {
-    const convolver = ctx.createConvolver();
-
-    // 创建脉冲响应
-    const sampleRate = ctx.sampleRate;
-    const length = Math.floor(sampleRate * 1.5);
-    const impulse = ctx.createBuffer(2, length, sampleRate);
-
-    for (let channel = 0; channel < 2; channel++) {
-      const data = impulse.getChannelData(channel);
-      for (let i = 0; i < length; i++) {
-        data[i] = (Math.random() * 2 - 1) *
-          Math.exp(-i / (sampleRate * 0.3)) *
-          (1 - i / length);
-      }
-    }
-
-    convolver.buffer = impulse;
-    return convolver;
-  }
-
-  /**
-   * 播放和弦声音 - 钢琴音色版本（多八度扩展）
-   */
-  function playChord(frequencies, duration = 1.2, options = {}) {
-    try {
-      const ctx = getAudioContext();
-      if (options.interrupt !== false) interruptPlayback(ctx);
-      const now = ctx.currentTime;
-      // 88-key/MIDI chord input may contain more than eight held notes.
-      // Keep the shared multi-harmonic piano timbre while allowing wider harmony.
-      const uniqueFreqs = [...new Set(frequencies)].slice(0, 16);
-
-      uniqueFreqs.forEach((freq, index) => {
-        const noteTime = now + index * 0.012;
-        const tone = createPianoTone(ctx, freq, noteTime, duration);
-        tone.connect(audioDryBus);
-        tone.connect(audioWetBus);
-      });
-    } catch (e) {
-      console.warn("playChord failure:", e);
-    }
-  }
-
-  /** Independent piano voices for held MIDI notes and the 88-key chord latch. */
-  function createHeldPianoVoice(frequency, velocity = 100) {
-    const ctx = getAudioContext();
-    const start = ctx.currentTime;
-    const level = Math.max(0.08, Math.min(1, velocity / 127));
-    const voiceGain = ctx.createGain();
-    voiceGain.gain.setValueAtTime(0, start);
-    voiceGain.gain.linearRampToValueAtTime(level, start + 0.006);
-    voiceGain.gain.exponentialRampToValueAtTime(Math.max(0.001, level * 0.38), start + 0.35);
-    voiceGain.gain.exponentialRampToValueAtTime(Math.max(0.001, level * 0.16), start + 3);
-    voiceGain.connect(audioMaster);
-    let endedPartials = 0;
-    const pianoPartials = [
-      { ratio: 1, amp: 0.18 },
-      { ratio: 2.002, amp: 0.065 },
-      { ratio: 3.011, amp: 0.025 },
-      { ratio: 4.025, amp: 0.009 },
-    ];
-    const oscillators = pianoPartials.map(({ ratio, amp }) => {
-      const oscillator = ctx.createOscillator();
-      const partial = ctx.createGain();
-      oscillator.type = "triangle";
-      oscillator.frequency.setValueAtTime(frequency * ratio, start);
-      partial.gain.setValueAtTime(amp, start);
-      oscillator.connect(partial);
-      partial.connect(voiceGain);
-      oscillator.onended = () => {
-        oscillator.disconnect();
-        partial.disconnect();
-        if (++endedPartials === pianoPartials.length) voiceGain.disconnect();
-      };
-      oscillator.start(start);
-      return { oscillator, ratio };
-    });
-    // A very short filtered hammer attack gives the held harmonics a piano-like onset.
-    const hammerBuffer = ctx.createBuffer(1, Math.max(1, Math.round(ctx.sampleRate * 0.045)), ctx.sampleRate);
-    const hammerSamples = hammerBuffer.getChannelData(0);
-    for (let i = 0; i < hammerSamples.length; i++) hammerSamples[i] = (Math.random() * 2 - 1) * (1 - i / hammerSamples.length);
-    const hammer = ctx.createBufferSource();
-    const hammerFilter = ctx.createBiquadFilter();
-    const hammerGain = ctx.createGain();
-    hammer.buffer = hammerBuffer;
-    hammerFilter.type = "highpass";
-    hammerFilter.frequency.setValueAtTime(950, start);
-    hammerGain.gain.setValueAtTime(0.018 * level, start);
-    hammerGain.gain.exponentialRampToValueAtTime(0.001, start + 0.035);
-    hammer.connect(hammerFilter);
-    hammerFilter.connect(hammerGain);
-    hammerGain.connect(voiceGain);
-    hammer.onended = () => { hammer.disconnect(); hammerFilter.disconnect(); hammerGain.disconnect(); };
-    hammer.start(start);
-    hammer.stop(start + 0.045);
-    let stopped = false;
-    return {
-      setFrequency(nextFrequency) {
-        if (stopped || !Number.isFinite(nextFrequency) || nextFrequency <= 0) return;
-        const now = ctx.currentTime;
-        for (const { oscillator, ratio } of oscillators) {
-          oscillator.frequency.setTargetAtTime(nextFrequency * ratio, now, 0.012);
-        }
-      },
-      stop() {
-        if (stopped) return;
-        stopped = true;
-        const now = ctx.currentTime;
-        voiceGain.gain.cancelScheduledValues(now);
-        voiceGain.gain.setValueAtTime(Math.max(0.001, voiceGain.gain.value), now);
-        voiceGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
-        for (const { oscillator } of oscillators) oscillator.stop(now + 0.2);
-      },
-    };
-  }
-
-  // 保持原有的音符转频率函数
-  function noteToFrequency(noteName) {
-    const noteMap = {
-      C: 0, "C#": 1, Db: 1, D: 2, "D#": 3, Eb: 3, E: 4,
-      F: 5, "F#": 6, Gb: 6, G: 7, "G#": 8, Ab: 8, A: 9,
-      "A#": 10, Bb: 10, B: 11,
-    };
-
-    const match = noteName.match(/^([A-G][#b]?)(\d)?$/);
-    if (!match) return 440;
-
-    const note = match[1];
-    const octave = match[2] ? parseInt(match[2]) : 4;
-
-    const semitone = noteMap[note];
-    if (semitone === undefined) return 440;
-
-    const midiNote = semitone + (octave + 1) * 12;
-    return 440 * Math.pow(2, (midiNote - 69) / 12);
-  }
-
-  /**
-   * 将音符名转换为半音值（0-11）
-   */
-  function noteToSemitoneValue(noteName) {
-    const noteMap = {
-      C: 0, "C#": 1, Db: 1, D: 2, "D#": 3, Eb: 3, E: 4,
-      F: 5, "F#": 6, Gb: 6, G: 7, "G#": 8, Ab: 8, A: 9,
-      "A#": 10, Bb: 10, B: 11,
-    };
-
-    return noteMap[noteName];
-  }
-
-  /**
-   * 根据半音值和八度直接计算频率
-   * @param {number} semitone - 半音值 (0-11)
-   * @param {number} octave - 八度，C4 的 MIDI 编号为 60
-   * @returns {number} 频率
-   */
-  function semitoneToFreq(semitone, octave) {
-    // MIDI 编号：C0 = 12, C4 = 60
-    const midiNote = semitone + (octave + 1) * 12;
-    return 440 * Math.pow(2, (midiNote - 69) / 12);
-  }
-
-  function semitoneToMidi(semitone, octave) {
-    return semitone + (octave + 1) * 12;
-  }
-
-  function resolveRootOctave(semitone, baseOctave, lastRootMidi, voiceLeading = "ascending") {
-    if (lastRootMidi == null) return baseOctave;
-
-    if (voiceLeading === "nearest") {
-      const minMidi = semitoneToMidi(0, baseOctave);
-      const maxMidi = semitoneToMidi(11, baseOctave);
-      const candidates = [];
-
-      for (let octave = baseOctave - 2; octave <= baseOctave + 2; octave++) {
-        const midi = semitoneToMidi(semitone, octave);
-        candidates.push({ octave, midi });
-      }
-
-      const rangedCandidates = candidates.filter(({ midi }) => midi >= minMidi && midi <= maxMidi);
-      const availableCandidates = rangedCandidates.length ? rangedCandidates : candidates;
-      let bestOctave = baseOctave;
-      let bestDistance = Infinity;
-
-      availableCandidates.forEach(({ octave, midi }) => {
-        const distance = Math.abs(midi - lastRootMidi);
-        if (distance < bestDistance) {
-          bestDistance = distance;
-          bestOctave = octave;
-        }
-      });
-
-      return bestOctave;
-    }
-
-    let octave = baseOctave;
-    while (semitoneToMidi(semitone, octave) <= lastRootMidi) {
-      octave += 1;
-    }
-    return octave;
-  }
-
-  /**
-   * 和弦频率：以 i 级（表第一行）为基准八度，后续级根音 MIDI 严格高于前一级
-   * @param {number|null} lastRootMidi - 上一行和弦根音 MIDI，首行传 null
-   * @returns {{ freqs: number[], rootMidi: number|null }}
-   */
-  function chordNotesToFrequencies(
-    notes,
-    baseOctave = 4,
-    multiOctave = false,
-    lastRootMidi = null,
-    options = {},
-  ) {
-    const freqs = [];
-    let prevSemitone = null;
-    let octave = baseOctave;
-    let rootMidi = null;
-
-    notes.forEach((note, idx) => {
-      const semitone = noteToSemitoneValue(note);
-      if (semitone === undefined) return;
-
-      if (idx === 0) {
-        if (lastRootMidi != null) {
-          octave = resolveRootOctave(semitone, baseOctave, lastRootMidi, options.voiceLeading);
-        }
-        rootMidi = semitoneToMidi(semitone, octave);
-      } else if (prevSemitone !== null && semitone <= prevSemitone) {
-        octave += 1;
-      }
-
-      freqs.push(semitoneToFreq(semitone, octave));
-
-      if (multiOctave) {
-        freqs.push(semitoneToFreq(semitone, octave - 1));
-        freqs.push(semitoneToFreq(semitone, octave - 2));
-        freqs.push(semitoneToFreq(semitone, octave + 1));
-        freqs.push(semitoneToFreq(semitone, octave + 2));
-      }
-
-      prevSemitone = semitone;
-    });
-
-    return { freqs, rootMidi };
-  }
-
-  let majorMode = "natural"; // "natural" | "harmonic"
-  let minorMode = "natural"; // "natural" | "harmonic"
   const canvas = document.getElementById("circle-canvas");
   const container = document.getElementById("circle-canvas-container");
   const tableContainer = document.getElementById("circle-table-container");
@@ -656,6 +317,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (semitoneMap[normalized] !== undefined) {
       return semitoneMap[normalized];
     }
+    // 按音级拼写的 Cb、E#、Fb、B#、重升重降等
+    const parsed = parsePitch(`${normalized}4`);
+    if (parsed) return parsed.pc;
     console.warn("Unknown note for semitone conversion:", note);
     return undefined;
   }
@@ -694,7 +358,7 @@ document.addEventListener("DOMContentLoaded", () => {
       typeof conv !== "undefined" ? conv : null,
       typeof brain !== "undefined" ? brain?.converter : null,
       typeof classical !== "undefined" ? classical?.converter : null,
-      _multiModeChordConverter,
+      circle?.multiModeConverter(),
     ]
       .filter(Boolean)
       .forEach((converter) => {
@@ -707,7 +371,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const runMap = { chord: "chord-run", classical: "classical-run", blues: "blues-run", lcc: "lcc-run", cst: "cst-run", other: "other-run", neo: "neo-run" };
     const button = runMap[active] && document.getElementById(runMap[active]);
     if (button) button.click();
-    if (active === "circle") drawCircle(circleCurrentKey?.primary === "major" ? circleCurrentKey.major : null, circleCurrentKey?.primary === "minor" ? circleCurrentKey.minor : null);
+    if (active === "circle") circle?.redraw();
     if (active === "ref") initRefPanel();
   }
 
@@ -736,2132 +400,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (changed) requestAnimationFrame(rerenderActivePanel);
   }
 
-  // 获取音阶音符（使用半音索引，避免等音名匹配失败）
-  function getScaleNotes(root, intervals) {
-    const rootIdx = noteToSemitone(root);
-    if (rootIdx === undefined) {
-      console.error("Unknown root:", root);
-      return intervals.map(() => "?");
-    }
-    const preferSharps = /[#♯]/.test(root);
-    return intervals.map((i) => semitoneToNote((rootIdx + i) % 12, notationMode === "sharps" || preferSharps));
-  }
-
-  const axisColorMap = {
-    T: {
-      major: "rgba(66,128,226,0.22)",
-      minor: "rgba(66,128,226,0.14)",
-      highlight: "rgba(66,128,226,0.42)",
-    },
-    D: {
-      major: "rgba(222,138,40,0.24)",
-      minor: "rgba(222,138,40,0.15)",
-      highlight: "rgba(222,138,40,0.44)",
-    },
-    S: {
-      major: "rgba(56,160,102,0.22)",
-      minor: "rgba(56,160,102,0.14)",
-      highlight: "rgba(56,160,102,0.42)",
-    },
-    default: {
-      major: null,
-      minor: null,
-      highlight: null,
-    },
-  };
-
-  function getAxisRoot(highlightMajor, highlightMinor) {
-    if (highlightMajor) return highlightMajor;
-    const found = circleData.find(
-      (item) =>
-        item.minor === highlightMinor ||
-        item.major === highlightMinor ||
-        item.enharmonic === highlightMinor,
-    );
-    return found ? found.major : null;
-  }
-
-  function getAxisGroup(itemMajor, axisRoot) {
-    if (!axisRoot) return null;
-    const rootIndex = circleData.findIndex(
-      (item) =>
-        item.major === axisRoot ||
-        item.enharmonic === axisRoot ||
-        item.minor === axisRoot,
-    );
-    const itemIndex = circleData.findIndex(
-      (item) =>
-        item.major === itemMajor ||
-        item.enharmonic === itemMajor ||
-        item.minor === itemMajor,
-    );
-    if (rootIndex < 0 || itemIndex < 0) return null;
-    const offset = (itemIndex - rootIndex + 12) % 12;
-    if (offset % 3 === 0) return "T";
-    if (offset % 3 === 1) return "D";
-    return "S";
-  }
-
-  // 绘制五度圈
-  function drawCircle(highlightMajor, highlightMinor) {
-    const { size, ctx } = resizeCanvas();
-    const cx = size / 2;
-    const cy = size / 2;
-    const outerR = size * 0.42;
-    const innerR = size * 0.28;
-    const centerR = size * 0.12;
-
-    ctx.clearRect(0, 0, size, size);
-
-    // 背景
-    const palette = canvasPalette();
-    ctx.fillStyle = palette.disc;
-    ctx.beginPath();
-    ctx.arc(cx, cy, outerR + 20, 0, Math.PI * 2);
-    ctx.fill();
-
-    const axisRoot = getAxisRoot(highlightMajor, highlightMinor);
-    circleData.forEach((item, i) => {
-      const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
-      const nextAngle = ((i + 1) / 12) * Math.PI * 2 - Math.PI / 2;
-      const axisGroup = getAxisGroup(item.major, axisRoot);
-
-      // 外环（大调）
-      const isHighlightedOuter = highlightMajor === item.major;
-      drawArcSegment(
-        ctx,
-        cx,
-        cy,
-        innerR,
-        outerR,
-        angle,
-        nextAngle,
-        item.major,
-        item.sharps,
-        item.flats,
-        isHighlightedOuter,
-        "major",
-        axisGroup,
-      );
-
-      // 内环（小调）
-      const isHighlightedInner = highlightMinor === item.minor;
-      drawArcSegment(
-        ctx,
-        cx,
-        cy,
-        centerR,
-        innerR,
-        angle,
-        nextAngle,
-        item.minor,
-        item.sharps,
-        item.flats,
-        isHighlightedInner,
-        "minor",
-        axisGroup,
-      );
-
-      // 扇区分隔线
-      ctx.beginPath();
-      ctx.moveTo(
-        cx + Math.cos(angle) * centerR,
-        cy + Math.sin(angle) * centerR,
-      );
-      ctx.lineTo(
-        cx + Math.cos(angle) * outerR,
-        cy + Math.sin(angle) * outerR,
-      );
-      ctx.strokeStyle = palette.line;
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    });
-
-    // 中心标签
-    ctx.fillStyle = palette.text;
-    ctx.font = `700 13px ${palette.display}`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(window.__("nav_circle"), cx, cy - 6);
-    ctx.font = `10px ${palette.font}`;
-    ctx.fillStyle = palette.textDim;
-    ctx.fillText("Circle of 5ths", cx, cy + 10);
-  }
-  // 多调性模式相关变量
-  let multiModeActive = false;
-  let currentMultiMode = null;       // 当前选中的模式对象
-  let currentRoot = null;            // 主音（点击五度圈后设定）
-
-  // 辅助函数：半音差转音级索引（0-11）
-  function getSemitoneDistance(fromNote, toNote) {
-    const idxFrom = noteToIdx[fromNote];
-    const idxTo = noteToIdx[toNote];
-    return (idxTo - idxFrom + 12) % 12;
-  }
-
-  /** 在音阶顺序上取该级的三音、五音（按半音 3/4 与 6/7/8，非简单 +2/+4 音级） */
-  function getScaleTriadAtDegree(intervals, degIndex) {
-    const n = intervals.length;
-    const root = intervals[degIndex];
-    let thirdOff = null;
-    let thirdDist = null;
-    let fifthOff = null;
-    let fifthDist = null;
-
-    for (let step = 1; step < n; step++) {
-      const off = intervals[(degIndex + step) % n];
-      const d = (off - root + 12) % 12;
-      if (thirdOff == null && (d === 3 || d === 4)) {
-        thirdOff = off;
-        thirdDist = d;
-      }
-    }
-
-    if (thirdOff != null) {
-      for (const want of [7, 6, 8]) {
-        for (let step = 1; step < n; step++) {
-          const off = intervals[(degIndex + step) % n];
-          const d = (off - root + 12) % 12;
-          if (d === want) {
-            fifthOff = off;
-            fifthDist = d;
-            break;
-          }
-        }
-        if (fifthOff != null) break;
-      }
-    }
-
-    if (thirdOff == null) {
-      for (let step = 1; step < n; step++) {
-        const off = intervals[(degIndex + step) % n];
-        const d = (off - root + 12) % 12;
-        if (d === 2) {
-          thirdOff = off;
-          thirdDist = 2;
-          break;
-        }
-        if (d === 5) {
-          thirdOff = off;
-          thirdDist = 5;
-          break;
-        }
-      }
-      if (thirdOff != null) {
-        for (const want of [7, 6, 8]) {
-          for (let step = 1; step < n; step++) {
-            const off = intervals[(degIndex + step) % n];
-            const d = (off - root + 12) % 12;
-            if (d === want) {
-              fifthOff = off;
-              fifthDist = d;
-              break;
-            }
-          }
-          if (fifthOff != null) break;
-        }
-      }
-    }
-
-    return { thirdOff, fifthOff, thirdDist, fifthDist };
-  }
-
-  let _multiModeChordConverter = null;
-
-  function getMultiModeChordConverter() {
-    if (!_multiModeChordConverter) {
-      _multiModeChordConverter = new EnhancedChordConverter();
-    }
-    return _multiModeChordConverter;
-  }
-
-  /** 从 identifyChord 的 quality 提取基础和弦类型 */
-  function extractBaseChordQuality(quality) {
-    if (quality == null || quality === "") return "maj";
-    const q = String(quality).trim().split(/\s+/)[0];
-    if (q === "maj" || q === "major" || q === "M") return "maj";
-    if (q === "min" || q === "m" || q === "minor") return "min";
-    if (q === "dim") return "dim";
-    if (q === "aug") return "aug";
-    if (q === "sus2") return "sus2";
-    if (q === "sus4") return "sus4";
-    return "unknown";
-  }
-function extractBaseChordQuality(quality) {
-    if (!quality) return "maj";
-    const q = String(quality).trim().toLowerCase();
-    
-    // 标准类型列表
-    const standardTypes = ["maj", "min", "dim", "aug", "sus2", "sus4", "5"];
-    
-    for (const type of standardTypes) {
-        if (q === type || q.startsWith(type + " ") || q.startsWith(type + "\n")) {
-            return type;
-        }
-    }
-    
-    // 处理空字符串（大三和弦）
-    if (q === "" || q === "maj") return "maj";
-    if (q === "m" || q === "min") return "min";
-    
-    return "unknown";
-}
-  /**
-   * 音阶级数 → 和弦：取调内三音后用 EnhancedChordConverter.identifyChord 识别
-   * （与 jazz_compass.js _ensureNotesAndRoot 音名列表逻辑一致）
-   */
-function buildTriadChordAtDegree(root, intervals, degIndex, converter, preferredType = null) {
-    const conv = converter || getMultiModeChordConverter();
-    const rootIdx = conv.noteToIdx[root];
-    const rootOff = intervals[degIndex];
-    const rootNote = conv.idxToNote[(rootIdx + rootOff) % 12];
-
-    // 获取三音和五音（按音阶级进，隔一个取一个）
-    const n = intervals.length;
-    let thirdOff = null;
-    let fifthOff = null;
-    
-    // 找到第三个音（跳过1个）
-    let thirdIdx = (degIndex + 2) % n;
-    thirdOff = intervals[thirdIdx];
-    
-    // 找到第五个音（跳过3个，即 +4 索引）
-    let fifthIdx = (degIndex + 4) % n;
-    fifthOff = intervals[fifthIdx];
-    
-    // 构建音符列表
-    const noteNames = [rootNote];
-    if (thirdOff != null) {
-        noteNames.push(conv.idxToNote[(rootIdx + thirdOff) % 12]);
-    }
-    if (fifthOff != null) {
-        noteNames.push(conv.idxToNote[(rootIdx + fifthOff) % 12]);
-    }
-    
-    // 使用 EnhancedChordConverter 识别和弦
-    let chordLabel = rootNote;
-    let chordType = "unknown";
-    let notes = noteNames.join(", ");
-    let finalNotes = noteNames;
-
-    // 优先：基于调内音在整调上尝试匹配标准三和弦（不再严格限制为同一格子）
-    function findTriadFromScaleNotes(scaleRoot, chordRoot, scaleIntervals, conv, preferred) {
-        const scaleRootIdx = conv.noteToIdx[scaleRoot];
-        const scaleSet = new Set(
-            scaleIntervals.map(i => (scaleRootIdx + i) % 12)
-        );
-        const rootIdxLocal = conv.noteToIdx[chordRoot];
-
-        const triadSpecs = [
-            { type: 'maj', ints: [4,7] },
-            { type: 'min', ints: [3,7] },
-            { type: 'dim', ints: [3,6] },
-            { type: 'aug', ints: [4,8] },
-            { type: 'sus2', ints: [2,7] },
-            { type: 'sus4', ints: [5,7] },
-        ];
-
-        // 按优先级分组： maj/min > dim/aug > sus2/sus4
-        const priorityGroups = [
-            ['maj','min'],
-            ['dim','aug'],
-            ['sus2','sus4']
-        ];
-
-        // 先检测完全匹配（三音都在调内）
-        const matches = [];
-        for (const spec of triadSpecs) {
-            const ok = spec.ints.every(i => scaleSet.has((rootIdxLocal + i) % 12));
-            if (ok) {
-                const notesArr = [
-                    conv.idxToNote[rootIdxLocal % 12],
-                    conv.idxToNote[(rootIdxLocal + spec.ints[0]) % 12],
-                    conv.idxToNote[(rootIdxLocal + spec.ints[1]) % 12]
-                ];
-                matches.push({ type: spec.type, notes: notesArr });
-            }
-        }
-
-        if (matches.length) {
-            // 如果有优先类型且能找到，直接返回
-            if (preferred && (preferred === 'maj' || preferred === 'min')) {
-                const found = matches.find(m => m.type === preferred);
-                if (found) return found;
-            }
-            
-            // 选择最高优先级匹配
-            for (const group of priorityGroups) {
-                const found = matches.find(m => group.includes(m.type));
-                if (found) return found;
-            }
-            return matches[0];
-        }
-
-        // 如果没有完全三音匹配，尝试弱匹配（任意两个音在调内）
-        const weakMatches = [];
-        for (const spec of triadSpecs) {
-            const have = spec.ints.filter(i => scaleSet.has((rootIdxLocal + i) % 12)).length;
-            if (have >= 2) {
-                const notesArr = [
-                    conv.idxToNote[rootIdxLocal % 12],
-                    conv.idxToNote[(rootIdxLocal + spec.ints[0]) % 12],
-                    conv.idxToNote[(rootIdxLocal + spec.ints[1]) % 12]
-                ];
-                weakMatches.push({ type: spec.type, notes: notesArr, have });
-            }
-        }
-        if (weakMatches.length) {
-            // 按 have(desc) + priority
-            weakMatches.sort((a,b) => b.have - a.have);
-            
-            // 如果有优先类型且能找到，直接返回
-            if (preferred && (preferred === 'maj' || preferred === 'min')) {
-                const found = weakMatches.find(m => m.type === preferred);
-                if (found) return found;
-            }
-            
-            for (const group of priorityGroups) {
-                const found = weakMatches.find(m => group.includes(m.type));
-                if (found) return found;
-            }
-            return weakMatches[0];
-        }
-
-        return null;
-    }
-
-    // 先尝试基于整调的triad匹配
-    try {
-        const scaleBased = findTriadFromScaleNotes(root, rootNote, intervals, conv, preferredType);
-      if (scaleBased) {
-        chordType = scaleBased.type === 'min' ? 'min' : (scaleBased.type === 'maj' ? 'maj' : scaleBased.type);
-        chordLabel = formatChordName(rootNote, chordType);
-        finalNotes = scaleBased.notes;
-        notes = finalNotes.join(', ');
-        return {
-          dist: rootOff,
-          degreeLabel: formatRomanDegreeLabel(degIndex, chordType),
-          chordLabel: chordLabel,
-          notes: notes,
-          chordType: chordType,
-          notesArray: finalNotes
-        };
-      }
-    } catch (e) {
-      console.warn('scale-based triad detection failed', e);
-    }
-
-    // 回退到原有的识别逻辑
-    if (noteNames.length >= 2) {
-      try {
-        // 直接使用 identifyChord 方法
-        const identified = conv.identifyChord(
-          noteNames.map(n => conv.noteToIdx[n])
-        );
-
-        if (identified && identified.chord) {
-          chordLabel = identified.chord;
-          // 提取基础和弦类型
-          const quality = identified.quality || "";
-          const baseQuality = quality.split(/\s+/)[0];
-
-          // 确定和弦类型
-          if (baseQuality === "" || baseQuality === "maj") {
-            chordType = "maj";
-          } else if (baseQuality === "min" || baseQuality === "m") {
-            chordType = "min";
-          } else if (baseQuality === "dim") {
-            chordType = "dim";
-          } else if (baseQuality === "aug") {
-            chordType = "aug";
-          } else if (baseQuality === "sus2") {
-            chordType = "sus2";
-          } else if (baseQuality === "sus4") {
-            chordType = "sus4";
-          } else {
-            chordType = baseQuality;
-          }
-
-          // 获取识别出的音符
-          if (identified.quality && identified.quality !== quality) {
-            // 尝试解析出音符
-            const parsedNotes = conv._ensureNotesAndRoot(chordLabel);
-            if (parsedNotes && parsedNotes.length) {
-              finalNotes = parsedNotes;
-              notes = finalNotes.join(", ");
-            }
-          }
-        }
-      } catch (e) {
-        console.warn(`识别和弦失败 ${rootNote}${rootOff}:`, e);
-        // 保持原始标签
-      }
-    }
-    
-    return {
-        dist: rootOff,
-        degreeLabel: formatRomanDegreeLabel(degIndex, chordType),
-        chordLabel: chordLabel,
-        notes: notes,
-        chordType: chordType,
-        notesArray: finalNotes
-    };
-}
-
-// 新增：强制匹配最接近的标准三和弦
-function forceToStandardTriad(notes, converter) {
-    if (!notes || notes.length < 3) return null;
-    
-    const root = notes[0];
-    const rootIdx = converter.noteToIdx[root];
-    
-    // 计算相对于根音的音程
-    const intervals = notes.map(n => {
-        const idx = converter.noteToIdx[n];
-        return (idx - rootIdx + 12) % 12;
-    }).sort((a, b) => a - b);
-    
-    // 标准三和弦的音程模式
-    const standardTriads = [
-        { intervals: [0, 4, 7], type: "maj", chord: root, label: root },
-        { intervals: [0, 3, 7], type: "min", chord: `${root}m`, label: `${root}m` },
-        { intervals: [0, 4, 8], type: "aug", chord: `${root}+`, label: `${root}+` },
-        { intervals: [0, 3, 6], type: "dim", chord: `${root}°`, label: `${root}°` },
-        { intervals: [0, 2, 7], type: "sus2", chord: `${root}sus2`, label: `${root}sus2` },
-        { intervals: [0, 5, 7], type: "sus4", chord: `${root}sus4`, label: `${root}sus4` },
-    ];
-    
-    // 找匹配度最高的
-    let bestMatch = null;
-    let bestScore = -1;
-    
-    for (const triad of standardTriads) {
-        let score = 0;
-        for (const interval of triad.intervals) {
-            if (intervals.includes(interval)) score++;
-        }
-        // 也检查是否有冲突音（不应该有的音）
-        for (const interval of intervals) {
-            if (!triad.intervals.includes(interval) && interval !== 0) {
-                score -= 0.5;
-            }
-        }
-        if (score > bestScore) {
-            bestScore = score;
-            bestMatch = triad;
-        }
-    }
-    
-    if (bestMatch && bestScore >= 2) {
-        // 构建标准音符
-        const standardNotes = bestMatch.intervals.map(i => 
-            converter.idxToNote[(rootIdx + i) % 12]
-        );
-        return {
-            chord: bestMatch.chord,
-            chordType: bestMatch.type,
-            notes: standardNotes
-        };
-    }
-    
-    return null;
-}
-
-  function formatChordName(rootNote, chordType) {
-    if (chordType === "min") return `${rootNote}m`;
-    if (chordType === "dim") return `${rootNote}°`;
-    if (chordType === "aug") return `${rootNote}+`;
-    if (chordType === "sus2") return `${rootNote}sus2`;
-    if (chordType === "sus4") return `${rootNote}sus4`;
-    return rootNote;
-  }
-
-  function getChordTypeForNote(root, targetNote, intervals) {
-    const dist = getSemitoneDistance(root, targetNote);
-    const degree = intervals.indexOf(dist);
-    if (degree === -1) return null;
-    return buildTriadChordAtDegree(root, intervals, degree).chordType;
-  }
-
-  // 更新五度圈显示（多调性模式）
-  function updateCircleMultiMode() {
-    if (!multiModeActive || !currentMultiMode) {
-      // 恢复原始五度圈
-      if (circleCurrentKey) {
-        drawCircle(circleCurrentKey.major, circleCurrentKey.minor);
-        renderKeyTable(circleCurrentKey.major, circleCurrentKey.minor, circleCurrentKey.primary);
-      } else {
-        drawCircle(null, null);
-        const tableContainer = document.getElementById("circle-table-container");
-        if (tableContainer) tableContainer.innerHTML = "";
-      }
-      return;
-    }
-
-    const includeSet = new Set(currentMultiMode.includeNoteIdx);
-    const root = currentRoot;
-
-    drawMultiCircle(root, includeSet, currentMultiMode);
-
-    const tableContainer = document.getElementById("circle-table-container");
-    if (root && noteToIdx[root] != null) {
-      renderMultiModeTable(root, currentMultiMode);
-    } else if (tableContainer) {
-      tableContainer.innerHTML = "";
-    }
-  }
-
-  // 解析内圈功能组标签片段，如 "3D(6s)" → [{text:"3D"}, {text:"6s", inParens:true}]
-  function parseFuncRingLabelSegments(label) {
-    const m = String(label).match(/^([^(]+)(?:\(([^)]+)\))?$/);
-    if (!m) return [{ text: label, inParens: false }];
-    const segments = [{ text: m[1], inParens: false }];
-    if (m[2]) segments.push({ text: m[2], inParens: true });
-    return segments;
-  }
-
-  // 与内圈主音环一致：按扇区标签定位功能替代（不用 funcGroup 半音索引）
-  function findSectorForFuncReplaceGroup(innerLabels, replaceGroup) {
-    if (!replaceGroup || !innerLabels?.length) return null;
-    for (let i = 0; i < innerLabels.length; i++) {
-      const label = innerLabels[i];
-      if (!label) continue;
-      const hit = parseFuncRingLabelSegments(label).some((s) => s.text === replaceGroup);
-      if (hit) return i;
-    }
-    return null;
-  }
-
-  // 主音环：沿五度圈顺时针 12 格（与画布内圈一致）
-  const FUNC_RING_BASE = [
-    { main: "t" },
-    { main: "d" },
-    { main: "S" },
-    { main: "T" },
-    { main: "D" },
-    { main: "DD" },
-    { main: "3D", overlap: "6s" },
-    { main: "4D", overlap: "5s" },
-    { main: "5D", overlap: "4s" },
-    { main: "6D", overlap: "3s" },
-    { main: "ss" },
-    { main: "s" },
-  ];
-
-  function getFuncGroupIndexForMode(key, mode) {
-    if (!funcGroupData || !mode) return null;
-    const idx = funcGroupData[key];
-    if (idx == null) return null;
-    if (!Array.isArray(idx)) return idx;
-    if (key === "tIdx") return mode.tonicGroup === "t" ? idx[0] : idx[1] ?? idx[0];
-    if (key === "TIdx") return mode.tonicGroup === "T" ? idx[0] : idx[1] ?? idx[0];
-    return idx[0];
-  }
-
-  function findCircleSectorForDist(root, dist) {
-    for (let i = 0; i < circleData.length; i++) {
-      if (getSemitoneDistance(root, circleData[i].major) === dist) return i;
-    }
-    return 0;
-  }
-
-  function formatFuncRingEntry(entry) {
-    return entry.overlap ? `${entry.main}(${entry.overlap})` : entry.main;
-  }
-
-  /** 内圈功能标签：从 t/T 锚点起沿五度圈顺转一圈 */
-  // 在 script.js 中，找到 buildInnerFuncRingLabels 函数并替换
-
-  function buildInnerFuncRingLabels(root, mode) {
-    const startChar = mode.tonicGroup === "t" ? "t" : "T";
-    const startIdx = FUNC_RING_BASE.findIndex((e) => e.main === startChar);
-    const ringSpec = startIdx <= 0
-      ? FUNC_RING_BASE
-      : [...FUNC_RING_BASE.slice(startIdx), ...FUNC_RING_BASE.slice(0, startIdx)];
-
-    const anchorKey = mode.tonicGroup === "t" ? "tIdx" : "TIdx";
-    const anchorDist = getFuncGroupIndexForMode(anchorKey, mode);
-    const anchorSector = anchorDist != null ? findCircleSectorForDist(root, anchorDist) : 0;
-
-    // 获取各扇区对应的和弦类型
-    const converter = getMultiModeChordConverter();
-    const rootIdx = converter.noteToIdx[root];
-    const intervals = mode.includeNoteIdx || [];
-    const degreePreferredType = buildDegreePreferredTypeMap(mode);
-
-    // 构建每个扇区（距离）对应的和弦类型
-    const chordTypeByDist = {};
-    const chordLabelByDist = {};
-    for (let i = 0; i < intervals.length; i++) {
-      const dist = intervals[i];
-      const preferred = degreePreferredType[i];
-      const triad = buildTriadChordAtDegree(root, intervals, i, converter, preferred);
-      chordTypeByDist[dist] = triad.chordType;
-      chordLabelByDist[dist] = triad.chordLabel;
-    }
-
-    const perSector = Array(12).fill("");
-    for (let step = 0; step < 12; step++) {
-      const sector = (anchorSector + step) % 12;
-      let label = formatFuncRingEntry(ringSpec[step]);
-
-      // 获取该扇区对应的音符和和弦类型
-      const sectorNote = circleData[sector].major;
-      const dist = getSemitoneDistance(root, sectorNote);
-      const chordType = chordTypeByDist[dist];
-      const chordLabel = chordLabelByDist[dist];
-      console.log(`Sector ${sector}: ${sectorNote} (dist ${dist}) -> ${label}, chord: ${chordLabel} (${chordType})`);
-      // 根据和弦类型调整功能标签的大小写
-      label = adjustFuncLabelByChordType(label, chordType);
-      // console.log(`Sector ${sector}: ${sectorNote} (dist ${dist}) -> ${label}, chord: ${chordLabel} (${chordType})`);
-      perSector[sector] = label;
-    }
-    return perSector;
-  }
-
-  // 新增辅助函数：根据和弦类型调整功能标签
-  function adjustFuncLabelByChordType(label, chordType) {
-      if (!label || !chordType) return label;
-      
-      const upperToLowerMap = { 'T': 't', 'D': 'd', 'S': 's', 'DD': 'dd' };
-      const lowerToUpperMap = { 't': 'T', 'd': 'D', 's': 'S', 'dd': 'DD' };
-      
-      let adjusted = label;
-      
-      // 只有 min 转换小写，maj 转换大写
-      // dim、aug 保持原样
-      if (chordType === 'min') {
-          for (const [upper, lower] of Object.entries(upperToLowerMap)) {
-              adjusted = adjusted.replace(new RegExp(upper, 'g'), lower);
-          }
-      } else if (chordType === 'maj') {
-          for (const [lower, upper] of Object.entries(lowerToUpperMap)) {
-              adjusted = adjusted.replace(new RegExp(lower, 'g'), upper);
-          }
-      }
-      // dim、aug、sus2、sus4 → 不转换
-      
-      return adjusted;
-  }
-
-  function buildFuncNameToSectorMap(innerLabels) {
-    const map = {};
-    for (let i = 0; i < innerLabels.length; i++) {
-      const label = innerLabels[i];
-      if (!label) continue;
-      for (const seg of parseFuncRingLabelSegments(label)) {
-        map[seg.text] = i;
-      }
-    }
-    return map;
-  }
-
-  // 替换 drawFuncRingLabel 函数
-
-function drawFuncRingLabel(ctx, centerX, centerY, label, replaceGroup, chordType = null) {
-    const segments = parseFuncRingLabelSegments(label);
-    const palette = canvasPalette();
-    const normalColor = palette.textDim;
-    const replaceColor = palette.brass;
-    const fontNormal = `9.5px ${palette.font}`;
-    const fontReplace = `700 10.5px ${palette.font}`;
-    const fontParen = `9.5px ${palette.font}`;
-
-    // 只有 min 强调括号内，其他情况（maj/dim/aug/null）都强调括号外
-    let emphasizeOuter = true;
-    let emphasizeInner = false;
-    
-    if (chordType === 'min') {
-        emphasizeOuter = false;
-        emphasizeInner = true;
-    }
-    // dim、aug、maj、null → 保持 emphasizeOuter = true
-
-    const pieces = [];
-    let totalW = 0;
-    
-    for (const seg of segments) {
-        const isRep = replaceGroup && seg.text === replaceGroup;
-        
-        let shouldEmphasize = false;
-        if (seg.inParens) {
-            shouldEmphasize = emphasizeInner;
-        } else {
-            shouldEmphasize = emphasizeOuter;
-        }
-        
-        if (isRep) {
-            shouldEmphasize = true;
-        }
-        
-        const font = shouldEmphasize ? fontReplace : fontNormal;
-        if (seg.inParens) {
-            ctx.font = fontParen;
-            const wOpen = ctx.measureText("(").width;
-            ctx.font = font;
-            const wInner = ctx.measureText(seg.text).width;
-            ctx.font = fontParen;
-            const wClose = ctx.measureText(")").width;
-            pieces.push({ text: "(", font: fontParen, isRep: false, shouldEmphasize: false, w: wOpen });
-            pieces.push({ text: seg.text, font, isRep, shouldEmphasize, w: wInner });
-            pieces.push({ text: ")", font: fontParen, isRep: false, shouldEmphasize: false, w: wClose });
-            totalW += wOpen + wInner + wClose;
-        } else {
-            ctx.font = font;
-            const w = ctx.measureText(seg.text).width;
-            pieces.push({ text: seg.text, font, isRep, shouldEmphasize, w });
-            totalW += w;
-        }
-    }
-
-    let x = centerX - totalW / 2;
-    const prevAlign = ctx.textAlign;
-    const prevBaseline = ctx.textBaseline;
-    ctx.textAlign = "left";
-    ctx.textBaseline = "middle";
-
-    for (const p of pieces) {
-        ctx.font = p.font;
-        ctx.shadowBlur = 0;
-        
-        if (p.isRep) {
-            ctx.fillStyle = replaceColor;
-        } else if (p.shouldEmphasize) {
-            ctx.fillStyle = palette.text;
-        } else {
-            ctx.fillStyle = normalColor;
-        }
-        ctx.fillText(p.text, x, centerY);
-        x += p.w;
-    }
-
-    ctx.shadowBlur = 0;
-    ctx.textAlign = prevAlign;
-    ctx.textBaseline = prevBaseline;
-}
-
-  // 绘制多调性五度圈
-  function drawMultiCircle(root, includeSet, mode) {
-    const { size, ctx } = resizeCanvas();
-    const cx = size / 2;
-    const cy = size / 2;
-    const outerR = size * 0.42;
-    const innerR = size * 0.28;
-    const centerR = size * 0.12;
-
-    ctx.clearRect(0, 0, size, size);
-    const palette = canvasPalette();
-    ctx.fillStyle = palette.disc;
-    ctx.beginPath();
-    ctx.arc(cx, cy, outerR + 20, 0, Math.PI * 2);
-    ctx.fill();
-
-    const hasRoot = root != null && noteToIdx[root] != null;
-
-    // 准备每个扇区的和弦标签
-    const degreePreferredType = buildDegreePreferredTypeMap(mode);
-    const chordLabels = [];
-    for (let i = 0; i < circleData.length; i++) {
-      const sectorNote = circleData[i].major; // 扇区代表的音（外环）
-      const dist = hasRoot ? getSemitoneDistance(root, sectorNote) : -1;
-      let label = sectorNote;
-      let isInside = hasRoot && includeSet.has(dist);
-      let chordType = null;
-      if (isInside) {
-        const distIdx = getSemitoneDistance(root, sectorNote);
-        const deg = mode.includeNoteIdx.indexOf(distIdx);
-        if (deg >= 0) {
-          const preferred = degreePreferredType[deg];
-          const triad = buildTriadChordAtDegree(root, mode.includeNoteIdx, deg, null, preferred);
-          chordType = triad.chordType;
-          label = triad.chordLabel;
-        }
-      }
-      chordLabels.push({ label, isInside, chordType });
-    }
-
-    const categoryColors = {
-      // 非特征类使用更浅的颜色
-      tonic: palette.accent,
-      tonicChar: palette.accent,
-      // 特性组和对照组使用明显不同且醒目的颜色
-      featureChar: "#6a71cb", // 更深的天蓝
-      contrastChar: "#f17f7f", // 更深的橙红
-      // 保留高低极显著色
-      // highPole: "#ff80b3",
-      // lowPole: "#7c4dff",
-    };
-
-    function hexToRgba(hex, alpha) {
-      const clean = hex.replace("#", "");
-      const r = parseInt(clean.slice(0, 2), 16);
-      const g = parseInt(clean.slice(2, 4), 16);
-      const b = parseInt(clean.slice(4, 6), 16);
-      return `rgba(${r},${g},${b},${alpha})`;
-    }
-
-    function getCircleNoteCategory(dist) {
-      if (!mode) return null;
-      if (dist === mode.tonicGroupNoteIdx) return "tonic";
-      if (dist === mode.featureGroupCharNoteIdx) return "featureChar";
-      if (dist === mode.tonicGroupCharNoteIdx) return "tonicChar";
-      if (dist === mode.contrastGroupCharNoteIdx) return "contrastChar";
-      // if (dist === mode.highPoleNoteIdx) return "highPole";
-      // if (dist === mode.lowPoleNoteIdx) return "lowPole";
-      return null;
-    }
-
-    const innerFuncLabels = hasRoot ? buildInnerFuncRingLabels(root, mode) : Array(12).fill("");
-
-    const funcReplaceSector = hasRoot && mode?.funcReplaceGroup
-      ? findSectorForFuncReplaceGroup(innerFuncLabels, mode.funcReplaceGroup)
-      : null;
-    const funcReplaceColor = "#ffb74d";
-    const funcReplaceGlow = "rgba(255, 183, 77, 0.95)";
-
-    // 绘制扇区
-    for (let i = 0; i < circleData.length; i++) {
-      const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
-      const nextAngle = ((i + 1) / 12) * Math.PI * 2 - Math.PI / 2;
-      const { label, isInside } = chordLabels[i];
-      const sectorNote = circleData[i].major;
-      const dist = hasRoot ? getSemitoneDistance(root, sectorNote) : -1;
-      const noteCategory = hasRoot ? getCircleNoteCategory(dist) : null;
-      const isFuncReplace = funcReplaceSector != null && i === funcReplaceSector;
-
-      // 填充（调内和弦高亮背景 + 特殊类别底色）
-      ctx.beginPath();
-      ctx.arc(cx, cy, outerR, angle, nextAngle);
-      ctx.arc(cx, cy, innerR, nextAngle, angle, true);
-      ctx.closePath();
-      if (noteCategory/* && noteCategory !== "highPole" && noteCategory !== "lowPole"*/) {
-        ctx.fillStyle = hexToRgba(categoryColors[noteCategory], 0.2);
-      } else if (isInside) {
-        ctx.fillStyle = hexToRgba(palette.accent, 0.12);
-      } else {
-        ctx.fillStyle = palette.fillSoft;
-      }
-      ctx.fill();
-
-      // 不在此处绘制边框，避免邻接扇区重复描边导致叠加。边框将在全部扇区填充后统一绘制。
-
-      // 标签
-      const midAngle = (angle + nextAngle) / 2;
-      const midR = (innerR + outerR) / 2;
-      const textX = cx + Math.cos(midAngle) * midR;
-      const textY = cy + Math.sin(midAngle) * midR;
-
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = isInside ? palette.text : palette.textDim;
-      ctx.font = isInside ? `700 13.5px ${palette.display}` : `12px ${palette.display}`;
-      /*
-      if (isFuncReplace) {
-        ctx.shadowColor = funcReplaceGlow;
-        ctx.shadowBlur = 12;
-        // ctx.fillStyle = funcReplaceColor;
-        ctx.font = "bold 14px sans-serif";
-      } else {
-      }
-        */
-      ctx.fillText(label, textX, textY);
-      ctx.shadowBlur = 0;
-    }
-
-    // 绘制基础分割线和环边界，避免重复扇区描边重叠
-    ctx.beginPath();
-    for (let i = 0; i < 12; i++) {
-      const edgeAngle = (i / 12) * Math.PI * 2 - Math.PI / 2;
-      const x1 = cx + Math.cos(edgeAngle) * innerR;
-      const y1 = cy + Math.sin(edgeAngle) * innerR;
-      const x2 = cx + Math.cos(edgeAngle) * outerR;
-      const y2 = cy + Math.sin(edgeAngle) * outerR;
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
-    }
-    ctx.strokeStyle = palette.line;
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
-    ctx.stroke();
-
-    // 绘制高低极与主音特殊边界
-    for (let i = 0; i < circleData.length; i++) {
-      const sectorNote = circleData[i].major;
-      const dist = hasRoot ? getSemitoneDistance(root, sectorNote) : -1;
-      const noteCategory = hasRoot ? getCircleNoteCategory(dist) : null;
-      if (!noteCategory || noteCategory === "featureChar" || noteCategory === "contrastChar" || noteCategory === "tonicChar") continue;
-
-      const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
-      const nextAngle = ((i + 1) / 12) * Math.PI * 2 - Math.PI / 2;
-      ctx.beginPath();
-      ctx.arc(cx, cy, outerR, angle, nextAngle);
-      ctx.arc(cx, cy, innerR, nextAngle, angle, true);
-      ctx.closePath();
-      if (noteCategory === "tonic") {
-        ctx.strokeStyle = palette.text;
-        ctx.lineWidth = 3;
-      } else {
-        ctx.strokeStyle = hexToRgba(categoryColors[noteCategory], 0.95);
-        ctx.lineWidth = 3;
-      }
-      ctx.stroke();
-    }
-
-    // 在五度圈上方绘制图例（圆点染色 + 音名）
-    (function drawLegend() {
-      const legendItems = [
-        { key: 'tonic', label: '主音', idxKey: 'tonicGroupNoteIdx' },
-        { key: 'tonicChar', label: '主组特征音', idxKey: 'tonicGroupCharNoteIdx' },
-        { key: 'featureChar', label: '特性组特征音', idxKey: 'featureGroupCharNoteIdx' },
-        { key: 'contrastChar', label: '对照组特性音', idxKey: 'contrastGroupCharNoteIdx' }
-      ];
-      const itemW = 120;
-      const totalW = legendItems.length * itemW;
-      let startX = cx - totalW / 2;
-      const y = cy - outerR - 18;
-      ctx.font = `12px ${palette.font}`;
-      ctx.textAlign = "left";
-      ctx.textBaseline = "middle";
-
-      // 先过滤出有效项（必须有 root 且 mode 对应 idx 为 number）
-      if (!(root in noteToIdx) || typeof noteToIdx[root] !== 'number') return;
-      const rootIdx = noteToIdx[root];
-      const validItems = legendItems.filter(it => typeof mode[it.idxKey] === 'number');
-      if (!validItems.length) return; // 无有效项则不绘制图例
-
-      for (let i = 0; i < validItems.length; i++) {
-        const it = validItems[i];
-        const x = startX + i * itemW;
-        const distIdx = mode[it.idxKey];
-        const noteIdx = (rootIdx + distIdx + 12) % 12;
-        const noteName = idxToNote[noteIdx] || '-';
-
-        // 圆点
-        ctx.beginPath();
-        ctx.arc(x + 6, y, 6, 0, Math.PI * 2);
-        ctx.fillStyle = hexToRgba(categoryColors[it.key], 1);
-        ctx.fill();
-        // 文本
-        ctx.fillStyle = palette.textSoft;
-        ctx.fillText(` ${it.label}: ${noteName}`, x + 18, y);
-      }
-    })();
-
-    // 中心标签（显示模式名称）
-    ctx.fillStyle = palette.text;
-    ctx.font = `700 11px ${palette.font}`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(mode.modeName || "多调性", cx, cy - 4);
-    ctx.font = `9px ${palette.font}`;
-    ctx.fillStyle = palette.textDim;
-    ctx.fillText(`张力:${mode.tensionLevel} 温度:${mode.spaceTemp}`, cx, cy + 12);
-
-    // 内圈功能组标注（需已选主音）
-    if (!hasRoot) {
-      ctx.beginPath();
-      ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
-      ctx.strokeStyle = palette.line;
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      return;
-    }
-
-    const innerLabelR = (centerR + innerR) / 2;
-    const replaceGroup = mode.funcReplaceGroup || null;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    for (let i = 0; i < circleData.length; i++) {
-      const label = innerFuncLabels[i];
-      if (!label) continue;
-      const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
-      const nextAngle = ((i + 1) / 12) * Math.PI * 2 - Math.PI / 2;
-      const midAngle = (angle + nextAngle) / 2;
-      const textX = cx + Math.cos(midAngle) * innerLabelR;
-      const textY = cy + Math.sin(midAngle) * innerLabelR;
-      // 修改为：
-      const sectorNote = circleData[i].major;
-      const dist = getSemitoneDistance(root, sectorNote);
-      let chordTypeForLabel = null;
-      if (hasRoot) {
-        const chordTypeByDist = {}; // 需要提前构建
-        // 或者从已有的 chordLabels 中获取
-        const chordData = chordLabels[i];
-        if (chordData && chordData.chordType) {
-          chordTypeForLabel = chordData.chordType;
-        }
-      }
-      drawFuncRingLabel(ctx, textX, textY, label, replaceGroup, chordTypeForLabel);
-    }
-
-    ctx.beginPath();
-    ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
-    ctx.strokeStyle = palette.line;
-    ctx.lineWidth = 1;
-    ctx.stroke();
-  }
-
-  function escapeMultiModeHtml(s) {
-    return String(s)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
-  }
-
-function formatRomanDegreeLabel(degIndex, chordType) {
-    const romanUpper = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
-    const romanLower = ["i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x", "xi", "xii"];
-    const upper = romanUpper[degIndex] || `${degIndex + 1}`;
-    const lower = romanLower[degIndex] || `${degIndex + 1}`;
-    
-    switch (chordType) {
-        case "min":
-            return lower;
-        case "dim":
-            return `${lower}°`;
-        case "aug":
-            return `${upper}+`;
-        case "sus2":
-            return `${upper}sus2`;
-        case "sus4":
-            return `${upper}sus4`;
-        case "maj":
-            return upper;
-        default:
-            return `${upper}?`;
-    }
-}
-
-  function buildModeScaleChordData(root, mode) {
-    // 默认使用 mode 中定义的音级（多数模式在 modes.json 中已预设）
-    let intervals = Array.isArray(mode.includeNoteIdx) ? mode.includeNoteIdx : [];
-
-    // 如果这是小调家族且用户选择了和声小调开关，则使用全局的和声小调音级
-    if (mode && mode.tonicGroup === "t" && minorMode === "harmonic") {
-      intervals = harmonicMinorIntervals;
-    }
-
-    const converter = getMultiModeChordConverter();
-    const degreePreferredType = buildDegreePreferredTypeMap(mode);
-    
-    // 生成行数据，考虑功能序列的优先类型
-    const rows = intervals.map((_, i) => {
-      const preferred = degreePreferredType[i];
-      return buildTriadChordAtDegree(root, intervals, i, converter, preferred);
-    });
-    const chordTypes = rows.map((r) => r.chordType);
-    return { intervals, rootIdx: noteToIdx[root], chordTypes, rows };
-  }
-
-  function getDesiredChordQualityFromFuncName(funcName) {
-    if (!funcName) return null;
-    const letters = String(funcName).replace(/[^A-Za-z]/g, "");
-    if (!letters) return null;
-    const hasLower = /[a-z]/.test(letters);
-    const hasUpper = /[A-Z]/.test(letters);
-    if (hasLower && !hasUpper) return "min";
-    if (hasUpper && !hasLower) return "maj";
-    return null;
-  }
-
-  function buildDegreePreferredTypeMap(mode) {
-    const degreePreferredType = {};
-    const funcSeq = Array.isArray(mode.fullFuncSeq) ? mode.fullFuncSeq : [];
-    
-    funcSeq.forEach(fn => {
-      const desiredQuality = getDesiredChordQualityFromFuncName(fn);
-      const baseFunc = fn.replace(/\([^)]*\)/g, '').toLowerCase();
-      const funcToDegreeMap = {
-        't': 0, 'T': 0,
-        'd': 4, 'D': 4,
-        's': 3, 'S': 3,
-        'dd': 1, 'DD': 1,
-        'ss': 6,
-        '3d': 2, '3D': 2,
-        '4d': 5, '4D': 5,
-        '5d': 1, '5D': 1,
-        '6d': 3, '6D': 3,
-      };
-      const degIndex = funcToDegreeMap[baseFunc];
-      if (degIndex !== undefined && desiredQuality) {
-        degreePreferredType[degIndex] = desiredQuality;
-      }
-    });
-    
-    return degreePreferredType;
-  }
-
-  function applyFuncNameCase(funcName, desiredQuality) {
-    if (!funcName || !desiredQuality) return funcName;
-    return String(funcName).replace(/[A-Za-z]+/g, (match) =>
-      desiredQuality === "maj" ? match.toUpperCase() : match.toLowerCase(),
-    );
-  }
-
-  function buildTriadChordAtDegreeWithQuality(root, intervals, degIndex, desiredQuality, converter) {
-    const triad = buildTriadChordAtDegree(root, intervals, degIndex, converter);
-    if (!desiredQuality || (desiredQuality !== "maj" && desiredQuality !== "min")) {
-      return triad;
-    }
-
-    const conv = converter || getMultiModeChordConverter();
-    const rootIdx = conv.noteToIdx[root];
-    const rootOff = intervals[degIndex];
-    const rootNote = conv.idxToNote[(rootIdx + rootOff) % 12];
-    const scaleSet = new Set(intervals.map((off) => (rootIdx + off) % 12));
-
-    const qualityIntervals = desiredQuality === "maj" ? [4, 7] : [3, 7];
-    const candidateNotes = qualityIntervals.map((interval) =>
-      conv.idxToNote[(rootIdx + rootOff + interval) % 12],
-    );
-    const candidateIdxs = qualityIntervals.map((interval) =>
-      (rootIdx + rootOff + interval) % 12,
-    );
-
-    const validCandidate = candidateIdxs.every((idx) => scaleSet.has(idx));
-    if (validCandidate) {
-      const notes = [rootNote, ...candidateNotes];
-      return {
-        dist: rootOff,
-        degreeLabel: formatRomanDegreeLabel(degIndex, desiredQuality),
-        chordLabel: formatChordName(rootNote, desiredQuality),
-        notes: notes.join(", "),
-        chordType: desiredQuality,
-        notesArray: notes,
-      };
-    }
-
-    return triad;
-  }
-
-  /** 按五度圈内圈功能名 → 扇区 → 调内和弦（与画布一致，如 T–S–D–T → C–F–G–C） */
-function resolveFuncGroupChord(funcName, root, mode, scaleData, innerLabels) {
-    // 1. 解析功能名，获取需要匹配的主功能
-    let targetFunc = funcName;
-    
-    // 获取所有调内和弦的音级映射
-    const degreeMap = {};
-    scaleData.rows.forEach((row, idx) => {
-        degreeMap[row.degreeLabel] = row;
-        degreeMap[idx] = row;
-        // 也按音级索引映射
-        degreeMap[`deg${idx}`] = row;
-    });
-    
-    // 标准功能到音级的映射（音级索引）
-    const funcToDegreeIndex = {
-        't': 0,   // i 级
-        'T': 0,   // I 级
-        'd': 4,   // v 级
-        'D': 4,   // V 级
-        's': 3,   // iv 级
-        'S': 3,   // IV 级
-        'dd': 1,  // ii 级
-        'DD': 1,  // II 级
-        'ss': 6,  // bVII 级 / VII 级
-        '3D': 2,  // III 级
-        '4D': 5,  // VI 级？根据五度圈位置调整
-        '5D': 1,  // bII 级
-        '6D': 3,  // bIII 级
-    };
-    
-    // 获取原始功能名（去掉大小写和括号）
-    let baseFunc = funcName.replace(/\([^)]*\)/g, '').toLowerCase();
-    if (baseFunc === 't') baseFunc = 't';
-    if (baseFunc === 'd') baseFunc = 'd';
-    if (baseFunc === 's') baseFunc = 's';
-    if (baseFunc === 'dd') baseFunc = 'dd';
-    if (baseFunc === 'ss') baseFunc = 'ss';
-    
-    // 处理数字前缀功能如 "3D", "6D"
-    const numberedMatch = baseFunc.match(/^(\d+)([A-Za-z]+)$/);
-    let numberedPrefix = null;
-    let numberedMain = null;
-    if (numberedMatch) {
-        numberedPrefix = parseInt(numberedMatch[1]);
-        numberedMain = numberedMatch[2].toLowerCase();
-        baseFunc = numberedMain;
-    }
-    
-    // 获取该功能对应的音级索引
-    let targetDegreeIndex = funcToDegreeIndex[baseFunc];
-    if (targetDegreeIndex === undefined) {
-        targetDegreeIndex = funcToDegreeIndex[baseFunc.toLowerCase()];
-    }
-    
-    // 特殊处理：ss 功能对应 VII 级（索引 6）
-    if (baseFunc === 'ss') {
-        targetDegreeIndex = 6;
-    }
-    
-    // 如果找到了音级索引，尝试获取调内该音级的和弦
-    if (targetDegreeIndex !== undefined && scaleData.rows[targetDegreeIndex]) {
-        const matchedRow = scaleData.rows[targetDegreeIndex];
-        const desiredQuality = getDesiredChordQualityFromFuncName(funcName);
-        const finalRow = (desiredQuality === 'maj' || desiredQuality === 'min')
-            ? buildTriadChordAtDegreeWithQuality(root, scaleData.intervals, targetDegreeIndex, desiredQuality, getMultiModeChordConverter())
-            : matchedRow;
-        const isMinorChord = finalRow.chordType === 'min';
-
-        // 确定最终的功能名（大小写根据和弦类型）
-        let finalFuncName = funcName;
-        if (baseFunc === 't' || baseFunc === 'T') {
-            finalFuncName = isMinorChord ? 't' : 'T';
-        } else if (baseFunc === 'd' || baseFunc === 'D') {
-            finalFuncName = isMinorChord ? 'd' : 'D';
-        } else if (baseFunc === 's' || baseFunc === 'S') {
-            finalFuncName = isMinorChord ? 's' : 'S';
-        } else if (baseFunc === 'dd' || baseFunc === 'DD') {
-            finalFuncName = isMinorChord ? 'dd' : 'DD';
-        } else {
-            finalFuncName = funcName;
-        }
-        finalFuncName = applyFuncNameCase(finalFuncName, desiredQuality);
-        
-        // 如果是数字前缀功能，保留原格式、括号片段
-        if (numberedPrefix !== null) {
-            const base = finalFuncName.replace(/^\d+/, '');
-            finalFuncName = `${numberedPrefix}${base}`;
-            if (funcName.includes('(')) {
-                const parenMatch = funcName.match(/\(([^)]+)\)/);
-                if (parenMatch) {
-                    finalFuncName += `(${parenMatch[1]})`;
-                }
-            }
-        }
-        
-        return {
-            funcName: finalFuncName,
-            degreeLabel: finalRow.degreeLabel,
-            chordLabel: finalRow.chordLabel,
-            notes: finalRow.notes,
-            dist: finalRow.dist,
-            isOutOfScale: false
-        };
-    }
-    
-    // 如果找不到调内和弦，只返回功能名，不返回和弦信息
-    // 这是调外功能的情况（如 C 旋律小调中的 ss 对应 Bb）
-    return {
-        funcName: funcName,
-        degreeLabel: "—",
-        chordLabel: "—",
-        notes: "—",
-        isOutOfScale: true  // 标记为调外
-    };
-}
-
-  function parseMultiModeNotes(notesStr) {
-    if (!notesStr || notesStr === "—") return [];
-    return String(notesStr)
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-  }
-
-  function getModeScaleNoteNames(root, intervals) {
-    const conv = getMultiModeChordConverter();
-    const rootIdx = conv.noteToIdx[root];
-    if (rootIdx === undefined) return [];
-    return intervals.map((off) => conv.idxToNote[(rootIdx + off) % 12]);
-  }
-
-  function buildScalePitchListHtml(root, intervals) {
-    const rootIdx = noteToIdx[root];
-    return intervals
-      .map((off, i) => {
-        const note = idxToNote[(rootIdx + off) % 12];
-        return `<span class="scale-pitch-chip" data-multi-play="scale-note" data-note="${escapeMultiModeHtml(note)}" title="点击播放 ${escapeMultiModeHtml(note)} · includeNoteIdx[${i}]=${off}">
-        <span class="scale-pitch-idx">${i + 1}</span>
-        <span class="scale-pitch-note">${escapeMultiModeHtml(note)}</span>
-        <span class="scale-pitch-off">+${off}</span>
-      </span>`;
-      })
-      .join("");
-  }
-
-function renderMultiModeTable(root, mode) {
-    const tableContainer = document.getElementById("circle-table-container");
-    if (!tableContainer) return;
-
-    let intervals = mode.includeNoteIdx || [];
-
-    const scalePitchHtml = buildScalePitchListHtml(root, intervals);
-    const scaleData = buildModeScaleChordData(root, mode);
-    const innerLabels = buildInnerFuncRingLabels(root, mode);
-    const replaceGroup = mode.funcReplaceGroup || null;
-    const temp = mode.spaceTemp ?? 0;
-    const tempHue = 210 + ((Math.max(-8, Math.min(8, temp)) + 8) / 16) * (12 - 210);
-
-    // 构建功能序列 - 只使用调内和弦
-    const funcSeq = Array.isArray(mode.fullFuncSeq) ? mode.fullFuncSeq : [];
-
-const funcSteps = funcSeq.map((fn) => {
-    const chord = resolveFuncGroupChord(fn, root, mode, scaleData, innerLabels);
-    return {
-        ...chord,
-        isReplace: replaceGroup && fn === replaceGroup,
-    };
-    // 不再过滤调外的，保留它们以显示功能标签
-});
-
-// 修改 seqFlowHtml 的渲染，区分调内调外
-const seqFlowHtml = funcSteps.length
-    ? funcSteps
-          .map((step, i) => {
-              // 调外和弦的样式不同
-              const isOutClass = step.isOutOfScale ? " func-out-of-scale" : "";
-              const node = `
-          <div class="func-seq-node${step.isReplace ? " is-func-replace" : ""}${isOutClass}" data-multi-play="func-node" data-func-index="${i}" role="button" tabindex="0" title="${window.__("circle_multi_play_func_seq") || "播放序列"} ${escapeMultiModeHtml(step.chordLabel !== "—" ? step.chordLabel : step.funcName)}">
-            <div class="func-seq-func">${escapeMultiModeHtml(step.funcName)}</div>
-            <div class="func-seq-degree">${escapeMultiModeHtml(step.degreeLabel)}</div>
-            <div class="func-seq-chord">${step.chordLabel !== "—" ? escapeMultiModeHtml(step.chordLabel) : '<span class="out-of-scale">(调外)</span>'} ${step.chordLabel !== "—" ? '<span class="multi-mode-play-hint" aria-hidden="true">🔊</span>' : ''}</div>
-            <div class="func-seq-notes">${escapeMultiModeHtml(step.notes)}</div>
-          </div>`;
-              const arrow =
-                  i < funcSteps.length - 1
-                      ? '<div class="func-seq-arrow" aria-hidden="true">→</div>'
-                      : funcSteps.length > 1
-                        ? `<div class="func-seq-arrow func-seq-arrow-return" aria-hidden="true" title="${window.__("circle_multi_func_seq_hint") || "回到起点"}">↺</div>`
-                        : "";
-              return node + arrow;
-          })
-          .join("")
-    : `<p class="multi-mode-empty">${window.__("circle_multi_empty_seq") || "暂无功能序列"}</p>`;
-
-    const scaleRowsHtml = scaleData.rows
-      .map(
-        (row, idx) => `
-      <tr class="multi-mode-degree-row" data-multi-play="degree" data-degree-index="${idx}" role="button" tabindex="0" title="${window.__("circle_multi_play_scale") || "播放音阶"} ${escapeMultiModeHtml(row.chordLabel)}">
-        <td class="col-degree"><span class="roman-badge">${escapeMultiModeHtml(row.degreeLabel)}</span></td>
-        <td class="col-chord"><strong>${escapeMultiModeHtml(row.chordLabel)}</strong> <span class="multi-mode-play-hint" aria-hidden="true">🔊</span></td>
-        <td class="col-notes">${escapeMultiModeHtml(row.notes)}</td>
-      </tr>`,
-      )
-      .join("");
-
-    const antiTag = mode.isAntiFunc
-      ? `<span class="meta-chip meta-anti">${window.__("circle_multi_mode_chip") || "反功能"}</span>`
-      : "";
-
-    tableContainer.innerHTML = `
-    <div class="multi-mode-display">
-      <header class="multi-mode-header">
-        <div class="multi-mode-title-row">
-          <span class="root-badge">${escapeMultiModeHtml(root)}</span>
-          <h3 class="multi-mode-title">${escapeMultiModeHtml(mode.modeName || window.__("circle_multi_mode_label") || "调式")}</h3>
-        </div>
-        <div class="multi-mode-meta">
-          <span class="meta-chip">${window.__("circle_multi_sort_tension")?.replace("{val}", escapeMultiModeHtml(mode.tensionLevel)) || `张力 ${escapeMultiModeHtml(mode.tensionLevel)}`}</span>
-          <span class="meta-chip meta-temp" style="--temp-hue:${tempHue}">${window.__("circle_multi_sort_temp")?.replace("{val}", escapeMultiModeHtml(mode.spaceTemp)) || `温度 ${escapeMultiModeHtml(mode.spaceTemp)}`}</span>
-          ${mode.funcReplaceGroup ? `<span class="meta-chip meta-replace">${window.__("circle_multi_func_seq_hint") || "功能替代"} ${escapeMultiModeHtml(mode.funcReplaceGroup)}</span>` : ""}
-          ${antiTag}
-        </div>
-      </header>
-
-      <section class="multi-mode-section scale-pitch-section">
-        <div class="multi-mode-section-head">
-          <h4 class="section-label">${window.__("circle_multi_mode_label") || "调式音阶"}</h4>
-          <button type="button" class="multi-mode-play-btn" data-multi-play="scale" title="${window.__("circle_multi_play_scale") || "顺序播放调式音阶"}">🔊 ${window.__("circle_multi_play_scale") || "播放音阶"}</button>
-        </div>
-        <div class="scale-pitch-list">${scalePitchHtml}</div>
-      </section>
-
-      <section class="multi-mode-section full-func-seq-section">
-        <div class="multi-mode-section-head">
-          <h4 class="section-label">${window.__("circle_multi_play_func_seq") || "完全功能序列"}</h4>
-          <button type="button" class="multi-mode-play-btn" data-multi-play="func-seq" title="${window.__("circle_multi_play_func_seq") || "按序列播放各功能和弦"}" ${funcSteps.length ? "" : "disabled"}>🔊 ${window.__("circle_multi_play_func_seq") || "播放序列"}</button>
-        </div>
-        <p class="section-hint">${window.__("circle_multi_func_seq_hint") || "功能名按五度圈内圈定位 · 点击节点可单独播放 · T–S–D–T → I–IV–V–I"}</p>
-        <div class="full-func-seq-flow">${seqFlowHtml}</div>
-      </section>
-
-      <section class="multi-mode-section scale-table-section">
-        <div class="multi-mode-section-head">
-          <h4 class="section-label">${window.__("circle_multi_mode_label") || "调内音级"}</h4>
-          <span class="section-hint-inline">${window.__("circle_multi_table_hint") || "点击行播放和弦"}</span>
-        </div>
-        <div class="multi-mode-table-wrap">
-          <table class="multi-mode-degree-table degree-table">
-            <thead>
-              <tr><th>${window.__("circle_col_degree") || "音级"}</th><th>${window.__("circle_col_chord") || "和弦"}</th><th>${window.__("circle_col_notes") || "音符"}</th></tr>
-            </thead>
-            <tbody>${scaleRowsHtml}</tbody>
-          </table>
-        </div>
-      </section>
-
-      <footer class="multi-mode-footer">
-        <small>${window.__("ack_color_harmony_studio") || "特别感谢色彩和声工作室提供的特性进行数据"}</small>
-      </footer>
-    </div>`;
-
-    const display = tableContainer.querySelector(".multi-mode-display");
-    if (display && window.jazzCompassAudio) {
-      window.jazzCompassAudio.wireDisplay(display, {
-        scaleNoteNames: getModeScaleNoteNames(root, intervals),
-        degreeRows: scaleData.rows,
-        funcSteps,
-      });
-    }
-  }
-
-  // 初始化多调性控制面板
-  function initMultiModeCircle() {
-    const toggleBtn = document.getElementById("circle-multi-toggle");
-    const panel = document.getElementById("circle-multi-panel");
-    const modeList = document.getElementById("circle-mode-list");
-    const modeDropdown = document.getElementById("circle-mode-dropdown");
-    const modeSearch = document.getElementById("circle-mode-search");
-    const modeToggleBtn = document.getElementById("circle-mode-toggle");
-    const applyBtn = document.getElementById("circle-apply-mode");
-    const filterNormal = document.getElementById("filter-normal-only");
-    const filterNatural = document.getElementById("filter-natural-only");
-    const sortType = document.getElementById("circle-sort-type");
-    const sortOrder = document.getElementById("circle-sort-order");
-
-    if (!toggleBtn || !modeToggleBtn) return;
-
-    // 颜色映射：空间温度 -> 色相（冷蓝到暖红），空间张力 -> 叠加变暗
-    // 色条：空间温度 -> 色相（冷蓝到暖红），空间张力 -> 明度（越紧张越暗）
-    function modeColor(temp, tension) {
-      const t = Math.max(-8, Math.min(8, temp));
-      const hue = 210 + ((t + 8) / 16) * (12 - 210);
-      const tense = (Math.max(1, Math.min(10, tension)) - 1) / 9;
-      return `hsl(${hue.toFixed(0)} 62% ${(64 - tense * 36).toFixed(0)}%)`;
-    }
-
-    let selectedModeIdx = null;
-
-    function clearSelectionVisual() {
-      Array.from(modeList.children).forEach(child => child.classList.remove("is-selected"));
-    }
-
-    function updateModeToggleLabel() {
-      if (currentMultiMode && currentMultiMode.modeName) {
-        modeToggleBtn.textContent = `${window.__("circle_multi_mode_chip") || "调式"}: ${currentMultiMode.modeName}`;
-      } else {
-        modeToggleBtn.textContent = window.__("circle_multi_expand") || '展开调式';
-      }
-    }
-
-    // 刷新模式卡片列表（以卡片替代 select）
-    function refreshModeList() {
-      if (!modesData) return;
-      let filtered = [...modesData];
-      if (filterNormal.checked) filtered = filtered.filter(m => m.isNormalMode === true);
-      if (filterNatural.checked) filtered = filtered.filter(m => m.isNaturalScale === true);
-
-      const keyword = modeSearch?.value.trim().toLowerCase();
-      if (keyword) {
-        filtered = filtered.filter(m => (m.modeName || '').toLowerCase().includes(keyword));
-      }
-
-      const sortKey = sortType.value === "tension" ? "tensionLevel" : "spaceTemp";
-      const order = sortOrder.value === "asc" ? 1 : -1;
-      filtered.sort((a, b) => order * (a[sortKey] - b[sortKey]));
-
-      modeList.innerHTML = "";
-      if (filtered.length === 0) {
-        const empty = document.createElement('div');
-        empty.className = 'mode-list-empty';
-        empty.textContent = window.__("circle_multi_no_match") || '没有匹配的调式';
-        modeList.appendChild(empty);
-        return;
-      }
-
-      filtered.forEach(m => {
-        const card = document.createElement('div');
-        card.className = 'mode-card';
-        card.dataset.idx = m.idx;
-        card.style.setProperty('--mode-color', modeColor(m.spaceTemp, m.tensionLevel));
-
-        const title = document.createElement('div');
-        title.className = 'mode-card-title';
-        title.textContent = m.modeName || (`mode ${m.idx}`);
-
-        const meta = document.createElement('div');
-        meta.className = 'mode-card-meta';
-        meta.textContent = `${window.__("circle_multi_sort_tension")?.replace("{val}", m.tensionLevel) || `张力:${m.tensionLevel}`} ${window.__("circle_multi_sort_temp")?.replace("{val}", m.spaceTemp) || `温度:${m.spaceTemp}`}`;
-
-        card.appendChild(title);
-        card.appendChild(meta);
-
-        if (selectedModeIdx === m.idx) {
-          card.classList.add('is-selected');
-        }
-
-        card.addEventListener('click', () => {
-          selectedModeIdx = m.idx;
-          clearSelectionVisual();
-          card.classList.add('is-selected');
-          currentMultiMode = m;
-          currentRoot = null;
-          updateModeToggleLabel();
-          updateCircleMultiMode();
-        });
-
-        modeList.appendChild(card);
-      });
-    }
-
-    // helper: 在 checkbox 状态变化时为包裹的 label 添加/移除活动类
-    function setFilterLabelState(checkbox) {
-      if (!checkbox) return;
-      const lbl = checkbox.closest('label') || document.querySelector(`label[for="${checkbox.id}"]`);
-      if (!lbl) return;
-      if (checkbox.checked) lbl.classList.add('is-active');
-      else lbl.classList.remove('is-active');
-    }
-
-    // 初始化状态并绑定事件，使 UI 有视觉反馈
-    setFilterLabelState(filterNormal);
-    setFilterLabelState(filterNatural);
-    filterNormal.addEventListener('change', (e) => { setFilterLabelState(e.target); refreshModeList(); });
-    filterNatural.addEventListener('change', (e) => { setFilterLabelState(e.target); refreshModeList(); });
-    sortType.addEventListener('change', refreshModeList);
-    sortOrder.addEventListener('change', refreshModeList);
-    modeSearch.addEventListener('input', refreshModeList);
-
-    modeToggleBtn.addEventListener('click', () => {
-      if (!modeDropdown) return;
-      const isOpen = modeDropdown.style.display === 'flex';
-      modeDropdown.style.display = isOpen ? 'none' : 'flex';
-      modeToggleBtn.textContent = isOpen
-        ? (currentMultiMode?.modeName ? `${window.__("circle_multi_mode_chip") || "调式"}: ${currentMultiMode.modeName}` : window.__("circle_multi_expand") || '展开调式')
-        : window.__("circle_multi_collapse") || '收起调式';
-      if (!isOpen) {
-        refreshModeList();
-      }
-    });
-
-    toggleBtn.addEventListener('click', () => {
-      multiModeActive = !multiModeActive;
-      panel.style.display = multiModeActive ? 'flex' : 'none';
-      if (multiModeActive) {
-        currentRoot = null;
-        refreshModeList();
-      } else {
-        currentRoot = null;
-        circleCurrentKey = null;
-        drawCircle(null, null);
-        const tableContainer = document.getElementById('circle-table-container');
-        tableContainer.innerHTML = '';
-      }
-      toggleBtn.textContent = window.__("circle_multi_mode") || '多调性模式';
-      toggleBtn.classList.toggle('active', multiModeActive);
-      toggleBtn.setAttribute('aria-pressed', String(multiModeActive));
-    });
-
-    applyBtn.addEventListener('click', () => {
-      if (!multiModeActive) return;
-      if (!currentMultiMode) return;
-      updateCircleMultiMode();
-    });
-
-    // 搜索框 placeholder 本地化
-    if (modeSearch) {
-      modeSearch.placeholder = window.__("circle_multi_search_placeholder") || "搜索调式";
-    }
-
-    // 过滤器 label 本地化（只更新文本部分，保留checkbox）
-    if (filterNormal) {
-      const lbl = filterNormal.closest('label');
-      if (lbl) {
-        let textNode = Array.from(lbl.childNodes).find(n => n.nodeType === 3 && n.textContent.trim());
-        if (!textNode) {
-          textNode = document.createTextNode('');
-          lbl.appendChild(textNode);
-        }
-        textNode.textContent = ' ' + (window.__("circle_multi_filter_normal") || "仅常规调式");
-      }
-    }
-    if (filterNatural) {
-      const lbl = filterNatural.closest('label');
-      if (lbl) {
-        let textNode = Array.from(lbl.childNodes).find(n => n.nodeType === 3 && n.textContent.trim());
-        if (!textNode) {
-          textNode = document.createTextNode('');
-          lbl.appendChild(textNode);
-        }
-        textNode.textContent = ' ' + (window.__("circle_multi_filter_natural") || "仅自然音阶");
-      }
-    }
-
-    // 排序类型 label 本地化
-    if (sortType) {
-      for (const opt of sortType.options) {
-        if (opt.value === "tension") opt.textContent = window.__("circle_multi_sort_tension") || "空间张力等级";
-        if (opt.value === "temp") opt.textContent = window.__("circle_multi_sort_temp") || "空间温度等级";
-      }
-    }
-
-    // 排序顺序 label 本地化
-    if (sortOrder) {
-      for (const opt of sortOrder.options) {
-        if (opt.value === "asc") opt.textContent = window.__("sort_asc") || "升序";
-        if (opt.value === "desc") opt.textContent = window.__("sort_desc") || "降序";
-      }
-    }
-
-    // 初始隐藏面板与下拉列表
-    panel.style.display = 'none';
-    if (modeDropdown) modeDropdown.style.display = 'none';
-  }
-
-
-  function drawArcSegment(
-    ctx,
-    cx,
-    cy,
-    innerR,
-    outerR,
-    startAngle,
-    endAngle,
-    label,
-    sharps,
-    flats,
-    isHighlighted,
-    type,
-    axisGroup,
-  ) {
-    const midAngle = (startAngle + endAngle) / 2;
-    const midR = (innerR + outerR) / 2;
-
-    // 填充
-    ctx.beginPath();
-    ctx.arc(cx, cy, outerR, startAngle, endAngle);
-    ctx.arc(cx, cy, innerR, endAngle, startAngle, true);
-    ctx.closePath();
-
-    const palette = canvasPalette();
-    const axisColor =
-      axisGroup && axisColorMap[axisGroup]
-        ? axisColorMap[axisGroup][type]
-        : type === "major" ? palette.fill : palette.fillSoft;
-    const highlightColor =
-      axisGroup && axisColorMap[axisGroup]
-        ? axisColorMap[axisGroup].highlight
-        : palette.fill;
-    if (isHighlighted) {
-      const grad = ctx.createLinearGradient(
-        cx + Math.cos(midAngle) * innerR,
-        cy + Math.sin(midAngle) * innerR,
-        cx + Math.cos(midAngle) * outerR,
-        cy + Math.sin(midAngle) * outerR,
-      );
-      grad.addColorStop(0, highlightColor);
-      grad.addColorStop(1, palette.fill);
-      ctx.fillStyle = grad;
-    } else {
-      ctx.fillStyle = axisColor;
-    }
-    ctx.fill();
-
-    // 边框
-    ctx.strokeStyle = isHighlighted
-      ? type === "major" ? palette.accent : palette.brass
-      : palette.line;
-    ctx.lineWidth = isHighlighted ? 2 : 1;
-    ctx.stroke();
-
-    // 标签
-    const textX = cx + Math.cos(midAngle) * midR;
-    const textY = cy + Math.sin(midAngle) * midR;
-
-    ctx.fillStyle = isHighlighted ? palette.text : palette.textSoft;
-    ctx.font = isHighlighted ? `700 14px ${palette.display}` : `600 12.5px ${palette.display}`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(label, textX, textY);
-
-    // 升号/降号数量小标
-    if (sharps > 0 || flats > 0) {
-      const subLabel = sharps > 0 ? `${sharps}♯` : `${flats}♭`;
-      ctx.fillStyle = palette.textDim;
-      ctx.font = `9px ${palette.font}`;
-      ctx.fillText(subLabel, textX, textY + (type === "major" ? 14 : -14));
-    }
-  }
-  function createModeButton(label, isActive, onClick) {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = `panel-action${isActive ? " active" : ""}`;
-    btn.setAttribute("aria-pressed", String(isActive));
-    btn.textContent = label;
-    btn.addEventListener("click", onClick);
-    return btn;
-  }
-
-  // 生成调性对照表
-  function renderKeyTable(majorKey, minorKey, primarySection = "major") {
-    tableContainer.innerHTML = "";
-
-    // --- 大调切换按钮 ---
-    const majorToggleRow = document.createElement("div");
-    majorToggleRow.className = "key-mode-row";
-
-    const naturalMajorLabel =
-      window.__("circle_major_natural") || "Natural Major";
-    const harmonicMajorLabel =
-      window.__("circle_major_harmonic") || "Harmonic Major";
-
-    const btnMajorNatural = createModeButton(
-      `${naturalMajorLabel} (${majorKey})`,
-      majorMode === "natural",
-      () => {
-        majorMode = "natural";
-        renderKeyTable(majorKey, minorKey, circleCurrentKey?.primary || "major");
-      },
-    );
-    const btnMajorHarmonic = createModeButton(
-      `${harmonicMajorLabel} (${majorKey})`,
-      majorMode === "harmonic",
-      () => {
-        majorMode = "harmonic";
-        renderKeyTable(majorKey, minorKey, circleCurrentKey?.primary || "major");
-      },
-    );
-    majorToggleRow.appendChild(btnMajorNatural);
-    majorToggleRow.appendChild(btnMajorHarmonic);
-
-    // --- 大调表 ---
-    const majorSec = document.createElement("div");
-    majorSec.className = "key-table-section";
-
-    const intervals =
-      majorMode === "harmonic" ? harmonicMajorIntervals : majorScaleIntervals;
-    const chordTypes =
-      majorMode === "harmonic" ? harmonicMajorChordTypes : majorChordTypes;
-    const degreeNums =
-      majorMode === "harmonic" ? harmonicMajorDegreeNums : majorDegreeNums;
-    const funcs =
-      majorMode === "harmonic"
-        ? buildHarmonicMajorFuncs()
-        : buildMajorFuncs();
-    const modeLabel =
-      majorMode === "harmonic"
-        ? window.__("circle_major_harmonic") || "Harmonic Major"
-        : window.__("circle_major_natural") || "Natural Major";
-
-    const majorNotes = getScaleNotes(majorKey, intervals);
-
-    const majorTitle = document.createElement("h4");
-    majorTitle.className = "key-table-title";
-    majorTitle.textContent = `${majorKey} ${modeLabel}`;
-    majorSec.appendChild(majorTitle);
-    majorSec.appendChild(
-      buildDegreeTable(majorNotes, degreeNums, funcs, chordTypes, majorKey),
-    );
-
-    // --- 分隔线 ---
-    const divider = document.createElement("hr");
-    divider.className = "key-table-divider";
-
-    // --- 小调切换按钮 ---
-    const minorToggleRow = document.createElement("div");
-    minorToggleRow.className = "key-mode-row";
-    const naturalMinorLabel =
-      window.__("circle_minor_natural") || "Natural Minor";
-    const harmonicMinorLabel =
-      window.__("circle_minor_harmonic") || "Harmonic Minor";
-
-    const btnMinorNatural = createModeButton(
-      `${naturalMinorLabel} (${minorKey})`,
-      minorMode === "natural",
-      () => {
-        minorMode = "natural";
-        renderKeyTable(majorKey, minorKey, circleCurrentKey?.primary || "major");
-      },
-    );
-    const btnMinorHarmonic = createModeButton(
-      `${harmonicMinorLabel} (${minorKey})`,
-      minorMode === "harmonic",
-      () => {
-        minorMode = "harmonic";
-        renderKeyTable(majorKey, minorKey, circleCurrentKey?.primary || "major");
-      },
-    );
-    minorToggleRow.appendChild(btnMinorNatural);
-    minorToggleRow.appendChild(btnMinorHarmonic);
-
-    // --- 小调表 ---
-    const minorSec = document.createElement("div");
-    minorSec.className = "key-table-section";
-
-    const mIntervals =
-      minorMode === "harmonic" ? harmonicMinorIntervals : minorScaleIntervals;
-    const mChordTypes =
-      minorMode === "harmonic" ? harmonicMinorChordTypes : minorChordTypes;
-    const mDegreeNums =
-      minorMode === "harmonic" ? harmonicMinorDegreeNums : minorDegreeNums;
-    const mFuncs =
-      minorMode === "harmonic"
-        ? buildHarmonicMinorFuncs()
-        : buildMinorFuncs();
-    const mModeLabel =
-      minorMode === "harmonic"
-        ? window.__("circle_minor_harmonic") || "Harmonic Minor"
-        : window.__("circle_minor_natural") || "Natural Minor";
-
-    const minorNotes = getScaleNotes(minorKey, mIntervals);
-
-    const minorTitle = document.createElement("h4");
-    minorTitle.className = "key-table-title";
-    minorTitle.textContent = `${minorKey} ${mModeLabel}`;
-    minorSec.appendChild(minorTitle);
-    minorSec.appendChild(
-      buildDegreeTable(
-        minorNotes,
-        mDegreeNums,
-        mFuncs,
-        mChordTypes,
-        minorKey,
-      ),
-    );
-
-    if (primarySection === "major") {
-      tableContainer.appendChild(majorToggleRow);
-      tableContainer.appendChild(majorSec);
-      tableContainer.appendChild(divider);
-      tableContainer.appendChild(minorToggleRow);
-      tableContainer.appendChild(minorSec);
-    } else {
-      tableContainer.appendChild(minorToggleRow);
-      tableContainer.appendChild(minorSec);
-      tableContainer.appendChild(divider);
-      tableContainer.appendChild(majorToggleRow);
-      tableContainer.appendChild(majorSec);
-    }
-  }
-
-  function buildDegreeTable(notes, degreeNums, funcs, chordTypes, keyRoot) {
-    const wrap = document.createElement("div");
-    wrap.className = "degree-table-wrap";
-    const table = document.createElement("table");
-    table.className = "degree-table clickable";
-
-    // 表头
-    const thead = document.createElement("thead");
-    const headerRow = document.createElement("tr");
-    [
-      window.__("circle_col_degree") || "Degree",
-      window.__("circle_col_chord") || "Chord",
-      window.__("circle_col_function") || "Function",
-      window.__("circle_col_notes") || "Notes",
-    ].forEach((h) => {
-      const th = document.createElement("th");
-      th.textContent = h;
-      headerRow.appendChild(th);
-    });
-    thead.appendChild(headerRow);
-    table.appendChild(thead);
-
-    // 表体：主 / 下属 / 属 / 导音级用功能色标出
-    const tbody = document.createElement("tbody");
-    const degreeClasses = ["deg-tonic", "", "", "deg-sub", "deg-dom", "", "deg-lead"];
-    let lastChordRootMidi = null;
-
-    notes.forEach((note, i) => {
-      const row = document.createElement("tr");
-      const degStr = degreeNums[i] || "";
-      const isAug = degStr.includes("+");
-      const rowClass = isAug ? "deg-aug" : degreeClasses[i];
-      if (rowClass) row.className = rowClass;
-      row.tabIndex = 0;
-
-      const degCell = document.createElement("td");
-      degCell.className = "deg-cell";
-      degCell.textContent = degStr;
-      row.appendChild(degCell);
-
-      const chordCell = document.createElement("td");
-      chordCell.className = "chord-cell";
-      const chordNameFull = formatChordNameFull(note, degStr);
-      chordCell.textContent = chordNameFull;
-      row.appendChild(chordCell);
-
-      const funcCell = document.createElement("td");
-      funcCell.className = "fn-cell";
-      funcCell.textContent = funcs[i] || "";
-      row.appendChild(funcCell);
-
-      const notesCell = document.createElement("td");
-      notesCell.className = "notes-cell";
-
-      const chordType = chordTypes[i] || "maj";
-      const chordIntervals = getIntervalsByType(chordType);
-      const chordNoteNames = []; // 收集和弦音符
-      chordIntervals.forEach((interval) => {
-        const noteSemitone = noteToSemitone(note);
-        if (noteSemitone === undefined) return;
-        const idx = (noteSemitone + interval) % 12;
-        const chordNote = semitoneToNote(idx);
-        chordNoteNames.push(chordNote);
-        const span = document.createElement("span");
-        span.className = "mini-note";
-        span.textContent = chordNote;
-        notesCell.appendChild(span);
-      });
-      row.appendChild(notesCell);
-
-      // ============ 点击播放声音（i 级定基准，逐级抬高根音） ============
-      const { freqs: chordFreqs, rootMidi } = chordNotesToFrequencies(
-        chordNoteNames,
-        4,
-        false,
-        lastChordRootMidi,
-      );
-      if (rootMidi != null) {
-        lastChordRootMidi = rootMidi;
-      }
-
-      const audioIndicator = document.createElement("span");
-      audioIndicator.className = "audio-hint";
-      audioIndicator.setAttribute("aria-hidden", "true");
-      audioIndicator.textContent = "🔊";
-      chordCell.appendChild(audioIndicator);
-
-      row.addEventListener("click", () => playChord(chordFreqs));
-      row.addEventListener("keydown", (event) => {
-        if (event.key !== "Enter" && event.key !== " ") return;
-        event.preventDefault();
-        playChord(chordFreqs);
-      });
-
-      tbody.appendChild(row);
-    });
-    table.appendChild(tbody);
-    wrap.appendChild(table);
-
-    return wrap;
-  }
-
-  function formatChordNameFull(root, degreeStr) {
-    const cleanRoot = semitoneToNote(noteToSemitone(root) || 0);
-    if (degreeStr.includes("°")) return cleanRoot + "°";
-    if (degreeStr.includes("+")) return cleanRoot + "+";
-    if (degreeStr === degreeStr.toLowerCase() && degreeStr.includes("m"))
-      return cleanRoot + "m";
-    // I, IV, V 等大写 = 大三和弦
-    if (
-      degreeStr === degreeStr.toUpperCase() &&
-      !degreeStr.includes("°") &&
-      !degreeStr.includes("+")
-    )
-      return cleanRoot;
-    // ii, iii, vi 等小写 = 小和弦
-    if (degreeStr === degreeStr.toLowerCase()) return cleanRoot + "m";
-    return cleanRoot;
-  }
-
-  function getIntervalsByType(type) {
-    switch (type) {
-      case "maj":
-        return [0, 4, 7];
-      case "m":
-        return [0, 3, 7];
-      case "dim":
-        return [0, 3, 6];
-      case "aug":
-        return [0, 4, 8];
-      default:
-        return [0, 4, 7];
-    }
-  }
-
-  // Canvas 点击事件
-  canvas.addEventListener("click", (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const size = rect.width;
-    const scaleX = size / rect.width;
-    const scaleY = size / rect.height;
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
-    const cx = size / 2;
-    const cy = size / 2;
-    const dist = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
-    const outerR = size * 0.42;
-    const innerR = size * 0.28;
-    const centerR = size * 0.12;
-
-    if (dist < centerR || dist > outerR) return;
-
-    let angle = Math.atan2(y - cy, x - cx) + Math.PI / 2;
-    if (angle < 0) angle += Math.PI * 2;
-    const sectorIndex = Math.floor((angle / (Math.PI * 2)) * 12) % 12;
-    const item = circleData[sectorIndex];
-
-    if (multiModeActive && currentMultiMode) {
-      if (dist >= innerR && dist <= outerR) {
-        currentRoot = item.major;
-      } else if (dist >= centerR && dist < innerR) {
-        currentRoot = item.minor;
-      }
-      updateCircleMultiMode();
-      return;
-    }
-
-    if (dist >= innerR && dist <= outerR) {
-      // 点击外环 — 大调
-      circleCurrentKey = {
-        major: item.major,
-        minor: item.minor,
-        primary: "major",
-      };
-      drawCircle(item.major, null);
-      renderKeyTable(item.major, item.minor, "major");
-    } else if (dist >= centerR && dist < innerR) {
-      // 点击内环 — 小调
-      circleCurrentKey = {
-        major: item.major,
-        minor: item.minor,
-        primary: "minor",
-      };
-      drawCircle(null, item.minor);
-      renderKeyTable(item.major, item.minor, "minor");
-    }
-  });
-
-  // 重置按钮
-  resetBtn.addEventListener("click", () => {
-    circleCurrentKey = null;
-    drawCircle(null, null);
-    tableContainer.innerHTML = "";
-  });
-
-  // 窗口大小变化重绘
-  window.addEventListener("resize", () => {
-    if (document.getElementById("panel-circle").style.display !== "none") {
-      if (multiModeActive && currentMultiMode) {
-        updateCircleMultiMode();
-      } else if (circleCurrentKey) {
-        drawCircle(
-          circleCurrentKey.primary === "major"
-            ? circleCurrentKey.major
-            : null,
-          circleCurrentKey.primary === "minor"
-            ? circleCurrentKey.minor
-            : null,
-        );
-        renderKeyTable(
-          circleCurrentKey.major,
-          circleCurrentKey.minor,
-          circleCurrentKey.primary,
-        );
-      } else {
-        drawCircle(null, null);
-      }
-    }
-  });
-
-  // 初始绘制
-  drawCircle(null, null);
 
 
   const navButtons = Array.from(document.querySelectorAll(".feature-btn"));
@@ -2873,7 +411,7 @@ const seqFlowHtml = funcSteps.length
       const wasPlaying = compositionTimer !== null || compositionMarks.length > 0;
       clearInterval(compositionTimer); compositionTimer = null;
       compositionMarks.forEach(clearTimeout); compositionMarks = [];
-      if (wasPlaying && audioCtx) interruptPlayback(audioCtx);
+      if (wasPlaying) interruptIfActive();
     },
     play(events, bpm, duration, highlight) {
       this.stop(); stopClassicalSequencePlayback();
@@ -2888,7 +426,7 @@ const seqFlowHtml = funcSteps.length
           const event = sorted[index++], time = start + event.beat * seconds;
           const tone = createPianoTone(ctx, 440 * 2 ** ((event.midi-69)/12), time, event.duration * seconds);
           const gain = ctx.createGain(); gain.gain.value = event.velocity;
-          tone.connect(gain); gain.connect(audioDryBus); gain.connect(audioWetBus);
+          tone.connect(gain); connectOutput(gain);
           const marker = event.bar ?? event.step;
           if (marker !== lastMarker) {
             lastMarker = marker;
@@ -2901,9 +439,47 @@ const seqFlowHtml = funcSteps.length
     }
   };
 
+  /** 全局停止：结束各模块的排程与正在发声的音 */
+  function stopAllPlayback() {
+    compositionAudio.stop();
+    stopClassicalSequencePlayback();
+    document.getElementById('panel-blues-body')?.stopBluesPlayback?.();
+    document.querySelectorAll('.panel, .panel-body').forEach((node) => node.dispatchEvent(new Event('toolbox-stop')));
+    interruptIfActive();
+    suppressQueued();
+  }
+
+
+  initAppShell({ stopAllPlayback, navButtons, noteName: (pc) => idxToNote[pc], reverseFormulas: () => conv.reverseFormulas });
+  // 全站搜索（Ctrl+K）：工具与乐理闯关的关卡
+  mountSiteSearch({
+    tools: () => navButtons.map((b) => b.dataset.feature).filter((id) => id !== 'about').map((id) => ({
+      id, name: window.__(`nav_${id}`) || id, intro: window.__(`intro_${id}`) || '',
+      allNames: Object.values(window.__all?.(`nav_${id}`) || {}).join(' '),
+    })),
+    units: () => import("./learn_content.js?v=20261003-s7").then((m) => [...m.UNITS, ...m.SIDES]), lang: window.__lang, anchor: document.getElementById('share-link'),
+  });
+
   const conv = new EnhancedChordConverter();
   const brain = new JazzBrain();
   const classical = new ClassicalHarmonyConnector();
+  // ===================== 五度圈面板（circle_panel.js，第一次打开五度圈时才载入） =====================
+  const createCirclePanelNow = () => { const json = loadJsonFiles(); return createCirclePanel({
+    canvas, tableContainer, resetBtn, conv, resizeCanvas, canvasPalette, noteToSemitone, semitoneToNote, noteToIdx, circleData,
+    majorScaleIntervals, minorScaleIntervals, harmonicMajorIntervals, harmonicMinorIntervals,
+    majorChordTypes, minorChordTypes, harmonicMajorChordTypes, harmonicMinorChordTypes,
+    majorDegreeNums, minorDegreeNums, harmonicMajorDegreeNums, harmonicMinorDegreeNums,
+    live: {
+      get notationMode() { return notationMode; },
+      get idxToNote() { return idxToNote; },
+      get modesData() { return modesData; },
+      get funcGroupData() { return funcGroupData; },
+    },
+  }).then((panel) => {
+    circle = panel;
+    // 多调式五度圈要等 modes.json：和面板代码同时下载，到了再初始化
+    return json.then(() => circle.initMultiModeCircle());
+  }); };
   let classicalChain = [];
   let classicalSegments = [];
   let classicalLastKey = null;
@@ -2920,7 +496,7 @@ const seqFlowHtml = funcSteps.length
     classicalSequencePlaybackId += 1;
     classicalSequenceTimers.forEach(timer => clearTimeout(timer));
     classicalSequenceTimers = [];
-    if (wasPlaying && audioCtx) interruptPlayback(audioCtx);
+    if (wasPlaying) interruptIfActive();
   }
 
   function loadClassicalPlaybackSettings() {
@@ -2961,10 +537,43 @@ const seqFlowHtml = funcSteps.length
     axisLabelEl.textContent = window.__("neg_axis") || "Axis";
   }
 
+  /** "看不懂？玩教程"要打开的关卡；"其他工具"按当前模式区分（进行分析、和弦报告直接进对应的进阶关） */
+  const OTHER_MODE_UNIT = { key_center: 'keycenter', progression: 'keycenter:2', negative: 'negharmony', guide: 'guidetone', report: 'guidetone:3' };
+  /** 面板第一次挂载时，把链接里的 ?q= 交给它（如 #counterpoint?q=@sub:canon） */
+  /** 面板第一次打开时挂载一次：异步载入期间不会重复挂载；返回挂载完成的 Promise */
+  const mounting = new WeakMap();
+  function mountOnce(host, run) {
+    if (!host) return Promise.resolve();
+    if (mounting.has(host)) return mounting.get(host);
+    if (host.children.length) return Promise.resolve();
+    const done = Promise.resolve(run());
+    mounting.set(host, done);
+    return done;
+  }
+  /** 等面板挂载完（没在挂载的话立刻） */
+  const whenMounted = (host) => (host && mounting.get(host)) || Promise.resolve();
+  const isFirstMount = (host) => Boolean(host) && !mounting.has(host) && !host.children.length;
+  // 打开面板时地址栏里的链接参数：showOnlyFeature 一开始就记下来（随后 rememberFeature 会把地址栏改成不带参数的形式）
+  let hashAtShow = { feature: null, q: null };
+  let initialHashForShow = null; // 初始化时先点了 chord-run，地址栏已被改写：第一次 showOnlyFeature 用一开始读到的链接参数
+  function dispatchInitialQuery(feature, hostId) {
+    const { feature: hashFeature, q } = hashAtShow;
+    const host = document.getElementById(hostId);
+    if (hashFeature === feature && q) whenMounted(host).then(() => host?.dispatchEvent(new CustomEvent('toolbox-query', { detail: q })));
+  }
+  function tutorialUnitFor(feature) {
+    if (feature === 'other') return OTHER_MODE_UNIT[currentOtherMode] || FEATURE_UNIT.other;
+    return FEATURE_UNIT[feature];
+  }
+
   function showOnlyFeature(feature) {
+    hashAtShow = initialHashForShow || parseLocationHash();
+    initialHashForShow = null;
     if (feature !== 'blues') document.getElementById('panel-blues-body')?.stopBluesPlayback?.();
     if (feature !== 'classical') stopClassicalSequencePlayback();
     document.querySelectorAll('#panel-form, #panel-rhythm').forEach(panel => { if (panel.dataset.feature !== feature) panel.dispatchEvent(new Event('toolbox-stop')); });
+    ['chinese', 'counterpoint', 'nonchord', 'harmonize', 'figured', 'jazzmore', 'posttonal', 'temperaments', 'world', 'instruments', 'fretboard', 'progression', 'ear', 'chordsymbols', 'staff', 'learn'].forEach((id) => { if (feature !== id) document.getElementById(`panel-${id}-body`)?.dispatchEvent(new Event('toolbox-stop')); });
+    if (isFeature(feature)) rememberFeature(feature);
     const featureButton = navButtons.find(button => button.dataset.feature === feature);
     const groupLabel = featureButton?.closest('.nav-group')?.querySelector('.nav-group-label');
     document.getElementById('workspace-index').textContent = groupLabel?.textContent.trim() || '';
@@ -2988,17 +597,21 @@ const seqFlowHtml = funcSteps.length
         p.setAttribute("aria-hidden", "true");
       }
     });
-    document.querySelector(`.feature-btn[data-feature="${feature}"]`)?.scrollIntoView({
-      block: "nearest",
-      inline: "center",
-      behavior: "smooth",
-    });
+    // 只在导航条自己里面横向滚动，把选中的按钮移到中间；不用 scrollIntoView，以免整页被横向带偏
+    const activeNavButton = document.querySelector(`.feature-btn[data-feature="${feature}"]`);
+    const featureNav = activeNavButton?.closest(".feature-nav");
+    if (activeNavButton && featureNav && featureNav.scrollWidth > featureNav.clientWidth + 1) {
+      const navBox = featureNav.getBoundingClientRect();
+      const buttonBox = activeNavButton.getBoundingClientRect();
+      const target = featureNav.scrollLeft + (buttonBox.left - navBox.left) - (featureNav.clientWidth - buttonBox.width) / 2;
+      featureNav.scrollTo?.({ left: Math.max(0, target), behavior: "smooth" });
+    }
     // special handling for about panel
     if (feature === "about") {
       showAbout();
     }
     if (feature === "circle") {
-      drawCircle(null, null);
+      circle?.drawCircle(null, null);
     }
     if (feature === "ref") {
       initRefPanel();
@@ -3006,124 +619,133 @@ const seqFlowHtml = funcSteps.length
     if (feature === "classical" && !document.getElementById("panel-classical-body")?.children.length) {
       document.getElementById("classical-run")?.click();
     }
-    if (feature === 'neo' && !document.getElementById('panel-neo-body')?.children.length) {
-      document.getElementById('neo-run')?.click();
+    if (feature === 'neo' && !neoReady) {
+      neoReady = initNeoPanel({ brain }).then(() => { if (!document.getElementById('panel-neo-body')?.children.length) document.getElementById('neo-run')?.click(); });
     }
-    if (feature === 'form' && !document.getElementById('panel-form').children.length) mountComposition(document.getElementById('panel-form'), compositionAudio);
-    if (feature === 'rhythm' && !document.getElementById('panel-rhythm').children.length) mountRhythm(document.getElementById('panel-rhythm'), compositionAudio);
+    if (feature === 'circle' && !circleReady) circleReady = createCirclePanelNow();
+    if (feature === 'micro' && !microReady) microReady = mountMicrotonal(playChord, createHeldPianoVoice);
+    // 和弦音阶、LCC、布鲁斯：第一次打开时才计算（它们的代码也是这时才下载）
+    if (['cst', 'lcc', 'blues'].includes(feature) && !ranOnShow.has(feature)) { ranOnShow.add(feature); document.getElementById(`${feature}-run`)?.click(); }
+    if (feature === 'form' && isFirstMount(document.getElementById('panel-form'))) {
+      // 两个子页面：曲式生成 / 动机与乐句（曲式面板本身没有内边距，新工具的子页面自己加）
+      mountSubPages(document.getElementById('panel-form'), [
+        { id: 'compose', label: { zh: '曲式生成', ja: '楽式の生成', en: 'Form generator' }, mount: (box) => mountComposition(box, compositionAudio), accepts: (q) => q === '@import' },
+        { id: 'motif', label: { zh: '动机与乐句', ja: '動機とフレーズ', en: 'Motif & phrase' }, padded: true, mount: (box) => mountMotifPhrase(box, compositionAudio) },
+      ], { padded: true });
+      dispatchInitialQuery('form', 'panel-form');
+    }
+    if (feature === 'rhythm' && isFirstMount(document.getElementById('panel-rhythm'))) {
+      mountSubPages(document.getElementById('panel-rhythm'), [
+        { id: 'patterns', label: { zh: '节奏型', ja: 'リズム・パターン', en: 'Rhythm patterns' }, mount: (box) => mountRhythm(box, compositionAudio) },
+        { id: 'poly', label: { zh: '复节奏与节拍调制', ja: 'ポリリズムとメトリック・モジュレーション', en: 'Polyrhythm & metric modulation' }, padded: true, mount: (box) => mountPolyMeter(box, compositionAudio) },
+      ], { padded: true });
+      dispatchInitialQuery('rhythm', 'panel-rhythm');
+    }
+    if (feature === 'chinese') { const el = document.getElementById('panel-chinese-body'); mountOnce(el, () => mountChineseModes(el, { playChord })); }
+    if (feature === 'counterpoint' && isFirstMount(document.getElementById('panel-counterpoint-body'))) {
+      mountSubPages(document.getElementById('panel-counterpoint-body'), [
+        { id: 'species', label: { zh: '类别对位', ja: '類別対位法', en: 'Species counterpoint' }, mount: (box) => mountCounterpoint(box, { playChord }) },
+        { id: 'canon', label: { zh: '模仿与卡农', ja: '模倣とカノン', en: 'Imitation & canon' }, mount: (box) => mountCanon(box, compositionAudio) },
+      ]);
+      dispatchInitialQuery('counterpoint', 'panel-counterpoint-body');
+    }
+    if (feature === 'nonchord') { const el = document.getElementById('panel-nonchord-body'); mountOnce(el, () => mountNonChordTones(el, { playChord, conv })); }
+    if (feature === 'harmonize' && isFirstMount(document.getElementById('panel-harmonize-body'))) {
+      mountSubPages(document.getElementById('panel-harmonize-body'), [
+        { id: 'harmonize', label: { zh: '旋律配和声', ja: '旋律の和声付け', en: 'Harmonize a melody' }, mount: (box) => mountHarmonizer(box, { playChord }) },
+        { id: 'reharm', label: { zh: '固定旋律再和声', ja: '固定旋律のリハーモナイズ', en: 'Reharmonization' }, mount: (box) => mountReharm(box, compositionAudio) },
+      ]);
+      dispatchInitialQuery('harmonize', 'panel-harmonize-body');
+    }
+    if (feature === 'figured') { const el = document.getElementById('panel-figured-body'); mountOnce(el, () => mountFiguredBass(el, { playChord })); }
+    if (feature === 'jazzmore') { const el = document.getElementById('panel-jazzmore-body'); mountOnce(el, () => mountJazzMore(el, { playChord })); }
+    if (feature === 'posttonal') { const el = document.getElementById('panel-posttonal-body'); mountOnce(el, () => mountPostTonal(el, { playChord })); }
+    if (feature === 'temperaments') { const el = document.getElementById('panel-temperaments-body'); mountOnce(el, () => mountTemperaments(el, { playChord })); }
+    if (feature === 'world') { const el = document.getElementById('panel-world-body'); mountOnce(el, () => mountWorldModes(el, { playChord })); }
+    if (feature === 'instruments') { const el = document.getElementById('panel-instruments-body'); mountOnce(el, () => mountInstruments(el, { playChord })); }
+    if (feature === 'fretboard') { const el = document.getElementById('panel-fretboard-body'); mountOnce(el, () => mountFretboard(el, { playChord })); }
+    if (feature === 'progression' && isFirstMount(document.getElementById('panel-progression-body'))) {
+      const el = document.getElementById('panel-progression-body');
+      mountOnce(el, () => mountProgression(el, { playChord, conv }));
+      dispatchInitialQuery('progression', 'panel-progression-body');
+    }
+    if (feature === 'ear' && isFirstMount(document.getElementById('panel-ear-body'))) {
+      mountSubPages(document.getElementById('panel-ear-body'), [
+        { id: 'ear', label: { zh: '听辨练习', ja: '聴き取り練習', en: 'Ear training' }, mount: (box) => mountEarTraining(box, { playChord }) },
+        { id: 'dictation', label: { zh: '听写', ja: '聴音（書き取り）', en: 'Dictation' }, mount: (box) => mountDictation(box, compositionAudio) },
+        { id: 'schema', label: { zh: '套路听辨', ja: '定番進行の聴き取り', en: 'Progression ID' }, mount: (box) => mountProgQuiz(box, compositionAudio) },
+      ]);
+      dispatchInitialQuery('ear', 'panel-ear-body');
+    }
+    if (feature === 'chordsymbols') { const el = document.getElementById('panel-chordsymbols-body'); mountOnce(el, () => mountChordSymbols(el, { playChord, conv })); }
+    if (feature === 'staff' && isFirstMount(document.getElementById('panel-staff-body'))) {
+      const el = document.getElementById('panel-staff-body');
+      mountOnce(el, () => mountStaffReading(el, { playChord }));
+      dispatchInitialQuery('staff', 'panel-staff-body');
+    }
+    if (feature === 'learn') { const el = document.getElementById('panel-learn-body'); mountOnce(el, () => mountLearn(el, { playChord })); }
+    // 每个工具顶部的"看不懂？玩教程"：跳到对应的闯关关卡
+    const tutorialButton = document.getElementById('tutorial-link');
+    if (tutorialButton) {
+      const unit = tutorialUnitFor(feature);
+      tutorialButton.hidden = !unit;
+      tutorialButton.dataset.unit = unit || '';
+    }
+    currentLearnFeature = feature;
+    updateReturnTutorial();
   }
 
-  function showAbout() {
-    const aboutBody = document.getElementById("panel-about-body");
-    if (!aboutBody) return;
-
-    const html = `
-      <h3>${window.__("about_title")}</h3>
-      <p>${window.__("about_desc")}</p>
-
-      <h4>${window.__("about_features")}</h4>
-      <ul>
-        <li>${window.__("about_feature_chord")}</li>
-        <li>${window.__("about_feature_blues")}</li>
-        <li>${window.__("about_feature_lcc")}</li>
-        <li>${window.__("about_feature_cst")}</li>
-      </ul>
-      <p class="about-ack">${window.__("about_acknowledgement")}</p>
-      <p class="about-credit">${window.__("about_sposobin")}</p>
-
-      <h4>${window.__("about_github")}</h4>
-      <div class="about-links">
-        <p><a href="https://github.com/3035936740/Jazz-Compass-Web" target="_blank" rel="noopener noreferrer">${window.__("about_github_web")}</a></p>
-        <p><a href="https://github.com/3035936740/JazzCompassPy" target="_blank" rel="noopener noreferrer">${window.__("about_github_py")}</a></p>
-      </div>
-
-      <p class="about-footer">${window.__("about_footer")}</p>
-    `;
-
-    aboutBody.innerHTML = html;
+  // "回到教程"：有没做完的关卡（学习记录）时显示（在乐理闯关页面里不显示）；通关或退出关卡后记录清除，按钮随之消失
+  var currentLearnFeature = null;
+  function updateReturnTutorial() {
+    const button = document.getElementById('return-tutorial');
+    if (!button) return;
+    const record = anyResume();
+    button.hidden = !record || currentLearnFeature === 'learn';
+    if (record) button.title = window.__f('return_tutorial_title', { title: record.title, n: (record.position ?? 0) + 1, m: record.total ?? '?' });
+  }
+  window.addEventListener('learn-resume-change', updateReturnTutorial);
+  /** 任何没做完的关卡（含平时的自动保存）：显示"回到教程"，误点"看不懂？玩教程"时先提示 */
+  function anyResume() {
+    const record = loadResume();
+    return record?.session && record.key ? record : null;
   }
 
-  function prettyChordRender(targetEl, inputValue) {
-    const v = inputValue.trim();
-    const data = conv._ensureNotesAndRoot(v, true);
-    const notes = data.notes;
-    const displayNotes = data.voicing?.length ? data.voicing : notes;
-    const chord = data.chord;
-
-    if (notes && Array.isArray(notes) && notes.length > 0) {
-      const offsets = displayNotes.map((n) => conv.noteToIdx[n]);
-      // 美化输出：根 / 链接 和 列表 + 偏移 + 小键盘视图
-      const root = data.root || notes[0];
-      const isSlash = v.includes("/");
-      const bass = data.bass;
-      const bassIdx = bass ? conv.noteToIdx[bass] : null;
-      const htmlParts = [];
-      htmlParts.push(`<div class="chord-result-heading"><div><span class="result-eyebrow">${window.__("identified_chord")}</span><h3 class="chord-symbol">${chord}</h3></div><span class="chord-note-count">${displayNotes.length} ${window.__("note_count_unit")}</span></div>`);
-      /*
-      htmlParts.push(
-        `<p><strong>${window.__("root_label")}：</strong>${root} <strong style="margin-left:12px">${window.__("slash_label")}：</strong>${isSlash}</p>`,
-      );
-    */
-      htmlParts.push('<div class="note-grid">');
-      for (let i = 0; i < displayNotes.length; i++) {
-        const note = displayNotes[i];
-        const classes = ["note-cell"];
-        if (bass && conv.noteToIdx[note] === bassIdx) classes.push("bass-note");
-        if (conv.noteToIdx[note] === conv.noteToIdx[root]) classes.push("root-note");
-        const degree = ('CDEFGAB'.indexOf(note[0]) - 'CDEFGAB'.indexOf(root[0]) + 7) % 7;
-        const semitones = (conv.noteToIdx[note] - conv.noteToIdx[root] + 12) % 12;
-        const alteration = (semitones - [0, 2, 4, 5, 7, 9, 11][degree] + 18) % 12 - 6;
-        const interval = `${alteration < 0 ? '♭'.repeat(-alteration) : '♯'.repeat(alteration)}${degree + 1}`;
-        htmlParts.push(
-          `<div class="${classes.join(" ")}"><div class="note">${note}</div><span class="note-interval">${interval}</span></div>`,
-        );
-      }
-      htmlParts.push("</div>");
-
-      const rootIdx = conv.noteToIdx[root];
-      const activeSet = new Set(offsets);
-      const whitePcs = [0, 2, 4, 5, 7, 9, 11, 0, 2, 4, 5, 7, 9, 11];
-      const blackAfter = new Set([0, 2, 5, 7, 9]);
-      const blackPc = { 0: 1, 2: 3, 5: 6, 7: 8, 9: 10 };
-      const keys = whitePcs.map((pc, index) => {
-        const octave = index < 7 ? 4 : 5;
-        const white = `<button type="button" class="piano-key piano-white-key${activeSet.has(pc) ? " is-active" : ""}${rootIdx === pc ? " is-root" : ""}${bassIdx === pc ? " is-bass" : ""}" data-piano-pc="${pc}" data-piano-octave="${octave}" aria-label="${conv.idxToNote[pc]}${octave}"><span class="piano-key-label">${conv.idxToNote[pc]}</span></button>`;
-        let black = "";
-        if (blackAfter.has(pc)) {
-          const accidentalPc = blackPc[pc];
-          black = `<button type="button" class="piano-key piano-black-key${activeSet.has(accidentalPc) ? " is-active" : ""}${rootIdx === accidentalPc ? " is-root" : ""}${bassIdx === accidentalPc ? " is-bass" : ""}" data-piano-pc="${accidentalPc}" data-piano-octave="${octave}" aria-label="${conv.idxToNote[accidentalPc]}${octave}"><span class="piano-key-label">${conv.idxToNote[accidentalPc]}</span></button>`;
-        }
-        return `<div class="piano-white-wrap">${white}${black}</div>`;
-      }).join("");
-      htmlParts.push(`<section class="piano-section"><div class="piano-section-head"><div><strong>${window.__("piano_title")}</strong><span class="piano-caption">${window.__("piano_hint")}</span></div><button type="button" class="chord-play-button" id="chord-play-result"><span aria-hidden="true">▶</span> ${window.__("play_chord")}</button></div><div class="mini-keyboard piano-keyboard">${keys}</div><div class="piano-legend"><span><i class="legend-root"></i>${window.__("root_label")}</span><span><i class="legend-bass"></i>${window.__("bass_tone")}</span><span><i class="legend-tone"></i>${window.__("chord_tone")}</span><span class="piano-range">C4 — B5</span></div></section>`);
-
-      targetEl.innerHTML = htmlParts.join("");
-      targetEl.querySelector("#chord-play-result")?.addEventListener("click", () => {
-        const { freqs } = chordNotesToFrequencies(displayNotes, isSlash ? 3 : 4, false, null);
-        playChord(freqs);
-      });
-      targetEl.querySelectorAll("[data-piano-pc]").forEach((key) => {
-        key.addEventListener("click", () => {
-          playChord([semitoneToFreq(Number(key.dataset.pianoPc), Number(key.dataset.pianoOctave))], 0.7);
-        });
-      });
-      return;
-    }
-
-    // 退回到 parse（只显示 chord 与 notes，忽略 offsets）
-    try {
-      const data = conv.parseAndGetNotes(v);
-      const display = {
-        chord: data.chord,
-        notes: data.notes,
-        voicing: data.voicing,
-        isSlash: data.isSlash,
-      };
-      targetEl.innerHTML = `<h3>${window.__f("chord_parse_heading", { input: v })}</h3><pre>${JSON.stringify(display, null, 2)}</pre>`;
-    } catch (e) {
-      targetEl.innerHTML = `<h3>${window.__("chord_parse_error")}</h3><pre>${e.message}</pre>`;
-    }
+  /** 有学习记录时误点"看不懂？玩教程"：先提示，可以回到之前的关卡、放弃并打开新教程，或取消 */
+  function confirmTutorialSwitch(record, onBack, onNew) {
+    document.querySelector('.learn-confirm-layer')?.remove();
+    const layer = document.createElement('div');
+    layer.className = 'learn-confirm-layer';
+    layer.setAttribute('role', 'alertdialog');
+    layer.setAttribute('aria-modal', 'true');
+    const card = document.createElement('div');
+    card.className = 'learn-confirm';
+    const title = document.createElement('strong');
+    title.textContent = window.__('learn_confirm_title');
+    const body = document.createElement('p');
+    body.textContent = window.__f('learn_confirm_body', { title: record.title, n: (record.position ?? 0) + 1, m: record.total ?? '?' });
+    const row = document.createElement('div');
+    row.className = 'learn-confirm-actions';
+    const make = (key, cls, action) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = cls;
+      b.textContent = window.__(key);
+      b.addEventListener('click', () => { layer.remove(); action?.(); });
+      return b;
+    };
+    const back = make('learn_confirm_back', 'learn-confirm-back', onBack);
+    row.append(back, make('learn_confirm_new', 'learn-confirm-new', onNew), make('learn_confirm_cancel', 'learn-confirm-cancel', null));
+    card.append(title, body, row);
+    layer.appendChild(card);
+    layer.addEventListener('click', (event) => { if (event.target === layer) layer.remove(); });
+    layer.addEventListener('keydown', (event) => { if (event.key === 'Escape') layer.remove(); });
+    document.body.appendChild(layer);
+    back.focus?.();
   }
+
+  /** 和弦转换面板的结果（chord_convert_panel.js） */
+  const prettyChordRender = (targetEl, inputValue) => renderChordConversion(conv, targetEl, inputValue);
 
   // helper: create a card element for a scale suggestion (name,reason,notes)
   function createScaleCard(scale) {
@@ -3664,6 +1286,9 @@ const seqFlowHtml = funcSteps.length
 
     function setOtherMode(mode) {
       currentOtherMode = mode;
+      // "其他工具"的每个模式对应不同的教程关卡
+      const tutorialButton = document.getElementById('tutorial-link');
+      if (tutorialButton && currentLearnFeature === 'other') tutorialButton.dataset.unit = tutorialUnitFor('other');
       modes.forEach((m) => buttons[m].classList.toggle("active", m === mode));
       const labelEl = document.getElementById("label_other_example");
       const newText =
@@ -3712,483 +1337,12 @@ const seqFlowHtml = funcSteps.length
     setOtherMode(currentOtherMode);
   }
 
-  // ===================== 新里曼面板渲染 =====================
-  // ===================== 新里曼面板渲染（树型布局 + 右键拖拽节点 + 节点大小调节）=====================
-  let neoCanvasCleanup = null;
-  let neoCurrentView = 'tonnetz';
-  let neoCurrentDepth = 1;
-  let neoCurrentInput = "";
-  let neoLayerSpacing = 100;      // 层间垂直间距
-  let neoNodeSize = 22;           // 节点半径
-  let neoCanvasState = { offsetX: 0, offsetY: 0, scale: 1 };
-  let neoNodeOffsets = {};        // 手动偏移 { nodeId: {x, y} }
-  let neoHarmonyViewState = { zoom: 1, panX: 0, panY: 0 };
-
-  // 基本操作集
-  const PRIMARY_OPS = new Set(["P", "L", "R", "S", "N", "D1"]);
-
-  function updateNeo(targetEl, inputValue) {
-    neoCanvasCleanup?.();
-    neoCanvasCleanup = null;
-    const v = inputValue.trim();
-    if (!v) {
-      targetEl.innerHTML = `<div class="result-card">${window.__("cannot_parse_input")}</div>`;
-      return;
-    }
-
-    neoCurrentInput = v;
-    neoCanvasState = { offsetX: 0, offsetY: 0, scale: 1 };
-    neoNodeOffsets = {};
-
-    let geometric = {};
-    if (neoCurrentView !== 'harmony') {
-      try {
-        geometric = brain.nrt.getGeometricNeighbors(v);
-      } catch (e) {
-        if (neoCurrentView !== 'all') {
-          targetEl.innerHTML = `<div class="result-card">${window.__("chord_parse_error")}: ${e.message}</div>`;
-          return;
-        }
-      }
-    }
-
-    targetEl.innerHTML = "";
-
-    // ---------- 可视化切换按钮 ----------
-    const vizRow = document.createElement('div');
-    vizRow.className = 'neo-view-switch';
-    const neoGroup = document.createElement('div'); neoGroup.className = 'neo-view-group';
-    const neoGroupLabel = document.createElement('span'); neoGroupLabel.textContent = window.__('neo_sublevel');
-    neoGroup.appendChild(neoGroupLabel);
-    const viewButtons = new Map();
-    for (const [view, label, parent] of [
-      ['tonnetz', window.__('neo_triad_title'), neoGroup],
-      ['octatonic', window.__('neo_octatonic_title'), neoGroup],
-      ['harmony', window.__('neo_harmony_title'), vizRow],
-      ['all', window.__('neo_all_title'), vizRow],
-    ]) {
-      const button = document.createElement('button'); button.type = 'button';
-      button.className = 'panel-action'; button.dataset.view = view; button.textContent = label;
-      viewButtons.set(view, button); parent.appendChild(button);
-    }
-    // Keep the nested Neo-Riemannian controls first in the reading order.
-    vizRow.prepend(neoGroup);
-    targetEl.appendChild(vizRow);
-
-    // 可视化容器
-    const canvasContainer = document.createElement("div");
-    canvasContainer.id = "neo-canvas-container";
-    targetEl.appendChild(canvasContainer);
-
-    // 图例/详情区
-    const detailArea = document.createElement("div");
-    detailArea.id = "neo-detail-area";
-    detailArea.className = "neo-detail-area";
-    targetEl.appendChild(detailArea);
-
-    // 绑定控件
-    const depthInput = document.getElementById("neo-depth-input");
-    const spacingInput = document.getElementById("neo-spacing-input");
-    const nodeSizeInput = document.getElementById("neo-node-size-input");
-    const nodeSizeVal = document.getElementById("neo-node-size-val");
-    const applyBtn = document.getElementById("neo-depth-apply");
-
-    if (depthInput) depthInput.value = neoCurrentDepth;
-    if (spacingInput) spacingInput.value = neoLayerSpacing;
-    if (nodeSizeInput) {
-      nodeSizeInput.value = neoNodeSize;
-      if (nodeSizeVal) nodeSizeVal.textContent = neoNodeSize;
-      nodeSizeInput.oninput = () => {
-        neoNodeSize = parseInt(nodeSizeInput.value) || 22;
-        if (nodeSizeVal) nodeSizeVal.textContent = neoNodeSize;
-        renderCurrent();
-      };
-    }
-
-    const applyDepthAndRender = () => {
-      if (depthInput) {
-        neoCurrentDepth = Math.max(1, Math.min(10, parseInt(depthInput.value) || 1));
-        depthInput.value = neoCurrentDepth;
-      }
-      if (spacingInput) {
-        neoLayerSpacing = Math.max(50, Math.min(250, parseInt(spacingInput.value) || 100));
-        spacingInput.value = neoLayerSpacing;
-      }
-      neoCanvasState = { offsetX: 0, offsetY: 0, scale: 1 };
-      neoNodeOffsets = {};
-      renderCurrent();
-    };
-
-    if (applyBtn) applyBtn.onclick = applyDepthAndRender;
-    if (depthInput) depthInput.onkeydown = e => { if (e.key === "Enter") applyDepthAndRender(); };
-    if (spacingInput) spacingInput.onkeydown = e => { if (e.key === "Enter") applyDepthAndRender(); };
-
-    // 重置视图
-    document.getElementById("neo-reset-view").onclick = () => {
-      neoCanvasState = { offsetX: 0, offsetY: 0, scale: 1 };
-      neoNodeOffsets = {};
-      renderCurrent();
-    };
-
-    // 重置节点位置
-    document.getElementById("neo-reset-positions").onclick = () => {
-      neoNodeOffsets = {};
-      renderCurrent();
-    };
-
-    // ---------- 渲染函数 ----------
-    let currentView = neoCurrentView;
-
-    function renderTonnetzMulti() {
-      canvasContainer.innerHTML = "";
-      detailArea.innerHTML = "";
-
-      const multiGraph = buildTreeGraph(v, neoCurrentDepth, "tonnetz");
-      if (!multiGraph || !multiGraph.nodes.length) {
-        canvasContainer.innerHTML = `<div class="small-muted">${window.__("neo_no_transform")}</div>`;
-        return;
-      }
-
-      drawTreeCanvas(canvasContainer, multiGraph, "tonnetz");
-
-      const uniqueChords = [...new Set(multiGraph.nodes.map(n => n.chord))];
-      const listTitle = document.createElement("h4");
-      listTitle.className = "section-title";
-      listTitle.textContent = `${window.__("neo_triad_title")} (${neoCurrentDepth}层, ${uniqueChords.length}个和弦)`;
-      detailArea.appendChild(listTitle);
-      detailArea.appendChild(createChordCard(v, true));
-
-      const byDepth = {};
-      multiGraph.nodes.forEach(n => {
-        if (n.depth > 0) {
-          if (!byDepth[n.depth]) byDepth[n.depth] = [];
-          byDepth[n.depth].push(n);
-        }
-      });
-
-      Object.keys(byDepth).sort((a, b) => a - b).forEach(depth => {
-        const depthLabel = document.createElement("div");
-        depthLabel.className = "neo-depth-label";
-        depthLabel.textContent = `第 ${depth} 层`;
-        detailArea.appendChild(depthLabel);
-
-        const depthGrid = document.createElement("div");
-        depthGrid.className = "neo-card-grid";
-
-        byDepth[depth].forEach(node => {
-          const chordCard = createChordCard(node.chord, false);
-          if (node.operation) {
-            const opLabel = document.createElement("div");
-            const isPrimary = PRIMARY_OPS.has(node.operation);
-            opLabel.className = `neo-op-label${isPrimary ? "" : " is-extended"}`;
-            opLabel.textContent = `← ${node.operation}${isPrimary ? '' : window.__("neo_extended")}`;
-            chordCard.insertBefore(opLabel, chordCard.firstChild);
-          }
-          depthGrid.appendChild(chordCard);
-        });
-        detailArea.appendChild(depthGrid);
-      });
-    }
-
-    function renderOctatonicMulti() {
-      canvasContainer.innerHTML = "";
-      detailArea.innerHTML = "";
-
-      const multiGraph = buildTreeGraph(v, neoCurrentDepth, "octatonic");
-      if (!multiGraph || !multiGraph.nodes || multiGraph.nodes.length === 0) {
-        canvasContainer.innerHTML = `<div class="small-muted">${window.__("neo_no_octatonic")}</div>`;
-        return;
-      }
-
-      drawTreeCanvas(canvasContainer, multiGraph, "octatonic");
-
-      const uniqueChords = [...new Set(multiGraph.nodes.map(n => n.chord))];
-      const listTitle = document.createElement("h4");
-      listTitle.className = "section-title";
-      listTitle.textContent = `${window.__("neo_octatonic_neighbors")} (${window.__f("neo_chord_depth_heading", {
-        depth: neoCurrentDepth,
-        chords_count: uniqueChords.length
-      })}`;
-      detailArea.appendChild(listTitle);
-
-      // ===== 添加原始和弦卡片（修复：八度音阶塔现在也显示原始和弦）=====
-      const originalCard = createChordCard(v, true);
-      detailArea.appendChild(originalCard);
-
-      const byDepth = {};
-      multiGraph.nodes.forEach(n => {
-        if (n.depth > 0) {
-          if (!byDepth[n.depth]) byDepth[n.depth] = [];
-          byDepth[n.depth].push(n);
-        }
-      });
-
-      Object.keys(byDepth).sort((a, b) => a - b).forEach(depth => {
-        const depthLabel = document.createElement("div");
-        depthLabel.className = "neo-depth-label";
-        depthLabel.textContent = window.__f("neo_chord_depth_heading", {
-          depth: depth
-        });
-        detailArea.appendChild(depthLabel);
-        const depthGrid = document.createElement("div");
-        depthGrid.className = "neo-card-grid";
-        byDepth[depth].forEach(node => depthGrid.appendChild(createChordCard(node.chord, false)));
-        detailArea.appendChild(depthGrid);
-      });
-    }
-
-    function createChordCard(chordName, isOriginal) {
-      const card = document.createElement("div");
-      card.className = `result-card neo-chord-card${isOriginal ? " is-origin" : ""}`;
-      card.tabIndex = 0;
-      card.setAttribute("role", "button");
-      card.addEventListener("keydown", (event) => {
-        if (event.key === "Enter" || event.key === " ") { event.preventDefault(); card.click(); }
-      });
-      card.addEventListener("click", () => {
-        const neoInput = document.getElementById("neo-input");
-        if (neoInput) neoInput.value = chordName;
-        neoCanvasState = { offsetX: 0, offsetY: 0, scale: 1 };
-        neoNodeOffsets = {};
-        updateNeo(canvasContainer.parentElement, chordName);
-      });
-      const title = document.createElement("div");
-      title.className = "card-title";
-      title.textContent = chordName;
-      card.appendChild(title);
-      try {
-        const parsed = brain.converter._ensureNotesAndRoot(chordName, true);
-        if (parsed?.notes?.length) {
-          const noteRow = document.createElement("div");
-          noteRow.className = "note-grid";
-          parsed.notes.slice(0, 6).forEach(n => {
-            const nc = document.createElement("div");
-            nc.className = "note-cell";
-            nc.innerHTML = `<div class="note">${n}</div>`;
-            noteRow.appendChild(nc);
-          });
-          card.appendChild(noteRow);
-        }
-      } catch (e) { }
-      return card;
-    }
-
-    function renderHarmony() {
-      neoCanvasCleanup?.(); neoCanvasCleanup = null;
-      detailArea.replaceChildren();
-      neoCanvasCleanup = mountHarmonyWheel(canvasContainer, v, chord => {
-        document.getElementById('neo-input').value = chord;
-        updateNeo(targetEl, chord);
-      }, key => window.__(key), chord => createChordCard(chord, false), neoHarmonyViewState);
-    }
-
-    function renderAll() {
-      canvasContainer.replaceChildren(); detailArea.replaceChildren();
-      const sources = [];
-      for (const family of ['tonnetz', 'octatonic']) {
-        try { sources.push({ family, graph: buildTreeGraph(v, neoCurrentDepth, family) }); }
-        catch { sources.push({ family, graph: null }); }
-      }
-      sources.push({ family: 'harmony', graph: harmonyNeighborhood(v, neoCurrentDepth) });
-      const combined = mergeConnectionGraphs(v, sources);
-      drawTreeCanvas(canvasContainer, combined, 'all');
-      const heading = document.createElement('h4'); heading.className = 'section-title';
-      heading.textContent = `${window.__('neo_all_title')} · ${combined.nodes.length} ${window.__('neo_all_chords')}`;
-      detailArea.append(heading, createChordCard(v, true));
-      for (const { family, graph } of sources) {
-        const section = document.createElement('section'); section.className = `neo-all-family family-${family}`;
-        const title = document.createElement('h5');
-        title.textContent = `${window.__({ tonnetz: 'neo_triad_title', octatonic: 'neo_octatonic_title', harmony: 'neo_harmony_title' }[family])} · ${Math.max(0, (graph?.nodes?.length || 1) - 1)}`;
-        section.appendChild(title);
-        const grid = document.createElement('div'); grid.className = 'neo-all-family-cards';
-        graph?.nodes?.filter(node => node.depth === 1).forEach(node => grid.appendChild(createChordCard(node.chord, false)));
-        if (!grid.childElementCount) grid.appendChild(document.createTextNode(window.__('neo_all_no_neighbors')));
-        section.appendChild(grid); detailArea.appendChild(section);
-      }
-    }
-
-    function renderCurrent() {
-      viewButtons.forEach((button, view) => {
-        const active = currentView === view;
-        button.classList.toggle('active', active); button.setAttribute('aria-pressed', String(active));
-      });
-      canvasContainer.classList.toggle('is-harmony-wheel', currentView === 'harmony');
-      if (currentView === 'tonnetz') renderTonnetzMulti();
-      else if (currentView === 'octatonic') renderOctatonicMulti();
-      else if (currentView === 'harmony') renderHarmony();
-      else renderAll();
-    }
-    viewButtons.forEach((button, view) => button.addEventListener('click', () => {
-      currentView = neoCurrentView = view;
-      neoCanvasState = { offsetX: 0, offsetY: 0, scale: 1 };
-      neoNodeOffsets = {};
-      renderCurrent();
-    }));
-    if (currentView === 'tonnetz' && !(geometric.Tonnetz_PLRSND && Object.keys(geometric.Tonnetz_PLRSND).length)) {
-      currentView = neoCurrentView = 'octatonic';
-    }
-    renderCurrent();
-  }
-
-  /**
-   * 树型布局：根节点顶部，子节点向下展开
-   * 类似二叉树/族谱结构，每层水平分布
-   */
-  function buildTreeGraph(rootChord, maxDepth, type) {
-    const visited = new Set();
-    const nodes = [];
-    const edges = [];
-
-    const normalize = (chord) => {
-      try {
-        const notes = brain.converter._ensureNotesAndRoot(chord);
-        if (notes?.length) return [...notes].sort().join(',');
-      } catch (e) { }
-      return chord;
-    };
-
-    const rootNorm = normalize(rootChord);
-    visited.add(rootNorm);
-
-    const centerInfo = brain.converter._ensureNotesAndRoot(rootChord, true);
-    nodes.push({
-      id: 0,
-      chord: rootChord,
-      notes: centerInfo?.notes || [],
-      label: rootChord.length > 8 ? rootChord.slice(0, 7) + ".." : rootChord,
-      x: 0,
-      y: 0,
-      group: "center",
-      depth: 0
-    });
-
-    let nodeId = 1;
-    // BFS: 队列元素 { chord, depth, parentId, operation, childIndex, totalSiblings }
-    const queue = [{ chord: rootChord, depth: 0, parentId: null, operation: null }];
-
-    while (queue.length > 0) {
-      const { chord, depth, parentId } = queue.shift();
-      if (depth >= maxDepth) continue;
-
-      let neighbors = {};
-      const geo = brain.nrt.getGeometricNeighbors(chord);
-
-      if (type === "tonnetz" && geo.Tonnetz_PLRSND) {
-        // 优先排列基本操作，再排扩展操作
-        const primary = [];
-        const secondary = [];
-        Object.entries(geo.Tonnetz_PLRSND).forEach(([op, result]) => {
-          if (result.chord) {
-            if (PRIMARY_OPS.has(op)) primary.push([op, result.chord]);
-            else secondary.push([op, result.chord]);
-          }
-        });
-        // 基本操作按固定顺序：P, L, R, S, N, D1
-        const order = ["P", "L", "R", "S", "N", "D1"];
-        primary.sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0]));
-        const allNeighbors = [...primary, ...secondary];
-        allNeighbors.forEach(([op, chord]) => { neighbors[op] = chord; });
-      } else if (type === "octatonic" && geo.Octatonic_Tower) {
-        geo.Octatonic_Tower.forEach((neighbor, i) => {
-          if (neighbor) neighbors[`O${i + 1}`] = neighbor;
-        });
-      }
-
-      const neighborEntries = Object.entries(neighbors);
-      const totalSiblings = neighborEntries.length;
-      const parentNode = nodes.find(n => n.id === parentId);
-      const parentX = parentNode ? parentNode.x : 0;
-      const parentY = parentNode ? parentNode.y : 0;
-
-      // 树的水平展开宽度随深度动态调整
-      const levelWidth = neoLayerSpacing * 2 + (depth + 1) * neoLayerSpacing * 0.8;
-      const startX = parentX - levelWidth / 2 + levelWidth / (totalSiblings + 1);
-
-      neighborEntries.forEach(([op, neighborChord], idx) => {
-        const normNeighbor = normalize(neighborChord);
-
-        // 计算树型位置
-        const childX = startX + (idx + 1) * (levelWidth / (totalSiblings + 1));
-        const childY = parentY + neoLayerSpacing;
-
-        if (!visited.has(normNeighbor)) {
-          visited.add(normNeighbor);
-
-          let notes = [];
-          try {
-            const parsed = brain.converter._ensureNotesAndRoot(neighborChord, true);
-            notes = parsed?.notes || [];
-          } catch (e) { }
-
-          const isPrimary = PRIMARY_OPS.has(op);
-          const newNode = {
-            id: nodeId,
-            chord: neighborChord,
-            notes: notes,
-            label: op,
-            operation: op,
-            isPrimary: isPrimary,
-            x: Math.round(childX),
-            y: Math.round(childY),
-            group: isPrimary ? "transform" : "secondary",
-            depth: depth + 1
-          };
-
-          nodes.push(newNode);
-          edges.push({
-            source: parentId !== null ? parentId : 0,
-            target: nodeId,
-            label: op,
-            depth: depth + 1,
-            isPrimary: isPrimary
-          });
-
-          queue.push({
-            chord: neighborChord,
-            depth: depth + 1,
-            parentId: nodeId,
-            operation: op
-          });
-
-          nodeId++;
-        } else {
-          // 连接到已访问节点
-          const existingNode = nodes.find(
-            n => normalize(n.chord) === normNeighbor && n.id !== parentId
-          );
-          if (existingNode && !edges.some(
-            e => (e.source === parentId && e.target === existingNode.id) ||
-              (e.source === existingNode.id && e.target === parentId)
-          )) {
-            edges.push({
-              source: parentId !== null ? parentId : 0,
-              target: existingNode.id,
-              label: op,
-              depth: Math.max(depth + 1, existingNode.depth),
-              isPrimary: PRIMARY_OPS.has(op)
-            });
-          }
-        }
-      });
-    }
-
-    return { nodes, edges, center: rootChord };
-  }
-
-  function drawTreeCanvas(container, graphData, type) {
-    neoCanvasCleanup?.();
-    neoCanvasCleanup = mountNeoCanvas(container, graphData, {
-      size: neoNodeSize,
-      spacing: neoLayerSpacing,
-      family: type,
-      state: neoCanvasState,
-      offsets: neoNodeOffsets,
-      onSelect(chord) {
-        document.getElementById('neo-input').value = chord;
-        updateNeo(container.parentElement, chord);
-      },
-    });
-  }
+  // ===================== 新里曼面板（neo_panel.js） =====================
+  // 新里曼面板第一次打开时才载入、绑定按钮（见 showOnlyFeature）
+  let neoReady = null;
+  let circleReady = null;
+  let microReady = null;
+  const ranOnShow = new Set();
   // ==================== 和弦音阶速查面板 ====================
   function initRefPanel() {
     const rootSelect = document.getElementById("ref-root-select");
@@ -4312,7 +1466,7 @@ const seqFlowHtml = funcSteps.length
       frequencies.forEach((freq, index) => {
         const startTime = now + index * dur;
         const tone = createSimpleTone(ctx, freq, startTime, dur * 1.1, 0.1);
-        tone.connect(audioDryBus);
+        connectOutput(tone, { wet: false });
       });
     } catch (e) {
       console.warn("playNoteSequence failure:", e);
@@ -4344,7 +1498,7 @@ const seqFlowHtml = funcSteps.length
   function buildMultiModeDegreeFreqs(rows) {
     let lastRootMidi = null;
     return rows.map((row) => {
-      const names = parseMultiModeNotes(row.notes);
+      const names = circle.parseMultiModeNotes(row.notes);
       const { freqs, rootMidi } = chordNotesToFrequencies(
         names,
         4,
@@ -4370,7 +1524,7 @@ const seqFlowHtml = funcSteps.length
       let t = now;
       let lastRootMidi = null;
       funcSteps.forEach((step) => {
-        const names = parseMultiModeNotes(step.notes);
+        const names = circle.parseMultiModeNotes(step.notes);
         if (!names.length) {
           t += 0.4;
           return;
@@ -4386,8 +1540,7 @@ const seqFlowHtml = funcSteps.length
         freqs.forEach((freq, i) => {
           const noteTime = t + i * 0.012;
           const tone = createPianoTone(ctx, freq, noteTime, 0.85);
-          tone.connect(audioDryBus);
-          tone.connect(audioWetBus);
+          connectOutput(tone);
         });
         t += 0.95;
       });
@@ -4440,12 +1593,12 @@ const seqFlowHtml = funcSteps.length
         const idx = parseInt(target.dataset.funcIndex, 10);
         const step = payload.funcSteps?.[idx];
         if (!step) return;
-        const names = parseMultiModeNotes(step.notes);
+        const names = circle.parseMultiModeNotes(step.notes);
         if (!names.length) return;
         let lastRootMidi = null;
         if (idx > 0) {
           for (let j = 0; j < idx; j++) {
-            const prev = parseMultiModeNotes(payload.funcSteps[j].notes);
+            const prev = circle.parseMultiModeNotes(payload.funcSteps[j].notes);
             if (!prev.length) continue;
             const { rootMidi } = chordNotesToFrequencies(
               prev,
@@ -4482,7 +1635,7 @@ const seqFlowHtml = funcSteps.length
     playScale: playMultiModeScale,
     playFuncSequence: playMultiModeFuncSequence,
     chordNotesToFrequencies,
-    parseMultiModeNotes,
+    parseMultiModeNotes: (text) => circle.parseMultiModeNotes(text),
   };
 
   function playScale(scaleNotes, baseOctave = 3, noteDuration = 0.15) {
@@ -4640,7 +1793,7 @@ const seqFlowHtml = funcSteps.length
     const playUpDownBtn = document.createElement("button");
     playUpDownBtn.type = "button";
     playUpDownBtn.className = "btn btn-secondary btn-sm ref-play-btn";
-    playUpDownBtn.textContent = `▶ ${window.__("scale_play_title") || "Play"}`;
+    playUpDownBtn.textContent = `► ${window.__("scale_play_title") || "Play"}`;
     notesHeaderRow.appendChild(playUpDownBtn);
 
     playUpDownBtn.addEventListener("click", () => {
@@ -4824,247 +1977,12 @@ const seqFlowHtml = funcSteps.length
 
     return container;
   }
-  // ==================== 五度圈面板 ====================
 
-  // 功能名称 — 通过 i18n 动态获取
-  function getFuncNames() {
-    return {
-      tonic: window.__("circle_func_tonic") || "Tonic",
-      supertonic: window.__("circle_func_supertonic") || "Supertonic",
-      mediant: window.__("circle_func_mediant") || "Mediant",
-      subdom: window.__("circle_func_subdominant") || "Subdominant",
-      dominant: window.__("circle_func_dominant") || "Dominant",
-      submed: window.__("circle_func_submediant") || "Submediant",
-      leading: window.__("circle_func_leading") || "Leading Tone",
-      subtonic: window.__("circle_func_subtonic") || "Subtonic",
-    };
-  }
-
-  function buildMajorFuncs() {
-    const f = getFuncNames();
-    return [
-      f.tonic,
-      f.supertonic,
-      f.mediant,
-      f.subdom,
-      f.dominant,
-      f.submed,
-      f.leading,
-    ];
-  }
-
-  function buildMinorFuncs() {
-    const f = getFuncNames();
-    return [
-      f.tonic,
-      f.supertonic,
-      f.mediant,
-      f.subdom,
-      f.dominant,
-      f.submed,
-      f.subtonic,
-    ];
-  }
-
-  function buildHarmonicMajorFuncs() {
-    const f = getFuncNames();
-    return [
-      f.tonic,
-      f.supertonic,
-      f.mediant,
-      f.subdom,
-      f.dominant,
-      f.submed,
-      f.leading,
-    ];
-  }
-
-  function buildHarmonicMinorFuncs() {
-    const f = getFuncNames();
-    return [
-      f.tonic,
-      f.supertonic,
-      f.mediant,
-      f.subdom,
-      f.dominant,
-      f.submed,
-      f.leading,
-    ];
-  }
-
-  function updateNeoPath(targetEl, chordA, chordB, maxSteps = 8) {
-    let paths;
-    try {
-      paths = brain.nrt.findPath(chordA, chordB, maxSteps);
-    } catch (e) {
-      targetEl.innerHTML = `<div class="result-card">${e.message}</div>`;
-      return;
-    }
-
-    targetEl.innerHTML = "";
-
-    if (!paths || paths.length === 0) {
-      const noPath = document.createElement("div");
-      noPath.className = "result-card path-empty";
-      noPath.innerHTML = `
-      <div class="path-empty-mark" aria-hidden="true">✕</div>
-      <div class="small-muted">${window.__("neo_path_no_path") || "No connection path found"}</div>
-      <div class="path-empty-route">${chordA}<span aria-hidden="true">→</span>${chordB}</div>
-      <div class="small-muted">(${window.__("neo_path_steps") || "max"}: ${maxSteps} ${window.__("neo_path_steps") || "steps"})</div>
-    `;
-      targetEl.appendChild(noPath);
-      return;
-    }
-
-    // 最优路径
-    const optimalPath = paths[0];
-    renderPathCard(targetEl, optimalPath, chordA, chordB, true);
-
-    // 其他路径
-    if (paths.length > 1) {
-      const altTitle = document.createElement("h4");
-      altTitle.className = "section-title";
-      altTitle.textContent = window.__("neo_path_alternative") || "Alternative Paths";
-      targetEl.appendChild(altTitle);
-
-      paths.slice(1, Math.min(6, paths.length)).forEach((p) => {
-        renderPathCard(targetEl, p, chordA, chordB, false);
-      });
-    }
-  }
-
-  function renderPathCard(container, pathData, chordA, chordB, isOptimal) {
-    const card = document.createElement("div");
-    card.className = `result-card path-card${isOptimal ? " is-optimal" : ""}`;
-
-    // 头部：标题 + 步数徽章
-    const header = document.createElement("div");
-    header.className = "path-card-head";
-
-    const title = document.createElement("div");
-    title.className = "card-title";
-    title.textContent = isOptimal
-      ? `${window.__("neo_path_optimal") || "Optimal Path"}`
-      : `${window.__("neo_path_alternative") || "Path"}`;
-
-    const stepsBadge = document.createElement("span");
-    stepsBadge.className = `step-pill${isOptimal ? " is-best" : ""}`;
-    stepsBadge.textContent = `${pathData.steps} ${window.__("neo_path_steps") || "steps"}`;
-
-    header.appendChild(title);
-    header.appendChild(stepsBadge);
-    card.appendChild(header);
-
-    // 路径流程图
-    const flowContainer = document.createElement("div");
-    flowContainer.className = "path-flow";
-
-    pathData.path.forEach((step, i) => {
-      // 和弦块
-      const chordEl = document.createElement("div");
-      chordEl.className = "path-chord";
-      chordEl.textContent = step.from;
-      flowContainer.appendChild(chordEl);
-
-      // 变换操作箭头
-      const arrowEl = document.createElement("div");
-      arrowEl.className = "path-op";
-      arrowEl.innerHTML = `<span aria-hidden="true">→</span><span>${step.operation}</span>`;
-      flowContainer.appendChild(arrowEl);
-
-      // 最后一步显示目标和弦（高亮）
-      if (i === pathData.path.length - 1) {
-        const targetEl = document.createElement("div");
-        targetEl.className = "path-chord is-target";
-        targetEl.textContent = step.to;
-        flowContainer.appendChild(targetEl);
-      }
-    });
-
-    card.appendChild(flowContainer);
-
-    // 每步和弦的音符展示
-    const notesRow = document.createElement("div");
-    notesRow.className = "path-notes";
-
-    pathData.chords.forEach((chordName) => {
-      try {
-        const info = brain.converter._ensureNotesAndRoot(chordName);
-        if (info && info.length >= 3) {
-          const block = document.createElement("div");
-          block.className = "path-notes-block";
-
-          const nameDiv = document.createElement("div");
-          nameDiv.textContent = chordName;
-          block.appendChild(nameDiv);
-
-          const noteRow = document.createElement("div");
-          info.slice(0, 4).forEach((n) => {
-            const nc = document.createElement("span");
-            nc.className = "mini-note";
-            nc.textContent = n;
-            noteRow.appendChild(nc);
-          });
-          block.appendChild(noteRow);
-
-          // 箭头分隔（最后一个不显示）
-          if (chordName !== pathData.chords[pathData.chords.length - 1]) {
-            const wrapper = document.createElement("div");
-            wrapper.className = "path-notes-item";
-            wrapper.appendChild(block);
-
-            const sep = document.createElement("span");
-            sep.className = "path-notes-sep";
-            sep.setAttribute("aria-hidden", "true");
-            sep.textContent = "→";
-            wrapper.appendChild(sep);
-
-            notesRow.appendChild(wrapper);
-          } else {
-            notesRow.appendChild(block);
-          }
-        }
-      } catch (e) { }
-    });
-
-    card.appendChild(notesRow);
-    container.appendChild(card);
-  }
-
-  // 绑定新里曼运行按钮
-  document.getElementById("neo-run").addEventListener("click", () => {
-    const target = document.getElementById("panel-neo-body");
-    const val = document.getElementById("neo-input").value;
-    updateNeo(target, val);
-  });
-
-  // 路径查找按钮事件
-  const neoPathRunBtn = document.getElementById("neo-path-run");
-  if (neoPathRunBtn) {
-    neoPathRunBtn.addEventListener("click", () => {
-      const target = document.getElementById("panel-neo-body");
-      const fromChord = document.getElementById("neo-path-from").value.trim();
-      const toChord = document.getElementById("neo-path-to").value.trim();
-      const maxSteps = parseInt(document.getElementById("neo-max-steps").value) || 8;
-
-      if (!fromChord || !toChord) {
-        target.innerHTML = `<div class="small-muted">${window.__("cannot_parse_input")}</div>`;
-        return;
-      }
-
-      updateNeoPath(target, fromChord, toChord, maxSteps);
-    });
-
-    // 支持回车触发
-    document.getElementById("neo-path-to").addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        neoPathRunBtn.click();
-      }
-    });
-  }
 
   // Bind run buttons and inputs per-panel
+  /** 古典和声面板的界面文字（键值见 lang.js 的 cl_*） */
+  function clt(key, params) { return params ? window.__f(key, params) : window.__(key); }
+
   function localizeClassicalText(text) {
     if (window.__lang !== "zh") return text;
     const exact = {
@@ -5097,21 +2015,21 @@ const seqFlowHtml = funcSteps.length
     };
     if (exact[text]) return exact[text];
     const secondary = text.match(/^Resolve to ([^(]+) \(([^)]+)\); retain common tones and resolve the temporary leading tone upward\.$/);
-    if (secondary) return `解决到 ${secondary[1].trim()}（${secondary[2]}） 保留共同音 临时导音上行解决 `;
+    if (secondary) return clt("cl_resolve_secondary", { target: secondary[1].trim(), degree: secondary[2] });
     return text;
   }
 
   function classicalModeLabel(mode = "major") {
     return {
       "all-generic": "/",
-      "major-generic": "大调(不分)",
-      "minor-generic": "小调(不分)",
-      major: "自然大调",
-      "harmonic-major": "和声大调",
-      "melodic-major": "旋律大调",
-      minor: "自然小调",
-      "harmonic-minor": "和声小调",
-      "melodic-minor": "旋律小调",
+      "major-generic": clt("cl_mode_major_generic"),
+      "minor-generic": clt("cl_mode_minor_generic"),
+      major: clt("cl_mode_major"),
+      "harmonic-major": clt("cl_mode_harmonic_major"),
+      "melodic-major": clt("cl_mode_melodic_major"),
+      minor: clt("cl_mode_minor"),
+      "harmonic-minor": clt("cl_mode_harmonic_minor"),
+      "melodic-minor": clt("cl_mode_melodic_minor"),
     }[mode] || mode;
   }
 
@@ -5128,6 +2046,42 @@ const seqFlowHtml = funcSteps.length
     if (mode === "major-generic") return majorModes;
     if (mode === "minor-generic") return minorModes;
     return [mode];
+  }
+
+  /**
+   * 和弦链写成四部和声的大谱表：女高、女中在高音谱表，男高、男低在低音谱表；
+   * 每个和弦下面标三行：级数（罗马数字）、功能记号（T、S、D……）、和弦音
+   * 声部用 classical.voiceSequence 解出的配置（和播放时同一套规则），音名按该和弦的拼写写出
+   */
+  /**
+   * "连续和声连接"就画在大谱表上：女高、女中在高音谱表，男高、男低在低音谱表（声部用 classical.voiceSequence 解出，和播放同一套规则）
+   * 每个和弦下面：功能记号、级数、和弦名、和弦音、功能组；每段开头在谱表上方标 |Key=…|
+   * 点一列 = 试听这个和弦；点下面的标注 = 和弦链退回到这个和弦。不到 8 个和弦按 8 个的长度画，超过 8 个出现横向滚动条
+   * 返回 true 表示谱表画出来了（这时上面那排和弦卡片就不用再显示）
+   */
+  let classicalLastSatb = null;
+  function renderClassicalStaff(container, displaySymbol = (x) => x, after = null, opts = {}) {
+    const result = drawClassicalStaff({ classical, segments: classicalSegments, settings: loadClassicalPlaybackSettings(), modeLabel: classicalModeLabel, localize: localizeClassicalText, text: clt, lang: window.__lang || "zh" }, container, displaySymbol, after, opts);
+    classicalLastSatb = result.satb;
+    return result.drawn;
+  }
+  /** 和弦链里第几个和弦（跨各段连续编号，只算调色板里认得的和弦，和谱例的列一致） */
+  function classicalGlobalIndex(segmentIndex, chainIndex) {
+    let index = 0;
+    for (let s = 0; s < classicalSegments.length; s += 1) {
+      const palette = new Set(classical.getPalette(classicalSegments[s].key, classicalSegments[s].mode).map((entry) => entry.symbol));
+      for (let c = 0; c < classicalSegments[s].symbols.length; c += 1) {
+        if (!palette.has(classicalSegments[s].symbols[c])) continue;
+        if (s === segmentIndex && c === chainIndex) return index;
+        index += 1;
+      }
+    }
+    return -1;
+  }
+  /** 播放时在谱例上点亮正在响的那一列（column < 0 时全部熄灭） */
+  function highlightClassicalStaff(root, column) {
+    root.querySelectorAll(".classical-chain-staff .is-playing").forEach((n) => n.classList.remove("is-playing"));
+    if (column >= 0) root.querySelectorAll(`.classical-chain-staff [data-col="${column}"]`).forEach((n) => n.classList.add("is-playing"));
   }
 
   function updateClassicalHarmony(targetEl) {
@@ -5174,7 +2128,10 @@ const seqFlowHtml = funcSteps.length
 
       const chainBar = document.createElement("div");
       chainBar.className = "classical-chain result-card";
-      const displayClassicalSymbol = symbol => symbol;
+      // 斯波索宾数据里的符号带中文变体名（如 T不完全、T双三），只在显示时翻译，内部仍用原符号
+      const displayClassicalSymbol = symbol => String(symbol)
+        .replace(/不完全/g, clt("cl_variant_incomplete"))
+        .replace(/双三/g, clt("cl_variant_doubled_third"));
        if (report) {
          const activeSegment = classicalSegments[classicalSegments.length - 1];
          if (!activeSegment) {
@@ -5200,13 +2157,13 @@ const seqFlowHtml = funcSteps.length
           const labels = entry
             ? `<span class="classical-chain-function">${entry.symbol}</span><span class="classical-chain-roman">${entry.roman}</span><span class="classical-chain-chord">${entry.chord}</span><span class="classical-chain-category">${categoryLabel}</span>`
             : `<span class="classical-chain-function">${symbol}</span>`;
-          return `<span class="classical-chain-node-wrap"><button type="button" class="classical-chain-node" data-symbol="${symbol}" data-segment-index="${segmentIndex}" data-chain-index="${index}" title="${entry ? `${entry.symbol} / ${entry.roman} / ${entry.chord} / ${categoryLabel}` : symbol}">${labels}</button><button type="button" class="classical-chain-single-play" data-single-segment-index="${segmentIndex}" data-single-chain-index="${index}" aria-label="播放 ${entry ? `${entry.symbol} ${entry.chord}` : symbol}" title="播放此和弦">▶</button></span>${index < segment.symbols.length - 1 ? "<span class=\"classical-chain-arrow\">→</span>" : ""}`;
+          return `<span class="classical-chain-node-wrap"><button type="button" class="classical-chain-node" data-symbol="${symbol}" data-segment-index="${segmentIndex}" data-chain-index="${index}" title="${entry ? `${entry.symbol} / ${entry.roman} / ${entry.chord} / ${categoryLabel}` : symbol}">${labels}</button><button type="button" class="classical-chain-single-play" data-single-segment-index="${segmentIndex}" data-single-chain-index="${index}" aria-label="${clt("cl_play")} ${entry ? `${entry.symbol} ${entry.chord}` : symbol}" title="${clt("cl_play_this_chord")}">►</button></span>${index < segment.symbols.length - 1 ? "<span class=\"classical-chain-arrow\">→</span>" : ""}`;
         }).join("");
         const keyLabelClass = segmentIndex ? "classical-chain-divider" : "classical-chain-key-start";
         return `<span class="${keyLabelClass}">│ Key=${segment.key} ${classicalModeLabel(segment.mode)} │</span>${nodes}`;
       }).join("");
       const playbackSettings = loadClassicalPlaybackSettings();
-      chainBar.innerHTML = `<div class="classical-chain-head"><strong>连续和声连接</strong><div class="classical-chain-primary-actions"><button type="button" class="classical-chain-play" ${classicalChain.length ? "" : "disabled"}>▶ 播放</button><button type="button" class="classical-chain-back" ${classicalChain.length < 2 ? "disabled" : ""}>↶ 回退</button><button type="button" class="classical-chain-reset">× 清空</button></div></div><div class="classical-chain-flow">${segmentFlow || `<span class="small-muted">输入当前和弦 或从功能库选择起点</span>`}</div><details class="classical-playback-settings"><summary>播放设置 · ${playbackSettings.bpm} BPM · ${playbackSettings.meter}</summary><div class="classical-chain-controls"><label class="classical-chain-bpm">速度 <input class="classical-chain-tempo" type="range" min="40" max="640" step="1" value="${playbackSettings.bpm}" aria-label="播放速度"><input class="classical-chain-tempo-value" type="number" min="40" max="640" step="1" value="${playbackSettings.bpm}" aria-label="BPM 数值"> BPM</label><select class="classical-chain-meter" aria-label="播放拍号"><option value="4/4" ${playbackSettings.meter === "4/4" ? "selected" : ""}>4/4</option><option value="3/4" ${playbackSettings.meter === "3/4" ? "selected" : ""}>3/4</option><option value="6/8" ${playbackSettings.meter === "6/8" ? "selected" : ""}>6/8</option><option value="8/8" ${playbackSettings.meter === "8/8" ? "selected" : ""}>8/8</option><option value="12/16" ${playbackSettings.meter === "12/16" ? "selected" : ""}>12/16</option><option value="16/16" ${playbackSettings.meter === "16/16" ? "selected" : ""}>16/16</option></select><select class="classical-chain-play-mode" aria-label="序列播放方式"><option value="block" ${playbackSettings.mode === "block" ? "selected" : ""}>柱式和声</option><option value="arpeggio" ${playbackSettings.mode === "arpeggio" ? "selected" : ""}>琶音 1-3-5</option></select></div></details>`;
+      chainBar.innerHTML = `<div class="classical-chain-head"><strong>${clt("cl_chain_title")}</strong><div class="classical-chain-primary-actions"><button type="button" class="classical-chain-play" ${classicalChain.length ? "" : "disabled"}>${clt("cl_play_button")}</button><button type="button" class="classical-chain-back" ${classicalChain.length < 2 ? "disabled" : ""}>${clt("cl_back")}</button><button type="button" class="classical-chain-reset">${clt("cl_clear")}</button></div></div><div class="classical-chain-flow">${segmentFlow || `<span class="small-muted">${clt("cl_chain_empty")}</span>`}</div><details class="classical-playback-settings"><summary>${clt("cl_playback_settings")} · ${playbackSettings.bpm} BPM · ${playbackSettings.meter}</summary><div class="classical-chain-controls"><label class="classical-chain-bpm">${clt("cl_tempo")} <input class="classical-chain-tempo" type="range" min="40" max="640" step="1" value="${playbackSettings.bpm}" aria-label="${clt("cl_tempo_aria")}"><input class="classical-chain-tempo-value" type="number" min="40" max="640" step="1" value="${playbackSettings.bpm}" aria-label="${clt("cl_bpm_aria")}"> BPM</label><select class="classical-chain-meter" aria-label="${clt("cl_meter_aria")}"><option value="4/4" ${playbackSettings.meter === "4/4" ? "selected" : ""}>4/4</option><option value="3/4" ${playbackSettings.meter === "3/4" ? "selected" : ""}>3/4</option><option value="6/8" ${playbackSettings.meter === "6/8" ? "selected" : ""}>6/8</option><option value="8/8" ${playbackSettings.meter === "8/8" ? "selected" : ""}>8/8</option><option value="12/16" ${playbackSettings.meter === "12/16" ? "selected" : ""}>12/16</option><option value="16/16" ${playbackSettings.meter === "16/16" ? "selected" : ""}>16/16</option></select><select class="classical-chain-play-mode" aria-label="${clt("cl_mode_aria")}"><option value="block" ${playbackSettings.mode === "block" ? "selected" : ""}>${clt("cl_block")}</option><option value="arpeggio" ${playbackSettings.mode === "arpeggio" ? "selected" : ""}>${clt("cl_arpeggio")}</option></select></div></details>`;
       const clampClassicalBpm = value => Math.max(40, Math.min(640, Math.round(Number(value) || 80)));
       const tempoSlider = chainBar.querySelector(".classical-chain-tempo");
       const tempoValue = chainBar.querySelector(".classical-chain-tempo-value");
@@ -5225,16 +2182,22 @@ const seqFlowHtml = funcSteps.length
       };
       tempoSlider?.addEventListener("input", event => syncClassicalTempo(event.currentTarget.value));
       tempoValue?.addEventListener("change", event => syncClassicalTempo(event.currentTarget.value));
-      meterSelect?.addEventListener("change", () => saveClassicalPlaybackSettings({
-        bpm: clampClassicalBpm(tempoValue?.value || tempoSlider?.value),
-        meter: meterSelect.value,
-        mode: modeSelect?.value || DEFAULT_CLASSICAL_PLAYBACK.mode,
-      }));
-      modeSelect?.addEventListener("change", () => saveClassicalPlaybackSettings({
-        bpm: clampClassicalBpm(tempoValue?.value || tempoSlider?.value),
-        meter: meterSelect?.value || DEFAULT_CLASSICAL_PLAYBACK.meter,
-        mode: modeSelect.value,
-      }));
+      meterSelect?.addEventListener("change", () => {
+        saveClassicalPlaybackSettings({
+          bpm: clampClassicalBpm(tempoValue?.value || tempoSlider?.value),
+          meter: meterSelect.value,
+          mode: modeSelect?.value || DEFAULT_CLASSICAL_PLAYBACK.mode,
+        });
+        redrawClassicalStaff();
+      });
+      modeSelect?.addEventListener("change", () => {
+        saveClassicalPlaybackSettings({
+          bpm: clampClassicalBpm(tempoValue?.value || tempoSlider?.value),
+          meter: meterSelect?.value || DEFAULT_CLASSICAL_PLAYBACK.meter,
+          mode: modeSelect.value,
+        });
+        redrawClassicalStaff();
+      });
       chainBar.querySelectorAll(".classical-chain-single-play").forEach(button => button.addEventListener("click", event => {
         compositionAudio.stop();
         event.stopPropagation();
@@ -5247,8 +2210,9 @@ const seqFlowHtml = funcSteps.length
         stopClassicalSequencePlayback();
         chainBar.querySelectorAll(".classical-chain-node.is-playing").forEach(node => node.classList.remove("is-playing"));
         chainBar.querySelector(`[data-segment-index="${segmentIndex}"][data-chain-index="${chainIndex}"]`)?.classList.add("is-playing");
+        highlightClassicalStaff(chainBar, classicalGlobalIndex(segmentIndex, chainIndex));
         playChord(classicalMidiFreqs(entry), 1.4);
-        setTimeout(() => chainBar.querySelector(`[data-segment-index="${segmentIndex}"][data-chain-index="${chainIndex}"]`)?.classList.remove("is-playing"), 1450);
+        setTimeout(() => { chainBar.querySelector(`[data-segment-index="${segmentIndex}"][data-chain-index="${chainIndex}"]`)?.classList.remove("is-playing"); highlightClassicalStaff(chainBar, -1); }, 1450);
       }));
       chainBar.querySelector(".classical-chain-play")?.addEventListener("click", event => {
         compositionAudio.stop();
@@ -5256,8 +2220,9 @@ const seqFlowHtml = funcSteps.length
         if (playButton.dataset.playing === "true") {
           stopClassicalSequencePlayback();
           chainBar.querySelectorAll(".classical-chain-node.is-playing").forEach(node => node.classList.remove("is-playing"));
+          highlightClassicalStaff(chainBar, -1);
           playButton.dataset.playing = "false";
-          playButton.textContent = "▶ 播放序列";
+          playButton.textContent = clt("cl_play_sequence");
           return;
         }
         const sequence = [];
@@ -5275,7 +2240,7 @@ const seqFlowHtml = funcSteps.length
             const entry = entries.get(symbol);
             if (!entry) return;
             sequenceEntries.push(entry);
-            sequence.push({ segmentIndex, chainIndex, mode: playbackMode });
+            sequence.push({ segmentIndex, chainIndex, mode: playbackMode, column: sequence.length });
           });
         });
         if (!sequence.length) return;
@@ -5283,7 +2248,7 @@ const seqFlowHtml = funcSteps.length
         let status = chainBar.querySelector('.classical-voicing-status');
         if (!status) { status = document.createElement('div'); status.className = 'classical-voicing-status'; status.setAttribute('role', 'status'); chainBar.append(status); }
         if (!solved.ok) { status.textContent = solved.reason; return; }
-        status.textContent = '四部连接已校验 B / T / A / S 固定声部 与转位低音';
+        status.textContent = clt("cl_satb_checked");
         sequence.forEach((step, i) => { step.freqs = solved.voices[i].map(n => 440 * 2 ** ((n - 69) / 12)); });
         const voiceTable = document.createElement('div'); voiceTable.className = 'classical-voice-table';
         solved.voices.forEach((v,i) => { const row = document.createElement('div'); row.textContent = `${sequenceEntries[i].symbol}   ${v.map(midiName).join(' / ')}`; voiceTable.append(row); });
@@ -5291,7 +2256,7 @@ const seqFlowHtml = funcSteps.length
         stopClassicalSequencePlayback();
         const playbackId = classicalSequencePlaybackId;
         playButton.dataset.playing = "true";
-        playButton.textContent = "■ 停止";
+        playButton.textContent = clt("cl_stop");
         let eventIndex = 0;
         sequence.forEach(step => {
           const arpSource = step.freqs;
@@ -5303,6 +2268,7 @@ const seqFlowHtml = funcSteps.length
             if (playbackId !== classicalSequencePlaybackId) return;
             chainBar.querySelectorAll(".classical-chain-node.is-playing").forEach(node => node.classList.remove("is-playing"));
             chainBar.querySelector(`[data-segment-index="${step.segmentIndex}"][data-chain-index="${step.chainIndex}"]`)?.classList.add("is-playing");
+            highlightClassicalStaff(chainBar, step.column);
             playChord(step.mode === "arpeggio" ? [frequency] : frequency, step.mode === "arpeggio" ? 0.55 : Math.max(0.8, barMs / 1000 * 0.9), { interrupt: frequencyIndex === 0 || step.mode !== "arpeggio" });
           }, eventIndex++ * (step.mode === "arpeggio" ? beatMs : barMs)));
           });
@@ -5311,8 +2277,9 @@ const seqFlowHtml = funcSteps.length
         classicalSequenceTimers.push(setTimeout(() => {
           if (playbackId !== classicalSequencePlaybackId) return;
           chainBar.querySelectorAll(".classical-chain-node.is-playing").forEach(node => node.classList.remove("is-playing"));
+          highlightClassicalStaff(chainBar, -1);
           playButton.dataset.playing = "false";
-          playButton.textContent = "▶ 播放序列";
+          playButton.textContent = clt("cl_play_sequence");
           classicalSequenceTimers = [];
         }, eventIndex * stepDuration + 180));
       });
@@ -5339,6 +2306,27 @@ const seqFlowHtml = funcSteps.length
       targetEl.appendChild(workbench);
       workbench.append(resultPane);
       resultPane.appendChild(chainBar);
+      // "连续和声连接"直接画在大谱表上（谱表画得出来时，原来那排和弦卡片就不再显示）
+      function redrawClassicalStaff() {
+        chainBar.querySelector(".classical-chain-staff")?.remove();
+        const chainFlow = chainBar.querySelector(".classical-chain-flow");
+        const staffDrawn = renderClassicalStaff(chainBar, displayClassicalSymbol, chainFlow, {
+          onPlay: (column, segmentIndex, chainIndex) => chainBar.querySelector(`.classical-chain-single-play[data-single-segment-index="${segmentIndex}"][data-single-chain-index="${chainIndex}"]`)?.click(),
+          onPick: (segmentIndex, chainIndex) => chainBar.querySelector(`.classical-chain-node[data-segment-index="${segmentIndex}"][data-chain-index="${chainIndex}"]`)?.click(),
+        });
+        if (chainFlow) chainFlow.hidden = Boolean(staffDrawn);
+      }
+      redrawClassicalStaff();
+      // 送到五线谱：把四部和声交给五线谱工具继续编辑
+      const sendButton = document.createElement("button");
+      sendButton.type = "button";
+      sendButton.className = "classical-chain-send";
+      sendButton.textContent = clt("cl_send_staff");
+      sendButton.addEventListener("click", () => {
+        if (!classicalLastSatb) return;
+        sendToStaff({ clef: "grand", key: classicalLastSatb.key, meter: [4, 4], bpm: 72, voices: satbToVoices(classicalLastSatb.chords, 4) });
+      });
+      chainBar.querySelector(".classical-chain-primary-actions")?.appendChild(sendButton);
 
       // The picker stays near the current sequence so users do not have to
       // scroll past recommendation cards just to choose the next function.
@@ -5348,7 +2336,7 @@ const seqFlowHtml = funcSteps.length
       const paths = hasInput ? classical.findPaths(input, key, mode, 4, 8) : [];
       const pathBar = document.createElement("section");
       pathBar.className = "classical-paths result-card";
-      pathBar.innerHTML = `<div class="classical-palette-title">连续建议路线</div><div class="classical-path-list">${paths.map((path, index) => `<button type="button" class="classical-path" data-path-index="${index}"><span>${path.symbols.join(" → ")}</span><small>${path.symbols.length - 1} 步 · ${path.score.toFixed(1)}</small></button>`).join("")}</div>`;
+      pathBar.innerHTML = `<div class="classical-palette-title">${clt("cl_paths_title")}</div><div class="classical-path-list">${paths.map((path, index) => `<button type="button" class="classical-path" data-path-index="${index}"><span>${path.symbols.join(" → ")}</span><small>${clt("cl_steps", { n: path.symbols.length - 1 })} · ${path.score.toFixed(1)}</small></button>`).join("")}</div>`;
       pathBar.querySelectorAll("[data-path-index]").forEach(button => button.addEventListener("click", () => {
         const selected = paths[Number(button.dataset.pathIndex)];
         classicalChain = selected.symbols;
@@ -5370,13 +2358,13 @@ const seqFlowHtml = funcSteps.length
       }
       const modulationTargetLabel = `${modulationKey} ${classicalModeLabel(modulationMode)}`;
       const modulationBody = !hasInput
-        ? `<div class="small-muted">先输入当前和弦或点击功能组 再选择这里的转调方案 </div>`
+        ? `<div class="small-muted">${clt("cl_mod_need_chord")}</div>`
         : targetMatchesCurrent
-          ? `<div class="small-muted">目标调与当前调相同 不需要转调 </div>`
+          ? `<div class="small-muted">${clt("cl_mod_same_key")}</div>`
           : modulationRoutes.length
-            ? modulationRoutes.map((route, index) => `<button type="button" class="classical-path modulation-path" data-modulation-index="${index}"><span>${route.sourceSymbols.join(" → ")} <b>│ Key=${route.targetKey} ${classicalModeLabel(route.targetMode)} │</b> ${route.targetSymbols.join(" → ")}</span><small>枢纽 ${route.pivot.chord} · 四部连接已校验</small></button>`).join("")
-            : `<div class="small-muted">当前调性与目标调性之间没有找到可用的共同和弦枢纽 </div>`;
-      modulationBar.innerHTML = `<div class="classical-palette-title">转调候选 · 到 ${modulationTargetLabel}</div><div class="small-muted classical-modulation-hint">点击下面的方案才会把转调路线加入连续和声连接 上方选项只负责指定目标调 </div><div class="classical-path-list">${modulationBody}</div>`;
+            ? modulationRoutes.map((route, index) => `<button type="button" class="classical-path modulation-path" data-modulation-index="${index}"><span>${route.sourceSymbols.join(" → ")} <b>│ Key=${route.targetKey} ${classicalModeLabel(route.targetMode)} │</b> ${route.targetSymbols.join(" → ")}</span><small>${clt("cl_pivot", { chord: route.pivot.chord })}</small></button>`).join("")
+            : `<div class="small-muted">${clt("cl_mod_no_pivot")}</div>`;
+      modulationBar.innerHTML = `<div class="classical-palette-title">${clt("cl_mod_title", { target: modulationTargetLabel })}</div><div class="small-muted classical-modulation-hint">${clt("cl_mod_hint")}</div><div class="classical-path-list">${modulationBody}</div>`;
       modulationBar.querySelectorAll("[data-modulation-index]").forEach(button => button.addEventListener("click", () => {
         const selected = modulationRoutes[Number(button.dataset.modulationIndex)];
         const sourceSegment = classicalSegments[classicalSegments.length - 1];
@@ -5398,12 +2386,12 @@ const seqFlowHtml = funcSteps.length
       const paletteWrap = document.createElement("section");
       paletteWrap.className = "classical-palette result-card";
       const groups = [
-        ["tonic group", "主功能组(T / DT)"],
-        ["subdominant group", "下属功能组(S / TSVI / VII)"],
-        ["dominant group", "属功能组(D / K)"],
-        ["leading-tone group", "导功能组(Dᵥᵢᵢ)"],
-        ["altered chord group", "变和弦组(N / +6)"],
-        ["double dominant", "重属功能组(DD)"]
+        ["tonic group", clt("cl_group_tonic")],
+        ["subdominant group", clt("cl_group_subdominant")],
+        ["dominant group", clt("cl_group_dominant")],
+        ["leading-tone group", clt("cl_group_leading")],
+        ["altered chord group", clt("cl_group_altered")],
+        ["double dominant", clt("cl_group_dd")]
       ];
       const grouped = new Map(groups.map(([id, label]) => [id, { label, entries: [] }]));
       const tonicized = new Map();
@@ -5416,11 +2404,11 @@ const seqFlowHtml = funcSteps.length
       });
       const makeGroup = (label, entries, extraClass = "") => {
         if (!entries.length) return "";
-        const buttons = entries.map(entry => `<button type="button" class="classical-palette-btn ${extraClass}" data-classical-symbol="${entry.symbol}"><span>${entry.symbol}</span><small>${entry.roman || ""}${entry.chord ? ` · ${entry.chord}` : ""}</small></button>`).join("");
+        const buttons = entries.map(entry => `<button type="button" class="classical-palette-btn ${extraClass}" data-classical-symbol="${entry.symbol}"><span>${displayClassicalSymbol(entry.symbol)}</span><small>${entry.roman || ""}${entry.chord ? ` · ${entry.chord}` : ""}</small></button>`).join("");
         return `<div class="classical-palette-group"><h4>${label}</h4><div class="classical-palette-grid">${buttons}</div></div>`;
       };
       const availableGroups = groups.filter(([id]) => grouped.get(id)?.entries.length);
-      paletteWrap.innerHTML = `<div class="classical-palette-title">Sposobin 功能组</div><div class="classical-function-tabs">${availableGroups.map(([id]) => `<button type="button" class="classical-function-tab" data-function-group="${id}">${grouped.get(id).label.replace(/[（(].*$/, "")} <span>${grouped.get(id).entries.length}</span></button>`).join("")}</div><div class="classical-function-list"></div><div class="classical-palette-tonicization"><h4>离调与变音体系</h4><div class="classical-tonicization-tabs">${["II", "III", "IV", "V", "VI"].map(target => `<button type="button" class="classical-tonicization-tab" data-tonic-target="${target}">至 ${target} 级 <span>${(tonicized.get(target) || []).length}</span></button>`).join("")}</div><div class="classical-tonicization-list"></div></div>`;
+      paletteWrap.innerHTML = `<div class="classical-palette-title">${clt("cl_palette_title")}</div><div class="classical-function-tabs">${availableGroups.map(([id]) => `<button type="button" class="classical-function-tab" data-function-group="${id}">${grouped.get(id).label.replace(/[（(].*$/, "")} <span>${grouped.get(id).entries.length}</span></button>`).join("")}</div><div class="classical-function-list"></div><div class="classical-palette-tonicization"><h4>${clt("cl_tonicization_title")}</h4><div class="classical-tonicization-tabs">${["II", "III", "IV", "V", "VI"].map(target => `<button type="button" class="classical-tonicization-tab" data-tonic-target="${target}">${clt("cl_to_degree", { degree: target })} <span>${(tonicized.get(target) || []).length}</span></button>`).join("")}</div><div class="classical-tonicization-list"></div></div>`;
       const appendClassicalSymbol = symbol => {
         const activeSegment = classicalSegments[classicalSegments.length - 1] || { key, mode, symbols: [] };
         if (!classicalSegments.length) classicalSegments.push(activeSegment);
@@ -5448,7 +2436,7 @@ const seqFlowHtml = funcSteps.length
       }));
       const tonicList = paletteWrap.querySelector(".classical-tonicization-list");
       const renderTonicization = target => {
-        tonicList.innerHTML = makeGroup(`副属和弦 · 至 ${target} 级`, tonicized.get(target) || [], "classical-tonicization-btn");
+        tonicList.innerHTML = makeGroup(`${clt("cl_secondary")} · ${clt("cl_to_degree", { degree: target })}`, tonicized.get(target) || [], "classical-tonicization-btn");
         bindClassicalSymbolButtons(tonicList);
       };
       paletteWrap.querySelectorAll(".classical-tonicization-tab").forEach(button => button.addEventListener("click", () => {
@@ -5463,13 +2451,13 @@ const seqFlowHtml = funcSteps.length
       summary.className = "classical-summary result-card";
       const modeLabel = classicalModeLabel(mode);
       summary.innerHTML = report
-        ? `<div class="classical-summary-title">${key} ${modeLabel} · ${displayClassicalSymbol(report.current.symbol || input, true)}</div><div class="small-muted">${localizeClassicalText(report.constraints)}</div><div class="classical-current-meta">${localizeClassicalText(report.current.category || "unclassified")} · 功能 ${report.current.function || "—"} · 低音 ${report.current.bass || report.current.notes?.[0] || "—"}</div>`
-        : `<div class="classical-summary-title">${key} ${modeLabel}</div><div class="small-muted">请选择或输入一个和弦 开始查看连续连接建议 </div>`;
+        ? `<div class="classical-summary-title">${key} ${modeLabel} · ${displayClassicalSymbol(report.current.symbol || input, true)}</div><div class="small-muted">${localizeClassicalText(report.constraints)}</div><div class="classical-current-meta">${localizeClassicalText(report.current.category || "unclassified")} · ${clt("cl_function")} ${report.current.function || "—"} · ${clt("cl_bass")} ${report.current.bass || report.current.notes?.[0] || "—"}</div>`
+        : `<div class="classical-summary-title">${key} ${modeLabel}</div><div class="small-muted">${clt("cl_summary_empty")}</div>`;
       resultPane.appendChild(summary);
 
       const heading = document.createElement("div");
       heading.className = "classical-list-heading";
-      heading.textContent = report ? `推荐衔接 · ${report.recommendations.length}` : "推荐衔接";
+      heading.textContent = report ? `${clt("cl_recommendations")} · ${report.recommendations.length}` : clt("cl_recommendations");
       recommendationSection.appendChild(heading);
 
       const list = document.createElement("div");
@@ -5479,10 +2467,10 @@ const seqFlowHtml = funcSteps.length
         card.className = "classical-rec-card result-card";
         card.tabIndex = 0;
         card.setAttribute("role", "button");
-        card.setAttribute("aria-label", `将 ${item.symbol} ${item.roman} ${item.chord} 加入连续和声连接`);
-        card.title = "加入连续和声连接";
+        card.setAttribute("aria-label", clt("cl_add_to_chain_aria", { chord: `${item.symbol} ${item.roman} ${item.chord}` }));
+        card.title = clt("cl_add_to_chain");
         const toneButtons = (item.notes || []).map(note => `<button type="button" class="classical-note" data-classical-note="${note}">${note}</button>`).join("");
-        card.innerHTML = `<div class="classical-rec-top"><div><strong>${item.symbol}</strong><span class="classical-roman-name">${item.roman || item.symbol}</span><span class="classical-chord-name">${item.chord}</span></div><div class="classical-rec-actions"><span class="classical-score">${item.score.toFixed(1)}</span><span class="classical-add" aria-hidden="true">+</span></div></div><div class="classical-tags"><span>${localizeClassicalText(item.category)}</span><span>功能 ${item.function}</span><span>转位 ${item.figuredBass || "根位"}</span><span>低音 ${item.bass || "—"}</span></div><div class="classical-notes">${toneButtons}</div><div class="classical-meta">共同音 ${item.commonTones} · 声部距离 ${item.voiceLeading}</div><button type="button" class="classical-play" title="播放和弦">▶ 播放</button>`;
+        card.innerHTML = `<div class="classical-rec-top"><div><strong>${item.symbol}</strong><span class="classical-roman-name">${item.roman || item.symbol}</span><span class="classical-chord-name">${item.chord}</span></div><div class="classical-rec-actions"><span class="classical-score">${item.score.toFixed(1)}</span><span class="classical-add" aria-hidden="true">+</span></div></div><div class="classical-tags"><span>${localizeClassicalText(item.category)}</span><span>${clt("cl_function")} ${item.function}</span><span>${clt("cl_inversion")} ${item.figuredBass || clt("cl_root_position")}</span><span>${clt("cl_bass")} ${item.bass || "—"}</span></div><div class="classical-notes">${toneButtons}</div><div class="classical-meta">${clt("cl_common_tones")} ${item.commonTones} · ${clt("cl_voice_distance")} ${item.voiceLeading}</div><button type="button" class="classical-play" title="${clt("cl_play_chord")}">${clt("cl_play_button")}</button>`;
         const appendRecommendation = () => {
           const activeSegment = classicalSegments[classicalSegments.length - 1] || { key, mode, symbols: [] };
           if (!classicalSegments.length) classicalSegments.push(activeSegment);
@@ -5513,7 +2501,7 @@ const seqFlowHtml = funcSteps.length
           } else playChord(classicalMidiFreqs(item));
         });
         const voiceLabel = document.createElement('div'); voiceLabel.className = 'classical-meta'; voiceLabel.textContent = `B / T / A / S  ${(item.midiVoicing || []).map(midiName).join(' / ')}`; card.append(voiceLabel);
-        card.querySelector('.classical-play').textContent = '▶ 试听四部连接';
+        card.querySelector('.classical-play').textContent = clt("cl_play_satb");
         card.querySelectorAll("[data-classical-note]").forEach(button => button.addEventListener("click", () => {
           playChord([noteToFrequency(button.dataset.classicalNote)], 0.7);
         }));
@@ -5525,10 +2513,10 @@ const seqFlowHtml = funcSteps.length
       viewTabs.className = "classical-view-tabs";
       viewTabs.setAttribute("role", "tablist");
       const viewDefinitions = [
-        ["recommendations", "推荐", report?.recommendations?.length || 0],
-        ["paths", "路线", paths.length],
-        ["modulations", "转调", modulationRoutes.length],
-        ["palette", "功能库", palette.length],
+        ["recommendations", clt("cl_tab_recommendations"), report?.recommendations?.length || 0],
+        ["paths", clt("cl_tab_paths"), paths.length],
+        ["modulations", clt("cl_tab_modulations"), modulationRoutes.length],
+        ["palette", clt("cl_tab_palette"), palette.length],
       ];
       viewTabs.innerHTML = viewDefinitions.map(([id, label, count]) => `<button type="button" class="classical-view-tab" data-classical-view="${id}" role="tab"><span>${label}</span><small>${count}</small></button>`).join("");
 
@@ -5673,15 +2661,117 @@ const seqFlowHtml = funcSteps.length
     });
   }
 
-  // 初始化默认显示第一个面板（保持原有逻辑）
-  mountMicrotonal(playChord, createHeldPianoVoice);
-  const defaultFeature =
-    navButtons.length > 0 ? navButtons[0].dataset.feature : "chord";
-  showOnlyFeature(defaultFeature);
+  // ===================== 记住状态与链接分享 =====================
+  // 地址栏形如 #cst?q=Dm7：打开对应面板并填入输入框；上次打开的面板与输入保存在 localStorage
+  var FEATURE_STORAGE_KEY = "jc-feature";
+  var INPUT_STORAGE_KEY = "jc-inputs";
+  var PRIMARY_INPUTS = { chord: "chord-input", blues: "blues-input", lcc: "lcc-input", cst: "cst-input" };
+  // 用函数声明：showOnlyFeature 可能早于这里被调用
+  function isFeature(id) { return navButtons.some((button) => button.dataset.feature === id); }
+  function readStored(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch (_) { return fallback; } }
+  function writeStored(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (_) { } }
+  function parseLocationHash() {
+    const raw = location.hash.slice(1);
+    const split = raw.indexOf("?");
+    const feature = decodeURIComponent(split < 0 ? raw : raw.slice(0, split));
+    return { feature, q: split < 0 ? null : new URLSearchParams(raw.slice(split + 1)).get("q") };
+  }
+  function shareableHash(feature) {
+    const input = PRIMARY_INPUTS[feature] && document.getElementById(PRIMARY_INPUTS[feature]);
+    const value = input?.value.trim();
+    return `#${feature}${value ? `?q=${encodeURIComponent(value)}` : ""}`;
+  }
+  function rememberFeature(feature) {
+    if (!FEATURE_STORAGE_KEY) return; // 初始化完成前不记录
+    writeStored(FEATURE_STORAGE_KEY, feature);
+    try { history.replaceState(null, "", shareableHash(feature)); } catch (_) { }
+  }
+  Object.entries(PRIMARY_INPUTS).forEach(([feature, inputId]) => {
+    document.getElementById(`${feature}-run`)?.addEventListener("click", () => {
+      writeStored(INPUT_STORAGE_KEY, { ...readStored(INPUT_STORAGE_KEY, {}), [inputId]: document.getElementById(inputId).value });
+      if (document.querySelector(`.feature-btn.active`)?.dataset.feature === feature) rememberFeature(feature);
+    });
+  });
+  /**
+   * 复制文字：navigator.clipboard 只在安全上下文（https 或 localhost）可用；
+   * 通过局域网 IP 或 file:// 打开时退回到 execCommand('copy')，仍失败则交给调用方弹出可手动复制的对话框
+   */
+  async function copyText(text) {
+    if (window.isSecureContext && navigator.clipboard?.writeText) {
+      try { await navigator.clipboard.writeText(text); return true; } catch (_) { /* 继续尝试旧方法 */ }
+    }
+    const area = document.createElement("textarea");
+    area.value = text;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.opacity = "0";
+    document.body.appendChild(area);
+    let ok = false;
+    try { area.select(); ok = document.execCommand("copy"); } catch (_) { ok = false; }
+    area.remove();
+    return ok;
+  }
+  const shareButton = document.getElementById("share-link");
+  shareButton?.addEventListener("click", async () => {
+    const feature = document.querySelector(".feature-btn.active")?.dataset.feature;
+    if (feature) rememberFeature(feature);
+    const label = document.getElementById("share_link");
+    const copied = await copyText(location.href);
+    label.textContent = window.__(copied ? "share_copied" : "share_failed");
+    if (!copied) window.prompt(window.__("share_prompt"), location.href);
+    setTimeout(() => { label.textContent = window.__("share_link"); }, 1600);
+  });
+  /** #learn?q=<关卡 id>：打开乐理闯关并直接进入该关 */
+  function openLearnUnit(unitId) {
+    showOnlyFeature("learn");
+    const panel = document.getElementById("panel-learn-body");
+    whenMounted(panel).then(() => {
+      if (unitId === "@resume") { panel?.resume?.(); return; }
+      if (unitId) panel?.openUnit?.(unitId);
+    });
+  }
+  document.getElementById("tutorial-link")?.addEventListener("click", (event) => {
+    const unitId = event.currentTarget.dataset.unit;
+    if (!unitId) return;
+    const record = anyResume();
+    const go = () => { location.hash = `#learn?q=${encodeURIComponent(unitId)}`; };
+    // 学习记录正是这一关时直接回去；否则先确认，避免误触丢掉进度
+    const sameLevel = record && (unitId.includes(":") ? record.key === unitId : record.key.split(":")[0] === unitId);
+    if (sameLevel) { location.hash = "#learn?q=%40resume"; return; }
+    if (record) { confirmTutorialSwitch(record, () => { location.hash = "#learn?q=%40resume"; }, () => { clearResume(); updateReturnTutorial(); go(); }); return; }
+    go();
+  });
+  document.getElementById("return-tutorial")?.addEventListener("click", () => {
+    if (location.hash === "#learn?q=%40resume") openLearnUnit("@resume");
+    else location.hash = "#learn?q=%40resume";
+  });
+  window.addEventListener("hashchange", () => {
+    const { feature, q } = parseLocationHash();
+    if (!isFeature(feature)) return;
+    if (feature === "learn") { openLearnUnit(q); return; }
+    // 模块面板的链接参数（如 #staff?q=bass）：面板已经打开过就直接交给它
+    // 曲式结构、节奏面板没有 -body 容器，直接发给面板本身
+    if (q !== null && !PRIMARY_INPUTS[feature]) {
+      const host = document.getElementById(`panel-${feature}-body`) || document.getElementById(`panel-${feature}`);
+      whenMounted(host).then(() => host?.dispatchEvent(new CustomEvent("toolbox-query", { detail: q })));
+    }
+    if (q !== null && PRIMARY_INPUTS[feature]) {
+      document.getElementById(PRIMARY_INPUTS[feature]).value = q;
+      document.getElementById(`${feature}-run`)?.click();
+    }
+    showOnlyFeature(feature);
+  });
 
-  showOnlyFeature("chord");
+  // 初始化：先按保存的输入与链接参数填好输入框，再渲染各面板
+  const storedInputs = readStored(INPUT_STORAGE_KEY, {});
+  Object.values(PRIMARY_INPUTS).forEach((inputId) => {
+    if (typeof storedInputs[inputId] === "string" && storedInputs[inputId].trim()) document.getElementById(inputId).value = storedInputs[inputId];
+  });
+  const initialHash = parseLocationHash();
+  if (initialHash.q !== null && PRIMARY_INPUTS[initialHash.feature]) document.getElementById(PRIMARY_INPUTS[initialHash.feature]).value = initialHash.q;
   document.getElementById('chord-run').click();
-  document.getElementById('cst-run').click();
-  document.getElementById('lcc-run').click();
-  document.getElementById('blues-run').click();
+  const storedFeature = readStored(FEATURE_STORAGE_KEY, null);
+  initialHashForShow = initialHash;
+  showOnlyFeature(isFeature(initialHash.feature) ? initialHash.feature : isFeature(storedFeature) ? storedFeature : "chord");
+  if (initialHash.feature === "learn" && initialHash.q) openLearnUnit(initialHash.q);
 });

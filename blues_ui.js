@@ -3,6 +3,7 @@ import { parsedAccompaniment } from './accompaniment_voicing.js';
 import { midiName } from './classical_voicing.js';
 import { BLUES_NOTES, BLUES_SCALES, bluesForm, bluesScaleNotes, bluesScaleMidi, bluesBentFrequency, bluesPhrase } from './blues_lab.js';
 
+// ref:aizcutei-blues ref:berklee-blues-guitar ref:berklee-reharmonization
 const SOURCES = {
   blue: 'https://music-theory.aizcutei.com/post/%E6%97%8B%E5%BE%8B%E7%AF%87/24-%E8%93%9D%E8%B0%83',
   form: 'https://online.berklee.edu/courses/blues-guitar',
@@ -10,6 +11,8 @@ const SOURCES = {
 };
 const TEXT = {
   zh: {
+    voicingLine: (bass, upper) => `低音 ${bass} / 上方声部 ${upper}`, hearChordBass: '试听和弦与指定低音', hearBassOnly: '仅听低音',
+    scaleHints: { minorPentatonic: '小调五声音阶可与大调属和弦叠置，形成蓝调张力。', minorBlues: '在小调五声音阶加入蓝调的♯4／♭5经过音。', majorPentatonic: '大调五声音阶适合比较明亮的旋律骨架。', majorBlues: '在大调五声音阶中让♭3向3滑动或作装饰。', mixedBlues: '大调音与♭3、♯4／♭5、♭7并列，用比例与落点控制蓝调感。', mixolydianBlues: '属七／Mixolydian音集合中插入♭3，注意与和弦3度的表情关系。' },
     title: '布鲁斯工具箱', subtitle: '12小节 · 大小调五声音阶 · Blue Note · 问答乐句 · 和弦配色',
     tabs: { form: '12小节进行', scales: '音阶与蓝调音', phrases: '问答与落点', chord: '和弦配色' },
     key: '主音', form: '形态', turnaround: '第12小节转折', groove: '练习节奏', tempo: '速度 BPM', play: '钢琴试听', stop: '停止',
@@ -29,6 +32,8 @@ const TEXT = {
     caution: '蓝调常用小调五声音阶叠在大调／属和弦上，造成有意的三度摩擦；这不是“每个和弦只能有一条正确音阶”。', source: '资料参考',
   },
   en: {
+    voicingLine: (bass, upper) => `Bass ${bass} / upper voices ${upper}`, hearChordBass: 'Hear chord with this bass', hearBassOnly: 'Bass only',
+    scaleHints: { minorPentatonic: 'The minor pentatonic can sit over a major or dominant chord, creating blues tension.', minorBlues: 'Adds the blue ♯4/♭5 passing tone to the minor pentatonic.', majorPentatonic: 'The major pentatonic suits a brighter melodic frame.', majorBlues: 'In the major pentatonic, let ♭3 slide into 3 or use it as an ornament.', mixedBlues: 'Major-scale notes sit beside ♭3, ♯4/♭5 and ♭7; balance and landing notes control the blues colour.', mixolydianBlues: 'Inserts ♭3 into the dominant-seventh / Mixolydian collection; mind its expressive clash with the chord’s third.' },
     title: 'Blues Toolbox', subtitle: '12-bar forms · pentatonics · blue notes · call and response · chord colors',
     tabs: { form: '12-bar form', scales: 'Scales & blue notes', phrases: 'Phrases & landing', chord: 'Chord colors' },
     key: 'Tonic', form: 'Form', turnaround: 'Bar 12 turnaround', groove: 'Practice groove', tempo: 'Tempo BPM', play: 'Piano preview', stop: 'Stop',
@@ -48,6 +53,8 @@ const TEXT = {
     caution: 'Minor pentatonic over major/dominant harmony creates intentional third friction; there is not one uniquely correct scale per chord.', source: 'Sources',
   },
   ja: {
+    voicingLine: (bass, upper) => `ベース ${bass} / 上声部 ${upper}`, hearChordBass: 'コードとベースを試聴', hearBassOnly: 'ベースのみ',
+    scaleHints: { minorPentatonic: 'マイナー・ペンタトニックは長三和音や属和音の上に重ねられ、ブルースらしい緊張を生みます。', minorBlues: 'マイナー・ペンタトニックにブルーな ♯4／♭5 の経過音を加えます。', majorPentatonic: 'メジャー・ペンタトニックは明るい旋律の骨格に向きます。', majorBlues: 'メジャー・ペンタトニックの中で ♭3 を 3 へすべらせたり装飾にしたりします。', mixedBlues: '長音階の音と ♭3・♯4／♭5・♭7 を並べ、比率と着地点でブルース感を調整します。', mixolydianBlues: '属七／ミクソリディアンの音集合に ♭3 を挿入。コードの 3 度との表情の関係に注意。' },
     title: 'ブルース・ツールボックス', subtitle: '12小節 · ペンタトニック · ブルーノート · コール＆レスポンス · コードカラー',
     tabs: { form: '12小節の進行', scales: 'スケールとブルーノート', phrases: 'フレーズと着地', chord: 'コードカラー' },
     key: '主音', form: '形式', turnaround: '12小節目', groove: '練習のリズム', tempo: 'テンポ BPM', play: 'ピアノ試聴', stop: '停止',
@@ -269,7 +276,7 @@ function renderScales(content, t, target, { conv, playChord, semitoneToFreq }) {
     detail.replaceChildren();
     const definition = BLUES_SCALES.find(item => item.id === scale.value);
     const card = e('article', 'blues-scale-card');
-    card.append(e('strong', '', `${key.value} ${definition.name}`), noteRow(bluesScaleNotes(key.value, definition.id)), e('p', '', definition.hint));
+    card.append(e('strong', '', `${key.value} ${definition.name}`), noteRow(bluesScaleNotes(key.value, definition.id)), e('p', '', t.scaleHints?.[definition.id] || definition.hint));
     detail.appendChild(card);
     const compare = e('div', 'blues-compare-grid');
     [['majorPentatonic', 'majorBlues'], ['minorPentatonic', 'minorBlues']].forEach(pair => {
@@ -364,10 +371,10 @@ function renderChordColors(content, t, input, { brain, conv, playChord, semitone
   const chordSet = new Set(notes.map(lccPitchClass));
   const current = e('div', 'blues-current-chord'); current.append(e('strong', '', symbol), noteRow(notes)); section.appendChild(current);
   const voiced = parsedAccompaniment(conv,symbol);
-  current.append(e('small','blues-voicing',`低音 ${midiName(voiced.midi[0])} / 上方声部 ${voiced.midi.slice(1).map(midiName).join(' ')}`));
-  const hearChord = e('button','blues-outline','试听和弦与指定低音');hearChord.type='button';
+  current.append(e('small','blues-voicing',t.voicingLine(midiName(voiced.midi[0]), voiced.midi.slice(1).map(midiName).join(' '))));
+  const hearChord = e('button','blues-outline',t.hearChordBass);hearChord.type='button';
   hearChord.onclick=()=>playChord(voiced.midi.map(n=>frequency(n,semitoneToFreq)),1.4);current.append(hearChord);
-  const hearBass = e('button','blues-outline','仅听低音');hearBass.type='button';hearBass.onclick=()=>playChord([frequency(voiced.midi[0],semitoneToFreq)],1.4);current.append(hearBass);
+  const hearBass = e('button','blues-outline',t.hearBassOnly);hearBass.type='button';hearBass.onclick=()=>playChord([frequency(voiced.midi[0],semitoneToFreq)],1.4);current.append(hearBass);
   const basic = brain.blt.suggestForChord(symbol) || [];
   const basicNames = new Set(basic.map(item => item.name));
   const advanced = (brain.blt.suggestAdvanced(symbol) || []).filter(item => !basicNames.has(item.name));

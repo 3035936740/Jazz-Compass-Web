@@ -54,6 +54,7 @@ const COPY = {
   },
 };
 
+// ref:lamplight-chalaxata ref:lamplight-requests ref:shasavistic-editor ref:nafchanaphata ref:haleyhalcyon-notes
 const SOURCE_LINKS = [
   ["sourceAuthor", "https://lamplight0.sakura.ne.jp/en/a/music/chalaxata.php?mode=%E5%B9%B3%E5%9D%87%E5%BE%8B"],
   ["sourceAnswer", "https://lamplight0.sakura.ne.jp/a/requests.php"],
@@ -189,7 +190,7 @@ export function mountMicrotonal(playChord, createHeldPianoVoice) {
         const edoPosition = ((result.temperedCents % 1200) + 1200) % 1200;
         const jiX = result.exactCents > 0 && Math.abs(Math.log2(justPosition.position)) < 1e-9 ? 100 : Math.min(100, Math.max(0, Math.log2(justPosition.position) * 100));
         const edoX = result.temperedCents > 0 && edoPosition < 1e-9 ? 100 : Math.min(100, Math.max(0, edoPosition / 12));
-        return `<tr><td><span class="micro-ratio ${classForRatio(label)}">${label}</span></td><td>${result.exactCents.toFixed(2)}¢</td><td>${result.steps}</td><td class="micro-error">${signed(result.errorCents)}¢</td><td>${justHz.toFixed(2)} / ${edoHz.toFixed(2)}</td><td><button type="button" class="micro-note-play" data-note="${index}" aria-label="${copy.playNote} ${label}">▶</button></td></tr>
+        return `<tr><td><span class="micro-ratio ${classForRatio(label)}">${label}</span></td><td>${result.exactCents.toFixed(2)}¢</td><td>${result.steps}</td><td class="micro-error">${signed(result.errorCents)}¢</td><td>${justHz.toFixed(2)} / ${edoHz.toFixed(2)}</td><td><button type="button" class="micro-note-play" data-note="${index}" aria-label="${copy.playNote} ${label}">►</button></td></tr>
           <tr class="micro-visual-row"><td colspan="6"><div class="micro-axis" aria-label="${label}: ${copy.ji} ${result.exactCents.toFixed(2)} ${copy.cents}; ${edo} EDO ${result.temperedCents.toFixed(2)} ${copy.cents}"><span class="micro-axis-dot micro-axis-ji" style="left:${jiX}%"></span><span class="micro-axis-dot micro-axis-edo" style="left:${edoX}%"></span></div></td></tr>`;
       }).join("");
       const relations = [];
@@ -274,14 +275,14 @@ export function mountMicrotonal(playChord, createHeldPianoVoice) {
       const harmonics = harmonicNotes.map(({ harmonic, ratio }) => {
         const label = ratioLabel(ratio);
         const q = quantizeRatio(ratio, edo, method);
-        return `<tr data-harmonic-ratio="${label}"><td>${harmonic}</td><td><span class="micro-ratio ${classForRatio(label)}">${label}</span></td><td>${centsFromRatio(ratio).toFixed(2)}¢</td><td>${q.steps}</td><td>${signed(q.errorCents)}¢</td><td><button type="button" class="micro-harmonic-play" data-harmonic="${harmonic}" aria-label="${copy.playNote} ${harmonic}">▶</button></td></tr>`;
+        return `<tr data-harmonic-ratio="${label}"><td>${harmonic}</td><td><span class="micro-ratio ${classForRatio(label)}">${label}</span></td><td>${centsFromRatio(ratio).toFixed(2)}¢</td><td>${q.steps}</td><td>${signed(q.errorCents)}¢</td><td><button type="button" class="micro-harmonic-play" data-harmonic="${harmonic}" aria-label="${copy.playNote} ${harmonic}">►</button></td></tr>`;
       }).join("");
       const comma = syntonicComma();
       const comma12 = quantizeRatio(comma, 12).steps;
       const comma41 = quantizeRatio(comma, 41).steps;
       const fallback = ratios.some(ratio => quantizeRatio(ratio, edo, method).appliedMethod !== method && method === "generator");
       body.innerHTML = `
-        <div class="micro-summary"><div><span class="micro-kicker">RATIO LAB / ${MICRO_PRESETS[preset.value]?.dimension || "JI"}</span><h3>${copy.compareTitle}</h3><p>${copy.compareHelp}</p></div><div class="micro-play-actions"><button type="button" id="micro-play-ji">▶ ${copy.playJi}</button><button type="button" id="micro-play-edo">▶ ${copy.playEdo}</button></div></div>
+        <div class="micro-summary"><div><span class="micro-kicker">RATIO LAB / ${MICRO_PRESETS[preset.value]?.dimension || "JI"}</span><h3>${copy.compareTitle}</h3><p>${copy.compareHelp}</p></div><div class="micro-play-actions"><button type="button" id="micro-play-ji">► ${copy.playJi}</button><button type="button" id="micro-play-edo">► ${copy.playEdo}</button></div></div>
         <div class="micro-legend"><span><i class="micro-legend-ji"></i>${copy.ji}</span><span><i class="micro-legend-edo"></i>${edo} EDO</span></div>
         <div class="micro-table-scroll"><table class="micro-table"><thead><tr><th>${copy.ratio}</th><th>${copy.cents}</th><th>${edo} EDO ${copy.step}</th><th>${copy.error}</th><th>${copy.hz} · JI / EDO</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
         <p class="micro-footnote">${copy.rootNote}${fallback ? ` ${copy.fallback}` : ""}</p>

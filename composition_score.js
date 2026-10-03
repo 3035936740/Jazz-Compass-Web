@@ -1,3 +1,4 @@
+import { COMPOSE_TEXT } from './composition_i18n.js?v=20261003-c2';
 const NS='http://www.w3.org/2000/svg';
 const node=(tag,attrs={},text='')=>{const e=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,String(v)));e.textContent=text;return e;};
 export function scorePitch(midi,key='C',mode='major',chord=null) {
@@ -40,9 +41,10 @@ export function mountCompositionScore(host,model,section,onPlayBar) {
     for(let start=0;start<bars.length;start+=columns) {
       const row=bars.slice(start,start+columns),prefix=62,measure=250,width=prefix+measure*row.length+10;
       const wrap=document.createElement('div');wrap.className='compose-score-scroll';
-      const svg=node('svg',{viewBox:`0 0 ${width} 335`,class:'compose-score','aria-label':`${section.label} 第 ${row[0].number} 到 ${row.at(-1).number} 小节`});
+      const svg=node('svg',{viewBox:`0 0 ${width} 335`,class:'compose-score','aria-label':COMPOSE_TEXT[['zh','ja','en'].includes(window.__lang)?window.__lang:'en'].staffAria(section.label,row[0].number,row.at(-1).number)});
       wrap.append(svg);host.append(wrap);
-      const tracks=[['melody','旋律',82,30,'𝄞'],['harmony','和声',174,18,'𝄢'],['bass','低音',266,18,'𝄢']];
+      const trackNames=COMPOSE_TEXT[['zh','ja','en'].includes(window.__lang)?window.__lang:'en'].tracks;
+      const tracks=[['melody',trackNames.melody,82,30,'𝄞'],['harmony',trackNames.harmony,174,18,'𝄢'],['bass',trackNames.bass,266,18,'𝄢']];
       tracks.forEach(([track,label,y,bottom,clef])=>{
         svg.append(node('text',{x:4,y:y-23,class:'score-part'},label));
         for(let line=0;line<5;line++)svg.append(node('line',{x1:4,y1:y+line*8,x2:width-4,y2:y+line*8,class:'score-staff'}));
@@ -51,7 +53,7 @@ export function mountCompositionScore(host,model,section,onPlayBar) {
       });
       row.forEach((bar,idx)=>{
         const left=prefix+idx*measure,right=left+measure;
-        const group=node('g',{'data-bar':bar.number-1,role:'button',tabindex:0,'aria-label':`试听第 ${bar.number} 小节 ${bar.chords.map(c=>c.name).join(' ')} 含旋律和伴奏`,class:'score-measure'});
+        const group=node('g',{'data-bar':bar.number-1,role:'button',tabindex:0,'aria-label':COMPOSE_TEXT[['zh','ja','en'].includes(window.__lang)?window.__lang:'en'].barAria(bar.number,bar.chords.map(c=>c.name).join(' ')),class:'score-measure'});
         group.append(node('rect',{x:left+1,y:10,width:measure-2,height:308,rx:3,class:'score-hit'}));
         group.append(node('text',{x:left+8,y:16,class:'score-bar-number'},bar.number));
         bar.chords.forEach(c=>{

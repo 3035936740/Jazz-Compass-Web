@@ -39,7 +39,7 @@ const TEXT = {
     station: 'I／VI トニック・ステーション', stationHint: '7声音階から1·3·5·7を抽出し I と VI を示します。完全なコードモード表ではありません。',
     auxiliary: count => `この親は${count}音なので、7音の三度堆積を当てはめません。`,
     comparison: '同じ音、異なる3つの中心', comparisonHint: 'G7 → C の例：C Major、G Mixolydian、F Lydian は同じ白鍵を使っても中心の意味が異なります。',
-    levels: ['内向', '半内向', '半外向', '外向'], caveat: 'このページは入門記事を基にした音集合と試聴の実験です。正式な重力理論やコードモード表はさらに複雑です。',
+    levels: ['インゴーイング', 'セミ・インゴーイング', 'セミ・アウトゴーイング', 'アウトゴーイング'], caveat: 'このページは入門記事を基にした音集合と試聴の実験です。正式な重力理論やコードモード表はさらに複雑です。',
   },
 };
 
@@ -205,7 +205,8 @@ export function mountLccLab(target, { playChord, semitoneToFreq }) {
     comparison.appendChild(examplesRow); detail.appendChild(comparison);
     detail.appendChild(e('p', 'lcc-disclaimer', t.caveat));
     const source = e('div', 'lcc-sources', `${t.source}: `);
-    source.append(sourceLink('LCC 介绍', 'https://music-theory.aizcutei.com/post/%E5%92%8C%E5%BC%A6%E7%AF%87/65-Lydian-Chromatic-Concept'),
+    source.append(sourceLink({ zh: 'LCC 介绍', ja: 'LCC 解説', en: 'LCC introduction' }[language()] || 'LCC', 'https://music-theory.aizcutei.com/post/%E5%92%8C%E5%BC%A6%E7%AF%87/65-Lydian-Chromatic-Concept'),
+      // ref:george-russell-lcc ref:aizcutei-lcc
       sourceLink('George Russell', 'https://georgerussell.com/lydian-chromatic-concept'));
     detail.appendChild(source);
   }

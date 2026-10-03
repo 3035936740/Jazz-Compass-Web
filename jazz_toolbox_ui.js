@@ -1,6 +1,21 @@
 import { JAZZ_CHAPTERS } from './jazz_toolbox_data.js';
+import { renderScaleStaff } from './staff_svg.js?v=20261002-fix';
+import { JAZZ_I18N } from './jazz_toolbox_i18n.js';
+import { spellChord } from './chord_spelling.js?v=20261002-sp';
 import { JAZZ_MODE_CATALOG, JAZZ_NOTES, jazzScaleMidi, jazzCompatibleModes, jazzInspectMode, jazzModalInterchange, jazzProgression, jazzVoicing, jazzMidiName } from './jazz_toolbox.js';
 import { lccPitchClass } from './lcc_concept.js';
+
+/** 中文以外的界面：音阶家族、调式说明、章节分组与摘要的译文（见 jazz_toolbox_i18n.js） */
+const uiLang = () => (document.documentElement.lang.toLowerCase().startsWith('ja') ? 'ja' : document.documentElement.lang.toLowerCase().startsWith('zh') ? 'zh' : 'en');
+const tr = () => JAZZ_I18N[uiLang()];
+const familyName = (mode) => tr()?.families[mode.familyId || 'special'] ?? mode.family;
+const modeName = (mode) => (uiLang() === 'zh' ? mode.name : mode.name.replace(/\s*·\s*[\u4e00-\u9fff].*$/, ''));
+const modeRole = (mode) => (tr() ? (mode.familyId ? tr().role(tr().families[mode.familyId], mode.degree) : tr().specialRoles[mode.id] ?? mode.role) : mode.role);
+const chapterGroup = (group) => tr()?.groups[group] ?? group;
+const chapterSummary = (chapter) => tr()?.summaries[chapter.no] ?? chapter.summary;
+const chapterExample = (chapter) => (uiLang() === 'zh' ? chapter.example : chapter.example
+  .replace(/C大调 ↔ C小调/, uiLang() === 'ja' ? 'C 長調 ↔ C 短調' : 'C major ↔ C minor')
+  .replace(/半全/g, uiLang() === 'ja' ? 'ハーフ・ホール' : ' half–whole').replace(/全半/g, uiLang() === 'ja' ? 'ホール・ハーフ' : ' whole–half'));
 
 const TEXT = {
   zh: {
@@ -145,16 +160,18 @@ function renderScales(body, input, t, { conv, playChord, semitoneToFreq }) {
   body.appendChild(section);
   const notes = parseChord(conv, input);
   if (!notes?.length) { section.appendChild(e('p', 'input-error', t.badChord)); return; }
-  const root = notes[0];
+  // 根音按输入的写法（F#m7 的根音是 F#，不随"降号记法"变成 Gb），和弦音按音级拼写
+  const root = input.trim().match(/^([A-G](?:#|b)?)/)?.[1] || notes[0];
   const compatible = jazzCompatibleModes(notes);
   section.appendChild(e('p', 'jazz-intro', t.matchCount(compatible.length)));
   const chordRow = e('div', 'jazz-current-chord');
   chordRow.appendChild(e('strong', '', input.trim()));
-  notes.forEach(note => chordRow.appendChild(e('span', 'jazz-note-chip is-chord', note)));
+  const spelledTones = spellChord(root, notes.map(lccPitchClass));
+  (spelledTones ? spelledTones.map(tone => tone.name) : notes).forEach(note => chordRow.appendChild(e('span', 'jazz-note-chip is-chord', note)));
   section.appendChild(chordRow);
   const controls = e('div', 'jazz-controls');
   const family = e('select', 'jazz-family-select');
-  [['all', t.all], ['major', '大调'], ['melodicMinor', '旋律小调'], ['harmonicMinor', '和声小调'], ['special', '对称 / 扩展']].forEach(([value, name]) => family.appendChild(option(value, name)));
+  [['all', t.all], ...['major', 'melodicMinor', 'harmonicMinor', 'special'].map((id) => [id, familyName({ familyId: id === 'special' ? null : id, family: { major: '大调', melodicMinor: '旋律小调', harmonicMinor: '和声小调', special: '对称 / 扩展' }[id] })])].forEach(([value, name]) => family.appendChild(option(value, name)));
   controls.appendChild(label(t.family, family));
   const modeSelect = e('select', 'jazz-mode-select');
   controls.appendChild(label(t.scale, modeSelect));
@@ -170,7 +187,7 @@ function renderScales(body, input, t, { conv, playChord, semitoneToFreq }) {
     const listed = JAZZ_MODE_CATALOG.filter(mode => (family.value === 'all' || mode.familyId === family.value || (family.value === 'special' && !mode.familyId))
       && (showAll.checked || compatible.some(candidate => candidate.id === mode.id)));
     modeSelect.replaceChildren();
-    listed.forEach(mode => modeSelect.appendChild(option(mode.id, `${mode.name} · ${mode.family}${compatible.some(candidate => candidate.id === mode.id) ? ' ✓' : ''}`)));
+    listed.forEach(mode => modeSelect.appendChild(option(mode.id, `${modeName(mode)} · ${familyName(mode)}${compatible.some(candidate => candidate.id === mode.id) ? ' ✓' : ''}`)));
     if (!listed.length) { detail.replaceChildren(e('p', 'jazz-empty', '—')); return; }
     modeSelect.value = listed.some(mode => mode.id === preferred) ? preferred : listed[0].id;
     paint(listed.find(mode => mode.id === modeSelect.value));
@@ -181,9 +198,9 @@ function renderScales(body, input, t, { conv, playChord, semitoneToFreq }) {
     const inspect = jazzInspectMode(root, mode, notes, names);
     const card = e('article', 'jazz-scale-card');
     const top = e('div', 'jazz-card-top');
-    top.append(e('div', 'jazz-mode-name', mode.name), e('span', `jazz-fit ${inspect.compatible ? 'fits' : 'changes'}`, inspect.compatible ? t.fitting : t.incompatible));
+    top.append(e('div', 'jazz-mode-name', modeName(mode)), e('span', `jazz-fit ${inspect.compatible ? 'fits' : 'changes'}`, inspect.compatible ? t.fitting : t.incompatible));
     card.appendChild(top);
-    card.appendChild(e('p', 'jazz-mode-origin', mode.role));
+    card.appendChild(e('p', 'jazz-mode-origin', modeRole(mode)));
     const row = e('div', 'jazz-scale-notes');
     inspect.cells.forEach(cell => {
       const chip = e('div', `jazz-scale-note ${cell.role}`);
@@ -192,6 +209,14 @@ function renderScales(body, input, t, { conv, playChord, semitoneToFreq }) {
       row.appendChild(chip);
     });
     card.appendChild(row);
+    // 五线谱：音名沿用上面按音级拼写的结果，末尾加高八度主音；点击音符试听
+    const scaleMidis = [...jazzScaleMidi(root, mode), jazzScaleMidi(root, mode)[0] + 12];
+    const staffBox = e('div', 'mk-staff-scroll jazz-scale-staff');
+    staffBox.appendChild(renderScaleStaff([...inspect.cells.map(cell => cell.note), inspect.cells[0].note], scaleMidis, {
+      ariaLabel: `${root} ${mode.name}`,
+      onNote: index => playChord([midiFrequency(scaleMidis[index], semitoneToFreq)], .6),
+    }));
+    card.appendChild(staffBox);
     if (!inspect.compatible) {
       const pitchSet = new Set(mode.intervals);
       const tonic = lccPitchClass(root);
@@ -238,11 +263,13 @@ function renderModalExchange(section, currentRoot, t, { conv, playChord, semiton
   block.append(e('h4', '', t.modalTitle), e('p', 'jazz-intro', t.modalHelp));
   const controls = e('div', 'jazz-controls');
   const key = e('select', 'jazz-modal-key');
-  const names = conv.idxToNote || JAZZ_NOTES;
+  // 当前和弦根音按输入的拼法出现在调列表里（F#m7 → F#，而不是 Gb），派生的音级才拼得对
+  const names = [...(conv.idxToNote || JAZZ_NOTES)];
+  names[lccPitchClass(currentRoot)] = currentRoot;
   names.forEach((name, pitch) => key.appendChild(option(String(pitch), name)));
   key.value = String(lccPitchClass(currentRoot));
   const donor = e('select', 'jazz-modal-donor');
-  JAZZ_MODE_CATALOG.filter(mode => mode.intervals.length === 7).forEach(mode => donor.appendChild(option(mode.id, `${mode.family} · ${mode.name}`)));
+  JAZZ_MODE_CATALOG.filter(mode => mode.intervals.length === 7).forEach(mode => donor.appendChild(option(mode.id, `${familyName(mode)} · ${modeName(mode)}`)));
   donor.value = 'major-6';
   controls.append(label(t.key, key), label(t.donor, donor));
   block.appendChild(controls);
@@ -367,7 +394,7 @@ function renderProgressions(body, t, { conv, playChord, semitoneToFreq }, chapte
       sideStep: '第一对ii–V在半音外侧，第二对回到inside；保持outside短暂且让落点清晰。',
       multiTonic: '轴按12音等分：三主音每隔大三度，四主音每隔小三度，六主音每隔大二度。',
     };
-    guide.textContent = notes[kind.value] || t.progressionsNote;
+    guide.textContent = (tr()?.progressionNotes[kind.value]) || notes[kind.value] || t.progressionsNote;
     result.appendChild(guide);
     const sourceNumber = { iiVI: 2, minorIiVI: 2, tritone: 9, secondarySub: 4, extendedDominant: 3, iiVChain: 3, sideStep: 8, multiTonic: 10 }[kind.value];
     const chapter = JAZZ_CHAPTERS.find(item => item.no === sourceNumber);
@@ -428,6 +455,7 @@ function renderMaps(body, t) {
   const section = e('section', 'jazz-maps'); body.appendChild(section);
   section.appendChild(e('p', 'jazz-intro', t.mapHelp));
   const credit = e('p', 'jazz-map-credit');
+  // ref:aizcutei-jazz
   credit.append(e('span', '', `${t.mapCredit}: `), link('music-theory.aizcutei.com', 'https://music-theory.aizcutei.com/', 'jazz-source-link'));
   section.appendChild(credit);
   const tools = e('div', 'jazz-map-tools');
@@ -480,7 +508,7 @@ function renderChapters(body, t, activate) {
   const filters = e('div', 'jazz-chapter-filters');
   const group = e('select', 'jazz-chapter-group');
   group.appendChild(option('all', t.all));
-  [...new Set(JAZZ_CHAPTERS.map(item => item.group))].forEach(name => group.appendChild(option(name, name)));
+  [...new Set(JAZZ_CHAPTERS.map(item => item.group))].forEach(name => group.appendChild(option(name, chapterGroup(name))));
   const search = e('input', 'jazz-chapter-search'); search.type = 'search'; search.placeholder = t.search;
   filters.append(label(t.family, group), label(t.search, search));
   section.appendChild(filters);
@@ -489,12 +517,12 @@ function renderChapters(body, t, activate) {
     const query = search.value.trim().toLowerCase();
     list.replaceChildren();
     JAZZ_CHAPTERS.filter(item => (group.value === 'all' || item.group === group.value)
-      && (!query || `${item.title} ${item.summary} ${item.example} ${item.group}`.toLowerCase().includes(query))).forEach(item => {
+      && (!query || `${item.title} ${item.summary} ${chapterSummary(item)} ${item.example} ${item.group} ${chapterGroup(item.group)}`.toLowerCase().includes(query))).forEach(item => {
       const card = e('article', 'jazz-chapter-card');
-      const top = e('div', 'jazz-chapter-top'); top.append(e('span', 'jazz-chapter-no', String(item.no).padStart(2, '0')), e('strong', '', item.title), e('small', '', item.group));
-      card.append(top, e('p', '', item.summary), e('code', '', item.example));
+      const top = e('div', 'jazz-chapter-top'); top.append(e('span', 'jazz-chapter-no', String(item.no).padStart(2, '0')), e('strong', '', item.title), e('small', '', chapterGroup(item.group)));
+      card.append(top, e('p', '', chapterSummary(item)), e('code', '', chapterExample(item)));
       const actions = e('div', 'jazz-actions');
-      actions.appendChild(link('阅读原教程 ↗', item.url, 'jazz-source-link'));
+      actions.appendChild(link(({ zh: '阅读原教程 ↗', ja: '元の解説を読む ↗', en: 'Read the original tutorial ↗' })[uiLang()], item.url, 'jazz-source-link'));
       const jump = e('button', 'jazz-outline-btn', t.tryTool); jump.type = 'button'; jump.addEventListener('click', () => activate(item.tool, item.no));
       actions.appendChild(jump); card.appendChild(actions); list.appendChild(card);
     });

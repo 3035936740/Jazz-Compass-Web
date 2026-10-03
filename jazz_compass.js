@@ -22,6 +22,7 @@ export class ChordConverter {
             "p4": [0, 5, 10], "t4": [0, 5, 11], "majB5": [0, 4, 6], "Mb5": [0, 4, 6],
             "6": [0, 4, 7, 9], "m6": [0, 3, 7, 9], "6add9": [0, 4, 7, 9, 14],
             "m6add9": [0, 3, 7, 9, 14], "6sus4": [0, 5, 7, 9],
+            "6/9": [0, 4, 7, 9, 14], "69": [0, 4, 7, 9, 14], "m6/9": [0, 3, 7, 9, 14], "m69": [0, 3, 7, 9, 14],
             "7": [0, 4, 7, 10], "m7": [0, 3, 7, 10], "M7": [0, 4, 7, 11],
             "maj7": [0, 4, 7, 11], "m-maj7": [0, 3, 7, 11], "m-M7": [0, 3, 7, 11],
             "7sus4": [0, 5, 7, 10], "dim7": [0, 3, 6, 9], "m7b5": [0, 3, 6, 10],
@@ -48,6 +49,8 @@ export class ChordConverter {
             "m7add13": [0, 3, 7, 10, 21], "m-maj7add11": [0, 3, 7, 11, 17], "m-maj7add13": [0, 3, 7, 11, 21],
             "m-maj11": [0, 3, 7, 11, 14, 17], "m-maj13": [0, 3, 7, 11, 14, 17, 21], "m-M7add11": [0, 3, 7, 11, 17],
             "m-M7add13": [0, 3, 7, 11, 21], "m-M11": [0, 3, 7, 11, 14, 17], "m-M13": [0, 3, 7, 11, 14, 17, 21],
+            // Blackadder（Cblk = C D F♯ B♭）：aug 和弦加上其根音全音之上的低音，以低音命名  ref:soundquest-blk
+            "blk": [0, 2, 6, 10],
         };
 
         this.reverseFormulas = Object.entries(this.chordFormulas).reduce((acc, [key, value]) => {
@@ -61,6 +64,12 @@ export class ChordConverter {
     parse(inputStr) {
         const result = this.parseAndGetNotes(inputStr);
         return typeof result === 'string' ? result : result.notes;
+    }
+
+    /** 斜杠后面是音名时才是斜杠和弦（C/E）；C6/9 的 /9 是加音写法 */
+    _hasBassNote(inputStr) {
+        const slash = String(inputStr).lastIndexOf("/");
+        return slash > 0 && /^\s*[A-G]/.test(String(inputStr).slice(slash + 1));
     }
 
     parseSlashChord(inputStr) {
@@ -88,10 +97,29 @@ export class ChordConverter {
     }
 
     parseAndGetNotes(inputStr) {
-        if (inputStr.includes("/")) return this.parseSlashChord(inputStr);
+        if (this._hasBassNote(inputStr)) return this.parseSlashChord(inputStr);
+        // "Cblk" 的 b 不是降号
+        const blk = inputStr.trim().match(/^([A-G](?:#|b)?)blk$/i);
+        if (blk) return this.getChordNotes(blk[1], "blk");
+        const alt = inputStr.trim().match(/^([A-G](?:#|b)?)(?:7alt|alt7|alt)$/);
+        if (alt) return this.getAltChordNotes(alt[1]);
         const match = inputStr.match(/^([A-G][#b]?)(.*)$/);
         if (!match) throw new Error(`Unable to parse: ${inputStr}`);
         return this.getChordNotes(match[1], match[2] || "maj");
+    }
+
+    /**
+     * alt 和弦（C7alt）：和弦音不固定，每次解析随机取根音、大三度、小七度 + 2～3 个变化音（♭9／♯9、♭5／♯11、♯5／♭13 中各组至多一个）
+     * ref:wiki-altered-scale
+     */
+    getAltChordNotes(root, rng = Math.random) {
+        if (!(root in this.noteToIdx)) return "Invalid root";
+        const groups = [[13], [15], [6, 18], [8, 20]];
+        const order = [0, 1, 2, 3].sort(() => rng() - 0.5).slice(0, rng() < 0.5 ? 2 : 3);
+        const offsets = [0, 4, 10, ...order.map(g => groups[g][Math.floor(rng() * groups[g].length)])];
+        const rootIdx = this.noteToIdx[root];
+        const absIndices = offsets.map(o => (rootIdx + o) % 12);
+        return { chord: `${root}7alt`, notes: absIndices.map(i => this.idxToNote[i]), offsets: absIndices, isSlash: false, root, bass: root, quality: "7alt", random: true };
     }
 
     getChordNotes(root, chordType = "maj") {
@@ -574,10 +602,17 @@ export class EnhancedChordConverter extends ChordConverter {
      * @param {string} inputStr - 例如 "Cm add9", "A# maj7 omit 5"
      */
     parseAndGetNotes(inputStr) {
-        // 0. 处理斜杠和弦 (Slash Chord)
-        if (inputStr.includes("/")) {
+        // 0. 处理斜杠和弦 (Slash Chord)；6/9 中的 /9 不是低音
+        if (this._hasBassNote(inputStr)) {
             return this.parseSlashChord(inputStr);
         }
+
+        // Blackadder："Cblk"、"Bbblk"（blk 的 b 不是降号）  ref:soundquest-blk
+        const blkMatch = inputStr.trim().match(/^([A-G](?:#|b)?)blk$/i);
+        if (blkMatch) return this.getChordNotes(blkMatch[1], "blk");
+        // alt：每次解析得到一组不同的变化音  ref:wiki-altered-scale
+        const altMatch = inputStr.trim().match(/^([A-G](?:#|b)?)(?:7alt|alt7|alt)$/);
+        if (altMatch) return this.getAltChordNotes(altMatch[1]);
 
         // 1. 提取根音 (A-G + #/b)
         // 正则解释: ^([A-G][#b]?) 匹配开头的根音, (.*)$ 匹配剩余部分
@@ -587,7 +622,12 @@ export class EnhancedChordConverter extends ChordConverter {
         }
 
         const root = rootMatch[1];
-        const remaining = rootMatch[2].trim();
+        // 括号只是分组（C7(no3)、Cm7(b5)）；"no" 与 "omit" 同义（C7no3）；序数后缀（no3rd）去掉  ref:wiki-chord-notation
+        const remaining = rootMatch[2]
+            .replace(/[()]/g, " ")
+            .replace(/\bno\s*(?=[#b]?\d)|(?<=[\d\s)])no\s*(?=[#b]?\d)|^no\s*(?=[#b]?\d)/g, "omit")
+            .replace(/(\d)(?:st|nd|rd|th)\b/g, "$1")
+            .trim();
 
         // 2. 提取修饰符 (add/omit)
         // 使用全局匹配模式 'g' 来模拟 re.findall
@@ -601,14 +641,16 @@ export class EnhancedChordConverter extends ChordConverter {
         // 3. 确定主和弦类型 (Main Chord Type)
         // 逻辑：以 add 或 omit 为分隔符拆分，取第一部分
         // 例如 "m7 add9" -> "m7"
-        let mainTypePart = remaining.split(/add|omit/)[0].trim();
+        let mainTypePart = remaining.split(/add|omit/)[0].replace(/\s+/g, "");
         if (!mainTypePart) {
             mainTypePart = "maj"; // 默认为大三和弦
         }
 
-        // 获取初始偏移量 (Offsets)
-        // 如果公式库里没有，默认使用 [0, 4, 7] (大三)
-        let offsets = [...(this.chordFormulas[mainTypePart] || [0, 4, 7])];
+        // 获取初始偏移量 (Offsets)；不认识的和弦类型直接报错，而不是悄悄当成大三和弦
+        if (!this.chordFormulas[mainTypePart]) {
+            throw new Error(`Unknown chord type: ${mainTypePart}`);
+        }
+        let offsets = [...this.chordFormulas[mainTypePart]];
 
         // 4. 处理修饰符 (Add / Omit 逻辑)
         for (const { action, interval } of modifiers) {

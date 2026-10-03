@@ -1,4 +1,4 @@
-/** Original interactive reference based on the user's 17 linked SoundQuest/Aizcutei chapters. */
+/** ref:aizcutei-jazz  Original interactive reference based on the user's 17 linked SoundQuest/Aizcutei chapters. */
 const chapterUrl = slug => `https://music-theory.aizcutei.com/post/%E5%92%8C%E5%BC%A6%E7%AF%87/${encodeURIComponent(slug)}`;
 
 export const JAZZ_CHAPTERS = Object.freeze([

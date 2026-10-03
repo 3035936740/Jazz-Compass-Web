@@ -106,3 +106,23 @@ test('minor and split harmonic rhythm preserve chord tone membership through mod
     }
   }
 });
+
+test('a progression imported from the library replaces the main sections only', async () => {
+  const { buildComposition } = await import('./composition.js');
+  const custom = { key: 'C', mode: 'major', chords: [
+    { pitches: [0, 4, 7], rootPc: 0, bassPc: 0, rootDeg: 0, bassDeg: 0, suffix: '', roman: 'I' }, { pitches: [7, 11, 2], rootPc: 7, bassPc: 11, rootDeg: 4, bassDeg: 6, suffix: '', roman: 'V/3' },
+    { pitches: [9, 0, 4], rootPc: 9, bassPc: 9, rootDeg: 5, bassDeg: 5, suffix: 'm', roman: 'vi' }, { pitches: [5, 9, 0], rootPc: 5, bassPc: 5, rootDeg: 3, bassDeg: 3, suffix: '', roman: 'IV' }] };
+  const model = buildComposition({ form: 'ternary', key: 'D', custom });
+  const names = (id) => model.bars.filter((b) => b.section === id).map((b) => b.chords.map((c) => c.name).join('+'));
+  assert.deepEqual(names(0), ['D', 'A/C#', 'Bm', 'G', 'D', 'A/C#', 'Bm', 'G'], 'transposed to the section key, spelled by letter and repeated to 8 bars');
+  assert.equal(model.sections[0].cadence, 'custom');
+  assert.notDeepEqual(names(1), names(0), 'the contrasting section is still generated');
+  const first = model.bars[1].chords[0];
+  assert.equal(first.pitches[first.inversion], first.bassPc, 'the slash bass is a real inversion');
+  const long = buildComposition({ form: 'single', custom: { ...custom, chords: Array(12).fill(custom.chords[0]) } });
+  assert.equal(long.bars.length, 12, 'a 12-chord progression is not cut to 8 bars');
+  const withCadence = buildComposition({ form: 'single', custom, sections: { 0: { cadence: 'pac' } } });
+  assert.equal(withCadence.bars.at(-1).chords[0].name, 'C', 'a section cadence override is still applied at the end');
+  const sharp = buildComposition({ form: 'single', key: 'A', mode: 'major', cadence: 'pac' });
+  assert.ok(sharp.bars.every((b) => b.chords.every((c) => !/b/.test(c.name.replace(/m7b5|b9|b13/g, '')))), 'A major chords use sharps (F#m, not Gbm)');
+});

@@ -1,5 +1,5 @@
 // Independent SATB search informed by Huaishu61/Sposobin engine.py and rules.py
-// https://github.com/Huaishu61/Sposobin  retrieved 2026-09-21
+// https://github.com/Huaishu61/Sposobin  retrieved 2026-09-21  ref:sposobin
 // Voice arrays use B T A S order and absolute MIDI pitches throughout playback
 const pc = n => ((n % 12) + 12) % 12;
 const range = (lo, hi, pcs) => Array.from({length: hi-lo+1}, (_, i) => lo+i).filter(n => pcs.includes(pc(n)));
@@ -8,17 +8,19 @@ export const midiName = n => `${['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb
 export function voicingCandidates(entry) {
   const pcs = entry.pitchClasses;
   if (!pcs?.length || pcs.length > 4) return [];
-  const signature = JSON.stringify([pcs,entry.bassPc,entry.maxCounts,entry.sopranoPc]);
+  const signature = JSON.stringify([pcs,entry.bassPc,entry.maxCounts,entry.sopranoPc,entry.sopranoMidi,entry.bassMidi]);
   if (cache.has(signature)) return cache.get(signature);
   const result = [];
-  for (const b of range(36,60,[entry.bassPc]))
-    for (const t of range(Math.max(45,b+1),69,pcs))
-      for (const a of range(Math.max(53,t),Math.min(74,t+12),pcs))
-        for (const s of range(Math.max(57,a),Math.min(84,a+12),pcs)) {
+  // 音域按 OMT：男低 F2–D4、男高 C3–G4、女中 G3–D5、女高 C4–G5（ref:omt2e-roman-numerals）
+  for (const b of (entry.bassMidi != null ? [entry.bassMidi] : range(41,62,[entry.bassPc])))
+    for (const t of range(Math.max(48,b+1),67,pcs))
+      for (const a of range(Math.max(55,t),Math.min(74,t+12),pcs))
+        for (const s of range(Math.max(60,a),Math.min(79,a+12),pcs)) {
           const v = [b,t,a,s], counts = {};
           v.forEach(n => counts[pc(n)] = (counts[pc(n)] || 0)+1);
           if (pcs.some(n => !counts[n]) || Object.entries(entry.maxCounts || {}).some(([n,max]) => (counts[n] || 0)>max)) continue;
           if (entry.sopranoPc != null && pc(s)!==entry.sopranoPc) continue;
+          if (entry.sopranoMidi != null && s!==entry.sopranoMidi) continue;
           result.push(v);
         }
   result.sort((a,b)=>initialCost(a)-initialCost(b));

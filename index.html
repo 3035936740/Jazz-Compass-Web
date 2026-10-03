@@ -8,15 +8,19 @@
         try { document.documentElement.dataset.theme = localStorage.getItem('jazz-compass-theme') || 'light'; }
         catch { document.documentElement.dataset.theme = 'light'; }
     </script>
-    <script type="module" src="./script.js?v=20261001-ui"></script>
+    <script type="module" src="./script.js?v=20261003-r49"></script>
     <title>Music Theory Toolbox</title>
-    <link rel="stylesheet" href="./app.css?v=20261001-ui">
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" href="./icon.svg" type="image/svg+xml">
+    <meta name="theme-color" content="#10162e">
+    <link rel="stylesheet" href="./app.css?v=20261003-r39">
     <link rel="stylesheet" href="./microtonal.css?v=20261001-ui">
     <link rel="stylesheet" href="./lcc.css?v=20261001-ui">
     <link rel="stylesheet" href="./blues.css?v=20261001-ui">
     <link rel="stylesheet" href="./jazz_toolbox.css?v=20261001-ui">
     <link rel="stylesheet" href="./harmony_connections.css?v=20261001-ui">
     <link rel="stylesheet" href="./composition.css?v=20261001-ui">
+    <link rel="stylesheet" href="./learn.css?v=20261003-r31">
 </head>
 
 <body>
@@ -35,11 +39,13 @@
                 </div>
             </div>
 
-            <nav class="feature-nav" role="tablist" aria-label="工具">
+            <nav class="feature-nav" role="tablist" aria-label="工具" data-i18n-attr="aria-label:ui_nav_tools">
                 <div class="nav-group" role="presentation">
                     <span class="nav-group-label" id="navgroup_harmony">和声</span>
+                    <button class="feature-btn" data-feature="staff"><span id="nav_staff">五线谱</span></button>
                     <button class="feature-btn active" data-feature="chord"><span id="nav_chord">和弦转换处理</span></button>
                     <button class="feature-btn" data-feature="classical"><span id="nav_classical">古典和声连接器</span></button>
+                    <button class="feature-btn" data-feature="figured"><span id="nav_figured">数字低音</span></button>
                     <button class="feature-btn" data-feature="neo"><span id="nav_neo">和声连接论</span></button>
                     <button class="feature-btn" data-feature="circle"><span id="nav_circle">五度圈</span></button>
                 </div>
@@ -47,37 +53,76 @@
                     <span class="nav-group-label" id="navgroup_jazz">爵士与即兴</span>
                     <button class="feature-btn" data-feature="blues"><span id="nav_blues">布鲁斯工具箱</span></button>
                     <button class="feature-btn" data-feature="cst"><span id="nav_cst">爵士工具箱</span></button>
+                    <button class="feature-btn" data-feature="jazzmore"><span id="nav_jazzmore">爵士进阶</span></button>
                     <button class="feature-btn" data-feature="lcc"><span id="nav_lcc">LCC概念实验室</span></button>
+                </div>
+                <div class="nav-group" role="presentation">
+                    <span class="nav-group-label" id="navgroup_voice">对位与旋律</span>
+                    <button class="feature-btn" data-feature="counterpoint"><span id="nav_counterpoint">类别对位</span></button>
+                    <button class="feature-btn" data-feature="nonchord"><span id="nav_nonchord">和弦外音</span></button>
+                    <button class="feature-btn" data-feature="harmonize"><span id="nav_harmonize">旋律配和声</span></button>
                 </div>
                 <div class="nav-group" role="presentation">
                     <span class="nav-group-label" id="navgroup_compose">创作</span>
                     <button class="feature-btn" data-feature="form"><span id="nav_form">曲式结构</span></button>
                     <button class="feature-btn" data-feature="rhythm"><span id="nav_rhythm">节奏型工具箱</span></button>
+                    <button class="feature-btn" data-feature="progression"><span id="nav_progression">和弦进行播放器</span></button>
+                    <button class="feature-btn" data-feature="ear"><span id="nav_ear">练耳</span></button>
+                    <button class="feature-btn" data-feature="instruments"><span id="nav_instruments">移调乐器与音域</span></button>
+                    <button class="feature-btn" data-feature="fretboard"><span id="nav_fretboard">指板与 CAGED</span></button>
+                </div>
+                <div class="nav-group" role="presentation">
+                    <span class="nav-group-label" id="navgroup_world">民族与律学</span>
+                    <button class="feature-btn" data-feature="chinese"><span id="nav_chinese">中国民族调式</span></button>
+                    <button class="feature-btn" data-feature="micro"><span id="nav_micro">微分音工具箱</span></button>
+                    <button class="feature-btn" data-feature="temperaments"><span id="nav_temperaments">历史律制</span></button>
+                    <button class="feature-btn" data-feature="world"><span id="nav_world">世界调式体系</span></button>
                 </div>
                 <div class="nav-group" role="presentation">
                     <span class="nav-group-label" id="navgroup_lab">实验与参考</span>
-                    <button class="feature-btn" data-feature="micro"><span id="nav_micro">微分音工具箱</span></button>
+                    <button class="feature-btn" data-feature="posttonal"><span id="nav_posttonal">二十世纪技法</span></button>
+                    <button class="feature-btn" data-feature="chordsymbols"><span id="nav_chordsymbols">和弦标记查询</span></button>
                     <button class="feature-btn" data-feature="ref"><span id="nav_ref">和弦音阶速查</span></button>
                     <button class="feature-btn" data-feature="other"><span id="nav_other">其他工具</span></button>
                 </div>
                 <div class="nav-group nav-group-end" role="presentation">
+                    <button class="feature-btn learn-entry" data-feature="learn"><svg class="ui-icon" viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true" focusable="false"><path d="M9 4.5 3.5 6.5v13L9 17.5l6 2 5.5-2v-13L15 6.5zM9 4.5v13M15 6.5v13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="nav_learn">乐理闯关</span></button>
                     <button class="feature-btn" data-feature="about"><span id="nav_about">关于</span></button>
                 </div>
             </nav>
 
             <div class="rail-settings">
-                <div class="theme-switch segmented" role="group" aria-label="界面主题">
+                <div class="audio-controls" role="group" aria-label="声音" data-i18n-attr="aria-label:ui_sound">
+                    <span class="control-label" id="label_audio">声音</span>
+                    <input type="range" id="global-volume" min="0" max="100" step="1" value="80" aria-label="音量" data-i18n-attr="aria-label:ui_volume">
+                    <button type="button" class="audio-stop-btn" id="global-stop" title="停止所有播放（Esc）" data-i18n-attr="title:ui_stop_all"><span id="audio_stop">■ 停止</span></button>
+                </div>
+                <div class="midi-controls">
+                    <button type="button" class="audio-stop-btn" id="global-midi" aria-describedby="midi-readout"><svg class="ui-icon" viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true" focusable="false"><rect x="3" y="5.5" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 5.5v8M12 5.5v8M16 5.5v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="midi_connect">连接 MIDI 键盘</span></button>
+                    <span class="midi-readout" id="midi-readout" aria-live="polite"></span>
+                </div>
+                <button type="button" class="shortcut-open-btn" id="shortcut-open" aria-haspopup="dialog"><svg class="ui-icon" viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true" focusable="false"><rect x="2.5" y="6" width="19" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10h.01M9.5 10h.01M13 10h.01M16.5 10h.01M7.5 14h9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="shortcut_open">快捷键 ?</span></button>
+                <div class="theme-switch segmented" role="group" aria-label="界面主题" data-i18n-attr="aria-label:ui_theme">
                     <span class="control-label" id="label_theme">界面</span>
                     <div class="segmented-track">
                         <button class="theme-btn" type="button" data-theme-value="light" aria-pressed="false"><span id="theme_light">浅色</span></button>
                         <button class="theme-btn" type="button" data-theme-value="dark" aria-pressed="false"><span id="theme_dark">深色</span></button>
                     </div>
                 </div>
-                <div class="notation-switch segmented" role="group" aria-label="音名记法">
+                <div class="notation-switch segmented" role="group" aria-label="音名记法" data-i18n-attr="aria-label:ui_notation">
                     <span class="notation-label" id="label_notation">音名记法</span>
                     <div class="segmented-track">
                         <button class="notation-btn active" type="button" data-notation="flats" aria-pressed="true"><span id="notation_flats">♭ 降号</span></button>
                         <button class="notation-btn" type="button" data-notation="sharps" aria-pressed="false"><span id="notation_sharps">♯ 升号</span></button>
+                    </div>
+                </div>
+                <div class="lang-switch segmented" role="group" aria-label="界面语言" data-i18n-attr="aria-label:ui_language">
+                    <span class="control-label" id="label_language">语言</span>
+                    <div class="segmented-track">
+                        <button class="lang-btn" type="button" data-lang-value="auto" aria-pressed="false" title="跟随浏览器语言" data-i18n-attr="title:ui_lang_auto_title"><span id="lang_auto">自动</span></button>
+                        <button class="lang-btn" type="button" data-lang-value="zh" aria-pressed="false" title="中文" lang="zh-CN">中</button>
+                        <button class="lang-btn" type="button" data-lang-value="ja" aria-pressed="false" title="日本語" lang="ja">日</button>
+                        <button class="lang-btn" type="button" data-lang-value="en" aria-pressed="false" title="English" lang="en">EN</button>
                     </div>
                 </div>
             </div>
@@ -89,10 +134,33 @@
                     <p class="workspace-index" id="workspace-index">和声</p>
                     <h2 id="workspace-title">和弦转换</h2>
                     <p id="workspace-description">从一个和弦开始 探索音符之间的关系</p>
+                    <div class="workspace-actions">
+                    <span class="learn-jump">
+                        <button type="button" class="tutorial-btn return-btn" id="return-tutorial" hidden><svg class="ui-icon" viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true" focusable="false"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3M4.5 4.5v4h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="return_tutorial">回到教程</span></button>
+                        <button type="button" class="tutorial-btn" id="tutorial-link" hidden><svg class="ui-icon" viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true" focusable="false"><path d="M9 4.5 3.5 6.5v13L9 17.5l6 2 5.5-2v-13L15 6.5zM9 4.5v13M15 6.5v13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="tutorial_link">看不懂？玩教程</span></button>
+                    </span>
+                    <button type="button" class="share-btn" id="share-link" title="复制指向当前面板的链接" data-i18n-attr="title:ui_share_title"><span id="share_link">复制链接</span></button>
+                    </div>
                 </header>
 
                 <div id="panel-form" class="panel" data-feature="form" role="tabpanel"></div>
                 <div id="panel-rhythm" class="panel" data-feature="rhythm" role="tabpanel"></div>
+                <div id="panel-counterpoint" class="panel" data-feature="counterpoint" role="tabpanel"><div class="panel-body" id="panel-counterpoint-body"></div></div>
+                <div id="panel-nonchord" class="panel" data-feature="nonchord" role="tabpanel"><div class="panel-body" id="panel-nonchord-body"></div></div>
+                <div id="panel-harmonize" class="panel" data-feature="harmonize" role="tabpanel"><div class="panel-body" id="panel-harmonize-body"></div></div>
+                <div id="panel-figured" class="panel" data-feature="figured" role="tabpanel"><div class="panel-body" id="panel-figured-body"></div></div>
+                <div id="panel-jazzmore" class="panel" data-feature="jazzmore" role="tabpanel"><div class="panel-body" id="panel-jazzmore-body"></div></div>
+                <div id="panel-posttonal" class="panel" data-feature="posttonal" role="tabpanel"><div class="panel-body" id="panel-posttonal-body"></div></div>
+                <div id="panel-temperaments" class="panel" data-feature="temperaments" role="tabpanel"><div class="panel-body" id="panel-temperaments-body"></div></div>
+                <div id="panel-world" class="panel" data-feature="world" role="tabpanel"><div class="panel-body" id="panel-world-body"></div></div>
+                <div id="panel-instruments" class="panel" data-feature="instruments" role="tabpanel"><div class="panel-body" id="panel-instruments-body"></div></div>
+                <div id="panel-fretboard" class="panel" data-feature="fretboard" role="tabpanel"><div class="panel-body" id="panel-fretboard-body"></div></div>
+                <div id="panel-progression" class="panel" data-feature="progression" role="tabpanel"><div class="panel-body" id="panel-progression-body"></div></div>
+                <div id="panel-ear" class="panel" data-feature="ear" role="tabpanel"><div class="panel-body" id="panel-ear-body"></div></div>
+                <div id="panel-chordsymbols" class="panel" data-feature="chordsymbols" role="tabpanel"><div class="panel-body" id="panel-chordsymbols-body"></div></div>
+                <div id="panel-staff" class="panel" data-feature="staff" role="tabpanel"><div class="panel-body" id="panel-staff-body"></div></div>
+                <div id="panel-learn" class="panel" data-feature="learn" role="tabpanel"><div class="panel-body" id="panel-learn-body"></div></div>
+                <div id="panel-chinese" class="panel" data-feature="chinese" role="tabpanel"><div class="panel-body" id="panel-chinese-body"></div></div>
 
                 <div id="panel-chord" class="panel" data-feature="chord" role="tabpanel">
                     <div class="panel-header chord-toolbar">
@@ -117,37 +185,37 @@
                         <label><span id="label_classical_mode">调式</span>
                             <select id="classical-mode">
                                 <option value="all-generic" selected>/</option>
-                                <option value="major-generic">大调(不分)</option>
-                                <option value="minor-generic">小调(不分)</option>
-                                <option value="major">自然大调</option>
-                                <option value="harmonic-major">和声大调</option>
-                                <option value="melodic-major">旋律大调</option>
-                                <option value="minor">自然小调</option>
-                                <option value="harmonic-minor">和声小调</option>
-                                <option value="melodic-minor">旋律小调</option>
+                                <option value="major-generic" data-i18n="cl_mode_major_generic">大调(不分)</option>
+                                <option value="minor-generic" data-i18n="cl_mode_minor_generic">小调(不分)</option>
+                                <option value="major" data-i18n="cl_mode_major">自然大调</option>
+                                <option value="harmonic-major" data-i18n="cl_mode_harmonic_major">和声大调</option>
+                                <option value="melodic-major" data-i18n="cl_mode_melodic_major">旋律大调</option>
+                                <option value="minor" data-i18n="cl_mode_minor">自然小调</option>
+                                <option value="harmonic-minor" data-i18n="cl_mode_harmonic_minor">和声小调</option>
+                                <option value="melodic-minor" data-i18n="cl_mode_melodic_minor">旋律小调</option>
                             </select>
                         </label>
                         <label class="classical-current"><span id="label_classical_chord">当前和弦</span>
-                            <input id="classical-input" type="text" value="" placeholder="输入和弦或点击功能组" autocomplete="off" />
+                            <input id="classical-input" type="text" value="" placeholder="输入和弦或点击功能组" data-i18n-attr="placeholder:cl_input_placeholder" autocomplete="off" />
                         </label>
-                        <label><span>转调到</span>
+                        <label><span data-i18n="cl_modulate_to">转调到</span>
                             <select id="classical-mod-key">
                                 <option>C</option><option>Db</option><option>D</option><option>Eb</option><option>E</option>
                                 <option>F</option><option>Gb</option><option selected>G</option><option>Ab</option><option>A</option>
                                 <option>Bb</option><option>B</option>
                             </select>
                         </label>
-                        <label><span>目标调式</span>
+                        <label><span data-i18n="cl_target_mode">目标调式</span>
                             <select id="classical-mod-mode">
-                                <option value="all-generic">/ (列出全部可能性)</option>
-                                <option value="major-generic">大调(不分)</option>
-                                <option value="minor-generic">小调(不分)</option>
-                                <option value="major" selected>自然大调</option>
-                                <option value="harmonic-major">和声大调</option>
-                                <option value="melodic-major">旋律大调</option>
-                                <option value="minor">自然小调</option>
-                                <option value="harmonic-minor">和声小调</option>
-                                <option value="melodic-minor">旋律小调</option>
+                                <option value="all-generic" data-i18n="cl_mode_all">/ (列出全部可能性)</option>
+                                <option value="major-generic" data-i18n="cl_mode_major_generic">大调(不分)</option>
+                                <option value="minor-generic" data-i18n="cl_mode_minor_generic">小调(不分)</option>
+                                <option value="major" selected data-i18n="cl_mode_major">自然大调</option>
+                                <option value="harmonic-major" data-i18n="cl_mode_harmonic_major">和声大调</option>
+                                <option value="melodic-major" data-i18n="cl_mode_melodic_major">旋律大调</option>
+                                <option value="minor" data-i18n="cl_mode_minor">自然小调</option>
+                                <option value="harmonic-minor" data-i18n="cl_mode_harmonic_minor">和声小调</option>
+                                <option value="melodic-minor" data-i18n="cl_mode_melodic_minor">旋律小调</option>
                             </select>
                         </label>
                         <button id="classical-run" class="btn btn-primary"><span id="classical_run_btn">推荐衔接</span></button>
@@ -197,7 +265,7 @@
                             </label>
                         </div>
                         <div id="keycenter-inputs" style="display:none;">
-                            <button id="add-keycenter-chord" type="button" aria-label="添加和弦">+</button>
+                            <button id="add-keycenter-chord" type="button" aria-label="添加和弦" data-i18n-attr="aria-label:ui_add_chord">+</button>
                         </div>
                         <button id="other-run" class="btn btn-primary"><span id="other_run_btn">分析</span></button>
                     </div>
@@ -217,23 +285,23 @@
                             <label class="field-inline"><span id="neo_depth_label">展开层数</span>
                                 <input id="neo-depth-input" class="input-compact" type="number" value="1" min="1" max="10" />
                             </label>
-                            <button id="neo-depth-apply" class="btn btn-secondary btn-sm" type="button">应用</button>
-                            <label class="field-inline"><span>间距</span>
+                            <button id="neo-depth-apply" class="btn btn-secondary btn-sm" type="button" data-i18n="neo_apply">应用</button>
+                            <label class="field-inline"><span data-i18n="neo_spacing">间距</span>
                                 <input id="neo-spacing-input" class="input-compact" type="number" value="100" min="50" max="250" step="5" />
                                 <span class="unit">px</span>
                             </label>
-                            <label class="field-inline field-range"><span>节点大小</span>
+                            <label class="field-inline field-range"><span data-i18n="neo_node_size">节点大小</span>
                                 <input id="neo-node-size-input" type="range" min="12" max="36" value="22" step="1" />
                                 <span id="neo-node-size-val" class="range-value">22</span>
                             </label>
                         </div>
                         <div class="tool-row tool-row-meta">
-                            <span class="legend-item"><i class="legend-line"></i>PLRSN D1（基本）</span>
-                            <span class="legend-item"><i class="legend-line is-dashed"></i>扩展变换</span>
+                            <span class="legend-item"><i class="legend-line"></i><span data-i18n="neo_legend_basic">PLRSN D1（基本）</span></span>
+                            <span class="legend-item"><i class="legend-line is-dashed"></i><span data-i18n="neo_legend_extended">扩展变换</span></span>
                             <span id="neo_pan_hint" class="tool-hint">左键拖拽画布 · 右键拖拽节点 · 滚轮缩放 · 双击重置</span>
                             <span class="tool-row-actions">
-                                <button id="neo-reset-view" class="btn btn-ghost btn-sm" type="button">↺ 重置视图</button>
-                                <button id="neo-reset-positions" class="btn btn-ghost btn-sm" type="button">⟲ 重置位置</button>
+                                <button id="neo-reset-view" class="btn btn-ghost btn-sm" type="button" data-i18n="neo_reset_view">↺ 重置视图</button>
+                                <button id="neo-reset-positions" class="btn btn-ghost btn-sm" type="button" data-i18n="neo_reset_positions">⟲ 重置位置</button>
                             </span>
                         </div>
                     </div>
@@ -281,35 +349,35 @@
                         <div class="circle-toolbar-row">
                             <span id="circle_instruction" class="tool-hint">点击外环或内环扇区查看调性详情</span>
                             <div class="circle-toolbar-actions">
-                                <button id="circle-multi-toggle" class="panel-action" type="button" aria-pressed="false">多调性模式</button>
+                                <button id="circle-multi-toggle" class="panel-action" type="button" aria-pressed="false" data-i18n="circle_multi_mode">多调性模式</button>
                                 <button id="circle-reset" class="btn btn-ghost btn-sm" type="button">↺ Reset</button>
                             </div>
                         </div>
                         <div id="circle-multi-mode-controls">
                             <div id="circle-multi-panel" style="display:none;">
                                 <div class="circle-mode-head">
-                                    <span class="tool-hint">调式：点击卡片选择 色条表示温度 深浅表示张力</span>
-                                    <button id="circle-mode-toggle" class="btn btn-secondary btn-sm" type="button">展开调式</button>
+                                    <span class="tool-hint" data-i18n="circle_multi_hint">调式：点击卡片选择 色条表示温度 深浅表示张力</span>
+                                    <button id="circle-mode-toggle" class="btn btn-secondary btn-sm" type="button" data-i18n="circle_multi_expand">展开调式</button>
                                 </div>
                                 <div id="circle-mode-dropdown" style="display:none;">
-                                    <input id="circle-mode-search" type="search" placeholder="搜索调式" />
+                                    <input id="circle-mode-search" type="search" placeholder="搜索调式" data-i18n-attr="placeholder:circle_mode_search" />
                                     <div id="circle-mode-list"></div>
                                 </div>
                                 <div class="circle-filter-row">
-                                    <label class="filter-chip"><input type="checkbox" id="filter-normal-only" checked> 仅常规调式</label>
-                                    <label class="filter-chip"><input type="checkbox" id="filter-natural-only" checked> 仅自然音阶</label>
+                                    <label class="filter-chip"><input type="checkbox" id="filter-normal-only" checked> <span data-i18n="circle_filter_normal">仅常规调式</span></label>
+                                    <label class="filter-chip"><input type="checkbox" id="filter-natural-only" checked> <span data-i18n="circle_filter_natural">仅自然音阶</span></label>
                                     <div class="circle-sort-row">
-                                        <span>排序</span>
+                                        <span data-i18n="circle_sort">排序</span>
                                         <select id="circle-sort-type" class="circle-select">
-                                            <option value="tension">空间张力等级(1-10 越大越暗)</option>
-                                            <option value="temp">空间温度等级 -8 到 8 负值冷色 正值暖色</option>
+                                            <option value="tension" data-i18n="circle_sort_tension_opt">空间张力等级(1-10 越大越暗)</option>
+                                            <option value="temp" data-i18n="circle_sort_temp_opt">空间温度等级 -8 到 8 负值冷色 正值暖色</option>
                                         </select>
                                         <select id="circle-sort-order" class="circle-select">
                                             <option value="asc">升序</option>
                                             <option value="desc">降序</option>
                                         </select>
                                     </div>
-                                    <button id="circle-apply-mode" class="btn btn-primary btn-sm circle-apply-btn" type="button">应用</button>
+                                    <button id="circle-apply-mode" class="btn btn-primary btn-sm circle-apply-btn" type="button" data-i18n="circle_apply">应用</button>
                                 </div>
                             </div>
                         </div>
@@ -359,6 +427,18 @@
             </section>
         </main>
     </div>
+    <dialog id="shortcut-help" class="shortcut-help" aria-labelledby="shortcut_title">
+        <h3 id="shortcut_title">键盘快捷键</h3>
+        <dl>
+            <dt><kbd>Esc</kbd></dt><dd id="shortcut_stop">停止所有播放</dd>
+            <dt><kbd>/</kbd></dt><dd id="shortcut_focus">聚焦当前面板的输入框</dd>
+            <dt><kbd>[</kbd> <kbd>]</kbd></dt><dd id="shortcut_panels">上一个 / 下一个面板</dd>
+            <dt><kbd>↑</kbd> <kbd>↓</kbd></dt><dd id="shortcut_nav">在侧栏中移动（焦点在侧栏时）</dd>
+            <dt><kbd>M</kbd></dt><dd id="shortcut_mute">静音 / 取消静音</dd>
+            <dt><kbd>?</kbd></dt><dd id="shortcut_help">显示 / 关闭本说明</dd>
+        </dl>
+        <button type="button" class="btn btn-secondary btn-sm" id="shortcut-help-close"><span id="shortcut_close">关闭</span></button>
+    </dialog>
 </body>
 
 </html>

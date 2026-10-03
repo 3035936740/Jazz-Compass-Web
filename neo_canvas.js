@@ -1,3 +1,5 @@
+const tr = (key, fallback) => globalThis.window?.__?.(key) || fallback;
+const trf = (key, fallback, params) => Object.entries(params).reduce((text, [k, v]) => text.replaceAll(`{${k}}`, v), tr(key, fallback));
 // All layout and interaction coordinates use CSS pixels. DPR is applied once.
 export function layoutNeoGraph(nodes, width, size = 22, spacing = 100, forceRows = false) {
   const cardWidth = Math.max(76, size * 3.7);
@@ -45,11 +47,11 @@ export function layoutNeoGraph(nodes, width, size = 22, spacing = 100, forceRows
 export function mountNeoCanvas(container, graph, options) {
   const canvas = document.createElement('canvas');
   canvas.setAttribute('role', 'img');
-  canvas.setAttribute('aria-label', `${graph.center} 和声连接图 下方提供可选择的和弦列表`);
+  canvas.setAttribute('aria-label', trf('neo_canvas_aria', '{center} 和声连接图 下方提供可选择的和弦列表', { center: graph.center }));
   const toolbar = document.createElement('div');
   toolbar.className = 'neo-graph-toolbar';
   const caption = document.createElement('span');
-  caption.textContent = `${graph.nodes.length} 个和弦 / ${Math.max(...graph.nodes.map(n => n.depth || 0))} 层`;
+  caption.textContent = trf('neo_caption', '{n} 个和弦 / {d} 层', { n: graph.nodes.length, d: Math.max(...graph.nodes.map(n => n.depth || 0)) });
   const actions = document.createElement('div');
   toolbar.append(caption, actions);
   container.append(toolbar, canvas);
@@ -58,7 +60,7 @@ export function mountNeoCanvas(container, graph, options) {
   const families = options.family === 'all'
     ? new Set(['tonnetz', 'octatonic', 'harmony'])
     : new Set(graph.edges.map(edge => edge.family || options.family || 'tonnetz'));
-  const familyNames = { tonnetz: '音网图', octatonic: '八音塔', harmony: '和弦连接网' };
+  const familyNames = { tonnetz: tr('neo_family_tonnetz', '音网图'), octatonic: tr('neo_family_octatonic', '八音塔'), harmony: tr('neo_family_harmony', '和弦连接网') };
   [...families].forEach(family => {
     const entry = document.createElement('span');
     entry.className = `neo-graph-family family-${family}`;
@@ -68,11 +70,11 @@ export function mountNeoCanvas(container, graph, options) {
   });
   if (families.has('tonnetz')) {
     const extended = document.createElement('span');
-    extended.innerHTML = '<i class="is-extended"></i>扩展变换';
+    extended.innerHTML = `<i class="is-extended"></i>${tr('neo_legend_extended', '扩展变换')}`;
     legend.appendChild(extended);
   }
   const help = document.createElement('span'); help.className = 'neo-graph-help';
-  help.textContent = '点击和弦继续探索'; legend.appendChild(help);
+  help.textContent = tr('neo_click_explore', '点击和弦继续探索'); legend.appendChild(help);
   container.append(legend);
   const ctx = canvas.getContext('2d');
   const state = options.state;
@@ -111,7 +113,7 @@ export function mountNeoCanvas(container, graph, options) {
     state.offsetY = anchor.y - (anchor.y - state.offsetY) * state.scale / previous;
     render();
   }
-  for (const [label, title, action] of [['−', '缩小', () => zoom(1 / 1.2)], ['+', '放大', () => zoom(1.2)], ['适应画布', '适应画布', fit]]) {
+  for (const [label, title, action] of [['−', tr('neo_zoom_out', '缩小'), () => zoom(1 / 1.2)], ['+', tr('neo_zoom_in', '放大'), () => zoom(1.2)], [tr('neo_fit', '适应画布'), tr('neo_fit', '适应画布'), fit]]) {
     const button = document.createElement('button');
     button.type = 'button'; button.textContent = label; button.setAttribute('aria-label', title);
     listen(button, 'click', action); actions.append(button);
@@ -168,7 +170,7 @@ export function mountNeoCanvas(container, graph, options) {
       ctx.fillText(node.chord, p.x, p.y - 7 * state.scale, w - 10 * state.scale);
       ctx.fillStyle = root ? ink : muted;
       ctx.font = `${10.5 * state.scale}px ${monoFont}`;
-      ctx.fillText(root ? '起始和弦' : node.operation || node.label || '', p.x, p.y + 11 * state.scale, w - 8 * state.scale);
+      ctx.fillText(root ? tr('neo_start_chord', '起始和弦') : node.operation || node.label || '', p.x, p.y + 11 * state.scale, w - 8 * state.scale);
     });
     ctx.globalAlpha = 1;
   }

@@ -43,7 +43,7 @@ const COPY = {
     horizontalHelp: '水平スケールは7つの主要カラーとは別です。これは完全なコードモード表ではありません。',
     shortlist: 'この並びは学習用候補です。非適合カラーの試聴は近い音への変更例であり、正式な重力スコアやコードモード規則ではありません。',
     noResults: 'すべてのコードトーンを含む親スケールはありません。', sources: '理論資料',
-    levels: ['内向', '半内向', '半外向', '外向'],
+    levels: ['インゴーイング', 'セミ・インゴーイング', 'セミ・アウトゴーイング', 'アウトゴーイング'],
   },
 };
 
@@ -235,8 +235,9 @@ export function mountLccExplorer(target, input, { brain, conv, playChord, semito
     content.appendChild(element('p', 'lcc-disclaimer', t.shortlist));
     const sourceRow = element('div', 'lcc-sources', `${t.sources}: `);
     const links = [
+      // ref:george-russell-lcc ref:aizcutei-lcc
       ['George Russell', 'https://georgerussell.com/lydian-chromatic-concept'],
-      ['LCC 介绍', 'https://music-theory.aizcutei.com/post/%E5%92%8C%E5%BC%A6%E7%AF%87/65-Lydian-Chromatic-Concept'],
+      [{ zh: 'LCC 介绍', ja: 'LCC 解説', en: 'LCC introduction' }[document.documentElement.lang.slice(0, 2)] || 'LCC', 'https://music-theory.aizcutei.com/post/%E5%92%8C%E5%BC%A6%E7%AF%87/65-Lydian-Chromatic-Concept'],
     ];
     links.forEach(([label, href]) => {
       const link = element('a', '', label);
