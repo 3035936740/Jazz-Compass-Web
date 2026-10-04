@@ -2,7 +2,7 @@
 // 语法依据见 harmonize.js：ref:omt2e-phrase-model ref:omt2e-cadences ref:omt2e-predominants ref:omt2e-tonic-v6
 //   ref:omt2e-vii6 ref:omt2e-la-bass ref:omt2e-mediant ref:omt2e-plagal；四部写作沿用 classical_voicing.js（ref:sposobin）
 import { harmonizeMelody, voicingEntries, spellVoice } from './harmonize.js';
-import { solveVoicings } from './classical_voicing.js';
+import { solveVoicings } from './classical_voicing.js?v=20261004-w7';
 import { parsePitch } from './pitch_spelling.js';
 import { renderStaff } from './staff_svg.js?v=20261002-fix';
 import { el, button, option, field, language, midiToFrequency, sourcesFooter, cite, relatedLinks, midiExportButton } from './module_kit.js';

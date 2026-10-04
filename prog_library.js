@@ -11,7 +11,7 @@
 //   同一旋律音在不同和弦里的角色、半音 / 小九度摩擦：ref:wiki-harmonization
 //   旋律兼容：和弦音 / 延伸音（9 11 13，变化延伸音写在属七上）/ 与和弦音成小二度、需要解决的和弦外音：ref:omt2e-chord-symbols ref:omt2e-embellishing
 import { accompanimentVoicing } from './accompaniment_voicing.js';
-import { solveVoicings } from './classical_voicing.js';
+import { solveVoicings } from './classical_voicing.js?v=20261004-w7';
 
 export const MAJOR = [0, 2, 4, 5, 7, 9, 11];
 const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];

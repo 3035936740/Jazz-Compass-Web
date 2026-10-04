@@ -181,7 +181,7 @@ export const LEVEL_B2_2 = {
     experiment: [
       { id: 'b22-x1', type: 'experiment', toy: 'keyChords', ref: ['omt2e-roman-numerals', 'omt2e-chord-symbols'],
         prompt: t('盯住一个和弦（例如 G），在不同的调之间切换，看它在每个调里是几级；再切到七和弦看看。', '1 つの和音（G など）に注目して調を切り替え、各調で何度かを見よう。七の和音にも切り替えて。', 'Watch one chord (say G) and switch keys to see its numeral in each; then switch to seventh chords.'),
-        params: { keys: [['C', 'major'], ['G', 'major'], ['D', 'major'], ['F', 'major'], ['E', 'minor'], ['A', 'minor']], watch: ['G', 'Am', 'D', 'B7'] },
+        params: { watch: ['G', 'Am', 'D', 'B7'] },
         breakthrough: { id: 'b22-watch', text: t('你看到了：同一个符号，在不同的调里扮演不同的角色。', '同じシンボルが調によって違う役を演じる——見えた。', 'You saw one symbol play different roles in different keys.') } },
     ],
     challenge: [

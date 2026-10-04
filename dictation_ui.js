@@ -3,9 +3,9 @@
 // 逻辑与依据见 dictation.js（ref:omt-pb-dictation ref:omt2e-rhythm ref:omt2e-phrase-model ref:omt2e-cadences）
 import { rhythmQuestion, melodyQuestion, bassQuestion, progressionQuestion, compare, compareRhythm, compareMelody, segment, dotGrid, VALUE_BEATS } from './dictation.js';
 import { keyInfo, spellNote, stepOf } from './motif_phrase.js';
-import { parseRoman, realize } from './prog_library.js';
+import { parseRoman, realize } from './prog_library.js?v=20261004-w8';
 import { melodyStaff } from './tool_staff.js';
-import { renderVisual } from './learn_visuals.js?v=20261003-r31';
+import { renderVisual } from './learn_visuals.js?v=20261004-m5';
 import { recordToolMistake, tri } from './tool_review.js';
 import { el, button, option, field, language, cite } from './module_kit.js';
 

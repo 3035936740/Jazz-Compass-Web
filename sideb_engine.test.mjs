@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { completeBLevel, chapterAverage, overallAverage, sidebChapterExUnlocked, sidebFinalExUnlocked, CHAPTER_EX_LINE, FINAL_EX_LINE, sidebUnlocked, sidebLevelUnlocked, bKey, normalizeNote, gradeSpelling, normalizeRoman, gradeTaps, gradeNode, createBSession, recordAnswer, completeSection, summarizeB, retrySession, mergeMastery, overallMastery, PASS_LINE, LAB_LINES, LAB_MODES, levelSections, levelForAttempt, buildRecovery, startRecovery, recordRecovery, recoveryResult, summarizeExam, breakthroughFor, validateLevel, estimateMinutes, saveLabResult, bestLabResults, loadBreakthroughs, saveBreakthrough } from './sideb_engine.js';
+import { completeBLevel, chapterAverage, overallAverage, CHAPTER_EX_LINE, FINAL_EX_LINE, sidebUnlocked, sidebLevelUnlocked, bKey, normalizeNote, gradeSpelling, normalizeRoman, gradeTaps, gradeNode, createBSession, recordAnswer, completeSection, summarizeB, retrySession, mergeMastery, overallMastery, PASS_LINE, LAB_LINES, LAB_MODES, levelSections, levelForAttempt, buildRecovery, startRecovery, recordRecovery, recoveryResult, summarizeExam, breakthroughFor, validateLevel, estimateMinutes, saveLabResult, bestLabResults, loadBreakthroughs, saveBreakthrough, gradeOf } from './sideb_engine.js';
 import { emptyProgress, setLevelStars } from './learn_engine.js';
 import { ERRORS, SKILLS, recommend } from './sideb_errors.js';
 
@@ -112,7 +112,7 @@ test('level score = challenge 60% + mandatory lab 40%; pass needs total ≥ 60% 
   sum = summarizeB(s, lvl, { 'vl-ii6-V7-I': { score: 70, hardFail: [] } });
   assert.ok(Math.abs(sum.challenge - 5 / 7) < 1e-9);
   assert.ok(Math.abs(sum.score - (0.6 * 5 / 7 + 0.4 * 0.7)) < 1e-9);
-  assert.deepEqual([sum.passed, sum.stars, sum.next], [true, 1, 'clear']);
+  assert.deepEqual([sum.passed, sum.grade, sum.next], [true, 'C', 'clear']);
   // 实操有硬性失败：分数照算，但不通过
   sum = summarizeB(s, lvl, { 'vl-ii6-V7-I': { score: 90, hardFail: [{ error: 'wrong-chord' }] } });
   assert.deepEqual([sum.passed, sum.next], [false, 'revise-lab']);
@@ -137,7 +137,7 @@ test('below 60%: no restart — a short recovery challenge on the weak skill cle
   const r = recoveryResult(s);
   assert.equal(r.passed, true); assert.equal(r.done, true);
   let p = completeBLevel(setLevelStars(emptyProgress(), ['final-ex'], 1), 'BX', sum, { recovered: true, seen: ['discover', 'explain', 'experiment'] });
-  assert.deepEqual(p.units['b:BX'], { best: 0.6, done: true, stars: 1, seen: ['discover', 'explain', 'experiment'] });
+  assert.deepEqual(p.units['b:BX'], { best: 0.6, done: true, grade: 'C', seen: ['discover', 'explain', 'experiment'] });
 });
 
 test('checkpoints keep finished sections; a retry for more stars starts at the challenge with new questions', () => {
@@ -201,24 +201,26 @@ test('mastery keeps each level’s best per skill; errors map to skills and advi
   assert.deepEqual(recommend({ enharmonic: 1, 'parallel-fifths': 3, nope: 2 }).map((r) => r.type), ['parallel-fifths', 'enharmonic']);
 });
 
-test('best scores, chapter averages and the Side-B EX unlock lines (70% / 75%)', () => {
-  assert.deepEqual([CHAPTER_EX_LINE, FINAL_EX_LINE], [0.7, 0.75]);
+test('letter grades: A+ 95, A 85, B 75, C 60, D 50, E below; a failed attempt shows at most D', () => {
+  assert.deepEqual([0.95, 0.949, 0.85, 0.75, 0.6, 0.5, 0.49, 0].map((s) => gradeOf(s)), ['A+', 'A', 'A', 'B', 'C', 'D', 'E', 'E']);
+  assert.equal(gradeOf(0.9, false), 'D'); assert.equal(gradeOf(0.3, false), 'E');
+});
+
+test('best scores, chapter averages and the exam pass lines (all 60%)', () => {
+  assert.deepEqual([CHAPTER_EX_LINE, FINAL_EX_LINE], [0.6, 0.6]);
   let p = setLevelStars(emptyProgress(), ['final-ex'], 1);
-  p = completeBLevel(p, 'A1', { accuracy: 0.5, passed: false, stars: 0 });
-  assert.deepEqual(p.units['b:A1'], { best: 0.5, done: false, stars: 0 }, 'below 60%: not cleared');
-  p = completeBLevel(p, 'A1', { accuracy: 0.8, passed: true, stars: 2 });
-  p = completeBLevel(p, 'A1', { accuracy: 0.65, passed: true, stars: 1 });
-  assert.deepEqual(p.units['b:A1'], { best: 0.8, done: true, stars: 2 }, 'best and stars keep the highest');
+  p = completeBLevel(p, 'A1', { accuracy: 0.5, passed: false, grade: 'D' });
+  assert.deepEqual(p.units['b:A1'], { best: 0.5, done: false }, 'below 60%: not cleared, no grade');
+  p = completeBLevel(p, 'A1', { accuracy: 0.8, passed: true, grade: 'B' });
+  p = completeBLevel(p, 'A1', { accuracy: 0.65, passed: true, grade: 'C' });
+  assert.deepEqual(p.units['b:A1'], { best: 0.8, done: true, grade: 'B' }, 'best score and grade keep the highest');
   const ch1 = [{ id: 'A1' }, { id: 'A2' }];
   assert.equal(chapterAverage(ch1, p), 0.4, 'unplayed levels count as 0');
-  assert.equal(sidebChapterExUnlocked(ch1, p), false);
   p = completeBLevel(p, 'A2', { accuracy: 0.6, passed: true, stars: 1 });
   assert.equal(chapterAverage(ch1, p), 0.7);
-  assert.equal(sidebChapterExUnlocked(ch1, p), true, 'exactly 70% unlocks');
   const ch2 = [{ id: 'C1' }];
   p = completeBLevel(p, 'C1', { accuracy: 0.79, passed: true, stars: 2 });
   assert.ok(Math.abs(overallAverage([ch1, ch2], p) - 0.745) < 1e-9);
-  assert.equal(sidebFinalExUnlocked([ch1, ch2], p), false, '74.5% < 75%');
   p = completeBLevel(p, 'C1', { accuracy: 0.8, passed: true, stars: 2 });
-  assert.equal(sidebFinalExUnlocked([ch1, ch2], p), true);
+  assert.ok(Math.abs(overallAverage([ch1, ch2], p) - 0.75) < 1e-9);
 });

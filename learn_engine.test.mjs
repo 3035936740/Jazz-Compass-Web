@@ -108,6 +108,11 @@ test('branch levels unlock in order; mixed and final pools', async () => {
   assert.equal(exam.filter(isAdvanced).length, 45, 'EX: 45 advanced + 5 main');
   const genUnit = { id: 'g', cards: [{ type: 'choice', tag: 'm' }], branch: [{ cards: [{ type: 'guide' }, { type: 'gen', gen: 'plr', count: 6 }] }] };
   assert.equal(buildMixedCards(genUnit, { total: 5, fromMain: 1 }).filter((c) => c.type === 'gen').length, 4, 'generated questions are split');
+  // 默认 12 题：进阶 10 + 主关 2；主关的"出 5 道"生成卡也拆开，不会把题数撑大
+  const mixUnit = { id: 'x', cards: [{ type: 'gen', gen: 'plr', count: 5, tag: 'm' }, { type: 'choice', tag: 'm' }], branch: [1, 2, 3, 4].map(() => ({ cards: [{ type: 'gen', gen: 'plr', count: 4, tag: 'a' }] })) };
+  const mixed = buildMixedCards(mixUnit);
+  assert.equal(mixed.reduce((n, c) => n + (c.type === 'gen' ? c.count ?? 1 : 1), 0), 12, 'mixed test: 12 questions');
+  assert.equal(mixed.filter((c) => c.tag === 'm').length, 2, 'mixed test: 2 main + 10 advanced');
   assert.ok(!finalUnlocked(units, progress));
   progress = completeUnit(progress, 'b', { questions: 1, firstTry: 1 });
   assert.ok(finalUnlocked(units, progress));

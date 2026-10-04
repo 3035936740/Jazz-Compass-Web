@@ -79,11 +79,6 @@ function circleOfFifths({ highlight = [], inner = [], target, axis = false } = {
     const pts = [...lit].sort((a, b) => a - b).map((i) => polar(cx, cy, 98, i).join(','));
     add(root, 'polygon', { points: pts.join(' '), class: 'lv-axis' });
   }
-  if (target !== undefined && highlight.length) {
-    const [x1, y1] = polar(cx, cy, 98, circleIndex(highlight[0]));
-    const [x2, y2] = polar(cx, cy, 98, circleIndex(target));
-    add(root, 'line', { x1, y1, x2, y2, class: 'lv-arrow' });
-  }
   CIRCLE.forEach((name, i) => {
     const [x, y] = polar(cx, cy, 98, i);
     const g = add(root, 'g', { class: `lv-node${lit.has(i) ? ' is-lit' : ''}${target !== undefined && circleIndex(target) === i ? ' is-target' : ''}` });
@@ -100,6 +95,16 @@ function circleOfFifths({ highlight = [], inner = [], target, axis = false } = {
     clickable(m, play, [57 + mpc, 60 + mpc, 64 + mpc]);
     c.reg(`m:${MINOR_ASCII[i]}`, circleBox(mx, my, 13), m);
   });
+  // 起点到目标的连线画在所有圆圈之后（在最上层），两端收到圆圈边缘，不盖住起点和目标的音名；中间经过的圆圈会被线压住
+  if (target !== undefined && highlight.length) {
+    const [x1, y1] = polar(cx, cy, 98, circleIndex(highlight[0]));
+    const [x2, y2] = polar(cx, cy, 98, circleIndex(target));
+    const len = Math.hypot(x2 - x1, y2 - y1);
+    if (len > 34) {
+      const ux = (x2 - x1) / len; const uy = (y2 - y1) / len;
+      add(root, 'line', { x1: x1 + ux * 17, y1: y1 + uy * 17, x2: x2 - ux * 17, y2: y2 - uy * 17, class: 'lv-arrow' });
+    }
+  }
   const center = add(root, 'text', { x: cx, y: cy + 4, 'text-anchor': 'middle', class: 'lv-caption' }, '↻ 5  ↺ 4');
   c.reg('center', { x: cx - 30, y: cy - 10, w: 60, h: 20 }, center);
   return c;
@@ -254,7 +259,9 @@ function notation({ staves = [{ clef: 'treble' }], brace = false, notes = [], co
   const columnCount = cols ?? Math.max(1, ...notes.map((n, i) => (n.col ?? i) + 1));
   const left = brace ? 22 : 4;
   const noteStart = left + 52;
-  const step = colWidth;
+  // 标注比列宽还长时（如 Cmadd2），把列拉宽，免得相邻两列的标注挤在一起
+  const widestLabel = Math.max(0, ...notes.flatMap((n) => (n.label ? (Array.isArray(n.label) ? n.label : [n.label]) : []).map((l) => textWidth(String(l), 12))));
+  const step = Math.max(colWidth, Math.ceil(widestLabel + 12));
   const width = noteStart + columnCount * step + 4;
   const tops = staves.map((_, s) => 26 + s * (4 * GAP + stackGap));
   const placed = notes.map((n, i) => ({ ...n, s: n.s ?? 0, col: n.col ?? i }));
@@ -309,6 +316,20 @@ function notation({ staves = [{ clef: 'treble' }], brace = false, notes = [], co
     add(c.root, 'line', { x1: width - 0.5, x2: width - 0.5, y1: tops[0], y2: tops[tops.length - 1] + 4 * GAP, class: 'sd-line sd-system' });
   }
   c.reg('system', { x: left, y: tops[0], w: width - left, h: tops[tops.length - 1] + 4 * GAP - tops[0] });
+  // 同一列、同一行谱表里写着同样标注的几个音（整个和弦共用一个标注）：只写一次，写在最低的音下面（标注在上方时写在最高的音上面）
+  const labelOwner = new Map();
+  placed.forEach((n, i) => {
+    if (!n.label) return;
+    const p = placePitch(staves[n.s]?.clef || 'treble', n.p);
+    if (!p) return;
+    const key = `${n.s}:${n.col}:${n.labelAt || ''}:${JSON.stringify(n.label)}`;
+    const above = n.labelAt === 'bottom' ? false : n.labelAt ? n.labelAt === 'above' : staves.length > 1 && n.s < staves.length - 1;
+    const prev = labelOwner.get(key);
+    if (!prev || (above ? p.position > prev.position : p.position < prev.position)) labelOwner.set(key, { i, position: p.position });
+  });
+  const ownsLabel = new Set([...labelOwner.values()].map((o) => o.i));
+  // 同一列里不同的标注（如 R / 3 / 5）离得太近时依次错开一行，保证不叠在一起
+  const labelSlots = new Map();
   placed.forEach((n, i) => {
     const clefId = staves[n.s]?.clef || 'treble';
     const p = placePitch(clefId, n.p);
@@ -321,15 +342,25 @@ function notation({ staves = [{ clef: 'treble' }], brace = false, notes = [], co
     c.reg(`n${i}`, note.box, note.el);
     c.reg(`head${i}`, note.head);
     note.ledgers.forEach((l) => c.reg(`ledger${i}`, { x: x - 12, y: Number(l.getAttribute('y1')) - 2, w: 24, h: 4 }, l));
-    if (n.label) {
+    if (n.label && ownsLabel.has(i)) {
       // 大谱表上面那行的标注写在谱表上方，其余写在谱表下方；labelAt: 'bottom' 一律写在最下面一行谱表的下方，并且排在同一条基线上
       const above = n.labelAt === 'bottom' ? false : n.labelAt ? n.labelAt === 'above' : staves.length > 1 && n.s < staves.length - 1;
       const ly = n.labelAt === 'bottom' ? bottomLabelY : above ? Math.min(tops[n.s] - 12, note.y - 40) : Math.max(tops[n.s] + 4 * GAP + 20, note.y + 20);
       // 标注可以是几行（如 级数 / 功能 / 和弦音），一行一行往下排
       const lines = Array.isArray(n.label) ? n.label : [n.label];
+      const slotKey = `${n.labelAt === 'bottom' ? 'b' : n.s}:${n.col}:${above ? 'a' : 'b'}`;
+      const taken = labelSlots.get(slotKey) || [];
+      let y0 = ly;
+      const clash = (y) => taken.some(([a, b]) => y - 12 < b && a < y + (lines.length - 1) * 15 + 3);
+      for (let guard = 0; clash(y0) && guard < 12; guard += 1) y0 += above ? -15 : 15;
+      taken.push([y0 - 12, y0 + (lines.length - 1) * 15 + 3]);
+      // 错开后可能超出原来算好的画布：把画布撑大
+      c.height = Math.max(c.height, y0 + (lines.length - 1) * 15 + 6);
+      c.offsetY = Math.min(c.offsetY, y0 - 16);
+      labelSlots.set(slotKey, taken);
       lines.forEach((line, k) => {
-        const t = add(c.root, 'text', { x, y: ly + k * 15, 'text-anchor': 'middle', class: `lv-note-label${k ? ' is-sub' : ''}`, 'data-col': n.group ?? n.col ?? i }, line);
-        c.reg(`label${i}`, { x: x - textWidth(line, 12) / 2, y: Number(t.getAttribute('y')) - 12, w: textWidth(line, 12), h: 15 }, t);
+        const t = add(c.root, 'text', { x: x - (n.dx ?? 0), y: y0 + k * 15, 'text-anchor': 'middle', class: `lv-note-label${k ? ' is-sub' : ''}`, 'data-col': n.group ?? n.col ?? i }, line);
+        c.reg(`label${i}`, { x: x - (n.dx ?? 0) - textWidth(line, 12) / 2, y: Number(t.getAttribute('y')) - 12, w: textWidth(line, 12), h: 15 }, t);
       });
     }
   });

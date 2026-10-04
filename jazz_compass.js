@@ -4,7 +4,7 @@
  */
 
 import { SPOSOBIN_DNA } from "./sposobin_data.js";
-import { solveVoicings, voicingCandidates } from './classical_voicing.js';
+import { solveVoicings, voicingCandidates } from './classical_voicing.js?v=20261004-w7';
 import { LCC_NOTES, LCC_PRINCIPAL_SCALES, lccScaleNotes, lccChromaticOrder, analyzeLccParents, lccColorFamily } from "./lcc_concept.js";
 
 export class ChordConverter {
@@ -1736,6 +1736,9 @@ class NeoRiemannianToolkit {
     }
 }
 
+/** 大小调合并的功能库里，与大调同名但音不同的小调条目的记号后缀（显示为"小调"标签） */
+export const MINOR_MARK = "ᵐ";
+
 export class ClassicalHarmonyConnector {
     constructor() {
         this.converter = new EnhancedChordConverter();
@@ -2057,7 +2060,8 @@ export class ClassicalHarmonyConnector {
         if (/^Ger/.test(symbol)) return "Ger⁺⁶";
         if (/^DD/.test(symbol)) return `V${figure}/V`;
         if (/^Dᵥᵢᵢ/.test(symbol)) {
-            const diminished = symbol.includes("♭") ? "°" : (symbol.includes("₇") || symbol.includes("₅₆") || symbol.includes("₃₄") || symbol.includes("₂") ? "ø" : "°");
+            // 副导七和弦（…/II 等）和带 ♭ 的是减七（°），调内的 Dᵥᵢᵢ₇ 在大调是半减七（ø）、在小调是减七（°）
+            const diminished = symbol.includes("♭") || target || mode.includes("minor") ? "°" : (symbol.includes("₇") || symbol.includes("₅₆") || symbol.includes("₃₄") || symbol.includes("₂") ? "ø" : "°");
             return `vii${diminished}${figure}${target}`;
         }
         if (/^DTᵢᵢᵢ/.test(symbol)) return `${mode.includes("minor") ? "III" : "iii"}${figure}`;
@@ -2079,16 +2083,51 @@ export class ClassicalHarmonyConnector {
         if (/^Fr/.test(symbol)) return this._spellAugmentedSixthChordName(key, mode, "Fr");
         if (/^Ger/.test(symbol)) return this._spellAugmentedSixthChordName(key, mode, "Ger");
         const rootPc = (this.converter.noteToIdx[key] + rootRelPc) % 12;
-        const rootName = this.converter.idxToNote[rootPc];
+        const rootName = this._spellSposobinRoot(symbol, key, rootPc);
+        const bassName = this._spellChordTone(rootName, rootPc, bassPc);
         if (/^D[₇₅₆₃₄₂]*不完全(?:\/|$)/.test(symbol)) {
-            const bassName = this.converter.idxToNote[bassPc];
             return `${rootName}7(no5)${bassPc !== rootPc ? `/${bassName}` : ""}`;
         }
         const intervals = [...new Set(required.map(pc => (pc - rootRelPc + 12) % 12))].sort((a, b) => a - b);
         const quality = this._quality(intervals);
-        const suffix = quality.quality === "tertian chord" ? "" : quality.suffix;
-        const bassName = this.converter.idxToNote[bassPc];
+        const extra = { "0,4,6,10": "7b5", "0,4,8,10": "7#5", "0,3,7,11": "mMaj7", "0,4,6": "b5" }[intervals.join(",")];
+        const suffix = quality.quality === "tertian chord" ? (extra || "") : quality.suffix;
         return `${rootName}${suffix}${bassPc !== rootPc ? `/${bassName}` : ""}`;
+    }
+
+    /**
+     * 和弦根音按"音级字母"拼写（而不是一律用降号）：副属 / 副导和弦按被离调的级数推出字母（如 C 大调 vii°7/iii = D♯°7，不是 E♭dim7）
+     * 推不出时退回按音级查表
+     */
+    _spellSposobinRoot(symbol, key, rootPc) {
+        const targets = { II: 2, III: 3, IV: 4, iv: 4, VI: 6, VII: 7 };
+        const suffix = symbol.match(/\/(II|III|IV|VI|VII|iv)$/)?.[1];
+        let degree = null;
+        if (suffix) degree = /^Dᵥᵢᵢ/.test(symbol) ? targets[suffix] - 1 : targets[suffix] + 4;
+        else if (/^DD/.test(symbol)) degree = 2;
+        else if (/^Dᵥᵢᵢ/.test(symbol)) degree = 7;
+        else if (/^DTᵢᵢᵢ/.test(symbol)) degree = 3;
+        else if (/^[Ss]ᵢᵢ/.test(symbol)) degree = 2;
+        else if (/^[TtK]/.test(symbol)) degree = 1;
+        else if (/^[Ss]/.test(symbol)) degree = 4;
+        else if (/^N/.test(symbol)) degree = 2;
+        else if (/^D/.test(symbol)) degree = 5;
+        else if (/^♭?VII/.test(symbol)) degree = 7;
+        else if (/^♭?VI/.test(symbol)) degree = 6;
+        const root = this._normalizeKey(key);
+        if (degree === null) return this.converter.idxToNote[rootPc];
+        const letter = this.letters[(this.letters.indexOf(root[0]) + ((degree - 1) % 7 + 7) % 7) % 7];
+        const diff = ((rootPc - this.naturalPitch[letter]) % 12 + 18) % 12 - 6;
+        return Math.abs(diff) <= 2 ? `${letter}${this._accidentalForDiff(diff)}` : this.converter.idxToNote[rootPc];
+    }
+
+    /** 和弦里的某个音（多用于低音）：按它是根音上方第几度来定字母 */
+    _spellChordTone(rootName, rootPc, pc) {
+        const interval = ((pc - rootPc) % 12 + 12) % 12;
+        const step = { 0: 0, 1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 4, 7: 4, 8: 4, 9: 6, 10: 6, 11: 6 }[interval];
+        const letter = this.letters[(this.letters.indexOf(rootName[0]) + step) % 7];
+        const diff = ((pc - this.naturalPitch[letter]) % 12 + 18) % 12 - 6;
+        return Math.abs(diff) <= 2 ? `${letter}${this._accidentalForDiff(diff)}` : this.converter.idxToNote[pc];
     }
 
     _spellAugmentedSixthChordName(key, mode, family) {
@@ -2097,13 +2136,14 @@ export class ClassicalHarmonyConnector {
     }
 
     _spellAugmentedSixthNotes(key, mode, family) {
+        // le（降六级）、do、re（Fr）、me（Ger）、fi（升四级）都按大调音阶量：小调里的六级本来就是 le，再降一次会写成重降号
         const names = [
-            this._spellDegree(key, mode, 6, -1),
-            this._spellDegree(key, mode, 1),
+            this._spellDegree(key, "major", 6, -1),
+            this._spellDegree(key, "major", 1),
         ];
-        if (family === "Fr") names.push(this._spellDegree(key, mode, 2));
-        if (family === "Ger") names.push(this._spellDegree(key, mode, 3, -1));
-        names.push(this._spellDegree(key, mode, 4, 1));
+        if (family === "Fr") names.push(this._spellDegree(key, "major", 2));
+        if (family === "Ger") names.push(this._spellDegree(key, "major", 3, -1));
+        names.push(this._spellDegree(key, "major", 4, 1));
         return names;
     }
 
@@ -2140,13 +2180,20 @@ export class ClassicalHarmonyConnector {
     getPalette(key = "C", mode = "major") {
         const normalizedKey = this._normalizeKey(key);
         if (mode === "all-generic") {
-            const unique = new Map();
-            [...this.getPalette(normalizedKey, "major-generic"), ...this.getPalette(normalizedKey, "minor-generic")]
-                .forEach(entry => {
-                    const keyValue = `${entry.symbol}|${entry.roman}|${entry.chord}|${entry.bass}`;
-                    if (!unique.has(keyValue)) unique.set(keyValue, entry);
-                });
-            return [...unique.values()];
+            // 大小调合在一起时，同一个 Sposobin 记号在大调和小调里可能是两个不同的和弦（如 VI：大调 vi = Am，小调 VI = A♭）。
+            // 大调的条目保留原记号；小调里音不同的同名条目改用"记号 + ᵐ"（显示时标"小调"），点击时不会被解析成大调的那个；
+            // 音完全相同的只留一个
+            const major = this.getPalette(normalizedKey, "major-generic").map(entry => ({ ...entry, sourceMode: "major" }));
+            const bySymbol = new Map(major.map(entry => [entry.symbol, entry]));
+            const sameSet = (a, b) => [...a.pitchClasses].sort().join(",") === [...b.pitchClasses].sort().join(",");
+            const minor = this.getPalette(normalizedKey, "minor-generic").flatMap(entry => {
+                const twin = bySymbol.get(entry.symbol);
+                if (!twin) return [{ ...entry, sourceMode: "minor" }];
+                if (sameSet(twin, entry)) return [];
+                const symbol = `${entry.symbol}${MINOR_MARK}`;
+                return [{ ...entry, symbol, baseSymbol: entry.symbol, sourceMode: "minor", aliases: [...new Set([symbol, ...entry.aliases.filter(a => a !== entry.symbol)])] }];
+            });
+            return [...major, ...minor];
         }
         const normalizedMode = mode === "minor-generic" ? "minor" : mode === "major-generic" ? "major" : (this.modeIntervals[mode] ? mode : "major");
         const isMinorFamily = normalizedMode.includes("minor");

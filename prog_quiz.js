@@ -2,7 +2,7 @@
 // 条目和它们的出处见 prog_library_data.js；四和弦流行套路（Axis / doo-wop / 卡农 / hopscotch 等）：ref:omt-pb-4chord ref:omt-pb-classical-schemas
 // 低音线写成相对主音的级数（小调条目用同主音大调做参照，和速查里的数字写法一致）：ref:omt2e-major-scales
 import { ENTRIES } from './prog_library_data.js';
-import { prepareEntries, realize, keyOf } from './prog_library.js';
+import { prepareEntries, realize, keyOf } from './prog_library.js?v=20261004-w8';
 
 const DEGREE = ['1', '♭2', '2', '♭3', '3', '4', '♯4', '5', '♭6', '6', '♭7', '7'];
 const pick = (list, rng) => list[Math.floor(rng() * list.length)];

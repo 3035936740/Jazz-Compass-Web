@@ -148,13 +148,15 @@ const questionCards = (cards) => cards.filter((card) => card.type !== 'guide');
 /** 生成器占位按数量拆成单题占位，方便抽题 */
 const splitGenerated = (cards) => cards.flatMap((card) => (card.type === 'gen' ? Array.from({ length: card.count ?? 1 }, () => ({ ...card, count: 1 })) : [card]));
 
-/** 综合测验：以进阶关为主（默认 20 题里主关只占 3 题），生成题拆开抽，所以比单个关卡更长、更难 */
-export function buildMixedCards(unit, { total = 20, fromMain = 3 } = {}, rng = Math.random) {
-  const main = shuffle(questionCards(unit.cards), rng).slice(0, fromMain);
+/** 综合测验：每次随机 12 题——这一关 4 个进阶关里的 10 题 + 主关 2 题；生成题拆开抽 */
+export function buildMixedCards(unit, { total = 12, fromMain = 2 } = {}, rng = Math.random) {
+  // 主关的生成题也拆成单题，免得一张"出 5 道"的生成卡把题数撑过 total
+  const mainPool = shuffle(splitGenerated(questionCards(unit.cards)), rng);
+  const main = mainPool.slice(0, fromMain);
   const advanced = shuffle(splitGenerated((unit.branch || []).flatMap((level) => questionCards(level.cards))), rng);
   const picked = [...main, ...advanced.slice(0, total - main.length)];
   // 进阶题不够时再补主关题
-  if (picked.length < total) picked.push(...shuffle(questionCards(unit.cards), rng).filter((c) => !main.includes(c)).slice(0, total - picked.length));
+  if (picked.length < total) picked.push(...mainPool.slice(fromMain, fromMain + total - picked.length));
   return shuffle(picked, rng);
 }
 

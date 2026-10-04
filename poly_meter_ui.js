@@ -137,7 +137,7 @@ export function mountPolyMeter(host, audio) {
     const q = String(event.detail ?? '');
     if (!q.startsWith('@lab:')) return;
     state.polyPlayed = false; state.mmPlayed = false;
-    import('./lab_banner.js?v=20261004-w5').then(({ mountLabBanner }) => mountLabBanner(host, q.slice(5), {
+    import('./lab_banner.js?v=20261005-q1').then(({ mountLabBanner }) => mountLabBanner(host, q.slice(5), {
       getSubmission: () => ({ ratio: ab(), polyPlayed: state.polyPlayed, mm: { preset: presetSel.value, oldTempo: Number(oldTempo.value), played: state.mmPlayed } }),
     }));
   });

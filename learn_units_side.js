@@ -24,6 +24,8 @@ const C = { ii7: [50, 57, 60, 65], V7: [43, 53, 59, 64], Imaj7: [48, 55, 59, 64]
 export const UNITS = [
   {
     id: 'cadences2', parent: 'cadences', section: 'harmony', feature: 'progression', icon: '.2',
+    // 曲式结构工具里能看到终止式在乐句、乐段里的位置
+    extraTools: [{ feature: 'form' }],
     title: t('终止式 2：更多的收尾', '終止形 2：もっと多くの終わり方', 'Cadences 2: more ways to end'),
     blurb: t('弗里吉亚半终止、皮卡迪三度、强拍与弱拍终止、安达卢西亚进行、那不勒斯六与爵士里的终止', 'フリギア半終止・ピカルディの 3 度・強拍と弱拍の終止・アンダルシア進行・ナポリの六・ジャズの終止', 'Phrygian half cadence, Picardy third, accented and unaccented cadences, the Andalusian progression, the Neapolitan and jazz cadences'),
     cards: [

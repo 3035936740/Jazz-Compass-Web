@@ -64,8 +64,53 @@ export function voiceCost(a,b,from,to) {
   if(transitionIssues(a,b,from,to).length) return Infinity;
   return b.reduce((sum,n,i)=>sum+Math.abs(n-a[i])*(i===0?.65:i===3?1.3:1.1),0)+initialCost(b)*.08;
 }
+/**
+ * 找不到合法连接时的退路：每一步都选"违反规则最少、其次移动最小"的配置，保证仍能按顺序播放、送入五线谱。
+ * 某个和弦连音域 / 重复音规则都满足不了时，用一个简单的密集排列（低音 + 三个上方声部依次往上叠）
+ */
+function looseCandidates(entry) {
+  const strict = voicingCandidates(entry);
+  if (strict.length) return strict;
+  const pcs = entry.pitchClasses || [];
+  if (!pcs.length) return [];
+  const bass = range(41, 52, [entry.bassPc ?? pcs[0]])[0] ?? 48;
+  const upper = [];
+  let cur = 54;
+  for (let i = 0; i < 3; i += 1) { const want = pcs[(i + 1) % pcs.length]; let n = cur + 1; while (pc(n) !== want) n += 1; upper.push(n); cur = n; }
+  return [[bass, ...upper]];
+}
+function solveLoosely(entries) {
+  let layer = looseCandidates(entries[0]).map((v) => ({ v, cost: initialCost(v), prev: null }));
+  if (!layer.length) return null;
+  for (let k = 1; k < entries.length; k += 1) {
+    const next = [];
+    for (const v of looseCandidates(entries[k])) {
+      let best = null; let cost = Infinity;
+      for (const state of layer) {
+        const issues = transitionIssues(state.v, v, entries[k - 1], entries[k]).length;
+        const value = state.cost + issues * 1000 + v.reduce((sum, n, i) => sum + Math.abs(n - state.v[i]), 0);
+        if (value < cost) { cost = value; best = state; }
+      }
+      if (best) next.push({ v, cost, prev: best });
+    }
+    if (!next.length) return null;
+    layer = next;
+  }
+  let state = layer.reduce((a, b) => (a.cost < b.cost ? a : b));
+  const voices = [];
+  while (state) { voices.unshift(state.v); state = state.prev; }
+  const problems = voices.slice(1).map((v, i) => ({ index: i + 1, issues: transitionIssues(voices[i], v, entries[i], entries[i + 1]) })).filter((x) => x.issues.length);
+  return { voices, problems };
+}
 export function solveVoicings(entries) {
   if(!entries.length) return {ok:true,voices:[],cost:0};
+  const strict = solveStrict(entries);
+  if (strict.ok) return strict;
+  // 没有合法连接：仍然按顺序给出一种配置（ok 仍为 false，fallback = true），界面提示"这种写法不对"，但可以播放、可以送入五线谱
+  const loose = solveLoosely(entries);
+  return loose ? { ...strict, fallback: true, voices: loose.voices, problems: loose.problems } : strict;
+}
+function solveStrict(entries) {
   let layer=voicingCandidates(entries[0]).map(v=>({v,cost:initialCost(v),prev:null}));
   if(!layer.length) return {ok:false,index:0,reason:'该和弦没有符合音域与重复音规则的四部配置'};
   for(let k=1;k<entries.length;k++) {

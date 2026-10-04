@@ -72,9 +72,10 @@ export function renderChordConversion(conv, targetEl, inputValue) {
       }
       return `<div class="piano-white-wrap">${white}${black}</div>`;
     }).join("");
-    htmlParts.push(`<section class="piano-section"><div class="piano-section-head"><div><strong>${window.__("piano_title")}</strong><span class="piano-caption">${window.__("piano_hint")}</span></div><button type="button" class="chord-play-button" id="chord-play-result"><span aria-hidden="true">►</span> ${window.__("play_chord")}</button></div><div class="mini-keyboard piano-keyboard">${keys}</div><div class="piano-legend"><span><i class="legend-root"></i>${window.__("root_label")}</span><span><i class="legend-bass"></i>${window.__("bass_tone")}</span><span><i class="legend-tone"></i>${window.__("chord_tone")}</span><span class="piano-range">C4 — B5</span></div></section>`);
+    htmlParts.push(`<section class="piano-section"><div class="piano-section-head"><div><strong>${window.__("piano_title")}</strong><span class="piano-caption">${window.__("piano_hint")}</span></div><button type="button" class="chord-play-button" id="chord-play-result"><span aria-hidden="true">►</span> ${window.__("play_chord")}</button><button type="button" class="chord-play-button ghost" id="chord-to-staff">${window.__("chord_to_staff")}</button></div><div class="mini-keyboard piano-keyboard">${keys}</div><div class="piano-legend"><span><i class="legend-root"></i>${window.__("root_label")}</span><span><i class="legend-bass"></i>${window.__("bass_tone")}</span><span><i class="legend-tone"></i>${window.__("chord_tone")}</span><span class="piano-range">C4 — B5</span></div></section>`);
 
     targetEl.innerHTML = htmlParts.join("");
+    let staffPitches = symbolic ? symbolic.pitches : null;
     if (symbolic) {
       const staff = renderStaff({
         staves: [{ clef: chooseClef(symbolic.pitches), bars: [[{ p: symbolic.pitches, d: 4 }]] }],
@@ -87,6 +88,7 @@ export function renderChordConversion(conv, targetEl, inputValue) {
         // 根音高于 E4 或音数较多（延伸音和弦）时从第 3 八度起排，避免谱面过高
         const rootOctave = spelled.length >= 5 || parsePitch(`${typedRoot}4`).midi > 64 ? 3 : 4;
         const pitches = voiceSpelledChord(typedRoot, spelled, { rootOctave, bass: typedBass && typedBass !== typedRoot ? typedBass : null });
+        staffPitches = pitches;
         const staff = renderStaff({
           staves: [{ clef: chooseClef(pitches), bars: [[{ p: pitches, d: 4 }]] }],
           beats: 4,
@@ -102,6 +104,13 @@ export function renderChordConversion(conv, targetEl, inputValue) {
     } else {
       targetEl.querySelector("#chord-staff")?.remove();
     }
+    // 送到五线谱：不清空谱面，接在最后，按五线谱当前选中的时值成为下一个和弦（#staff?q=@append）
+    const toStaff = targetEl.querySelector("#chord-to-staff");
+    if (toStaff && !staffPitches?.length) toStaff.remove();
+    toStaff?.addEventListener("click", () => {
+      try { globalThis.localStorage?.setItem("jc-staff-append", JSON.stringify({ pitches: staffPitches, symbol: chord })); } catch (_) { /* ignore */ }
+      if (globalThis.location) globalThis.location.hash = "#staff?q=@append";
+    });
     targetEl.querySelector("#chord-play-result")?.addEventListener("click", () => {
       // 按定义解析得到的排列（alt 每次不同）与谱面一致时，直接播放谱面上的音
       if (symbolic) { playChord(symbolic.pitches.map((name) => 440 * 2 ** ((parsePitch(name).midi - 69) / 12))); return; }

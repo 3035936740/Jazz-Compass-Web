@@ -71,3 +71,7 @@
 .score-function { fill: var(--brass); }
 .score-measure.is-playing .score-hit { fill: var(--brass-wash); stroke: var(--brass); }
 .classical-voicing-status { color: var(--brass); }
+/* 没有合法声部连接时的退路：仍可播放 / 送入五线谱，但明确标出这种写法不对 */
+.classical-voicing-status.is-warning, .classical-voicing-warning { margin: 6px 0; padding: 8px 12px; border: 1px dashed #c0563b; border-radius: 10px; background: rgba(192, 86, 59, .08); color: #a5402a; font-size: 12px; line-height: 1.6; }
+:root[data-theme="dark"] .classical-voicing-status.is-warning, :root[data-theme="dark"] .classical-voicing-warning { color: #f0a08a; border-color: #f0a08a; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .classical-voicing-status.is-warning, :root:not([data-theme="light"]) .classical-voicing-warning { color: #f0a08a; border-color: #f0a08a; } }

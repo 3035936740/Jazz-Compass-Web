@@ -684,15 +684,15 @@ export const BRANCHES = {
     ]),
     L(t('Blackadder 和弦', 'ブラックアダー・コード', 'The Blackadder chord'), [
       { type: 'guide', ref: 'soundquest-blk', tool: { feature: 'chordsymbols', q: 'Cblk' }, demo: { play: [[48, 58, 62, 66]] },
-        title: t('增三和弦放在全音之上的低音上', '全音上のベースに増三和音', 'An augmented triad over a bass a whole step below'),
+        title: t('增三和弦放在比它高全音的低音上', '全音上のベースに増三和音', 'An augmented triad over a bass a whole step above its root'),
         steps: [
-          t('Blackadder 和弦 = 一个增三和弦，下面加一个比增三和弦根音低全音的低音：Cblk = C + B♭ D F♯（B♭aug/C）。听。', 'ブラックアダー = 増三和音 + その根音の全音下のベース：Cblk = C + B♭ D F♯（B♭aug/C）。聴いて。', 'A Blackadder chord = an augmented triad over a bass a whole step below its root: Cblk = C + B♭ D F♯ (B♭aug/C). Listen.'),
+          t('Blackadder 和弦 = 一个增三和弦，下面加一个比增三和弦根音高全音的低音（增三和弦的根音比低音低全音）：Cblk = C + B♭ D F♯（B♭aug/C）。听。', 'ブラックアダー = 増三和音 + その根音の全音上のベース（増三和音の根音はベースの全音下）：Cblk = C + B♭ D F♯（B♭aug/C）。聴いて。', 'A Blackadder chord = an augmented triad over a bass a whole step above its root (the triad’s root lies a whole step below the bass): Cblk = C + B♭ D F♯ (B♭aug/C). Listen.'),
           t('它也可以读成 C9(♭5) 省略三音、或 C+6(♯11) 省略三音；音全部来自全音音阶。', 'C9(♭5) の 3 度省略、C+6(♯11) の 3 度省略とも読め、音はすべて全音音階から。', 'It can also be read as C9(♭5) omit 3 or C+6(♯11) omit 3; all its notes come from a whole-tone scale.'),
         ] },
       { type: 'choice', ref: 'soundquest-blk',
         prompt: t('Gblk 由哪些音组成？', 'Gblk の構成音は？', 'Which notes make Gblk?'),
         options: ['G F A C♯', 'G B D F', 'G F♯ A♯ D'], answer: 0,
-        hint: t('G 上方的增三和弦根音比 G 高小七度（低全音的八度转位）：F。', 'G の全音下の F が増三和音の根音。', 'The augmented triad’s root is a whole step below G: F.'),
+        hint: t('增三和弦的根音比低音 G 低一个全音：F。', 'G の全音下の F が増三和音の根音。', 'The augmented triad’s root is a whole step below G: F.'),
         explain: t('F 增三和弦 F A C♯ 放在 G 上：G F A C♯。', 'F の増三和音 F A C♯ を G の上に：G F A C♯。', 'F augmented (F A C♯) over G: G F A C♯.') },
       { type: 'choice', ref: 'soundquest-blk',
         prompt: t('A♯aug/C 在标准写法里是？', 'A♯aug/C の標準形は？', 'A♯aug/C in standard notation is…'),
@@ -722,7 +722,7 @@ export const BRANCHES = {
       { type: 'guide', ref: ['wiki-altered-scale', 'soundquest-blk'], tool: { feature: 'chordsymbols' },
         title: t('alt、blk、aug', 'alt・blk・aug', 'alt, blk, aug'),
         steps: [
-          t('alt：属七加各种变化音，每次可以不同；blk：增三和弦 + 低全音的低音；aug：两个大三度。', 'alt：属七 + 変化音（毎回違ってよい）、blk：増三和音 + 全音下のベース、aug：長 3 度 2 つ。', 'alt: a dominant plus altered tensions, varying each time; blk: an augmented triad over a bass a whole step below; aug: two major thirds.'),
+          t('alt：属七加各种变化音，每次可以不同；blk：增三和弦 + 比它根音高全音的低音；aug：两个大三度。', 'alt：属七 + 変化音（毎回違ってよい）、blk：増三和音 + その根音の全音上のベース、aug：長 3 度 2 つ。', 'alt: a dominant plus altered tensions, varying each time; blk: an augmented triad over a bass a whole step above its root; aug: two major thirds.'),
         ] },
       G('scaleLibrary', 2, { ids: ['altered_dominant', 'lydian_sharp_5'] }), G('chordSymbolNotes', 2), G('symmetricScale', 1),
     ]),

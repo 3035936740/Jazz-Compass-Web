@@ -1,17 +1,17 @@
 // 乐理闯关界面：关卡地图（主关 + 进阶分支 + 综合测验 + 结业挑战）、关卡播放器（引导卡 / 选择 / 填空 / 连线）、
 // 图示、提示与解析、去工具里看看（带学习记录，回来时还是同一题）、结算
 // 题目与依据见 learn_content.js / learn_units_*.js / learn_branches_*.js；生成题见 learn_generators.js；规则见 learn_engine.js
-import { UNITS, SECTIONS, SIDES } from './learn_content.js?v=20261004-w3';
+import { UNITS, SECTIONS, SIDES } from './learn_content.js?v=20261005-p3';
 import {
   createSession, currentItem, answer, advance, isFinished, progressRatio, loadProgress, saveProgress, completeUnit, isUnlocked, nextUnitIndex, shuffle,
   levelKey, parseLevelKey, isLevelUnlocked, isDone, MIX_SLOT, buildMixedCards, buildFinalCards, FINAL_KEY, FINAL_EX_KEY, finalUnlocked, finalExUnlocked,
   buildChapterCards, chapterKey, parseChapterKey, chapterUnlocked, chapterExUnlocked,
   saveResume, loadResume, clearResume, unitLevelKeys, setLevelStars, emptyProgress,
   loadReview, saveReview, recordMistake, recordReviewAnswer, dueReview, exportProgress, importProgress, starsFor, isSideLevelUnlocked, unitFullyDone,
-} from './learn_engine.js?v=20261004-s4';
-import { expandCards } from './learn_generators.js?v=20261004-g4';
-import { worksheetHTML, openWorksheet, printable } from './worksheet.js?v=20261003-w1';
-import { renderVisual } from './learn_visuals.js?v=20261003-r31';
+} from './learn_engine.js?v=20261005-q1';
+import { expandCards } from './learn_generators.js?v=20261005-q1';
+import { worksheetHTML, openWorksheet, printable } from './worksheet.js?v=20261004-y1';
+import { renderVisual } from './learn_visuals.js?v=20261004-m5';
 import { el, button, language, midiToFrequency, cite } from './module_kit.js';
 import { icon, withIcon } from './ui_icons.js?v=20261003-i2';
 import { playFeedbackSound, sfxEnabled, setSfxEnabled } from './learn_sfx.js?v=20261003-x3';
@@ -46,7 +46,7 @@ const TEXT = {
     play: '听一听', tapToPair: '先点左边，再点右边，把它们连起来。', tapToFill: '点下面的词填进空格，点空格可以撤回。',
     retryTitle: '再练一次', finishTitle: '过关！', earned: (stars, xp) => `获得 ${'★'.repeat(stars)}${'☆'.repeat(3 - stars)} · ${xp} 经验`,
     nextUnit: '下一关', backToMap: '回到地图', source: '依据', tryTool: '去工具里试试', allDone: '主关全部通关！进阶分支和结业挑战还在等你。',
-    main: '主关', adv: (n) => `进阶 ${n}`, mix: '综合测验', mixBlurb: '20 题，以 4 个进阶关的难题为主，只混入少量主关题。', branchLocked: '先完成主关，再按顺序解锁进阶关',
+    main: '主关', adv: (n) => `进阶 ${n}`, mix: '综合测验', mixBlurb: '12 题：从 4 个进阶关里随机抽 10 题，再加 2 道主关题，每次都重新抽。', branchLocked: '先完成主关，再按顺序解锁进阶关',
     chapterTest: '章节测试', chapterTestEx: 'EX 章节测试', chapterBlurb: (name) => `${name}的章节测试：随机抽 20 道，18 道主关题、2 道进阶题，不含支线。每次都不一样，中途离开会自动保存进度。`, chapterLocked: '通关本章全部主关后开放',
     chapterExBlurb: (name) => `${name}的 EX 章节测试：随机抽 30 道，25 道进阶题（包括本章的支线大关卡）、5 道主关题，覆盖本章全部内容。`, chapterExLocked: '通关本章所有关卡（主关、进阶 1–4、综合测验、本章的支线）和章节测试后开放',
     goal: '终点', final: '结业挑战', finalBlurb: '从所有主线关卡里随机抽 50 道：44 道主关题、6 道进阶题，不含支线，每次都不一样。中途离开会自动保存进度。', finalLocked: '完成全部主关后开放',
@@ -68,7 +68,7 @@ const TEXT = {
     play: '聴いてみる', tapToPair: '左をタップしてから右をタップしてつなげよう。', tapToFill: '下の言葉をタップして空欄へ。空欄をタップで戻せます。',
     retryTitle: 'もう一度練習', finishTitle: 'クリア！', earned: (stars, xp) => `${'★'.repeat(stars)}${'☆'.repeat(3 - stars)} · ${xp} XP 獲得`,
     nextUnit: '次のステージ', backToMap: 'マップへ', source: '出典', tryTool: 'ツールで試す', allDone: 'メインを全クリア！発展ステージと修了チャレンジが待っています。',
-    main: 'メイン', adv: (n) => `発展 ${n}`, mix: '総合テスト', mixBlurb: '20 問。4 つの発展ステージの問題が中心で、メインの問題は少しだけ。', branchLocked: 'メインをクリアすると順に解放',
+    main: 'メイン', adv: (n) => `発展 ${n}`, mix: '総合テスト', mixBlurb: '12 問：4 つの発展ステージからランダムに 10 問、メインから 2 問。毎回抽選し直します。', branchLocked: 'メインをクリアすると順に解放',
     chapterTest: '章末テスト', chapterTestEx: 'EX 章末テスト', chapterBlurb: (name) => `${name}の章末テスト：ランダムに 20 問、メイン 18 問・発展 2 問（支線は含まない）。毎回変わり、途中でやめても保存されます。`, chapterLocked: 'この章のメインを全クリアすると解放',
     chapterExBlurb: (name) => `${name}の EX 章末テスト：ランダムに 30 問、発展 25 問（この章の支線を含む）・メイン 5 問。この章の内容をすべて含みます。`, chapterExLocked: 'この章のすべてのステージ（メイン・発展 1–4・総合テスト・支線）と章末テストをクリアすると解放',
     goal: 'ゴール', final: '修了チャレンジ', finalBlurb: 'メインルートの全ステージからランダムに 50 問：メイン 44 問・発展 6 問（支線は含まない）。毎回変わります。途中でやめても進み具合は保存されます。', finalLocked: 'メインを全クリアすると解放',
@@ -90,7 +90,7 @@ const TEXT = {
     play: 'Listen', tapToPair: 'Tap a left tile, then a right tile, to connect them.', tapToFill: 'Tap a word to fill the next blank; tap a blank to undo.',
     retryTitle: 'One more try', finishTitle: 'Level complete!', earned: (stars, xp) => `Earned ${'★'.repeat(stars)}${'☆'.repeat(3 - stars)} · ${xp} XP`,
     nextUnit: 'Next level', backToMap: 'Back to map', source: 'Source', tryTool: 'Try it in the tool', allDone: 'All main levels cleared! The advanced branches and the final challenge await.',
-    main: 'Main', adv: (n) => `Advanced ${n}`, mix: 'Mixed test', mixBlurb: '20 questions, mostly from the 4 advanced levels with only a few main-level ones.', branchLocked: 'Clear the main level, then unlock these in order',
+    main: 'Main', adv: (n) => `Advanced ${n}`, mix: 'Mixed test', mixBlurb: '12 questions: 10 drawn at random from the 4 advanced levels plus 2 from the main level, redrawn every time.', branchLocked: 'Clear the main level, then unlock these in order',
     chapterTest: 'Chapter test', chapterTestEx: 'EX chapter test', chapterBlurb: (name) => `Chapter test for ${name}: 20 random questions, 18 main and 2 advanced, no side quests. Different each time; leaving midway saves your place.`, chapterLocked: 'Opens after every main level in this chapter',
     chapterExBlurb: (name) => `EX chapter test for ${name}: 30 random questions, 25 advanced (this chapter's side quests included) and 5 main, covering the whole chapter.`, chapterExLocked: 'Opens after every level in this chapter (main, advanced 1–4, mixed tests, side quests) and the chapter test',
     goal: 'Finish line', final: 'Final challenge', finalBlurb: '50 random questions from the main route — 44 main, 6 advanced, no side quests, different each time. Leaving midway saves your place.', finalLocked: 'Opens after every main level',
@@ -721,7 +721,8 @@ export function mountLearn(target, { playChord }) {
   }
   /** 题卡 / 引导卡下方的工具：卡上写的工具优先，再加上本关的工具（含 extraTools，例如罗马数字关卡的五度圈）；考试等没有单一关卡时用本关的主工具 */
   function cardTools(card, level) {
-    const list = [...(card.tool ? [{ feature: card.tool.feature, q: card.tool.q || null }] : []), ...(level.unit ? unitTools(level.unit) : level.feature ? [{ feature: level.feature, q: null }] : [])];
+    const toolUnit = level.unit;
+    const list = [...(card.tool ? [{ feature: card.tool.feature, q: card.tool.q || null }] : []), ...(toolUnit ? unitTools(toolUnit) : level.feature ? [{ feature: level.feature, q: null }] : [])];
     return list.filter((x, i) => x.feature && list.findIndex((y) => y.feature === x.feature && (y.q || null) === (x.q || null)) === i);
   }
   function toolButton(feature, query, label, className = 'learn-btn ghost') {
@@ -1262,14 +1263,15 @@ export function mountLearn(target, { playChord }) {
       Promise.resolve(render()).then(() => {
         root.classList.remove('flip-out');
         root.classList.add('flip-in');
-        setTimeout(() => { root.classList.remove('flip-in'); done(); }, 320);
+        // 翻面动画进行时页面是转着的，量出来的位置不对（小路会变成一条直线）：翻完再重画一次
+        setTimeout(() => { root.classList.remove('flip-in'); if (!sideB && !session) drawTrails(); done(); }, 320);
       });
     }, 220));
   }
   function showSideB(then, { animate = true } = {}) {
     if (!sideBOpen()) { renderMap(); return; }
     stop(); closeSheets();
-    const mount = () => import('./sideb_ui.js?v=20261004-w5').then(({ mountSideB }) => {
+    const mount = () => import('./sideb_ui.js?v=20261005-p6').then(({ mountSideB }) => {
       writeSide('b');
       root.classList.add('is-side-b');
       sideB = mountSideB(root, {

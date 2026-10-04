@@ -1,7 +1,7 @@
 // 数字低音界面
 // 数字规则：ref:omt2e-figured-bass；罗马数字：ref:omt2e-roman-numerals；四部写作：ref:sposobin（classical_voicing.js）
 import { realizeFiguredBassLine, figuredVoicingEntries, spellFiguredVoice, FIGURED_PRESETS, FIGURED_KEYS, transposeFiguredLine, bassLeapProblems } from './figured_bass.js?v=20261002-fb2';
-import { solveVoicings } from './classical_voicing.js';
+import { solveVoicings } from './classical_voicing.js?v=20261004-w7';
 import { parseNote, intervalBetween } from './pitch_spelling.js';
 import { renderStaff } from './staff_svg.js?v=20261002-fix';
 import { el, button, option, field, language, midiToFrequency, sourcesFooter, cite, tabs, relatedLinks, midiExportButton } from './module_kit.js';

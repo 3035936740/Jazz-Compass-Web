@@ -1,71 +1,84 @@
 // Side-B（翻面课程）界面：翻面地图、关卡卡片、关卡播放器（发现 / 解释 / 实验 / 挑战 / 实操）、结算页、补弱挑战。
 // 规则在 sideb_engine.js，评分在 lab_checks.js，内容在 sideb_content.js / sideb_units_*.js；设计见 SIDE_B_DESIGN.md。
 // 原则：音乐优先于分数，发现优先于背诵，成就感优先于惩罚感——失败只补弱项，每关有一个"发现"（insight）和胜利瞬间。
-import { B_CHAPTERS, B_LEVELS, levelById, chapterLevels, isPlayable } from './sideb_content.js?v=20261004-w5';
+import { B_CHAPTERS, B_LEVELS, levelById, lookupLevel, chapterLevels, isPlayable, extLevelById, hasExtLevel } from './sideb_content.js?v=20261005-p3';
 import {
   bKey, levelSections, levelForAttempt, createBSession, completeSection, recordAnswer, gradeNode, summarizeB, retrySession,
   buildRecovery, startRecovery, recordRecovery, recoveryResult, completeBLevel, chapterAverage, overallAverage, sidebUnlocked,
   mergeMastery, overallMastery, loadMastery, saveMastery, loadBResume, saveBResume, clearBResume, bestLabResults, saveLabResult, LAB_LINES,
-  breakthroughFor, loadBreakthroughs, saveBreakthrough, estimateMinutes, CHAPTER_EX_LINE, FINAL_EX_LINE, PASS_LINE, isAssessed,
-} from './sideb_engine.js?v=20261004-w5';
-import { SKILLS, SKILL_NAMES, recommend } from './sideb_errors.js?v=20261004-w5';
-import { LABS, labHref } from './sideb_labs.js?v=20261004-w5';
-import { loadProgress, saveProgress, isDone } from './learn_engine.js?v=20261004-s4';
-import { renderVisual } from './learn_visuals.js?v=20261003-r31';
-import { satbStaff, rhythmGrid, playAudio, satbToy, polyToy, tapPad, spellToy, meterToy, intervalToy, scaleToy, textureToy, chordToy, keyChordsToy, progressionToy, plrToy, keyRelToy, transposeToy, fretToy, nctToy, speciesToy, canonToy, swingToy, bluesToy, chordScaleToy, guideToy, negativeToy } from './sideb_toys.js?v=20261004-w5';
+  breakthroughFor, loadBreakthroughs, saveBreakthrough, estimateMinutes, PASS_LINE, isAssessed,
+  extKey, gradeOf, chapterAverageWithExt, chapterTestOpen, chapterExOpen, finalOpen, finalExOpen, CHAPTER_EX_OPEN,
+} from './sideb_engine.js?v=20261005-q1';
+import { SKILLS, SKILL_NAMES, recommend } from './sideb_errors.js?v=20261004-z9';
+import { LABS, labHref, labResultKey } from './sideb_labs.js?v=20261004-x1';
+import { loadProgress, saveProgress, isDone } from './learn_engine.js?v=20261005-q1';
+import { renderVisual } from './learn_visuals.js?v=20261004-m5';
+import { satbStaff, rhythmGrid, playAudio, satbToy, polyToy, tapPad, spellToy, meterToy, intervalToy, scaleToy, textureToy, chordToy, keyChordsToy, progressionToy, plrToy, keyRelToy, transposeToy, fretToy, nctToy, speciesToy, canonToy, swingToy, bluesToy, chordScaleToy, guideToy, negativeToy, xuangongToy, worldToy, harmonicsToy, temperToy, pcToy, collectionToy, setToy, matrixToy, jiToy } from './sideb_toys.js?v=20261005-p4';
 import { celebrate } from './sideb_fx.js?v=20261004-f1';
+import { sidebWorksheet, openWorksheet } from './sideb_print.js?v=20261005-q1';
+import { certificate, awardCert, loadCerts, graduationShow } from './sideb_cert.js?v=20261004-y1';
+import { referenceById } from './references.js';
 
 const TEXT = {
   zh: {
+    examT: '章节测试', examTX: 'EX 章节测试', examFIN: 'Side-B Final', examFINX: 'Side-B EX Final',
+    ruleT: '本章普通关全部通过后开放（可选，不挡下一章；不含扩展关）', ruleTX: (p) => `本章平均（含扩展关）≥ ${Math.round(CHAPTER_EX_OPEN * 100)}% 开放（现在 ${p}%）`,
+    ruleFIN: (d, n) => `所有章节测试都通过（≥ 60%）才开放（${d}/${n}）`, ruleFINX: (d, n) => `所有章节测试和 EX 章节测试都通过才开放（${d}/${n}）`,
+    examPass: (p) => `过关线 ${p}%`, examBest: (p) => `最好 ${p}%`, examDone: '已通过', examGo: '开始考试', examMix: (m, labs) => `B 面普通关 ${m.main} 道 · B 面扩展关 ${m.ext} 道 · A 面 ${m.a} 道，打乱混在一起${labs ? ` · 最后 ${labs} 个实操` : ''}；每次开考重新抽题`, printSheet: '打印练习卷（含答案）', certView: (k) => (k === 'final-ex' ? '查看优秀毕业证书' : '查看毕业证书'), examLockedNote: '还没开放', examRetry: '换一套题再考', examNoContent: '这一章还没有可以出的题',
+    ext: '扩展关', extDesc: (m) => `把对应 A 面关卡（含挂在上面的支线关卡）的进阶关和综合测验重新、更细地讲一遍：节奏和普通关一样（发现 → 讲解 → 实验 → 挑战），讲解更长 · 约 ${m} 分钟`, extLocked: '通过本关后解锁扩展关', extGo: '开始扩展关', extBest: (g) => `扩展关 ${g}`, grade: (g) => `评级 ${g}`,
     title: 'Side-B', subtitle: 'Deep Mode · 原来好玩的东西还能这么深', back: '翻回 A 面', resume: (c, s) => `继续 ${c} · ${s}`,
     cleared: (n, m) => `已通关 ${n} / ${m}`, average: (p) => `平均 ${p}%`, mastery: '累计能力', noMastery: '还没有数据',
     chapterAvg: (p) => `本章平均 ${p}%`, soon: '制作中', locked: '先通关上一关', best: (p) => `最好 ${p}%`,
-    boss: '章节测试', bossSoon: '章节测试（制作中）', exRule: (p) => `B 面 EX 章节测试：本章平均 ≥ ${Math.round(CHAPTER_EX_LINE * 100)}% 开放（现在 ${p}%）`,
-    final: 'Side-B Final（制作中）', finalEx: (p) => `B 面 EX 结业挑战：所有章节平均 ≥ ${Math.round(FINAL_EX_LINE * 100)}% 开放（现在 ${p}%）`,
     minutes: (n) => `约 ${n} 分钟`, aLinks: '对应 A 面', tools: '相关工具', toolGo: (n) => `去工具：${n}`, toolPlay: (n) => `打开「${n}」接着玩`, toolLook: (n) => `打开「${n}」看看`, start: '开始', cont: '继续上次', fromChallenge: '直接去挑战（讲解已看过）', rewatch: '从头再看一遍', labTag: '含实操', coreTag: '核心关',
     sections: { discover: '发现', explain: '解释', experiment: '实验', challenge: '挑战', lab: '实操', recovery: '补弱' },
     exit: '回到地图', next: '继续', check: '确定', retry: '再试一次', correct: '答对了', wrong: '还差一点', answerWas: (a) => `答案：${a}`, practice: '小练习 · 不计分',
     insight: ['发现', '关键在这里', '换个角度', '听出来了', '这就是原因', '小结', '记一笔', '背后的道理', '你注意到了'], prev: '上一步', nextStep: '下一步', play: '播放', stepOf: (i, n) => `${i} / ${n}`,
     labOpen: '打开工具开始', labAgain: '回到工具接着改', labBest: (s) => `目前最好 ${s}/100`, labNone: '还没有提交', labLine: (p) => `过关线 ${p}%，没有硬性错误`, labDone: '实操完成，看结算',
-    clear: 'CLEAR', notYet: '还差一点', score: '整关分', challenge: '挑战', lab: '实操', stars: (n) => `${'★'.repeat(n)}${'☆'.repeat(3 - n)}`,
+    clear: 'CLEAR', notYet: '还差一点', score: '整关分', challenge: '挑战', lab: '实操',
     skillsTitle: '这一关的能力', masteryTitle: 'Side-B 累计', breakthroughs: '这一关的突破', errorsTitle: '可以再练练', go: '去看看',
-    nextLevel: (s) => `下一关 · ${s}`, retryStars: '再挑战拿更多星（换新题）', backMap: '回到地图', reviseLab: '回到工具接着改实操', recoveryBtn: (n) => `补弱挑战（${n} 题）`,
+    nextLevel: (s) => `下一关 · ${s}`, retryStars: '再挑战提高评级（换新题）', backBase: (s) => `回到 ${s}`, backMap: '回到地图', reviseLab: '回到工具接着改实操', recoveryBtn: (n) => `补弱挑战（${n} 题）`,
     weakLine: (s) => `弱项：${s}。讲解、实验和实操都保留，只补这一块。`, labLineFail: (p) => `实操还没到 ${p}%：回到工具接着改，之前写的内容和评分单都还在。`,
     recoveryTitle: '补弱挑战', recoveryPassed: '补弱通过，这一关 Clear！', recoveryFailed: '还差一点。再来一组新题？', again: '再来一组新题', recoveredTag: '补弱通过',
     passLine: (p) => `过关线 ${p}%`, firstClear: '第一次通关', chapters: 'Side-B 章节书签', goal: 'Final', contents: '目录',
   },
   ja: {
+    examT: '章末テスト', examTX: 'EX 章末テスト', examFIN: 'Side-B ファイナル', examFINX: 'Side-B EX ファイナル',
+    ruleT: '章の通常ステージをすべてクリアすると開放（任意。次の章は止めない。拡張ステージは含まない）', ruleTX: (p) => `章平均（拡張ステージを含む）${Math.round(CHAPTER_EX_OPEN * 100)}% 以上で開放（今 ${p}%）`,
+    ruleFIN: (d, n) => `すべての章末テストに合格（60% 以上）で開放（${d}/${n}）`, ruleFINX: (d, n) => `すべての章末テストと EX 章末テストに合格で開放（${d}/${n}）`,
+    examPass: (p) => `合格ライン ${p}%`, examBest: (p) => `最高 ${p}%`, examDone: '合格済み', examGo: 'テストを始める', examMix: (m, labs) => `B 面通常 ${m.main} 問・B 面拡張 ${m.ext} 問・A 面 ${m.a} 問をシャッフル${labs ? `・最後に実習 ${labs} つ` : ''}。受けるたびに出題し直し`, printSheet: '練習プリントを印刷（解答つき）', certView: (k) => (k === 'final-ex' ? '優秀修了証書を見る' : '修了証書を見る'), examLockedNote: 'まだ開放されていない', examRetry: '別の問題で再挑戦', examNoContent: 'この章にはまだ出題できる問題がない',
+    ext: '拡張ステージ', extDesc: (m) => `対応する A 面ステージ（ぶら下がる支線ステージも含む）の発展ステージと総合テストを、もう一度もっと詳しく：流れは通常ステージと同じ（発見 → 解説 → 実験 → チャレンジ）、解説が長め・約 ${m} 分`, extLocked: 'このステージをクリアすると拡張ステージが開放', extGo: '拡張ステージを始める', extBest: (g) => `拡張 ${g}`, grade: (g) => `評価 ${g}`,
     title: 'Side-B', subtitle: 'Deep Mode · 楽しいものは、こんなに深い', back: 'A 面へ戻る', resume: (c, s) => `続き ${c} · ${s}`,
     cleared: (n, m) => `クリア ${n} / ${m}`, average: (p) => `平均 ${p}%`, mastery: '累計の力', noMastery: 'まだデータなし',
     chapterAvg: (p) => `章平均 ${p}%`, soon: '制作中', locked: '前のステージをクリアしよう', best: (p) => `ベスト ${p}%`,
-    boss: '章末テスト', bossSoon: '章末テスト（制作中）', exRule: (p) => `B 面 EX 章末テスト：章平均 ${Math.round(CHAPTER_EX_LINE * 100)}% 以上で開放（今 ${p}%）`,
-    final: 'Side-B Final（制作中）', finalEx: (p) => `B 面 EX 修了チャレンジ：全章平均 ${Math.round(FINAL_EX_LINE * 100)}% 以上で開放（今 ${p}%）`,
     minutes: (n) => `約 ${n} 分`, aLinks: 'A 面の対応', tools: '関連ツール', toolGo: (n) => `ツールへ：${n}`, toolPlay: (n) => `「${n}」を開いて続ける`, toolLook: (n) => `「${n}」を開いてみる`, start: 'はじめる', cont: '続きから', fromChallenge: 'チャレンジへ（解説は見た）', rewatch: '最初から見る', labTag: '実習あり', coreTag: '重点',
     sections: { discover: '発見', explain: '解説', experiment: '実験', challenge: 'チャレンジ', lab: '実習', recovery: '補強' },
     exit: 'マップへ', next: '次へ', check: '決定', retry: 'もう一度', correct: '正解', wrong: 'あと少し', answerWas: (a) => `答え：${a}`, practice: 'ミニ練習・採点なし',
     insight: ['発見', 'ここがポイント', '見方を変えると', '聴き取れた', 'これが理由', 'まとめ', 'メモ', 'しくみ', '気づいたこと'], prev: '前へ', nextStep: '次へ', play: '再生', stepOf: (i, n) => `${i} / ${n}`,
     labOpen: 'ツールを開いて始める', labAgain: 'ツールに戻って直す', labBest: (s) => `現在のベスト ${s}/100`, labNone: 'まだ提出なし', labLine: (p) => `合格ライン ${p}%・致命的な誤りなし`, labDone: '実習完了、結果へ',
-    clear: 'CLEAR', notYet: 'あと少し', score: 'ステージ得点', challenge: 'チャレンジ', lab: '実習', stars: (n) => `${'★'.repeat(n)}${'☆'.repeat(3 - n)}`,
+    clear: 'CLEAR', notYet: 'あと少し', score: 'ステージ得点', challenge: 'チャレンジ', lab: '実習',
     skillsTitle: 'このステージの力', masteryTitle: 'Side-B 累計', breakthroughs: 'このステージのブレイクスルー', errorsTitle: 'もう少し練習', go: '見てみる',
-    nextLevel: (s) => `次のステージ · ${s}`, retryStars: '星を増やしに再挑戦（新しい問題）', backMap: 'マップへ', reviseLab: 'ツールに戻って実習を直す', recoveryBtn: (n) => `補強チャレンジ（${n} 問）`,
+    nextLevel: (s) => `次のステージ · ${s}`, retryStars: '評価を上げに再挑戦（新しい問題）', backBase: (s) => `${s} に戻る`, backMap: 'マップへ', reviseLab: 'ツールに戻って実習を直す', recoveryBtn: (n) => `補強チャレンジ（${n} 問）`,
     weakLine: (s) => `弱点：${s}。解説・実験・実習はそのまま、この部分だけ補強。`, labLineFail: (p) => `実習がまだ ${p}% に届かない：ツールに戻って続きから。書いた内容と採点表は残っている。`,
     recoveryTitle: '補強チャレンジ', recoveryPassed: '補強クリア、このステージは CLEAR！', recoveryFailed: 'あと少し。新しい問題でもう一度？', again: '新しい問題で', recoveredTag: '補強クリア',
     passLine: (p) => `合格ライン ${p}%`, firstClear: '初クリア', chapters: 'Side-B の章のしおり', goal: 'Final', contents: '目次',
   },
   en: {
+    examT: 'Chapter test', examTX: 'EX chapter test', examFIN: 'Side-B Final', examFINX: 'Side-B EX Final',
+    ruleT: 'Opens when every regular level of the chapter is cleared (optional — it never blocks the next chapter; no extension levels)', ruleTX: (p) => `Opens at a chapter average (extensions included) ≥ ${Math.round(CHAPTER_EX_OPEN * 100)}% (now ${p}%)`,
+    ruleFIN: (d, n) => `Opens when every chapter test is passed (≥ 60%) (${d}/${n})`, ruleFINX: (d, n) => `Opens when every chapter test and EX chapter test is passed (${d}/${n})`,
+    examPass: (p) => `Pass line ${p}%`, examBest: (p) => `Best ${p}%`, examDone: 'Passed', examGo: 'Start the test', examMix: (m, labs) => `${m.main} Side-B regular + ${m.ext} Side-B extension + ${m.a} Side-A questions, shuffled${labs ? `; ${labs} lab${labs > 1 ? 's' : ''} at the end` : ''}; a fresh draw every time`, printSheet: 'Print a worksheet (with answers)', certView: (k) => (k === 'final-ex' ? 'View the certificate with distinction' : 'View the certificate'), examLockedNote: 'Not open yet', examRetry: 'Retake with new questions', examNoContent: 'No questions available for this chapter yet',
+    ext: 'Extension level', extDesc: (m) => `The matching Side-A levels’ advanced levels and mixed tests (side quests included), taught again in more depth: same flow as a regular level (discover → explain → experiment → challenge), longer lessons · about ${m} min`, extLocked: 'Clear this level to unlock its extension level', extGo: 'Start the extension level', extBest: (g) => `Extension ${g}`, grade: (g) => `Grade ${g}`,
     title: 'Side-B', subtitle: 'Deep Mode · the fun stuff goes this deep', back: 'Back to side A', resume: (c, s) => `Continue ${c} · ${s}`,
     cleared: (n, m) => `Cleared ${n} / ${m}`, average: (p) => `Average ${p}%`, mastery: 'Mastery so far', noMastery: 'No data yet',
     chapterAvg: (p) => `Chapter average ${p}%`, soon: 'In the works', locked: 'Clear the previous level first', best: (p) => `Best ${p}%`,
-    boss: 'Chapter test', bossSoon: 'Chapter test (in the works)', exRule: (p) => `Side-B EX chapter test: opens at a chapter average ≥ ${Math.round(CHAPTER_EX_LINE * 100)}% (now ${p}%)`,
-    final: 'Side-B Final (in the works)', finalEx: (p) => `Side-B EX final: opens at an overall average ≥ ${Math.round(FINAL_EX_LINE * 100)}% (now ${p}%)`,
     minutes: (n) => `about ${n} min`, aLinks: 'Side A', tools: 'Related tools', toolGo: (n) => `Open tool: ${n}`, toolPlay: (n) => `Keep playing in “${n}”`, toolLook: (n) => `Open “${n}” to check`, start: 'Start', cont: 'Continue', fromChallenge: 'Go to the challenge (seen the lessons)', rewatch: 'Watch from the start', labTag: 'Lab', coreTag: 'Core',
     sections: { discover: 'Discover', explain: 'Explain', experiment: 'Experiment', challenge: 'Challenge', lab: 'Lab', recovery: 'Recovery' },
     exit: 'Back to the map', next: 'Next', check: 'Check', retry: 'Try again', correct: 'Correct', wrong: 'Not quite', answerWas: (a) => `Answer: ${a}`, practice: 'Quick practice · not scored',
     insight: ['Discovery', 'The key point', 'Another angle', 'You heard it', 'Here’s why', 'In short', 'Worth noting', 'Under the hood', 'What you noticed'], prev: 'Back', nextStep: 'Next', play: 'Play', stepOf: (i, n) => `${i} / ${n}`,
     labOpen: 'Open the tool and start', labAgain: 'Back to the tool to improve', labBest: (s) => `Best so far ${s}/100`, labNone: 'Not submitted yet', labLine: (p) => `Pass line ${p}%, no fatal errors`, labDone: 'Lab done — see results',
-    clear: 'CLEAR', notYet: 'Almost', score: 'Level score', challenge: 'Challenge', lab: 'Lab', stars: (n) => `${'★'.repeat(n)}${'☆'.repeat(3 - n)}`,
+    clear: 'CLEAR', notYet: 'Almost', score: 'Level score', challenge: 'Challenge', lab: 'Lab',
     skillsTitle: 'This level', masteryTitle: 'Side-B overall', breakthroughs: 'Breakthroughs here', errorsTitle: 'Worth another look', go: 'Go',
-    nextLevel: (s) => `Next · ${s}`, retryStars: 'Replay for more stars (new questions)', backMap: 'Back to the map', reviseLab: 'Back to the tool to improve the lab', recoveryBtn: (n) => `Recovery challenge (${n} questions)`,
+    nextLevel: (s) => `Next · ${s}`, retryStars: 'Replay for a better grade (new questions)', backBase: (s) => `Back to ${s}`, backMap: 'Back to the map', reviseLab: 'Back to the tool to improve the lab', recoveryBtn: (n) => `Recovery challenge (${n} questions)`,
     weakLine: (s) => `Weak spot: ${s}. Lessons, experiments and the lab stay done — just shore up this part.`, labLineFail: (p) => `The lab is not at ${p}% yet: go back to the tool — your work and score sheet are still there.`,
     recoveryTitle: 'Recovery challenge', recoveryPassed: 'Recovery passed — level CLEAR!', recoveryFailed: 'Almost. Another set of new questions?', again: 'New questions', recoveredTag: 'Recovered',
     passLine: (p) => `Pass line ${p}%`, firstClear: 'First clear', chapters: 'Side-B chapter bookmarks', goal: 'Final', contents: 'Contents',
@@ -80,11 +93,11 @@ const TEXT_ALL = {
 /** 调试模式（和 A 面同一个开关：控制台 class_debug(true)，存在 localStorage jc-learn-debug） */
 const debugOn = () => { try { return globalThis.localStorage?.getItem('jc-learn-debug') === '1'; } catch (_) { return false; } };
 const DEBUG_TEXT = {
-  zh: { title: 'Side-B 调试', note: '控制台输入 class_debug(false) 关闭', chapter: (c, n) => `${c} 全部 ${n} 星`, all3: 'Side-B 全部 3 星', clear: '清空 Side-B 记录', clearBreaks: '清空突破记录（可以重新触发）', off: '关闭调试', confirmClear: '确定清空 Side-B 的关卡、实操、技能和突破记录？', cleared: '已清空',
+  zh: { title: 'Side-B 调试', note: '控制台输入 class_debug(false) 关闭', chapter: (c, g) => `${c} 全部评级 ${g}`, all3: 'Side-B 全部 A+', clear: '清空 Side-B 记录', clearBreaks: '清空突破记录（可以重新触发）', off: '关闭调试', confirmClear: '确定清空 Side-B 的关卡、实操、技能和突破记录？', cleared: '已清空',
     skip: '跳过', right: '直接做对', wrong: '直接做错', lab100: '实操记 100 分', lab40: '实操记 40 分（不到门槛）', labFatal: '实操记硬性失败', finish: '直接结算', label: '调试' },
-  ja: { title: 'Side-B デバッグ', note: 'コンソールで class_debug(false) で終了', chapter: (c, n) => `${c} をすべて星 ${n}`, all3: 'Side-B をすべて星 3', clear: 'Side-B の記録を消去', clearBreaks: 'ブレイクスルーの記録を消去（再発生できる）', off: 'デバッグ終了', confirmClear: 'Side-B のステージ・実習・スキル・ブレイクスルーの記録を消去しますか？', cleared: '消去しました',
+  ja: { title: 'Side-B デバッグ', note: 'コンソールで class_debug(false) で終了', chapter: (c, g) => `${c} をすべて評価 ${g}`, all3: 'Side-B をすべて A+', clear: 'Side-B の記録を消去', clearBreaks: 'ブレイクスルーの記録を消去（再発生できる）', off: 'デバッグ終了', confirmClear: 'Side-B のステージ・実習・スキル・ブレイクスルーの記録を消去しますか？', cleared: '消去しました',
     skip: 'スキップ', right: '正解にする', wrong: '不正解にする', lab100: '実習を 100 点に', lab40: '実習を 40 点に（合格ライン未満）', labFatal: '実習を致命的な誤りに', finish: 'すぐ結果へ', label: 'デバッグ' },
-  en: { title: 'Side-B debug', note: 'Run class_debug(false) in the console to leave', chapter: (c, n) => `${c}: all ${n}★`, all3: 'All Side-B levels 3★', clear: 'Erase Side-B records', clearBreaks: 'Erase breakthroughs (so they fire again)', off: 'Leave debug', confirmClear: 'Erase Side-B level, lab, skill and breakthrough records?', cleared: 'Erased',
+  en: { title: 'Side-B debug', note: 'Run class_debug(false) in the console to leave', chapter: (c, g) => `${c}: all grade ${g}`, all3: 'All Side-B levels A+', clear: 'Erase Side-B records', clearBreaks: 'Erase breakthroughs (so they fire again)', off: 'Leave debug', confirmClear: 'Erase Side-B level, lab, skill and breakthrough records?', cleared: 'Erased',
     skip: 'Skip', right: 'Answer correctly', wrong: 'Answer wrongly', lab100: 'Lab = 100', lab40: 'Lab = 40 (below the line)', labFatal: 'Lab = fatal error', finish: 'Go to results', label: 'Debug' },
 };
 const lang = () => { const l = globalThis.window?.__lang || 'zh'; return ['zh', 'ja', 'en'].includes(l) ? l : 'en'; };
@@ -118,13 +131,28 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
   const levelOpen = (lv) => {
     const view = progressView();
     if (!sidebUnlocked(view) || !isPlayable(lv)) return false;
+    if (lv.exam) return examOpenFor(lv);
+    if (lv.ext) return Boolean(view.unlockAll) || isDone(view, bKey(lv.base));
     if (view.unlockAll) return true;
     const list = playable();
     const i = list.findIndex((x) => x.id === lv.id);
     return i <= 0 || isDone(view, bKey(list[i - 1].id)) || isDone(view, bKey(lv.id));
   };
   const chapterOf = (id) => B_CHAPTERS.find((c) => c.id === id);
-  const toneOf = (chapterId) => `tone-${['mint', 'sky', 'peach', 'lilac', 'sand', 'rose'][B_CHAPTERS.findIndex((c) => c.id === chapterId)] || 'sky'}`;
+  const toneOf = (chapterId) => `tone-${['mint', 'sky', 'peach', 'lilac', 'sand', 'rose'][B_CHAPTERS.findIndex((c) => c.id === chapterId)] || 'sand'}`;
+  /** 这一关有没有扩展关（B 面写好了扩展关内容） */
+  const hasExt = (lv) => hasExtLevel(lv);
+  /** 评级：存下来的评级；旧存档（只有星级）按最好成绩换算 */
+  const gradeFor = (state) => state?.grade || (state?.done ? gradeOf(state.best ?? 0.6) : null);
+  /** 地图 / 播放器上显示的编号：扩展关显示所属关卡的编号 */
+  const codeOf = (lv) => lv?.base || lv?.id;
+  const examOpenFor = (lv) => {
+    const view = progressView();
+    if (lv.exam === 'chapter') return chapterTestOpen(chapterLevels(lv.chapter).filter(isPlayable), view);
+    if (lv.exam === 'chapter-ex') return chapterExOpen(chapterLevels(lv.chapter).filter(isPlayable), view, hasExt);
+    const ids = B_CHAPTERS.filter((c) => chapterLevels(c.id).some(isPlayable)).map((c) => c.id);
+    return lv.exam === 'final-ex' ? finalExOpen(ids, view) : finalOpen(ids, view);
+  };
 
   // ---------------- 地图：一本乐谱书 ----------------
   // 第一页是封面与目录，然后每章一页，最后一页是 Final；右边伸出书签，点书签、页底的上一页 / 下一页、方向键都会翻页。
@@ -148,7 +176,7 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
     if (pageIndex < 0) {
       const saved = readPage();
       const record = loadBResume();
-      pageIndex = saved >= 0 ? saved : record?.levelId && levelById(record.levelId) ? PAGES.indexOf(levelById(record.levelId).chapter) : 0;
+      pageIndex = saved >= 0 ? saved : record?.levelId && lookupLevel(record.levelId) ? Math.max(0, PAGES.indexOf(lookupLevel(record.levelId).chapter || 'goal')) : 0;
     }
     const book = el('div', 'sideb-book');
     book.setAttribute('role', 'region');
@@ -186,7 +214,7 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
     const top = el('div', 'sideb-book-top');
     top.appendChild(btn('sideb-turn sideb-to-a', `◀ ${t.back}`, () => { stopAll(); onFlipBack?.(); }));
     const record = loadBResume();
-    if (record?.levelId && levelById(record.levelId)) top.appendChild(btn('sideb-turn sideb-top-resume', `${t.resume(record.levelId, tx(levelById(record.levelId).title))} ▶`, () => resume()));
+    if (record?.levelId && lookupLevel(record.levelId)) top.appendChild(btn('sideb-turn sideb-top-resume', `${t.resume(codeOf(lookupLevel(record.levelId)), tx(lookupLevel(record.levelId).title))} ▶`, () => resume()));
     shell.append(top, book);
     root.appendChild(shell);
     stage.appendChild(buildPage(pageIndex, progress));
@@ -232,10 +260,17 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
       page.dataset.page = id;
       if (id === 'cover') page.appendChild(coverPage(view, turnTo));
       else if (id === 'goal') {
-        const avg = overallAverage(B_CHAPTERS.map((c) => chapterLevels(c.id)), view);
         const goal = el('section', 'sideb-chapter sideb-goal');
-        goal.append(el('header', 'sideb-chapter-head'), el('div', 'sideb-exam is-final', t.final), el('p', 'sideb-rule', t.finalEx(pct(avg))));
+        goal.append(el('header', 'sideb-chapter-head'));
         goal.firstChild.append(el('span', 'sideb-chapter-code', 'FIN'), el('h4', '', t.goal));
+        const ids = B_CHAPTERS.filter((c) => chapterLevels(c.id).some(isPlayable)).map((c) => c.id);
+        const passed = (eid) => isDone(view, bKey(eid));
+        const exams = el('div', 'sideb-exams is-final');
+        exams.append(
+          examCard('FIN', t.ruleFIN(ids.filter((c) => passed(`T-${c}`)).length, ids.length), view),
+          examCard('FINX', t.ruleFINX(ids.filter((c) => passed(`T-${c}`) && passed(`TX-${c}`)).length, ids.length), view),
+        );
+        goal.appendChild(exams);
         page.appendChild(goal);
       } else page.appendChild(chapterBlock(chapterOf(id), view));
       // 页底：上一页 / 页码 / 下一页
@@ -260,7 +295,7 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
     stats.append(el('span', 'sideb-stat', t.cleared(cleared, B_LEVELS.length)), el('span', 'sideb-stat', t.average(pct(avg))));
     const actions = el('div', 'sideb-hero-actions');
     const record = loadBResume();
-    if (record?.levelId && levelById(record.levelId)) actions.appendChild(btn('learn-btn resume wide', t.resume(record.levelId, tx(levelById(record.levelId).title)), () => resume()));
+    if (record?.levelId && lookupLevel(record.levelId)) actions.appendChild(btn('learn-btn resume wide', t.resume(codeOf(lookupLevel(record.levelId)), tx(lookupLevel(record.levelId).title)), () => resume()));
     actions.appendChild(btn('learn-btn ghost sideb-flip-back', t.back, () => { stopAll(); onFlipBack?.(); }));
     const toc = el('ol', 'sideb-toc');
     B_CHAPTERS.forEach((chapter) => {
@@ -279,15 +314,36 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
     const section = el('section', `sideb-chapter ${toneOf(chapter.id)}`);
     section.id = `sideb-sec-${chapter.id}`;
     const head = el('header', 'sideb-chapter-head');
-    head.append(el('span', 'sideb-chapter-code', chapter.code), el('h4', '', tx(chapter.title)), el('span', 'sideb-chapter-avg', t.chapterAvg(pct(chapterAverage(levels, progress)))));
+    head.append(el('span', 'sideb-chapter-code', chapter.code), el('h4', '', tx(chapter.title)), el('span', 'sideb-chapter-avg', t.chapterAvg(pct(chapterAverageWithExt(levels.filter(isPlayable), progress, hasExt)))));
     section.appendChild(head);
     const list = el('ol', 'sideb-tracks');
     levels.forEach((lv) => list.appendChild(levelNode(lv, progress)));
     section.appendChild(list);
     const exams = el('div', 'sideb-exams');
-    exams.append(el('div', 'sideb-exam', t.bossSoon), el('p', 'sideb-rule', t.exRule(pct(chapterAverage(levels, progress)))));
+    const playableLevels = levels.filter(isPlayable);
+    exams.append(examCard(`T-${chapter.id}`, t.ruleT, progress), examCard(`TX-${chapter.id}`, t.ruleTX(pct(chapterAverageWithExt(playableLevels, progress, hasExt))), progress));
     section.appendChild(exams);
     return section;
+  }
+  /** 考试卡：标题、开放条件、最好成绩、开始按钮（没开放时写明还差什么） */
+  function examCard(id, rule, progress) {
+    const exam = lookupLevel(id);
+    const kind = id.startsWith('TX-') ? 'TX' : id.startsWith('T-') ? 'T' : id;
+    const card = el('div', `sideb-exam is-${kind.toLowerCase()}`);
+    const state = progress.units[bKey(id)];
+    card.append(el('strong', 'sideb-exam-title', t[`exam${kind}`]), el('p', 'sideb-rule', rule));
+    if (!exam) { card.appendChild(el('p', 'sideb-rule', t.examNoContent)); card.classList.add('is-locked'); return card; }
+    const open = levelOpen(exam);
+    card.classList.toggle('is-locked', !open);
+    card.classList.toggle('is-done', Boolean(state?.done));
+    const meta = el('p', 'sideb-exam-meta', [t.examPass(pct(exam.passLine ?? PASS_LINE)), t.minutes(exam.minutes), ...(state?.best ? [t.examBest(pct(state.best))] : []), ...(state?.done ? [t.examDone, t.grade(gradeFor(state))] : [])].join(' · '));
+    card.appendChild(meta);
+    if (exam.mix) card.appendChild(el('p', 'sideb-rule', t.examMix(exam.mix, exam.sections.lab?.length || 0)));
+    const certKind = id === 'FIN' ? 'final' : id === 'FINX' ? 'final-ex' : null;
+    if (certKind && state?.done && loadCerts()[certKind]) card.appendChild(btn('learn-btn ghost', t.certView(certKind), () => renderCert(certKind)));
+    if (open) card.append(btn('learn-btn primary', t.examGo, () => startLevel(id)), printLink(exam));
+    else card.appendChild(el('span', 'sideb-exam-lock', t.examLockedNote));
+    return card;
   }
   function levelNode(lv, progress) {
     const item = el('li', 'sideb-track');
@@ -309,7 +365,9 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
     const meta = el('span', 'sideb-track-meta');
     if (lv.lab) meta.appendChild(el('span', 'sideb-tag', t.labTag));
     if (lv.core) meta.appendChild(el('span', 'sideb-tag is-core', t.coreTag));
-    meta.appendChild(el('span', 'sideb-track-state', !ready ? t.soon : !open ? t.locked : state?.done ? `${t.stars(state.stars || 0)} · ${t.best(pct(state.best))}` : state?.best ? t.best(pct(state.best)) : ''));
+    const extState = progress.units[extKey(lv.id)];
+    if (hasExt(lv) && extState?.done) meta.appendChild(el('span', 'sideb-tag is-ext', t.extBest(gradeFor(extState))));
+    meta.appendChild(el('span', 'sideb-track-state', !ready ? t.soon : !open ? t.locked : state?.done ? `${t.grade(gradeFor(state))} · ${t.best(pct(state.best))}` : state?.best ? t.best(pct(state.best)) : ''));
     text.appendChild(meta);
     main.append(disc, text);
     item.appendChild(main);
@@ -349,33 +407,44 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
       } else if (record?.levelId !== lv.id) row.appendChild(btn('learn-btn primary', t.start, () => startLevel(lv.id)));
       else row.appendChild(btn('learn-btn ghost', t.rewatch, () => startLevel(lv.id)));
       sheet.appendChild(row);
+      sheet.appendChild(printLink(lv));
+      // 扩展关：通过本关后解锁，和普通关一样在 B 面播放器里玩（把对应 A 面关卡的进阶关重新、更细地讲一遍）
+      if (hasExt(lv)) {
+        const ext = el('div', 'sideb-ext');
+        const extState = progress.units[extKey(lv.id)];
+        const x = extLevelById(`${lv.id}x`);
+        ext.append(el('strong', '', t.ext), el('p', 'sideb-sheet-note', t.extDesc(estimateMinutes(x))));
+        if (progress.units[bKey(lv.id)]?.done || progress.unlockAll) ext.append(btn('learn-btn ghost', extState?.done ? `${t.extGo} · ${t.grade(gradeFor(extState))}` : t.extGo, () => { stopAll(); startLevel(x.id); }), printLink(x));
+        else ext.appendChild(el('p', 'sideb-sheet-note is-locked', t.extLocked));
+        sheet.appendChild(ext);
+      }
     }
     item.querySelector('.sideb-track-main').setAttribute('aria-expanded', 'true');
     item.appendChild(sheet);
   }
-  /** 地图上的调试面板：按章设星（1 星 = 65%、2 星 = 80%、3 星 = 100%，方便测 70% / 75% 的 EX 解锁线）、全部 3 星、清空记录 */
+  /** 地图上的调试面板：按章设评级（C = 65%、B = 80%、A+ = 100%，方便测 EX 章节测试 60%（含扩展关）的开放线）、全部 A+、清空记录 */
   function debugPanel() {
     const dt = DEBUG_TEXT[lang()];
     const panel = el('div', 'learn-debug-panel sideb-debug');
     const head = el('div', 'learn-debug-head');
     head.append(el('span', 'learn-debug-tag', 'DEBUG'), el('strong', '', dt.title), el('span', 'learn-muted', dt.note));
     panel.appendChild(head);
-    const BEST = [0, 0.65, 0.8, 1];
-    const apply = (levels, stars) => {
+    const BEST = { C: 0.65, B: 0.8, 'A+': 1 };
+    const apply = (levels, grade) => {
       const p = loadProgress();
-      levels.forEach((lv) => { const key = bKey(lv.id); p.units[key] = { ...(p.units[key] || {}), best: BEST[stars], done: true, stars, seen: ['discover', 'explain', 'experiment'] }; });
+      levels.forEach((lv) => { const key = bKey(lv.id); p.units[key] = { ...(p.units[key] || {}), best: BEST[grade], done: true, grade, seen: ['discover', 'explain', 'experiment'] }; });
       saveProgress(p);
       renderMap();
     };
     B_CHAPTERS.forEach((chapter) => {
       const row = el('div', `learn-debug-row ${toneOf(chapter.id)}`);
       row.appendChild(el('span', 'learn-debug-label', chapter.code));
-      [1, 2, 3].forEach((n) => { const b = btn('learn-debug-btn', '★'.repeat(n), () => apply(chapterLevels(chapter.id), n)); b.title = dt.chapter(tx(chapter.title), n); row.appendChild(b); });
+      ['C', 'B', 'A+'].forEach((g) => { const b = btn('learn-debug-btn', g, () => apply(chapterLevels(chapter.id), g)); b.title = dt.chapter(tx(chapter.title), g); row.appendChild(b); });
       panel.appendChild(row);
     });
     const actions = el('div', 'learn-debug-row');
     actions.append(
-      btn('learn-debug-btn strong', dt.all3, () => apply(B_LEVELS, 3)),
+      btn('learn-debug-btn strong', dt.all3, () => apply(B_LEVELS, 'A+')),
       btn('learn-debug-btn danger', dt.clear, () => {
         if (typeof globalThis.confirm === 'function' && !globalThis.confirm(dt.confirmClear)) return;
         const p = loadProgress();
@@ -406,7 +475,7 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
         score, hardFail: fatal ? [{ error: 'wrong-chord', text: { zh: '调试：硬性失败', ja: 'デバッグ：致命的な誤り', en: 'Debug: fatal error' } }] : [],
         items: [{ id: 'debug', layer: 'core', label: { zh: dt.label, ja: DEBUG_TEXT.ja.label, en: DEBUG_TEXT.en.label }, points: score, max: 100, deductions: [], info: [] }],
       });
-      [[dt.lab100, 100, false], [dt.lab40, 40, false], [dt.labFatal, 70, true]].forEach(([label, score, fatal]) => bar.appendChild(btn('learn-debug-btn', label, () => { saveLabResult(node.lab, sheet(score, fatal)); renderNode(); })));
+      [[dt.lab100, 100, false], [dt.lab40, 40, false], [dt.labFatal, 70, true]].forEach(([label, score, fatal]) => bar.appendChild(btn('learn-debug-btn', label, () => { saveLabResult(labResultKey(node.lab, node.mode || 'level'), sheet(score, fatal)); renderNode(); })));
     }
     if (!recovering) bar.appendChild(btn('learn-debug-btn', dt.finish, () => finishLevel()));
     return bar;
@@ -430,7 +499,7 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
 
   // ---------------- 进入关卡 ----------------
   function startLevel(id, { fromChallenge = false, attempt = 0 } = {}) {
-    level = levelById(id);
+    level = lookupLevel(id);
     if (!isPlayable(level)) { renderMap(); return; }
     lvl = levelForAttempt(level, attempt);
     const sections = levelSections(lvl);
@@ -440,6 +509,14 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
     persist();
     renderNode();
   }
+  /** 打印练习卷（关卡 / 扩展关 / 考试）：题和答案页，听辨和实操纸上做不了 */
+  function printLevel(lv) {
+    const title = `${codeOf(lv)} · ${tx(lv.title)}`;
+    const visualSvg = (card) => visualOf(card.visual)?.querySelector?.('svg')?.outerHTML || '';
+    const { html } = sidebWorksheet(lv, { lang: lang(), title, visualSvg, labTitle: (id) => tx(LABS[id]?.title) });
+    openWorksheet(title, html);
+  }
+  const printLink = (lv) => btn('learn-link sideb-print', t.printSheet, () => printLevel(lv));
   /** 这一关相关的工具：关卡自己写的 tools + 对应 A 面关卡的工具（learn_ui 给出，含五度圈这类 extraTools） */
   function levelTools(lv) {
     const list = [...(lv?.tools || []), ...toolsFor(lv?.a || [])];
@@ -465,8 +542,8 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
   const forget = () => { clearBResume(); notify(); };
   function resume() {
     const record = loadBResume();
-    if (!record?.levelId || !levelById(record.levelId) || !isPlayable(levelById(record.levelId))) { forget(); renderMap(); return false; }
-    level = levelById(record.levelId);
+    if (!record?.levelId || !lookupLevel(record.levelId) || !isPlayable(lookupLevel(record.levelId))) { forget(); renderMap(); return false; }
+    level = lookupLevel(record.levelId);
     session = record.session;
     session.breakthroughs ||= [];
     lvl = levelForAttempt(level, session.attempt || 0);
@@ -499,7 +576,7 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
     root.replaceChildren();
     const shell = el('div', `sideb-player ${toneOf(level.chapter)}`);
     const top = el('div', 'sideb-player-top');
-    top.append(btn('learn-link sideb-exit', t.exit, () => { persist(); renderMap(); }), el('span', 'sideb-player-code', level.id), el('span', 'sideb-player-title', tx(level.title)));
+    top.append(btn('learn-btn ghost sideb-exit', t.exit, () => { persist(); renderMap(); }), el('span', 'sideb-player-code', codeOf(level)), el('span', 'sideb-player-title', tx(level.title)));
     const tools = levelTools(level);
     if (tools.length && openTool) { const box = el('span', 'sideb-player-tools'); tools.slice(0, 3).forEach((tool) => box.appendChild(toolChip(tool, toolName(tool.feature)))); box.setAttribute('aria-label', t.tools); top.appendChild(box); }
     const strip = el('ol', 'sideb-strip');
@@ -555,10 +632,14 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
     toolHelp(node, body);
     if (debugOn()) body.before(debugBar(node, { skip: () => advance(), answerNow: answerNow && ((ok) => { if (!answered) answerNow(ok); }) }));
   }
-  /** 挑战题下方的"去工具"：题目自己写的 tool 优先，再加本关的相关工具（最多 3 个）；跳过去之前记下进度，回来接着这一题 */
+  /** 题目和讲解下方的"去工具"：题目自己写的 tool 优先，再加本关的相关工具（最多 3 个）；跳过去之前记下进度，回来接着这一题。
+   *  发现、讲解页、演示也有（实验另有"接着玩"，实操有自己的工具）；讲解页已经单独放了 node.tool 的链接，这里就不再重复它 */
   function toolHelp(node, body) {
-    if (!openTool || node.type === 'lab' || !isAssessed(node)) return;
-    const list = [...(node.tool ? [node.tool] : []), ...levelTools(level)];
+    if (!openTool || node.type === 'lab' || node.type === 'experiment') return;
+    if (!isAssessed(node) && !['discover', 'page', 'demo'].includes(node.type)) return;
+    const own = node.tool && node.type !== 'page' ? [node.tool] : [];
+    const shown = node.type === 'page' && node.tool ? node.tool : null;
+    const list = [...own, ...levelTools(level)].filter((x) => !shown || x.feature !== shown.feature || (x.q || '') !== (shown.q || ''));
     const tools = list.filter((x, i) => list.findIndex((y) => y.feature === x.feature && (y.q || '') === (x.q || '')) === i).slice(0, 3);
     if (!tools.length) return;
     const row = el('div', 'sideb-help');
@@ -567,8 +648,12 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
   }
   function title(body, text) { if (text) body.appendChild(el('h4', 'sideb-node-title', tx(text))); }
   function paragraphs(body, text) { [].concat(text ?? []).forEach((p) => body.appendChild(el('p', 'sideb-text', tx(p)))); }
-  function visualOf(visual) {
-    if (!visual) return null;
+  /** 图里的文字（标签、格子）可以写成三语对象：画之前换成当前语言 */
+  const isText = (v) => v && typeof v === 'object' && !Array.isArray(v) && 'zh' in v && 'en' in v && Object.keys(v).every((k) => ['zh', 'ja', 'en'].includes(k));
+  const localize = (v) => (isText(v) ? tx(v) : Array.isArray(v) ? v.map(localize) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, localize(x)])) : v);
+  function visualOf(raw) {
+    if (!raw) return null;
+    const visual = localize(raw);
     if (visual.kind === 'satb') return satbStaff(visual);
     if (visual.kind === 'grid') return rhythmGrid(visual);
     return renderVisual(visual);
@@ -579,10 +664,23 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
     list.forEach((p) => row.appendChild(btn('learn-btn ghost sideb-play', tx(p.label) || t.play, () => sound(p.audio))));
     body.appendChild(row);
   }
+  /** 出处：每个 ref 显示成可点击的标题，新标签页打开原文（鼠标停留显示 ref id 和作者）；找不到登记的就只显示 id */
   function refLine(body, ref) {
     const ids = [].concat(ref ?? []);
     if (!ids.length) return;
-    body.appendChild(el('p', 'sideb-ref', ids.join(' · ')));
+    const line = el('p', 'sideb-ref');
+    ids.forEach((id, i) => {
+      if (i) line.appendChild(document.createTextNode(' · '));
+      const r = referenceById(id);
+      if (!r?.url) { line.appendChild(document.createTextNode(id)); return; }
+      const a = el('a', 'sideb-ref-link', r.title || id);
+      a.href = r.url;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.title = [id, r.author].filter(Boolean).join(' · ');
+      line.appendChild(a);
+    });
+    body.appendChild(line);
   }
 
   function renderBody(node, body, footer, shell, { done, record, registerDebug = () => {} }) {
@@ -769,7 +867,7 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
       if (b) { saveBreakthrough(b.id); session.breakthroughs = [...new Set([...(session.breakthroughs || []), b.id])]; persist(); celebrate(shell, b.text); }
     };
     let toy = null;
-    const TOYS = { spell: spellToy, meter: meterToy, interval: intervalToy, scale: scaleToy, texture: textureToy, poly: polyToy, chord: chordToy, keyChords: keyChordsToy, progression: progressionToy, plr: plrToy, keyRel: keyRelToy, transpose: transposeToy, fret: fretToy, nct: nctToy, species: speciesToy, canon: canonToy, swing: swingToy, blues: bluesToy, chordScale: chordScaleToy, guide: guideToy, negative: negativeToy };
+    const TOYS = { spell: spellToy, meter: meterToy, interval: intervalToy, scale: scaleToy, texture: textureToy, poly: polyToy, chord: chordToy, keyChords: keyChordsToy, progression: progressionToy, plr: plrToy, keyRel: keyRelToy, transpose: transposeToy, fret: fretToy, nct: nctToy, species: speciesToy, canon: canonToy, swing: swingToy, blues: bluesToy, chordScale: chordScaleToy, guide: guideToy, negative: negativeToy, xuangong: xuangongToy, world: worldToy, harmonics: harmonicsToy, temper: temperToy, pc: pcToy, collection: collectionToy, set: setToy, matrix: matrixToy, ji: jiToy };
     if (node.toy === 'satb') toy = satbToy(body, node.params, { playChord, onSolved: solved });
     else if (TOYS[node.toy]) toy = TOYS[node.toy](body, node.params, { playChord, renderVisual, onSolved: solved });
     if (toy?.destroy) stops.push(toy.destroy);
@@ -782,8 +880,10 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
     const spec = LABS[node.lab];
     title(body, spec?.title);
     paragraphs(body, spec?.brief);
-    const best = bestLabResults()[node.lab];
-    const line = LAB_LINES.level;
+    // 考试里的实操按自己的模式（章节测试 / EX）单独计成绩、单独设门槛
+    const mode = node.mode || 'level';
+    const best = bestLabResults()[labResultKey(node.lab, mode)];
+    const line = LAB_LINES[mode] ?? LAB_LINES.level;
     body.appendChild(el('p', 'sideb-lab-line', t.labLine(pct(line))));
     const status = el('div', 'sideb-lab-status');
     if (best) {
@@ -807,7 +907,7 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
       status.appendChild(items);
     } else status.appendChild(el('p', 'sideb-lab-none', t.labNone));
     body.appendChild(status);
-    const go = () => { persist(); globalThis.location.hash = labHref(spec, 'level'); };
+    const go = () => { persist(); globalThis.location.hash = labHref(spec, mode); };
     footer.replaceChildren(btn(`learn-btn ${best ? 'ghost' : 'primary'}`, best ? t.labAgain : t.labOpen, go));
     if (best) footer.appendChild(btn('learn-btn primary', t.labDone, () => advance()));
   }
@@ -816,12 +916,30 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
   function finishLevel() {
     const summary = summarizeB(session, lvl, bestLabResults(), { context: 'level' });
     const before = progressView().units[bKey(level.id)]?.done;
+    // 通过 Side-B Final 发毕业证书，通过 EX Final 发优秀毕业证书
+    if (summary.passed && (level.exam === 'final' || level.exam === 'final-ex')) awardCert(level.exam, { score: summary.score, grade: summary.grade });
     saveProgress(completeBLevel(loadProgress(), level.id, summary, { seen: session.seen }));
     saveMastery(mergeMastery(loadMastery(), level.id, summary.skills));
     const result = { summary, firstClear: summary.passed && !before };
     session = { ...session, result };
     if (summary.passed) forget(); else persist();
     renderResults(result);
+    // 两个 Final 通过：全屏毕业动画（EX 更华丽），结束后留在结算页（下面就是证书）
+    if (summary.passed && isFinal(level)) graduationShow(level.exam, loadCerts()[level.exam], { lang: lang(), onDone: () => root.querySelector('.sideb-cert-wrap')?.scrollIntoView?.({ behavior: 'smooth', block: 'start' }) });
+  }
+  const isFinal = (lv) => lv?.exam === 'final' || lv?.exam === 'final-ex';
+  const certChapters = () => B_CHAPTERS.map((c) => ({ code: c.code, title: tx(c.title) }));
+  /** 从 Final 页打开证书（单独一页，带返回） */
+  function renderCert(kind) {
+    redraw = () => renderCert(kind);
+    stopAll();
+    root.replaceChildren();
+    const shell = el('div', 'sideb-results sideb-cert-page is-clear');
+    shell.appendChild(certificate(kind, loadCerts()[kind], { chapters: certChapters(), lang: lang() }));
+    const actions = el('div', 'sideb-results-actions');
+    actions.appendChild(btn('learn-btn ghost', t.backMap, () => renderMap()));
+    shell.appendChild(actions);
+    root.appendChild(shell);
   }
   function renderResults({ summary, firstClear, recovered = false }) {
     redraw = () => renderResults({ summary, firstClear, recovered });
@@ -829,14 +947,14 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
     root.replaceChildren();
     const shell = el('div', `sideb-results ${toneOf(level.chapter)}${summary.passed || recovered ? ' is-clear' : ''}`);
     const head = el('div', 'sideb-results-head');
-    head.append(el('span', 'sideb-kicker', `${level.id} · ${tx(level.title)}`), el('h3', 'sideb-results-title', summary.passed || recovered ? t.clear : t.notYet));
+    head.append(el('span', 'sideb-kicker', `${codeOf(level)} · ${tx(level.title)}`), el('h3', 'sideb-results-title', summary.passed || recovered ? t.clear : t.notYet));
     if (recovered) head.appendChild(el('span', 'sideb-tag', t.recoveredTag));
     if (firstClear) head.appendChild(el('span', 'sideb-tag is-core', t.firstClear));
     const ring = el('div', 'sideb-score-ring');
     ring.style.setProperty('--p', pct(summary.score));
     ring.append(el('strong', '', `${pct(summary.score)}%`), el('span', '', t.score));
     head.appendChild(ring);
-    if (summary.passed) head.appendChild(el('p', 'sideb-stars', t.stars(summary.stars)));
+    head.appendChild(el('p', `sideb-grade is-${(summary.grade || gradeOf(summary.score, summary.passed)).replace('+', 'plus')}`, summary.grade || gradeOf(summary.score, summary.passed)));
     head.appendChild(el('p', 'sideb-passline', t.passLine(pct(PASS_LINE))));
     shell.appendChild(head);
     const parts = el('div', 'sideb-parts');
@@ -864,6 +982,7 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
       session.breakthroughs.forEach((id) => { const b = all.find((n) => n.breakthrough?.id === id)?.breakthrough; if (b) box.appendChild(el('p', 'sideb-break', tx(b.text))); });
       shell.appendChild(box);
     }
+    if (summary.passed && (level.exam === 'final' || level.exam === 'final-ex') && loadCerts()[level.exam]) shell.appendChild(certificate(level.exam, loadCerts()[level.exam], { chapters: certChapters(), lang: lang() }));
     const recs = recommend(summary.errors).slice(0, 4);
     if (recs.length) {
       const box = el('div', 'sideb-recs');
@@ -879,11 +998,21 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
       shell.appendChild(box);
     }
     const actions = el('div', 'sideb-results-actions');
-    if (summary.passed || recovered) {
+    if (level.exam) {
+      // 考试：没过就换一套题重考（实操成绩保留，没过线的实操回去改）；过了回地图
+      if (!summary.passed) {
+        const lab = summary.labs.find((l) => !l.ok);
+        if (lab) actions.appendChild(btn('learn-btn primary', t.reviseLab, () => { const li = levelSections(lvl).indexOf('lab'); session = { ...session, result: null, section: li, node: Math.max(0, (lvl.sections.lab || []).findIndex((n) => n.lab === lab.id)) }; persist(); globalThis.location.hash = labHref(LABS[lab.id], lab.mode || 'chapter'); }));
+        actions.appendChild(btn(`learn-btn ${lab ? 'ghost' : 'primary'}`, t.examRetry, () => { const prev = session; level = lookupLevel(level.id); lvl = levelForAttempt(level, (prev.attempt || 0) + 1); session = retrySession(lvl, prev); session.breakthroughs = []; persist(); renderNode(); }));
+      } else actions.appendChild(btn('learn-btn ghost', t.examRetry, () => { const prev = session; level = lookupLevel(level.id); lvl = levelForAttempt(level, (prev.attempt || 0) + 1); session = retrySession(lvl, prev); session.breakthroughs = []; persist(); renderNode(); }));
+    } else if (summary.passed || recovered) {
       const list = playable();
-      const next = list[list.findIndex((x) => x.id === level.id) + 1];
+      const next = list[list.findIndex((x) => x.id === (level.base || level.id)) + 1];
+      // 普通关通过后：扩展关已开放就给入口；扩展关通过后：可以回到所属的关卡
       if (next) actions.appendChild(btn('learn-btn primary', t.nextLevel(`${next.id} ${tx(next.title)}`), () => startLevel(next.id)));
-      actions.appendChild(btn('learn-btn ghost', t.retryStars, () => { const prev = session; level = levelById(level.id); lvl = levelForAttempt(level, (prev.attempt || 0) + 1); session = retrySession(lvl, prev); session.breakthroughs = []; persist(); renderNode(); }));
+      const x = !level.ext && extLevelById(`${level.id}x`);
+      if (x) actions.appendChild(btn('learn-btn ghost', `${t.ext} · ${level.id}`, () => startLevel(x.id)));
+      actions.appendChild(btn('learn-btn ghost', t.retryStars, () => { const prev = session; level = lookupLevel(level.id); lvl = levelForAttempt(level, (prev.attempt || 0) + 1); session = retrySession(lvl, prev); session.breakthroughs = []; persist(); renderNode(); }));
     } else if (summary.next === 'revise-lab') {
       shell.appendChild(el('p', 'sideb-weak', t.labLineFail(pct(LAB_LINES.level))));
       const lab = summary.labs.find((l) => !l.ok);
@@ -897,7 +1026,8 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
     actions.appendChild(btn('learn-btn ghost', t.backMap, () => renderMap()));
     shell.appendChild(actions);
     root.appendChild(shell);
-    if (summary.passed || recovered) celebrateClear(shell);
+    if ((summary.passed || recovered) && !isFinal(level)) celebrateClear(shell);
+    else if (summary.passed) shell.classList.add('is-celebrating');
   }
   function celebrateClear(shell) {
     shell.classList.add('is-celebrating');
@@ -949,5 +1079,5 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
   }
 
   renderMap();
-  return { renderMap, refresh: () => redraw(), openLevel: (id) => (levelOpen(levelById(id)) ? startLevel(id) : renderMap()), resume, labReturn, stop: stopAll, get session() { return session; } };
+  return { renderMap, refresh: () => redraw(), openLevel: (id) => (lookupLevel(id) && levelOpen(lookupLevel(id)) ? startLevel(id) : renderMap()), resume, labReturn, stop: stopAll, get session() { return session; } };
 }

@@ -1,7 +1,7 @@
 // 古典和声面板的"连续和声连接"大谱表：四部声部、每个和弦下的五行标注、|Key=…|、点列试听、点标注退回、四部和声检查标记
 // 从 script.js 拆出来；面板状态通过 ctx 传进来：{ classical, segments, settings, modeLabel, localize, text, lang }
 // 返回 { drawn, satb }：drawn 表示谱表画出来了（上面那排和弦卡片就不用再显示），satb 是拼写好的四部和声（"送到五线谱"用）
-import { renderVisual as renderStaffVisual } from "./learn_visuals.js?v=20261003-r31";
+import { renderVisual as renderStaffVisual } from "./learn_visuals.js?v=20261004-m5";
 import { keyFifths } from "./staff_musicxml.js?v=20261003-x1";
 import { checkSATB } from "./satb_check.js?v=20261004-r32";
 import { issueList, drawIssueMarks } from "./satb_marks.js?v=20261003-r31";
@@ -22,13 +22,21 @@ export function drawClassicalStaff(ctx, container, displaySymbol = (x) => x, aft
   card.className = "classical-chain-staff";
   const place = () => (after?.parentNode === container ? after.after(card) : container.appendChild(card));
   const solved = classical.voiceSequence(entries.map((e) => e.entry));
-  if (!solved.ok) {
+  if (!solved.ok && !solved.voices) {
     const note = document.createElement("p");
     note.className = "small-muted";
     note.textContent = solved.reason;
     card.appendChild(note);
     place();
     return { drawn: false, satb: classicalLastSatb };
+  }
+  // 没有合法声部连接：照样画出（用违反规则最少的配置），上面写明这种写法不对；仍然可以播放、送入五线谱
+  if (solved.fallback) {
+    const note = document.createElement("p");
+    note.className = "classical-voicing-warning";
+    note.setAttribute("role", "status");
+    note.textContent = clt("cl_voicing_fallback", { reason: solved.reason, issues: [...new Set((solved.problems || []).flatMap((p) => p.issues))].map(localizeClassicalText).join("、") || "—" });
+    card.appendChild(note);
   }
   const LETTER = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
   const parseName = (name) => {

@@ -377,7 +377,7 @@ export const EXTRA_OPTIONS = {
   d82nkeb: '720',
   d1fbwg2n: t('狐狸五度', 'キツネの 5 度', 'the fox fifth'),
   dd61boe: t('约 100 音分', '約 100 セント', 'about 100 cents'),
-  dcyjwgg: 'E–B, B–F♯',
+  d15j4jmn: 'E–B, B–F♯',
   d1foq5x7: '1850',
   d1y3epj: '12',
   d12mrt6q: '3',

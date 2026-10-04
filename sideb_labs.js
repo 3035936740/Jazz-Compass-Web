@@ -3,6 +3,7 @@
 // 任务说明里的乐理：终止四六的 6→5、4→3：ref:omt2e-cad64；复节奏与节拍调制：ref:wiki-polyrhythm ref:wiki-metric-modulation；
 // 6/8 是复二拍子、一拍是附点四分音符：ref:omt2e-compound-meter；爵士配置的 3–7 骨架、9→13 的上声部线条、省略根音与五音：ref:omt2e-jazz-voicings ref:wiki-jazz-chord；切分与连音线：ref:omt2e-rhythm-more ref:omt2e-rhythm
 // 三全音替代：两个属七共用同一个三全音、三音与七音互换 ref:omt2e-substitutions
+// 集合类（标准顺序、原型、Tn / In）ref:omt2e-normal-order ref:omt2e-prime-form；十二音行与 I0 ref:omt2e-twelve-tone ref:omt2e-row-naming
 // 类别对位：第一类的开头、终止与平行规则 ref:omt-species1；第四类的预备—挂留—解决与终止的 7–6 挂留 ref:omt-species4
 // 八度法则（低音上行 1–5 级，主和属用 5/3、其余用 6）：ref:omt2e-galant-rule-octave；副属和弦：ref:omt2e-tonicization；那不勒斯六和弦 ra → ti：ref:omt2e-neapolitan
 const t = (zh, ja, en) => ({ zh, ja, en });
@@ -10,6 +11,10 @@ const t = (zh, ja, en) => ({ zh, ja, en });
 const wholeNotes = (line) => line.split(' ').map((p) => ({ rest: false, duration: 'w', dots: 0, tie: false, notes: [{ letter: p[0], octave: Number(p.slice(-1)), alter: null, cents: 0 }] }));
 // Fux《Gradus ad Parnassum》C 调定旋律（图 44 / 45，数据 ref:gotham-species），移到 C3 写在低音谱表
 const FUX_C = 'C3 E3 F3 G3 E3 A3 G3 E3 F3 E3 D3 C3';
+/** 预先写好的四分音符（十二音行），naturals 写明还原，避免同一小节里的临时记号延续 */
+const quarterNotes = (names) => names.map((p) => ({ rest: false, duration: 'q', dots: 0, tie: false, notes: [{ letter: p[0], octave: Number(p.slice(-1)), alter: p.includes('#') ? 1 : p.includes('b') ? -1 : 0, cents: 0 }] }));
+// OMT 2e 举的 Elisabeth Lutyens《Motet》的音列（以 C 为 0）：0–11–3–7–8–4–2–6–5–1–9–10（ref:omt2e-row-naming）
+const LUTYENS = [0, 11, 3, 7, 8, 4, 2, 6, 5, 1, 9, 10];
 
 export const LABS = {
   'vl-ii6-V7-I': {
@@ -108,6 +113,22 @@ export const LABS = {
     setup: { clef: 'treble', key: 0, meter: [4, 4], clear: true },
     breakthrough: { id: 'subV-voicing', when: ['identity', 'guide', 'motion'], text: t('换了根音，手几乎没动：三全音替代就是这么"省力"。', '根音を替えても手はほとんど動かない：裏コードはこんなに「楽」。', 'New root, hands barely moved: that is how economical a tritone sub is.') },
   },
+  'set-trichords': {
+    id: 'set-trichords', tool: 'staff', check: 'setWrite', minutes: 6,
+    title: t('集合类：写出三个 (014) 三和弦', 'セット・クラス：(014) の三和音を 3 つ', 'Set class: write three (014) trichords'),
+    brief: t('在谱上写三个三音和弦（每个和弦三个音同时开始），它们都要属于集合类 (014)，而且彼此不同：至少有一对是移位（Tn）关系、一对是倒影（In）关系。例如 C–D♭–E 是 [0,1,4]；同一小节里的还原音要写还原号。', '譜に三和音を 3 つ（各 3 音が同時に始まる）。どれもセット・クラス (014) に属し、互いに違うこと：少なくとも 1 組は移高（Tn）、1 組は反転（In）の関係に。たとえば C–D♭–E は [0,1,4]。同じ小節の本位音にはナチュラルを。', 'Write three three-note chords (three notes starting together each), all members of set class (014) and all different: at least one pair related by transposition (Tn) and one by inversion (In). C–D♭–E, for example, is [0,1,4]; within a bar, write naturals explicitly.'),
+    params: { prime: [0, 1, 4], count: 3 },
+    setup: { clef: 'treble', key: 0, meter: [4, 4], clear: true },
+    breakthrough: { id: 'set-family', when: ['members', 'relations'], text: t('三个听起来像亲戚的和弦——同一个集合类，移位与倒影。', '親戚のように聞こえる 3 つの和音——同じセット・クラスの移高と反転。', 'Three chords that sound related — one set class, transposed and inverted.') },
+  },
+  'row-inversion': {
+    id: 'row-inversion', tool: 'staff', check: 'rowForm', minutes: 6,
+    title: t('十二音：写出 Lutyens《Motet》音列的 I0', '12 音：Lutyens《Motet》の音列の I0', 'Twelve-tone: write I0 of Lutyens’s Motet row'),
+    brief: t('高音谱表上已经写好 P0（以 C 为 0：0–11–3–7–8–4–2–6–5–1–9–10，不要改动）。在低音谱表按顺序写出 I0：每个音的音程方向反过来，也就是 I0 的每个音级 = 12 − P0 的音级（模 12）。八度随意，十二个音一个不能少。', 'ト音譜表に P0（C = 0：0–11–3–7–8–4–2–6–5–1–9–10、変えないこと）が書いてある。ヘ音譜表に I0 を順に書く：各音程の向きを逆に、つまり I0 の各音級 = 12 − P0 の音級（mod 12）。オクターヴは自由、12 音すべて。', 'P0 is already on the treble staff (C = 0: 0–11–3–7–8–4–2–6–5–1–9–10 — leave it). On the bass staff write I0 in order: reverse every interval’s direction, i.e. each pitch class of I0 = 12 − that of P0 (mod 12). Any octave; all twelve notes.'),
+    params: { row: LUTYENS, form: 'I0', givenStaff: 0, answerStaff: 1 },
+    setup: { clef: 'grand', key: 0, meter: [4, 4], clear: true, prefill: [quarterNotes(['C5', 'B4', 'Eb5', 'G5', 'Ab4', 'E5', 'D5', 'F#5', 'F5', 'C#5', 'A4', 'Bb4']), []] },
+    breakthrough: { id: 'row-mirror', when: ['order', 'aggregate'], text: t('你把整条音列照进了镜子：每一步都反过来走。', '音列全体を鏡に映した：一歩ずつ逆向きに。', 'You mirrored the whole row: every step reversed.') },
+  },
   'poly-32-mm': {
     id: 'poly-32-mm', tool: 'rhythm', sub: 'poly', check: 'tempo', minutes: 5,
     title: t('复节奏 3:2 与节拍调制', 'ポリリズム 3:2 とメトリック・モジュレーション', 'Polyrhythm 3:2 and metric modulation'),
@@ -124,5 +145,7 @@ export function parseLabRef(ref) {
   const [id, mode] = String(ref).split('@');
   return { id, mode: MODES.includes(mode) ? mode : 'level' };
 }
+/** 成绩的存储键：普通关就是实操 id，章节测试 / EX 另存为 id@chapter、id@ex（考试要重新完成，不能拿普通关的成绩） */
+export const labResultKey = (id, mode = 'level') => (mode && mode !== 'level' ? `${id}@${mode}` : id);
 /** 打开任务的链接：#staff?q=@lab:<id>[@mode]；复节奏工具的任务开在节奏工具里 */
 export const labHref = (lab, mode = 'level') => `#${lab.tool}?q=${encodeURIComponent(`@lab:${lab.id}${mode === 'level' ? '' : `@${mode}`}`)}`;

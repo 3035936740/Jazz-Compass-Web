@@ -1,6 +1,6 @@
 // 五度圈面板（从 script.js 拆出）：五度圈与关系调、调内和弦表、轴心系统配色、多调式五度圈与功能环
 // 由 script.js 在初始化时调用 createCirclePanel(ctx)；ctx 传入画布、表格容器、音名换算与五度圈数据，live 里是会变的值（升降号记法、音名表、异步载入的 JSON）
-import { EnhancedChordConverter } from "./jazz_compass.js?v=20261002-no";
+import { EnhancedChordConverter } from "./jazz_compass.js?v=20261004-w7";
 import { chordNotesToFrequencies } from "./note_frequency.js?v=20261002-split";
 import { playChord } from "./audio_engine.js?v=20261003-a3";
 import { iconSvg } from "./ui_icons.js?v=20261003-i2";

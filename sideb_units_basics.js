@@ -445,7 +445,7 @@ export const LEVEL_B1_5 = {
     experiment: [
       { id: 'b15-x1', type: 'experiment', toy: 'scale', ref: 'omt2e-modes',
         prompt: t('保持主音不变，从 Lydian 一个个点到 Locrian，看金色的特征音，再换个主音试试（注意升降号怎么变）。', '主音はそのまま、リディアからロクリアまで順に押して金色の特性音を見よう。主音を変えても試して（臨時記号の変化に注意）。', 'Keep the tonic and step from Lydian to Locrian, watching the gold tell-tale note; then change the tonic (watch the accidentals).'),
-        params: { sets: MODES, tonics: ['C', 'D', 'E', 'F', 'G', 'A', 'E♭', 'F♯'] },
+        params: { sets: MODES },
         breakthrough: { id: 'b15-chain', text: t('你亲手走完了从最亮到最暗的调式链。', '最も明るい旋法から最も暗い旋法まで、自分の手でたどった。', 'You walked the whole chain from brightest to darkest yourself.') } },
     ],
     challenge: [
@@ -531,7 +531,7 @@ export const LEVEL_B1_6 = {
     experiment: [
       { id: 'b16-x1', type: 'experiment', toy: 'scale', ref: ['omt2e-pentatonic-harmony', 'sccm-ethnic-modes'],
         prompt: t('换主音、换五种转位，听每种的颜色。注意：不管从哪里开始，都找不到半音。', '主音と 5 つの転回を切り替えて、それぞれの色を聴こう。どこから始めても半音は見つからない。', 'Change the tonic and the rotation and hear each colour. Notice: wherever you start, there is no half step.'),
-        params: { sets: PENTA, tonics: ['C', 'D', 'F', 'G', 'A', 'E♭'] },
+        params: { sets: PENTA },
         breakthrough: { id: 'b16-rot', text: t('你听过了五声的五种颜色。', 'ペンタトニックの 5 つの色を聴いた。', 'You have heard all five colours of the pentatonic.') } },
     ],
     challenge: [

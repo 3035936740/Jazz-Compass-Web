@@ -2,7 +2,7 @@
 // 爵士配法逐条说明做了什么替换、为什么某处没有替换；可以分别试听
 // 逻辑与依据见 reharm.js（ref:wiki-harmonization ref:omt-pb-substitutions ref:omt-pb-blues ref:omt2e-phrase-model）
 import { reharmonize, MELODIES } from './reharm.js';
-import { voiceProgression } from './prog_library.js';
+import { voiceProgression } from './prog_library.js?v=20261004-w8';
 import { el, button, field, language, cite, sourcesFooter } from './module_kit.js';
 import { parsePitch } from './pitch_spelling.js';
 

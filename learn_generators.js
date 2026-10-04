@@ -18,7 +18,7 @@ import { primeForm, intervalVector, transpose, invert, mod12, formatSet } from '
 import { THAATS, thaatSemitones } from './world_modes.js';
 import { writtenToConcert } from './instruments.js';
 import { midiAt } from './fretboard.js';
-import { shuffle } from './learn_engine.js?v=20261004-s4';
+import { shuffle } from './learn_engine.js?v=20261005-q1';
 
 const t = (zh, ja, en) => ({ zh, ja, en });
 const fmt = (template, values) => Object.fromEntries(Object.entries(template).map(([lang, text]) => [lang, text.replace(/\{(\w+)\}/g, (_, key) => {
@@ -197,13 +197,13 @@ export const GENERATORS = {
   } },
   staffRead: { ref: 'omt2e-clefs', make(rng, { clefs = ['treble', 'bass'] } = {}) {
     const clef = pick(rng, clefs);
-    const pool = clef === 'treble' ? ['E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F5', 'C4', 'D4'] : clef === 'bass' ? ['G2', 'A2', 'B2', 'C3', 'D3', 'E3', 'F3', 'G3', 'A3', 'C4'] : ['F3', 'G3', 'A3', 'B3', 'C4', 'D4', 'E4', 'F4', 'G4'];
+    const pool = clef === 'treble' ? ['E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F5', 'C4', 'D4'] : clef === 'bass' ? ['G2', 'A2', 'B2', 'C3', 'D3', 'E3', 'F3', 'G3', 'A3', 'C4'] : clef === 'tenor' ? ['D3', 'E3', 'F3', 'G3', 'A3', 'B3', 'C4', 'D4', 'E4'] : ['F3', 'G3', 'A3', 'B3', 'C4', 'D4', 'E4', 'F4', 'G4'];
     const p = pick(rng, pool);
     const letter = p[0];
-    const clefName = { treble: t('高音谱号', 'ト音記号', 'treble clef'), bass: t('低音谱号', 'ヘ音記号', 'bass clef'), alto: t('中音谱号', 'ハ音記号（アルト）', 'alto clef') }[clef];
+    const clefName = { treble: t('高音谱号', 'ト音記号', 'treble clef'), bass: t('低音谱号', 'ヘ音記号', 'bass clef'), alto: t('中音谱号', 'ハ音記号（アルト）', 'alto clef'), tenor: t('次中音谱号', 'ハ音記号（テノール）', 'tenor clef') }[clef];
     return choice(rng, { ref: 'omt2e-clefs', prompt: fmt(t('{c}：这个音叫什么？', '{c}：この音は？', '{c}: what is this note?'), { c: clefName }), correct: letter, wrong: ['C', 'D', 'E', 'F', 'G', 'A', 'B'],
       visual: { kind: 'staff', notes: [p], clef }, audio: { notes: [parsePitch(p).midi], mode: 'melody' },
-      hint: clef === 'treble' ? t('高音谱号的线：E G B D F（下→上）。', 'ト音記号の線：E G B D F（下から）。', 'Treble lines: E G B D F, bottom to top.') : clef === 'bass' ? t('低音谱号的线：G B D F A（下→上）。', 'ヘ音記号の線：G B D F A（下から）。', 'Bass lines: G B D F A, bottom to top.') : t('中音谱号的中线是中央 C。', 'ハ音記号の真ん中の線が中央の C。', 'The alto clef’s middle line is middle C.'),
+      hint: clef === 'treble' ? t('高音谱号的线：E G B D F（下→上）。', 'ト音記号の線：E G B D F（下から）。', 'Treble lines: E G B D F, bottom to top.') : clef === 'bass' ? t('低音谱号的线：G B D F A（下→上）。', 'ヘ音記号の線：G B D F A（下から）。', 'Bass lines: G B D F A, bottom to top.') : clef === 'tenor' ? t('次中音谱号的上数第二线是中央 C；线：D F A C E（下→上）。', 'テノール記号は上から 2 本目が中央の C。線：D F A C E（下から）。', 'The tenor clef’s second line from the top is middle C; lines D F A C E, bottom to top.') : t('中音谱号的中线是中央 C。', 'ハ音記号の真ん中の線が中央の C。', 'The alto clef’s middle line is middle C.'),
       explain: fmt(t('这个音是 {p}。', 'この音は {p}。', 'This note is {p}.'), { p }) });
   } },
   noteValue: { ref: 'omt2e-rhythm', make(rng) {

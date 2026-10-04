@@ -5,10 +5,10 @@
 //   chapter 章节测试：最多检查 3 次，只写哪里扣分，不给改法
 //   ex      B-EX：评分 + 少提示 + 独立完成——不能检查，只能提交一次，提交后才看到完整评分单
 // 结果写进 localStorage（sideb_engine.saveLabResult），再回到课程 #learn?q=@lab-return:<id>。
-import { LABS, parseLabRef } from './sideb_labs.js?v=20261004-w5';
-import { evaluateLab } from './lab_checks.js?v=20261004-w1';
-import { saveLabResult, loadLabResults, LAB_MODES, LAB_LINES, breakthroughFor, loadBreakthroughs, saveBreakthrough } from './sideb_engine.js?v=20261004-w5';
-import { ERRORS } from './sideb_errors.js?v=20261004-w5';
+import { LABS, parseLabRef, labResultKey } from './sideb_labs.js?v=20261004-x1';
+import { evaluateLab } from './lab_checks.js?v=20261004-x1';
+import { saveLabResult, loadLabResults, LAB_MODES, LAB_LINES, breakthroughFor, loadBreakthroughs, saveBreakthrough } from './sideb_engine.js?v=20261005-q1';
+import { ERRORS } from './sideb_errors.js?v=20261004-z9';
 import { celebrate as flashBreakthrough } from './sideb_fx.js?v=20261004-f1';
 
 const TEXT = {
@@ -44,7 +44,7 @@ const btn = (cls, text, on) => { const b = el('button', cls, text); b.type = 'bu
 const fmt = (x) => String(Math.round(x * 10) / 10);
 
 /** 第一次打开这个实操（还没有提交过）——工具据此决定要不要清空成初始内容 */
-export const isFirstVisit = (ref) => !loadLabResults()[parseLabRef(ref).id];
+export const isFirstVisit = (ref) => { const { id, mode } = parseLabRef(ref); return !loadLabResults()[labResultKey(id, mode)]; };
 
 /**
  * @param {HTMLElement} host 工具的容器（任务条插在最前面）
@@ -69,7 +69,7 @@ export function mountLabBanner(host, ref, { getSubmission, onReturn = (href) => 
   head.append(el('span', 'lab-banner-kicker', `${t.kicker} · ${t.modes[mode]}`), el('strong', 'lab-banner-title', tx(spec.title)));
   const brief = el('p', 'lab-banner-brief', tx(spec.brief));
   const meta = el('p', 'lab-banner-line', mode === 'ex' ? `${t.exBrief} ${t.line(Math.round(line * 100))}` : t.line(Math.round(line * 100)));
-  const previous = loadLabResults()[labId];
+  const previous = loadLabResults()[labResultKey(labId, mode)];
   const prevNote = previous?.last && mode === 'level' ? el('p', 'lab-banner-previous', t.previous(Math.round(previous.last.score))) : null;
 
   let answer = null;
@@ -162,7 +162,7 @@ export function mountLabBanner(host, ref, { getSubmission, onReturn = (href) => 
     const result = evaluateLab(spec, submission());
     paint(result, { full: true });
     celebrate(result);
-    saveLabResult(labId, result);
+    saveLabResult(labResultKey(labId, mode), result);
     status.textContent = t.submitted;
     if (rules.submissions === 1) { submitBtn.disabled = true; if (checkBtn) checkBtn.disabled = true; }
     onReturn(`#learn?q=${encodeURIComponent(`@lab-return:${labId}`)}`);

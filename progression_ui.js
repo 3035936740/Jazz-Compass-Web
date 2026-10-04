@@ -3,7 +3,7 @@
 import { parseProgression, progressionEvents, transposeProgression } from './progression.js';
 import { parsedAccompaniment } from './accompaniment_voicing.js';
 import { el, button, option, field, language, midiToFrequency, crossLink, relatedLinks, midiExportButton, tabs } from './module_kit.js';
-import { mountProgressionLibrary } from './prog_library_ui.js?v=20261003-p5';
+import { mountProgressionLibrary } from './prog_library_ui.js?v=20261004-m5';
 import { chordSymbolsToVoices, sendToStaff } from './staff_handoff.js?v=20261003-h1';
 
 const EXAMPLES = [

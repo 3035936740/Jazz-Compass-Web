@@ -158,7 +158,7 @@ const children = (node, name) => node?.children.filter((c) => c.name === name) |
 const textOf = (node, name) => child(node, name)?.text.trim();
 const numOf = (node, name, fallback = 0) => { const v = Number(textOf(node, name)); return Number.isFinite(v) && textOf(node, name) !== undefined ? v : fallback; };
 
-const METERS = [[2, 4], [3, 4], [4, 4], [5, 4], [3, 8], [6, 8], [9, 8], [12, 8]];
+const METERS = [[2, 4], [3, 4], [4, 4], [5, 4], [3, 8], [6, 8], [8, 8], [9, 8], [12, 8], [16, 16]];
 /** 编辑器没有的拍号换成小节长度相同的（2/2 → 4/4、6/4 → 12/8） */
 function nearestMeter(beats, type) {
   const exact = METERS.find(([a, b]) => a === beats && b === type);

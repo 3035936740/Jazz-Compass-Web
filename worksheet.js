@@ -18,8 +18,8 @@ function seeded(seed) {
 }
 const shuffled = (list, rng) => { const a = list.slice(); for (let i = a.length - 1; i > 0; i -= 1) { const j = Math.floor(rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
-/** 能印在纸上的题：选择、填空、连线；有声音但没有谱例的不要 */
-export const printable = (card) => ['choice', 'fill', 'match'].includes(card?.type) && !(card.audio && !card.visual);
+/** 能印在纸上的题：选择、填空、连线、计算（write：几步写答案，Side-B 的推导题）；有声音但没有谱例的不要 */
+export const printable = (card) => ['choice', 'fill', 'match', 'write'].includes(card?.type) && !(card.audio && !card.visual);
 
 /**
  * 生成练习卷的 HTML 片段
@@ -38,7 +38,7 @@ export function worksheetHTML({ title, sections, lang = 'zh', visualSvg = () => 
     if (section.heading) questions.push(`<h2>${esc(section.heading)}</h2>`);
     items.forEach((card) => {
       number += 1;
-      if (card.ref) refs.add(card.ref);
+      [].concat(card.ref ?? []).forEach((r) => refs.add(r));
       const svg = card.visual ? visualSvg(card) : '';
       const figure = svg ? `<div class="ws-figure">${svg}</div>` : '';
       if (card.type === 'choice') {
@@ -53,6 +53,10 @@ export function worksheetHTML({ title, sections, lang = 'zh', visualSvg = () => 
         const filled = card.answer.map((id, i) => `（${i + 1}）${esc(tx(card.bank?.find((b) => b.id === id)?.label ?? id))}`).join('　');
         questions.push(`<div class="ws-q"><p><b>${number}.</b> ${prompt}</p>${figure}${bank.length ? `<p class="ws-bank">${t.bank}：${bank.join(' / ')}</p>` : ''}</div>`);
         answers.push(`<li><b>${number}.</b> ${filled}${card.explain ? `<br><span>${esc(tx(card.explain))}</span>` : ''}</li>`);
+      } else if (card.type === 'write') {
+        const steps = card.steps || [];
+        questions.push(`<div class="ws-q"><p><b>${number}.</b> ${esc(tx(card.prompt))}</p>${figure}<ol class="ws-steps">${steps.map((st) => `<li>${esc(tx(st.label))} <span class="ws-blank ws-wide"></span></li>`).join('')}</ol></div>`);
+        answers.push(`<li><b>${number}.</b> ${steps.map((st, i) => `（${i + 1}）${esc(tx(st.answerText ?? st.answer))}`).join('　')}${card.explain ? `<br><span>${esc(tx(card.explain))}</span>` : ''}</li>`);
       } else {
         const rights = shuffled(card.pairs.map((_, i) => i), rng);
         const rows = card.pairs.map(([a], i) => `<tr><td>${i + 1}. ${esc(tx(a))}　（　）</td><td><b>${LETTERS[i].toLowerCase()}</b>. ${esc(tx(card.pairs[rights[i]][1]))}</td></tr>`).join('');
@@ -74,7 +78,7 @@ const STYLE = `body{margin:0;padding:14mm;background:#fff;color:#111;font:14px/1
 h1{font-size:20px;margin:0 0 6px}h2{font-size:16px;margin:18px 0 6px;border-bottom:1px solid #999}
 .ws-head{margin-bottom:14px}.ws-note{color:#555;font-size:12px}.ws-q{break-inside:avoid;margin:0 0 14px}.ws-q p{margin:0 0 6px}
 .ws-options{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 18px}
-.ws-blank{display:inline-block;min-width:4.5em;border-bottom:1px solid #111;text-align:center}.ws-bank{font-size:13px;color:#333}
+.ws-steps{margin:0;padding-left:1.4em}.ws-steps li{margin:6px 0}.ws-wide{min-width:8em}.ws-blank{display:inline-block;min-width:4.5em;border-bottom:1px solid #111;text-align:center}.ws-bank{font-size:13px;color:#333}
 .ws-match{border-collapse:collapse}.ws-match td{padding:3px 18px 3px 0;vertical-align:top}
 .ws-figure svg{max-width:100%;height:auto;max-height:160px}.ws-answers{break-before:page}.ws-key li{margin-bottom:6px}.ws-key span,.ws-sources{color:#444;font-size:12px}
 .lv-key-label,.lv-label{font-size:11px}

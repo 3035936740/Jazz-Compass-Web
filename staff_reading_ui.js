@@ -15,16 +15,16 @@ import { recordToolMistake, tri } from './tool_review.js';
 import {
   GAP, svgNode, positionY, drawLines, drawClef, drawBrace, drawChordEvent, drawRest, drawBeams, drawTie, drawKeySignature, drawTimeSignature,
 } from './staff_diagram.js?v=20261002-r19';
-import { renderVisual } from './learn_visuals.js?v=20261003-r31';
+import { renderVisual } from './learn_visuals.js?v=20261004-m5';
 import { playFeedbackSound } from './learn_sfx.js?v=20261003-x3';
 import { el, button, language, midiToFrequency, sourcesFooter, cite, relatedLinks, midiExportButton } from './module_kit.js';
 import { scoreToMusicXML } from './staff_musicxml.js?v=20261003-x1';
-import { musicXMLToScore, unzipMusicXML, transposeScore, copyMeasures, pasteMeasures, deleteMeasures, measureCount, INTERVALS } from './staff_edit.js?v=20261003-e1';
+import { musicXMLToScore, unzipMusicXML, transposeScore, copyMeasures, pasteMeasures, deleteMeasures, measureCount, INTERVALS } from './staff_edit.js?v=20261004-w6';
 
 const SATB_SOURCES = ['omt2e-roman-numerals', 'omt-species1', 'omt2e-v7', 'omt2e-pd7'];
 const SOURCES = ['omt2e-notation', 'omt2e-clefs', 'wiki-clef', 'omt2e-keyboard', 'omt2e-aspn', 'omt2e-major-scales', 'wiki-key-signature', 'wiki-accidental', 'omt2e-rhythm', 'omt2e-simple-meter', 'omt2e-compound-meter', 'wiki-cent'];
 const STORE_KEY = 'jc-staff-score';
-const METERS = [[2, 4], [3, 4], [4, 4], [5, 4], [3, 8], [6, 8], [9, 8], [12, 8]];
+const METERS = [[2, 4], [3, 4], [4, 4], [5, 4], [3, 8], [6, 8], [8, 8], [9, 8], [12, 8], [16, 16]];
 const SYSTEM_WIDTH = 760;
 const SLOT = { w: 46, h: 38, q: 32, e: 27, s: 23 };
 
@@ -43,7 +43,7 @@ const TEXT = {
     copied: (a, b) => `已复制第 ${a}${b > a ? `–${b}` : ''} 小节。`, pasteMeter: '剪贴板里的小节拍号不同，不能粘贴。', nothingCopied: '还没有复制小节。',
     midiInput: 'MIDI 键盘：在页面顶部连接 MIDI 后直接弹就能写音，同时按住的几个键会写成一个和弦；屏幕下方的琴键也能点（手机上可以左右滑动）。',
     exportXml: '导出 MusicXML', print: '打印 / 存为 PDF', groupScore: '谱面设置', groupInput: '输入', groupPitch: '音高', hintTitle: '快捷键与说明',
-    clef: '谱表', key: '调号', meter: '拍号', bpm: '速度 ♩ =', keyName: (n, [major, minor]) => `${major} 大调 / ${minor} 小调${n ? `（${Math.abs(n)} 个${n > 0 ? '升' : '降'}号）` : ''}`,
+    toClassical: '去古典和声连接', toChord: '去和弦转换', appended: (x) => `已接在谱的最后：${x}`, clef: '谱表', key: '调号', meter: '拍号', bpm: '速度 ♩ =', keyName: (n, [major, minor]) => `${major} 大调 / ${minor} 小调${n ? `（${Math.abs(n)} 个${n > 0 ? '升' : '降'}号）` : ''}`,
     duration: '时值', durations: { w: '全音符', h: '二分音符', q: '四分音符', e: '八分音符', s: '十六分音符' }, dot: '附点', rest: '休止符', tie: '连音线', chord: '和弦',
     accidental: '临时记号', accAuto: '按调号', accNames: { '-2': '重降', '-1': '降', 0: '还原', 1: '升', 2: '重升' },
     cents: '音分偏移', centsHint: '给接下来写的音加上音分偏移（一个八度 1200 音分；±50 就是四分之一音），谱上会在符头旁标出。',
@@ -84,7 +84,7 @@ const TEXT = {
     copied: (a, b) => `第 ${a}${b > a ? `〜${b}` : ''} 小節をコピーしました。`, pasteMeter: 'コピーした小節は拍子が違うので貼り付けられません。', nothingCopied: 'まだ小節をコピーしていません。',
     midiInput: 'MIDI キーボード：ページ上部で MIDI をつなぐと、弾いた音がそのまま書かれます。同時に押さえた鍵は和音になります。画面下の鍵盤もタップできます（スマホでは左右にスクロール）。',
     exportXml: 'MusicXML 書き出し', print: '印刷 / PDF 保存', groupScore: '譜面の設定', groupInput: '入力', groupPitch: '音の高さ', hintTitle: 'ショートカットと説明',
-    clef: '譜表', key: '調号', meter: '拍子記号', bpm: 'テンポ ♩ =', keyName: (n, [major, minor]) => `${major} 長調 / ${minor} 短調${n ? `（${n > 0 ? '♯' : '♭'} ${Math.abs(n)} 個）` : ''}`,
+    toClassical: '古典和声の連結へ', toChord: '和音の変換へ', appended: (x) => `譜の最後に追加：${x}`, clef: '譜表', key: '調号', meter: '拍子記号', bpm: 'テンポ ♩ =', keyName: (n, [major, minor]) => `${major} 長調 / ${minor} 短調${n ? `（${n > 0 ? '♯' : '♭'} ${Math.abs(n)} 個）` : ''}`,
     duration: '音価', durations: { w: '全音符', h: '2 分音符', q: '4 分音符', e: '8 分音符', s: '16 分音符' }, dot: '付点', rest: '休符', tie: 'タイ', chord: '和音',
     accidental: '臨時記号', accAuto: '調号どおり', accNames: { '-2': 'ダブルフラット', '-1': 'フラット', 0: 'ナチュラル', 1: 'シャープ', 2: 'ダブルシャープ' },
     cents: 'セント', centsHint: 'これから書く音にセントのずれを加えます（1 オクターヴ = 1200 セント、±50 で 4 分音）。符頭の横に表示されます。',
@@ -125,7 +125,7 @@ const TEXT = {
     copied: (a, b) => `Copied bar${b > a ? `s ${a}–${b}` : ` ${a}`}.`, pasteMeter: 'The copied bars are in a different meter and cannot be pasted.', nothingCopied: 'No bars copied yet.',
     midiInput: 'MIDI keyboard: connect MIDI at the top of the page and play to write notes; keys held together become a chord. The on-screen keys work too (swipe sideways on a phone).',
     exportXml: 'Export MusicXML', print: 'Print / save PDF', groupScore: 'Score settings', groupInput: 'Input', groupPitch: 'Pitch', hintTitle: 'Shortcuts & notes',
-    clef: 'Staff', key: 'Key signature', meter: 'Time signature', bpm: 'Tempo ♩ =', keyName: (n, [major, minor]) => `${major} major / ${minor} minor${n ? ` (${Math.abs(n)} ${n > 0 ? 'sharp' : 'flat'}${Math.abs(n) > 1 ? 's' : ''})` : ''}`,
+    toClassical: 'Classical harmony connection', toChord: 'Chord conversion', appended: (x) => `Added at the end: ${x}`, clef: 'Staff', key: 'Key signature', meter: 'Time signature', bpm: 'Tempo ♩ =', keyName: (n, [major, minor]) => `${major} major / ${minor} minor${n ? ` (${Math.abs(n)} ${n > 0 ? 'sharp' : 'flat'}${Math.abs(n) > 1 ? 's' : ''})` : ''}`,
     duration: 'Duration', durations: { w: 'Whole', h: 'Half', q: 'Quarter', e: 'Eighth', s: 'Sixteenth' }, dot: 'Dot', rest: 'Rest', tie: 'Tie', chord: 'Chord',
     accidental: 'Accidental', accAuto: 'Follow key', accNames: { '-2': 'Double flat', '-1': 'Flat', 0: 'Natural', 1: 'Sharp', 2: 'Double sharp' },
     cents: 'Cents', centsHint: 'Offset the next notes by some cents (1200 cents to the octave; ±50 is a quarter tone). The offset is printed beside the notehead.',
@@ -335,6 +335,9 @@ export function mountStaffReading(target, { playChord }) {
       button('mk-btn', t.play, () => playScore()),
       button('mk-btn ghost', t.undo, () => undo()),
       button('mk-btn ghost', t.remove, () => removeSelected()),
+      // 快速去别的工具：古典和声的和声连接写好后"送到五线谱"会回到这里；和弦转换的"送到五线谱"会接在谱的最后
+      button('mk-btn ghost staff-jump', t.toClassical, () => { save(); if (globalThis.location) globalThis.location.hash = '#classical'; }),
+      button('mk-btn ghost staff-jump', t.toChord, () => { save(); if (globalThis.location) globalThis.location.hash = '#chord'; }),
     );
     toolbar.append(durations, modifiers, accidentals, actions);
 
@@ -343,8 +346,8 @@ export function mountStaffReading(target, { playChord }) {
     settingsBox.addEventListener('toggle', () => { state.settingsOpen = settingsBox.open; });
     const summary = el('summary', 'staff-settings-summary');
     summary.append(el('span', 'staff-settings-title', t.groupScore), el('span', 'staff-settings-brief', `${t.clefs[state.clef]} · ${KEY_NAMES[state.key][0]} · ${state.meter.join('/')} · ♩ = ${state.bpm}${state.cents ? ` · ${state.cents > 0 ? '+' : '−'}${Math.abs(state.cents)}¢` : ''}`));
-    const bpm = el('input'); bpm.type = 'number'; bpm.min = '30'; bpm.max = '240'; bpm.value = String(state.bpm);
-    bpm.addEventListener('change', () => { state.bpm = Math.max(30, Math.min(240, Number(bpm.value) || 90)); bpm.value = String(state.bpm); save(); renderControls(); });
+    const bpm = el('input'); bpm.type = 'number'; bpm.min = '30'; bpm.max = '1200'; bpm.value = String(state.bpm);
+    bpm.addEventListener('change', () => { state.bpm = Math.max(30, Math.min(1200, Number(bpm.value) || 90)); bpm.value = String(state.bpm); save(); renderControls(); });
     const centsInput = el('input'); centsInput.type = 'number'; centsInput.min = '-100'; centsInput.max = '100'; centsInput.value = String(state.cents); centsInput.className = 'staff-cents-input';
     centsInput.setAttribute('aria-label', t.cents);
     centsInput.addEventListener('change', () => { state.cents = Math.max(-100, Math.min(100, Math.round(Number(centsInput.value) || 0))); renderControls(); });
@@ -1196,7 +1199,7 @@ export function mountStaffReading(target, { playChord }) {
     // 挂上任务条（检查 / 提交时把当前的谱交给评分器）
     if (String(q).startsWith('@lab:')) {
       const ref = String(q).slice(5);
-      import('./lab_banner.js?v=20261004-w5').then(({ mountLabBanner, isFirstVisit }) => import('./sideb_labs.js?v=20261004-w5').then(({ LABS, parseLabRef }) => {
+      import('./lab_banner.js?v=20261005-q1').then(({ mountLabBanner, isFirstVisit }) => import('./sideb_labs.js?v=20261004-x1').then(({ LABS, parseLabRef }) => {
         const setup = LABS[parseLabRef(ref).id]?.setup;
         if (setup) {
           snapshot();
@@ -1207,6 +1210,31 @@ export function mountStaffReading(target, { playChord }) {
         }
         mountLabBanner(target, ref, { getSubmission: () => ({ voices: clone(state.voices), key: state.key, meter: state.meter, clef: state.clef }) });
       }));
+      return;
+    }
+    // 从和弦转换送来的一个和弦：不清空，接在最后，用当前选中的时值（大谱表按中央 C 分到上下两行，短的一行先补休止符对齐）
+    if (q === '@append') {
+      let incoming = null;
+      try { incoming = JSON.parse(globalThis.localStorage?.getItem('jc-staff-append') || 'null'); globalThis.localStorage?.removeItem('jc-staff-append'); } catch (_) { incoming = null; }
+      const notes = (incoming?.pitches || []).map((name) => { const m = /^([A-G])(##|bb|#|b|♯|♭)?(-?\d)$/.exec(String(name).trim()); return m ? { letter: m[1], octave: Number(m[3]), alter: { '': 0, '#': 1, '##': 2, '♯': 1, b: -1, bb: -2, '♭': -1 }[m[2] || ''], cents: 0 } : null; }).filter(Boolean);
+      if (notes.length) {
+        snapshot();
+        const ev = (list) => ({ rest: !list.length, duration: state.duration, dots: state.dots, tie: false, notes: list });
+        if (state.clef === 'grand') {
+          const total = (list) => list.reduce((sum, e) => sum + durationBeats(e.duration, e.dots), 0);
+          const pad = (list, beats) => decompose(beats).forEach((part) => list.push({ rest: true, duration: part.duration, dots: part.dots, tie: false, notes: [] }));
+          const [up, low] = state.voices;
+          const gap = total(up) - total(low);
+          if (gap > 1e-6) pad(low, gap); else if (gap < -1e-6) pad(up, -gap);
+          const midi = (n) => pitchMidi(n.letter, n.octave, n.alter);
+          up.push(ev(notes.filter((n) => midi(n) >= 60)));
+          low.push(ev(notes.filter((n) => midi(n) < 60)));
+        } else state.voices[0].push(ev(notes));
+        state.selected = null;
+        state.status = t.appended(incoming.symbol || notes.map((n) => `${n.letter}${n.octave}`).join(' '));
+        save();
+      }
+      renderAll();
       return;
     }
     if (q === '@import') {

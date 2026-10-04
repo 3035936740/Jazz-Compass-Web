@@ -1,6 +1,6 @@
 import { lccPitchClass } from './lcc_concept.js';
 import { parsedAccompaniment } from './accompaniment_voicing.js';
-import { midiName } from './classical_voicing.js';
+import { midiName } from './classical_voicing.js?v=20261004-w7';
 import { BLUES_NOTES, BLUES_SCALES, bluesForm, bluesScaleNotes, bluesScaleMidi, bluesBentFrequency, bluesPhrase } from './blues_lab.js';
 
 // ref:aizcutei-blues ref:berklee-blues-guitar ref:berklee-reharmonization

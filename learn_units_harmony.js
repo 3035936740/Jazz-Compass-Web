@@ -118,7 +118,7 @@ const ALL = [
   {
     id: 'functions', section: 'harmony', feature: 'harmonize', icon: 'T',
     // 五度圈上可以把调里各级和弦（罗马数字）标出来，方便看主、下属、属的位置
-    extraTools: [{ feature: 'circle' }],
+    extraTools: [{ feature: 'circle' }, { feature: 'form' }],
     title: t('和弦的角色：家、准备、想回家', '和音の役割：家・準備・帰りたい', 'Chord roles: home, getting ready, longing'),
     blurb: t('主、下属、属与终止式', '主・下属・属と終止', 'Tonic, predominant, dominant & cadences'),
     cards: [
@@ -386,7 +386,7 @@ const ALL = [
   {
     id: 'cadences', section: 'harmony', feature: 'progression', icon: '.',
     // 五度圈上可以把调里各级和弦（罗马数字）标出来
-    extraTools: [{ feature: 'circle' }],
+    extraTools: [{ feature: 'circle' }, { feature: 'form' }],
     title: t('终止式：音乐的标点', '終止形：音楽の句読点', 'Cadences: musical punctuation'),
     blurb: t('完全正格、不完全正格、半终止、变格、阻碍终止', '完全終止・不完全終止・半終止・変格終止・偽終止', 'Perfect and imperfect authentic, half, plagal and deceptive'),
     cards: [
@@ -422,6 +422,8 @@ const ALL = [
   },
   {
     id: 'sixfour', section: 'harmony', feature: 'classical', icon: '6/4',
+    // 曲式结构工具里能看到终止式在乐句、乐段里的位置
+    extraTools: [{ feature: 'form' }],
     title: t('四六和弦的四种用法', '四六の和音の 4 つの使い方', 'Four uses of 6/4 chords'),
     blurb: t('终止四六、经过、辅助与琶音四六', '終止・経過・刺繍・分散の四六', 'Cadential, passing, neighbour and arpeggiating 6/4'),
     cards: [

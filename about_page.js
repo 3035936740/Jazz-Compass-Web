@@ -1,6 +1,6 @@
 // 关于页面：工具列表（按导航分组，名字与介绍取自界面文字）、使用提示、作者碎碎念、致谢与全部参考资料（按主题分组，来自 references.js）
 // 从 script.js 拆出来；只依赖 window.__（lang.js）与 references.js
-import { REFERENCES, REFERENCE_TOPICS } from './references.js?v=20261004-w5';
+import { REFERENCES, REFERENCE_TOPICS } from './references.js?v=20261004-x1';
 
 function renderAboutReferences() {
   const lang = window.__lang || "zh";

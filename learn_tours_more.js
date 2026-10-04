@@ -874,14 +874,14 @@ export const MORE_TOURS = {
   },
   'color:2#0': {
     visual: { kind: 'notation', brace: true, staves: [{ clef: 'treble' }, { clef: 'bass' }], notes: [{ p: 'C3', s: 1, col: 0, d: 'w', label: 'Cblk' }, { p: 'Bb3', s: 1, col: 0, d: 'w' }, { p: 'D4', s: 0, col: 0, d: 'w' }, { p: 'F#4', s: 0, col: 0, d: 'w' }] },
-    tour: [[m(heads(1, 2, 3), t('B♭ 增三和弦', 'B♭ 増三和音', 'B♭ augmented')), m('head0', t('低全音的低音 C', '全音下のバス C', 'bass a whole step lower: C'), 'below')], m(ns(0, 1, 2, 3), t('音全部来自全音音阶', 'すべて全音音階の音', 'all from the whole-tone scale'))],
+    tour: [[m(heads(1, 2, 3), t('B♭ 增三和弦', 'B♭ 増三和音', 'B♭ augmented')), m('head0', t('比 B♭ 高全音的低音 C', 'B♭ の全音上のバス C', 'bass a whole step above B♭: C'), 'below')], m(ns(0, 1, 2, 3), t('音全部来自全音音阶', 'すべて全音音階の音', 'all from the whole-tone scale'))],
   },
   'color:3#0': {
     visual: { kind: 'blocks', rows: [{ cells: [{ text: 'V+7' }, { text: 'III+', sub: t('和声小调', '和声的短音階', 'harmonic minor') }, { text: 'Imaj7♯5' }] }] },
     tour: [m('row0', t('增三和弦出现的三个地方', '増三和音が出る 3 か所', 'three homes for the augmented triad'))],
   },
   'color:4#0': {
-    visual: { kind: 'blocks', rows: [{ cells: [{ text: 'alt', sub: t('属七 + 变化音', '属七 + 変化音', 'dom7 + alterations') }, { text: 'blk', sub: t('增三 + 低全音', '増三 + 全音下', 'aug + bass a tone below') }, { text: 'aug', sub: t('两个大三度', '長 3 度 × 2', 'two major thirds') }] }] },
+    visual: { kind: 'blocks', rows: [{ cells: [{ text: 'alt', sub: t('属七 + 变化音', '属七 + 変化音', 'dom7 + alterations') }, { text: 'blk', sub: t('增三 + 高全音的低音', '増三 + 全音上のバス', 'aug + bass a tone above its root') }, { text: 'aug', sub: t('两个大三度', '長 3 度 × 2', 'two major thirds') }] }] },
     tour: [m('row0', t('三种"紧"的颜色', '3 つの緊張した色', 'three tense colours'))],
   },
   'lcc:1#0': {

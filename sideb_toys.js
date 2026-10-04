@@ -1,7 +1,7 @@
 // Side-B 的"实验"与互动小部件（像玩具，不是作业）：四部和声调音台、复节奏网格、两只手打拍板，以及关卡里用到的两种图
 // （大谱表四部和弦、节奏格子）。评分沿用 lab_checks.js / sideb_engine.js；乐理出处见那两个文件与关卡内容文件。
 import { renderStaff } from './staff_svg.js';
-import { checkFourPart, checkSpecies } from './lab_checks.js?v=20261004-w1';
+import { checkFourPart, checkSpecies } from './lab_checks.js?v=20261004-x1';
 import { writtenToConcert, transpositionInterval, writtenKey } from './instruments.js';
 import { cagedVoicing, CAGED_ORDER } from './fretboard.js';
 import { buildCanon, checkCanon, canonEvents } from './canon.js';
@@ -9,7 +9,8 @@ import { keyInfo } from './motif_phrase.js';
 import { buildChineseMode, rotateGong, luName, MODES as CN_MODES, SCALE_TYPES as CN_TYPES } from './chinese_modes.js';
 import { THAATS, thaatSemitones, thaatAltered, buildMaqam, maqamSteps, stepLabel, noteLabel } from './world_modes.js';
 import { TEMPERAMENTS, buildTemperament, majorThirds, frequencyOf } from './temperaments.js';
-import { gradeTaps } from './sideb_engine.js?v=20261004-w5';
+import { normalOrder, primeForm, intervalVector, setClassInfo, twelveToneMatrix, rowForm, COLLECTIONS, collectionPcs, distinctTranspositions } from './post_tonal.js';
+import { gradeTaps } from './sideb_engine.js?v=20261005-q1';
 
 const lang = () => { const l = globalThis.window?.__lang || 'zh'; return ['zh', 'ja', 'en'].includes(l) ? l : 'en'; };
 const tx = (v) => (v == null ? '' : typeof v === 'string' ? v : v[lang()] ?? v.en ?? '');
@@ -25,6 +26,9 @@ const TEXT = {
   en: { play: 'Play', stop: 'Stop', score: 'Score', parts: ['Soprano', 'Alto', 'Tenor', 'Bass'], up: 'Up a step', down: 'Down a step', solved: 'Full marks!', composite: 'Combined', attacks: (n) => `${n} attacks per cycle combined`, listen: 'Listen first', practice: 'Practice (not scored)', real: 'For real', left: 'Left F', right: 'Right J', counting: 'Count-in…', go: 'Tap now!', result: (h, n, m, x, p) => `Hit ${h}/${n}, missed ${m}, extra ${x}; timing ${p}%`, latency: (ms) => `(device latency of about ${ms} ms removed)`, mute: 'Mute', unmute: 'On' },
 };
 const T = () => TEXT[lang()];
+/** 玩具里可选的主音 / 调：十二个音级全部给出（常用的等音写法各一个，F♯ / G♭、C♯ / D♭ 两种都列） */
+const ALL_TONICS = ['C', 'C♯', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
+const ALL_KEYS = [...['C', 'G', 'D', 'A', 'E', 'B', 'F♯', 'D♭', 'A♭', 'E♭', 'B♭', 'F'].map((k) => [k, 'major']), ...['A', 'E', 'B', 'F♯', 'C♯', 'G♯', 'D', 'G', 'C', 'F', 'B♭', 'E♭'].map((k) => [k, 'minor'])];
 
 // ---------------- 音名 ----------------
 const SPELL = [['C', 0], ['C', 1], ['D', 0], ['E', -1], ['E', 0], ['F', 0], ['F', 1], ['G', 0], ['A', -1], ['A', 0], ['B', -1], ['B', 0]];
@@ -550,7 +554,7 @@ export function intervalToy(host, params = {}, { playChord } = {}) {
  */
 export function scaleToy(host, params = {}, { playChord } = {}) {
   const t = TT();
-  const tonics = params.tonics || ['C', 'D', 'E', 'F', 'G', 'A', 'B♭', 'E♭', 'F♯'];
+  const tonics = params.tonics || ALL_TONICS;
   let tonic = tonics[0];
   let set = params.sets[0];
   const box = el('div', 'sideb-toy sideb-toy-scale');
@@ -704,7 +708,7 @@ const KEYS_INFO = {
 /** 调内和弦表：一个调里每一级的和弦（符号 + 罗马数字），并可以"盯住"一个和弦看它在各调是几级  ref:omt2e-roman-numerals ref:omt2e-chord-symbols */
 export function keyChordsToy(host, params = {}, { playChord } = {}) {
   const t2 = C2();
-  const keys = params.keys || [['C', 'major'], ['G', 'major'], ['D', 'major'], ['F', 'major'], ['A', 'minor']];
+  const keys = params.keys || ALL_KEYS;
   let current = 0; let sevenths = false; let watch = params.watch?.[0] ?? null;
   const box = el('div', 'sideb-toy sideb-toy-keychords');
   const grid = el('div', 'sideb-toy-cards');
@@ -892,7 +896,7 @@ const INSTRUMENT_NAMES = {
   'clarinet-bb': t('单簧管（B♭）', 'クラリネット（B♭）', 'Clarinet in B♭'), 'trumpet-bb': t('小号（B♭）', 'トランペット（B♭）', 'Trumpet in B♭'),
   'sax-soprano': t('高音萨克斯', 'ソプラノ・サックス', 'Soprano sax'), 'sax-alto': t('中音萨克斯（E♭）', 'アルト・サックス（E♭）', 'Alto sax (E♭)'),
   'sax-tenor': t('次中音萨克斯（B♭）', 'テナー・サックス（B♭）', 'Tenor sax (B♭)'), 'sax-baritone': t('上低音萨克斯（E♭）', 'バリトン・サックス（E♭）', 'Baritone sax (E♭)'),
-  horn: t('圆号（F）', 'ホルン（F）', 'Horn in F'), 'cor-anglais': t('英国管（F）', 'イングリッシュ・ホルン（F）', 'English horn (F)'), 'clarinet-eb': t('降 E 单簧管', 'E♭ クラリネット', 'E♭ clarinet'),
+  horn: t('圆号（F）', 'ホルン（F）', 'Horn in F'), 'cor-anglais': t('英国管（F）', 'イングリッシュ・ホルン（F）', 'English horn (F)'), 'clarinet-eb': t('降 E 单簧管', 'E♭ クラリネット', 'E♭ clarinet'), 'clarinet-a': t('单簧管（A）', 'クラリネット（A）', 'Clarinet in A'),
   guitar: t('吉他', 'ギター', 'Guitar'), 'double-bass': t('低音提琴', 'コントラバス', 'Double bass'), piccolo: t('短笛', 'ピッコロ', 'Piccolo'), glockenspiel: t('钟琴', 'グロッケンシュピール', 'Glockenspiel'), flute: t('长笛', 'フルート', 'Flute'),
 };
 /** 移调乐器：选乐器和谱面上的音，看实际发音；选实音的调，看谱面要写什么调  ref:ibmt-transposition ref:wiki-transposing */
@@ -923,7 +927,7 @@ export function transposeToy(host, params = {}, { playChord, renderVisual } = {}
     el('span', 'sideb-tap-opt-label', t3.instrument), chips(ids.map((id) => [id, tx(INSTRUMENT_NAMES[id]) || id]), state.id, (id) => { state.id = id; paint(); }),
     el('span', 'sideb-tap-opt-label', t3.written), chips(L7.map((l) => [l, l]), state.written, (l) => { state.written = l; paint(); }),
     chips([-1, 0, 1].map((a) => [a, ACC_TEXT[a] || '♮']), state.acc, (a) => { state.acc = a; paint(); }),
-    el('span', 'sideb-tap-opt-label', t3.concertKey), chips((params.keys || ['F', 'C', 'Bb', 'Eb', 'G', 'D']).map((k) => [k, prettyAcc(k)]), state.key, (k) => { state.key = k; paint(); }),
+    el('span', 'sideb-tap-opt-label', t3.concertKey), chips((params.keys || ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']).map((k) => [k, prettyAcc(k)]), state.key, (k) => { state.key = k; paint(); }),
     out, staff, play,
   );
   host.appendChild(box);
@@ -934,7 +938,7 @@ export function transposeToy(host, params = {}, { playChord, renderVisual } = {}
 /** CAGED：一个大三和弦在指板上的五个形，按 C→A→G→E→D 首尾相接  ref:agt-caged ref:wiki-standard-tuning */
 export function fretToy(host, params = {}, { playChord } = {}) {
   const t3 = C3();
-  const roots = params.roots || ['C', 'D', 'E', 'F', 'G', 'A'];
+  const roots = params.roots || ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
   const state = { root: roots[0], shape: 'all' };
   const box = el('div', 'sideb-toy sideb-toy-fret');
   const board = el('div', 'sideb-toy-board');
@@ -1117,7 +1121,7 @@ export function canonToy(host, params = {}, { playChord } = {}) {
 // ================= 第 4 章的实验 =================
 const CH4_TEXT = {
   zh: {
-    ratio: '长短比例', ratios: { '1:1': '直八分 1:1', '3:2': '轻摇摆 3:2', '2:1': '三连音摇摆 2:1', '3:1': '附点 3:1' }, backbeat: '反拍（2、4 拍）', on: '开', off: '关',
+    key: '调', ratio: '长短比例', ratios: { '1:1': '直八分 1:1', '3:2': '轻摇摆 3:2', '2:1': '三连音摇摆 2:1', '3:1': '附点 3:1' }, backbeat: '反拍（2、4 拍）', on: '开', off: '关',
     swingNote: (r) => `每拍的第二个八分音符落在拍子的 ${r} 处`,
     form: '形式', forms: { basic: '基本', quick: '快四（第 2 小节 IV）', turn: '结尾转回 V', minor: '小调布鲁斯' }, phrase: (n) => `第 ${n} 句`, bar: '小节',
     scale: '音阶', blues: '布鲁斯音阶', major: '大调布鲁斯音阶',
@@ -1127,7 +1131,7 @@ const CH4_TEXT = {
     chordOf: '原和弦', negative: '负和声', axis: (k) => `${k} 调：以 C–G 之间的轴镜像（C↔G、D↔F、E↔E♭、A↔B♭、B↔A♭、F♯↔D♭）`,
   },
   ja: {
-    ratio: '長短の比率', ratios: { '1:1': 'ストレート 1:1', '3:2': '軽いスウィング 3:2', '2:1': '3 連スウィング 2:1', '3:1': '付点 3:1' }, backbeat: 'バックビート（2・4 拍）', on: 'オン', off: 'オフ',
+    key: '調', ratio: '長短の比率', ratios: { '1:1': 'ストレート 1:1', '3:2': '軽いスウィング 3:2', '2:1': '3 連スウィング 2:1', '3:1': '付点 3:1' }, backbeat: 'バックビート（2・4 拍）', on: 'オン', off: 'オフ',
     swingNote: (r) => `各拍の 2 つ目の 8 分音符は拍の ${r} の位置`,
     form: '形式', forms: { basic: '基本', quick: 'クイック・チェンジ（2 小節目 IV）', turn: '最後に V へ', minor: 'マイナー・ブルース' }, phrase: (n) => `第 ${n} フレーズ`, bar: '小節',
     scale: '音階', blues: 'ブルース・スケール', major: 'メジャー・ブルース・スケール',
@@ -1137,7 +1141,7 @@ const CH4_TEXT = {
     chordOf: '元の和音', negative: 'ネガティブ', axis: (k) => `${k} 調：C と G の間の軸で反転（C↔G・D↔F・E↔E♭・A↔B♭・B↔A♭・F♯↔D♭）`,
   },
   en: {
-    ratio: 'Long–short ratio', ratios: { '1:1': 'Straight 1:1', '3:2': 'Light swing 3:2', '2:1': 'Triplet swing 2:1', '3:1': 'Dotted 3:1' }, backbeat: 'Backbeat (beats 2 & 4)', on: 'On', off: 'Off',
+    key: 'Key', ratio: 'Long–short ratio', ratios: { '1:1': 'Straight 1:1', '3:2': 'Light swing 3:2', '2:1': 'Triplet swing 2:1', '3:1': 'Dotted 3:1' }, backbeat: 'Backbeat (beats 2 & 4)', on: 'On', off: 'Off',
     swingNote: (r) => `The second eighth of each beat lands ${r} of the way through the beat`,
     form: 'Form', forms: { basic: 'Basic', quick: 'Quick change (IV in bar 2)', turn: 'Turnaround to V', minor: 'Minor blues' }, phrase: (n) => `Phrase ${n}`, bar: 'bar',
     scale: 'Scale', blues: 'Blues scale', major: 'Major blues scale',
@@ -1219,7 +1223,7 @@ export function guideVoicing(chords, { low = false } = {}) {
 /** 十二小节布鲁斯：几种常见的变化，播放时高亮正在响的小节；下面是布鲁斯音阶  ref:omt2e-blues-harmony ref:wiki-twelve-bar ref:omt2e-blues-scale */
 export function bluesToy(host, params = {}, { playChord } = {}) {
   const t4 = C4();
-  const key = params.key ?? 0;
+  let key = params.key ?? 0;
   const FORMS = {
     basic: ['I', 'I', 'I', 'I', 'IV', 'IV', 'I', 'I', 'V', 'IV', 'I', 'I'],
     quick: ['I', 'IV', 'I', 'I', 'IV', 'IV', 'I', 'I', 'V', 'IV', 'I', 'I'],
@@ -1259,6 +1263,7 @@ export function bluesToy(host, params = {}, { playChord } = {}) {
   };
   const playScale = () => { stop(); const steps = state.scale === 'blues' ? [0, 3, 5, 6, 7, 10, 12] : [0, 2, 3, 4, 7, 9, 12]; playAudio({ notes: steps.map((s) => 60 + key + s), mode: 'melody' }, playChord); };
   box.append(
+    el('span', 'sideb-tap-opt-label', t4.key), chips(PC_FLAT.map((n, pc) => [pc, n]), key, (pc) => { stop(); key = pc; paint(); }),
     el('span', 'sideb-tap-opt-label', t4.form), chips(Object.entries(t4.forms), state.form, (f) => { stop(); state.form = f; paint(); }),
     grid, btn('learn-btn ghost', TT().play, play),
     el('span', 'sideb-tap-opt-label', t4.scale), chips([['blues', t4.blues], ['major', t4.major]], state.scale, (s) => { state.scale = s; paint(); }), scaleRow, btn('learn-btn ghost', `${TT().play} · ${t4.scale}`, playScale),
@@ -1307,12 +1312,12 @@ export function guideToy(host, params = {}, { playChord } = {}) {
     'V–IV–I': [[7, '7'], [5, '7'], [0, '7']],
     'I–vi–ii–V': [[0, 'maj7'], [9, 'm7'], [2, 'm7'], [7, '7']],
   };
-  const state = { prog: Object.keys(PROGS)[0], layers: new Set(params.layers || ['bass', 'guide']), low: false };
+  const state = { prog: Object.keys(PROGS)[0], layers: new Set(params.layers || ['bass', 'guide']), low: false, key: params.key ?? 0 };
   let stopAudio = () => {};
   const box = el('div', 'sideb-toy sideb-toy-guide');
   const table = el('div', 'sideb-toy-voices');
   const out = el('p', 'sideb-toy-note-line');
-  const voicings = () => guideVoicing(PROGS[state.prog].map(([root, q]) => ({ root, q })), { low: state.low });
+  const voicings = () => guideVoicing(PROGS[state.prog].map(([root, q]) => ({ root: (root + state.key) % 12, q })), { low: state.low });
   const notes = (v) => [...(state.layers.has('bass') ? [v.bass] : []), ...(state.layers.has('fifth') ? [v.fifth] : []), ...(state.layers.has('guide') ? v.guide : []), ...(state.layers.has('top') ? [v.top] : [])].sort((x, y) => x - y);
   const paint = () => {
     const vs = voicings();
@@ -1339,6 +1344,7 @@ export function guideToy(host, params = {}, { playChord } = {}) {
     layerChips.appendChild(c);
   });
   box.append(
+    el('span', 'sideb-tap-opt-label', t4.key), chips(PC_FLAT.map((n, pc) => [pc, n]), state.key, (pc) => { state.key = pc; paint(); }),
     el('span', 'sideb-tap-opt-label', t4.prog), chips(Object.keys(PROGS).map((k) => [k, k]), state.prog, (k) => { state.prog = k; paint(); }),
     el('span', 'sideb-tap-opt-label', t4.layers), layerChips,
     ...(params.lowOption ? [chips([[false, t4.off], [true, t4.low]], false, (v) => { state.low = v; paint(); })] : []),
@@ -1392,7 +1398,7 @@ export function xuangongToy(host, params = {}, { playChord } = {}) {
   let stopAudio = () => {};
   const box = el('div', 'sideb-toy sideb-toy-cn');
   const out = el('div', 'sideb-toy-sheet');
-  const gongRow = el('div');
+  const gongRow = el('div', 'sideb-toy-labelrow');
   const paint = () => {
     const m = buildChineseMode({ gong: state.gong, mode: state.mode, type: state.type });
     const row = el('div', 'sideb-toy-ratios');
@@ -1419,7 +1425,7 @@ export function worldToy(host, params = {}, { playChord } = {}) {
   const state = { tab: 'thaat', thaat: 'bilaval', maqam: 'rast' };
   let stopAudio = () => {};
   const box = el('div', 'sideb-toy sideb-toy-world');
-  const body = el('div');
+  const body = el('div', 'sideb-toy-stack');
   const paint = () => {
     body.replaceChildren();
     if (state.tab === 'thaat') {
@@ -1511,6 +1517,151 @@ export function temperToy(host, params = {}, { playChord } = {}) {
     el('span', 'sideb-tap-opt-label', t5.temperament), chips(ids.map((k) => [k, t5.names[k] || k]), state.id, (k) => { state.id = k; paint(); }),
     el('span', 'sideb-tap-opt-label', `${t5.root} · ${t5.thirds}`), grid, out, btn('learn-btn ghost', TT().play, play),
   );
+  host.appendChild(box);
+  paint();
+  return { box };
+}
+
+// ================= 第 6 章的实验 =================
+const CH6_TEXT = {
+  zh: { a: '第一个音', b: '第二个音', opi: (a, b, n) => `有序音级音程 ${a}→${b}：${n}（顺时针往上数）`, ic: (n) => `音程级：${n}（取较近的一边，≤ 6）`, collection: '音集', transpose: '移位', distinct: (n) => `一共只有 ${n} 个不同的移位`, same: '和 T0 完全一样', differs: (n) => `和 T0 共有 ${n} 个音`, pick: '点钟面上的音（最多 6 个）', normal: '标准顺序', prime: '原型', vector: '音程级向量', forte: 'Forte 编号', none: '至少选两个音', form: '行形式', matrix: '矩阵（行 = P，列 = I；R 从右往左读行，RI 从下往上读列）', ratio: '纯律音程', cents: '音分', fromEt: (c) => (Math.abs(c) < 0.5 ? '与十二平均律一致' : `比十二平均律最近的音${c > 0 ? '高' : '低'} ${Math.abs(c).toFixed(1)} 音分`), limit: (n) => `质数极限：${n}-limit`, neutral: '中立三和弦（中立三度 11:9 + 纯五度）' },
+  ja: { a: '1 つ目の音', b: '2 つ目の音', opi: (a, b, n) => `順序付き音級音程 ${a}→${b}：${n}（時計回りに数える）`, ic: (n) => `音程クラス：${n}（近い側、6 以下）`, collection: '音集合', transpose: '移高', distinct: (n) => `異なる移高は ${n} 通りだけ`, same: 'T0 とまったく同じ', differs: (n) => `T0 との共通音 ${n}`, pick: '時計の音を押す（6 つまで）', normal: '正規順序', prime: 'プライム・フォーム', vector: '音程クラス・ベクトル', forte: 'フォルテ番号', none: '2 音以上選ぶ', form: '音列形', matrix: 'マトリクス（行 = P、列 = I、R は行を右から、RI は列を下から）', ratio: '純正音程', cents: 'セント', fromEt: (c) => (Math.abs(c) < 0.5 ? '12 平均律と一致' : `12 平均律の最寄りより ${Math.abs(c).toFixed(1)} セント${c > 0 ? '高い' : '低い'}`), limit: (n) => `素数リミット：${n}-limit`, neutral: '中立三和音（中立 3 度 11:9 + 完全 5 度）' },
+  en: { a: 'First note', b: 'Second note', opi: (a, b, n) => `Ordered pc interval ${a}→${b}: ${n} (counted clockwise)`, ic: (n) => `Interval class: ${n} (the shorter way round, ≤ 6)`, collection: 'Collection', transpose: 'Transpose', distinct: (n) => `Only ${n} distinct transpositions`, same: 'identical to T0', differs: (n) => `${n} notes in common with T0`, pick: 'Tap notes on the clock (up to 6)', normal: 'Normal order', prime: 'Prime form', vector: 'Interval-class vector', forte: 'Forte number', none: 'Choose at least two notes', form: 'Row form', matrix: 'Matrix (rows = P, columns = I; read R right-to-left along a row, RI bottom-to-top up a column)', ratio: 'Just interval', cents: 'cents', fromEt: (c) => (Math.abs(c) < 0.5 ? 'matches 12-tone equal temperament' : `${Math.abs(c).toFixed(1)} cents ${c > 0 ? 'above' : 'below'} the nearest equal-tempered note`), limit: (n) => `Prime limit: ${n}-limit`, neutral: 'Neutral triad (11:9 neutral third + perfect fifth)' },
+};
+const C6 = () => CH6_TEXT[lang()];
+const PC_NAMES = ['C', 'C♯/D♭', 'D', 'D♯/E♭', 'E', 'F', 'F♯/G♭', 'G', 'G♯/A♭', 'A', 'A♯/B♭', 'B'];
+const pcChips = (current, pick, multi = false) => chips(PC_NAMES.map((n, pc) => [pc, `${pc} · ${n}`]), multi ? -1 : current, pick, 'sideb-pc-chips');
+
+/** 音级与整数音程：两个音级之间的有序音级音程（两个方向）和音程级  ref:omt2e-pitch-class ref:omt2e-integer-intervals */
+export function pcToy(host, params = {}, { playChord, renderVisual } = {}) {
+  const t6 = C6();
+  const state = { a: params.a ?? 0, b: params.b ?? 4 };
+  const box = el('div', 'sideb-toy sideb-toy-pc');
+  const clock = el('div', 'sideb-toy-staff');
+  const out = el('div', 'sideb-toy-sheet');
+  const paint = () => {
+    const ab = ((state.b - state.a) % 12 + 12) % 12; const ba = (12 - ab) % 12;
+    out.replaceChildren(el('p', '', t6.opi(state.a, state.b, ab)), el('p', '', t6.opi(state.b, state.a, ba)), el('p', 'sideb-toy-score', t6.ic(Math.min(ab, ba))));
+    const pic = renderVisual?.({ kind: 'clock', pcs: [state.a, state.b] });
+    clock.replaceChildren(...(pic ? [pic] : []));
+    box.dataset.ic = Math.min(ab, ba);
+    playChord?.([hz(60 + state.a), hz(60 + state.b + (state.b < state.a ? 12 : 0))], 0.9);
+  };
+  box.append(el('span', 'sideb-tap-opt-label', t6.a), pcChips(state.a, (pc) => { state.a = pc; paint(); }), el('span', 'sideb-tap-opt-label', t6.b), pcChips(state.b, (pc) => { state.b = pc; paint(); }), clock, out);
+  host.appendChild(box);
+  paint();
+  return { box };
+}
+
+/** 音集与对称：选音集，看 T0–T11 的移位里有几个是真正不同的（有限移位）  ref:omt2e-collections ref:wiki-messiaen-modes */
+export function collectionToy(host, params = {}, { playChord } = {}) {
+  const t6 = C6();
+  const NAMES = { diatonic: t('自然音音集', '全音階的音集合', 'Diatonic'), pentatonic: t('五声音集', '五音音集合', 'Pentatonic'), 'whole-tone': t('全音音集', '全音音集合', 'Whole-tone'), 'octatonic-01': t('八音音集', '八音音集合', 'Octatonic'), hexatonic: t('六音音集（1–3）', '六音音集合（1–3）', 'Hexatonic (1–3)'), acoustic: t('原音音集', 'アコースティック', 'Acoustic') };
+  const list = [{ id: 'diatonic', steps: [2, 2, 1, 2, 2, 2, 1] }, ...COLLECTIONS.filter((c) => NAMES[c.id])];
+  const state = { id: params.start || 'whole-tone', n: 0 };
+  const box = el('div', 'sideb-toy sideb-toy-coll');
+  const out = el('div', 'sideb-toy-sheet');
+  const nRow = el('div');
+  const paint = () => {
+    const c = list.find((x) => x.id === state.id);
+    const base = new Set(collectionPcs(c.steps, 0));
+    const pcs = collectionPcs(c.steps, state.n);
+    const common = pcs.filter((x) => base.has(x)).length;
+    const row = el('div', 'sideb-toy-ratios');
+    [...pcs].sort((a, b) => a - b).forEach((pc) => row.appendChild(el('span', `sideb-chip is-static${base.has(pc) ? '' : ' is-mark'}`, `${pc}`)));
+    out.replaceChildren(row, el('p', '', common === pcs.length ? t6.same : t6.differs(common)), el('p', 'sideb-toy-score', t6.distinct(distinctTranspositions(c.steps))));
+    nRow.replaceChildren(chips(Array.from({ length: 12 }, (_, i) => [i, `T${i}`]), state.n, (n) => { state.n = n; paint(); }));
+    box.dataset.distinct = distinctTranspositions(c.steps);
+  };
+  const play = () => { const c = list.find((x) => x.id === state.id); playAudio({ notes: [...collectionPcs(c.steps, state.n).map((pc) => 60 + pc).sort((a, b) => a - b), 72 + state.n % 12], mode: 'melody' }, playChord); };
+  box.append(el('span', 'sideb-tap-opt-label', t6.collection), chips(list.map((c) => [c.id, tx(NAMES[c.id])]), state.id, (id) => { state.id = id; state.n = 0; paint(); }), el('span', 'sideb-tap-opt-label', t6.transpose), nRow, out, btn('learn-btn ghost', TT().play, play));
+  host.appendChild(box);
+  paint();
+  return { box };
+}
+
+/** 集合类分析：在钟面上选音级，实时给出标准顺序、原型、音程级向量和 Forte 编号  ref:omt2e-normal-order ref:omt2e-prime-form ref:omt2e-ic-vector */
+export function setToy(host, params = {}, { playChord } = {}) {
+  const t6 = C6();
+  const on = new Set(params.start || [0, 1, 4]);
+  const box = el('div', 'sideb-toy sideb-toy-set');
+  const grid = el('div', 'sideb-toy-pcgrid');
+  const out = el('div', 'sideb-toy-sheet');
+  const paint = () => {
+    grid.replaceChildren();
+    for (let pc = 0; pc < 12; pc += 1) {
+      const b = btn(`sideb-pc-cell${on.has(pc) ? ' is-on' : ''}`, String(pc), () => { if (on.has(pc)) on.delete(pc); else if (on.size < 6) on.add(pc); paint(); });
+      b.title = PC_NAMES[pc];
+      grid.appendChild(b);
+    }
+    const pcs = [...on].sort((a, b) => a - b);
+    if (pcs.length < 2) { out.replaceChildren(el('p', '', t6.none)); box.dataset.prime = ''; return; }
+    const info = setClassInfo(pcs);
+    out.replaceChildren(
+      el('p', '', `${t6.normal}：[${normalOrder(pcs).join(', ')}]`),
+      el('p', 'sideb-toy-score', `${t6.prime}：(${primeForm(pcs).join('')})${info.forte ? ` · ${t6.forte} ${info.forte}` : ''}`),
+      el('p', '', `${t6.vector}：<${intervalVector(pcs).join('')}>`),
+    );
+    box.dataset.prime = primeForm(pcs).join('');
+  };
+  box.append(el('span', 'sideb-tap-opt-label', t6.pick), grid, out, btn('learn-btn ghost', TT().play, () => playChord?.([...on].sort((a, b) => a - b).map((pc) => hz(60 + pc)), 1.4)));
+  host.appendChild(box);
+  paint();
+  return { box };
+}
+
+/** 十二音矩阵：给一条音列，画出 12×12 矩阵，选 P / I / R / RI 的某个形式高亮并播放  ref:omt2e-twelve-tone ref:omt2e-row-naming */
+export function matrixToy(host, params = {}, { playChord } = {}) {
+  const t6 = C6();
+  const row = params.row || [0, 11, 3, 7, 8, 4, 2, 6, 5, 1, 9, 10];
+  const state = { type: 'P', n: row[0] };
+  let stopAudio = () => {};
+  const box = el('div', 'sideb-toy sideb-toy-matrix');
+  const table = el('div', 'sideb-toy-matrix-grid');
+  const out = el('p', 'sideb-toy-score');
+  const { matrix } = twelveToneMatrix(row);
+  const fmtPc = (pc) => (pc === 10 ? 't' : pc === 11 ? 'e' : String(pc));
+  const paint = () => {
+    const form = rowForm(row, `${state.type}${state.n}`);
+    table.replaceChildren();
+    matrix.forEach((line, r) => line.forEach((pc, c) => {
+      const inRow = (state.type === 'P' || state.type === 'R') && line[0] === state.n;
+      const inCol = (state.type === 'I' || state.type === 'RI') && matrix[0][c] === state.n;
+      table.appendChild(el('span', `sideb-matrix-cell${inRow || inCol ? ' is-on' : ''}${r === 0 ? ' is-top' : ''}${c === 0 ? ' is-left' : ''}`, fmtPc(pc)));
+    }));
+    out.textContent = `${state.type}${state.n}：${form.map(fmtPc).join(' ')}`;
+    box.dataset.form = form.join(',');
+  };
+  const play = () => { stopAudio(); stopAudio = playAudio({ notes: rowForm(row, `${state.type}${state.n}`).map((pc) => 60 + pc), mode: 'melody' }, playChord); };
+  box.append(
+    el('span', 'sideb-tap-opt-label', t6.form), chips(['P', 'I', 'R', 'RI'].map((x) => [x, x]), state.type, (x) => { state.type = x; paint(); }),
+    chips(Array.from({ length: 12 }, (_, i) => [i, String(i)]), state.n, (n) => { state.n = n; paint(); }),
+    el('p', 'sideb-toy-note-line', t6.matrix), table, out, btn('learn-btn ghost', TT().play, play),
+  );
+  host.appendChild(box);
+  paint();
+  return { box, destroy: () => stopAudio() };
+}
+
+/** 纯律音程：选频率比，看音分、和十二平均律差多少、质数极限；和根音一起听（按精确频率）  ref:wiki-limit ref:hf-intervals ref:wiki-neutral-third ref:gann-ji */
+export function jiToy(host, params = {}, { playChord } = {}) {
+  const t6 = C6();
+  const RATIOS = params.ratios || [[3, 2], [4, 3], [5, 4], [6, 5], [7, 4], [7, 6], [11, 9], [11, 8], [13, 8]];
+  const state = { i: 0 };
+  const f0 = params.root || 261.63;
+  const box = el('div', 'sideb-toy sideb-toy-ji');
+  const out = el('div', 'sideb-toy-sheet');
+  const largestPrime = (n) => { let p = 1; let x = n; for (let d = 2; d * d <= x; d += 1) while (x % d === 0) { p = d; x /= d; } return Math.max(p, x > 1 ? x : 1); };
+  const paint = () => {
+    const [a, b] = RATIOS[state.i];
+    const cents = 1200 * Math.log2(a / b);
+    const et = Math.round(cents / 100) * 100;
+    out.replaceChildren(el('p', 'sideb-toy-score', `${a}:${b} = ${cents.toFixed(1)} ${t6.cents}`), el('p', '', t6.fromEt(cents - et)), el('p', 'sideb-toy-note-line', t6.limit(Math.max(largestPrime(a), largestPrime(b)))));
+    box.dataset.cents = cents.toFixed(1);
+  };
+  const play = () => { const [a, b] = RATIOS[state.i]; playChord?.([f0, (f0 * a) / b], 1.6); };
+  const neutral = () => playChord?.([f0, (f0 * 11) / 9, (f0 * 3) / 2], 1.8);
+  box.append(el('span', 'sideb-tap-opt-label', t6.ratio), chips(RATIOS.map(([a, b], i) => [i, `${a}:${b}`]), state.i, (i) => { state.i = i; paint(); play(); }), out, btn('learn-btn ghost', TT().play, play), btn('learn-btn ghost', t6.neutral, neutral));
   host.appendChild(box);
   paint();
   return { box };

@@ -2,7 +2,7 @@
 // 揭晓后可以去速查里看这一条的说明；答错的题放进学习页的错题本。逻辑见 prog_quiz.js（ref:omt-pb-4chord ref:omt-pb-classical-schemas）
 import { quizQuestion, bassLine } from './prog_quiz.js';
 import { FAMILIES } from './prog_library_data.js';
-import { parseRoman, voiceProgression, playbackEvents } from './prog_library.js';
+import { parseRoman, voiceProgression, playbackEvents } from './prog_library.js?v=20261004-w8';
 import { recordToolMistake, tri } from './tool_review.js';
 import { el, button, option, field, language, cite } from './module_kit.js';
 

@@ -143,7 +143,7 @@ Side-B 最忌讳三件事同时出现：
 
 - **整关分 = 挑战 60% + 必做实操 40%**（没有实操的关：挑战 100%）。挑战题按部分得分算（推导三步对两步 = 2/3），只看第一次作答；答错立刻看到解释，可以再答一次（不改分）。
 - **通过 = 总分 ≥ 60% 且每个必做实操 ≥ 50%、没有硬性错误**。例：普通题 42/60 + 实操 28/40 = 70/100 → 通过；普通题全对 60 + 实操 0 → 总分刚好 60 但实操不到 50%，不通过（否则实操形同虚设）。
-- 星级（通过后）：≥ 90% 三星，≥ 75% 两星，其余一星。
+- 评级（2026-10-04 起取代星级）：A+ ≥ 95%、A ≥ 85%、B ≥ 75%、C ≥ 60%、D ≥ 50%、E < 50%。
 - **60% 是 mastery gate，不是 punishment gate。** 没过时：
   - 讲解、实验、实操的完成状态全部保留；
   - 结果页显示各技能得分和弱项，例如"总分 55%：功能分析 80%、拼写 75%、声部进行 35%"；
@@ -278,7 +278,7 @@ Side-B 最忌讳三件事同时出现：
 
 ### B 面 EX 章节测试
 
-- **解锁：这一章的平均分 ≥ 70%**（本章每关最好一次的平均，没玩过的关算 0）。
+- **解锁：这一章的平均分（含扩展关）≥ 60%**（本章每关最好一次的平均，没玩过的关算 0）；过关线 60%。
 - 更综合：更长的推理链、换调换语境、实操用 B-EX 模式（少提示、独立完成，≥ 70%）。
 - 同样只重做没过的部分。
 
@@ -288,7 +288,7 @@ Side-B 最忌讳三件事同时出现：
 
 ### B 面 EX 结业挑战
 
-- **解锁：所有章节的平均 ≥ 75%**（六章各自的平均再取平均）。
+- **解锁：所有章节测试和 EX 章节测试都通过**；过关线 60%。
 - 结构同 Side-B Final，任务更长、更开放（更长的完整分析、带半音化和弦的四部写作、复节奏与变拍子的组合、限制更多的再和声与配置）；实操用 B-EX 模式（≥ 70%）。
 
 ## 9. UI 与游戏感（仍然是 Jazz Compass，不是 LMS / Moodle）
@@ -321,6 +321,14 @@ Side-B 最忌讳三件事同时出现：
 | `sideb_toys.js` / `sideb_fx.js` | 实验与互动小部件（四部和声调音台、复节奏网格、打拍板、大谱表与节奏格子图）；胜利瞬间的弹出与琶音 |
 | `sideb_units_harmony.js` / `sideb_units_rhythm.js` | B2-4、B4-10 的内容（每条乐理都标了出处） |
 | `sideb_units_basics.js` | 第 1 章 B1-1 ~ B1-7 |
+| `sideb_ext_basics.js` | 第 1 章扩展关 B1-1x ~ B1-7x（含支线 dictation、meter2、modes2、pentaharm、intervalqual 的内容） |
+| `sideb_ext_harmony.js` | 第 2 章扩展关 B2-1x ~ B2-11x（含支线 symbols2、ruleoctave、voiceleading、schemas、cadences2、motif、phrase2、modulation2、schemas2）；B2-12 没有扩展关 |
+| `sideb_ext_melody.js` | 第 3 章扩展关 B3-1x ~ B3-5x（含支线 canon：B3-5x）；B3-4x 的第一类对位实验用另一条坏对位（开头、同度、倒数第二音、直接五度），B3-5x 的卡农实验比较严格 / 自由 / 倒影 |
+| `sideb_ext_jazz.js` | 第 4 章扩展关 B4-1x ~ B4-10x（含支线 dictation、blues2、turnarounds、reharm）；实验沿用第 4 章的 swing / blues / chordScale / guide / scale / progression / negative / poly 玩具，参数换成普通关没用过的设置 |
+| `sideb_ext_world.js` | 第 5 章扩展关 B5-1x ~ B5-4x（中国七声与旋宫、thaat / 木卡姆 / makam、泛音列、律制） |
+| `sideb_ext_modern.js` | 第 6 章扩展关 B6-1x ~ B6-5x（音级与整数音程、音集、集合类、十二音命名习惯、纯律与中立三度）；至此 42 个普通关（B2-12 除外）都有扩展关 |
+| `sideb_units_world.js` | 第 5 章 B5-1 ~ B5-4：玩具 xuangong / world / harmonics / temper（沿用 chinese_modes、world_modes、temperaments 的数据与计算） |
+| `sideb_units_modern.js` | 第 6 章 B6-1 ~ B6-5：玩具 pc / collection / set / matrix / ji；新实操 set-trichords（lab_checks.checkSetWrite）、row-inversion（checkRowForm，五线谱预先写好 Lutyens 音列 P0） |
 | `sideb_units_jazz.js` | 第 4 章 B4-1 ~ B4-9；新实操 jazz-subV-rootless（B4-8，沿用爵士配置评分器）；B4-1 用已有的 rhythm-sync-2bars，B4-5 用 jazz-ii-V-I-rootless；玩具 swing / blues / chordScale / guide / negative，音阶类沿用 scaleToy（用 degrees 拼八音音阶） |
 | `sideb_units_melody.js` | 第 3 章 B3-1 ~ B3-5；实操 cp-species1（B3-4）、cp-species4（B3-5）：五线谱预先写好 Fux 的 C 调定旋律（`setup.prefill`），lab_checks.checkSpecies 沿用 counterpoint.js 的逐条规则按部分得分评分；B3-5 定为核心关（第三、四类加卡农） |
 | `sideb_units_harmony2.js` | 第 2 章其余 11 关（B2-1 ~ B2-3、B2-5 ~ B2-12）；实操 fb-rule-octave（B2-3）、vl-secondary（B2-8）、vl-n6（B2-9）、vl-synthesis（B2-12）。和上面规划表的出入：B2-1、B2-6、B2-7 不设实操（改成和弦 / 终止玩具）；B2-9 的实操写那不勒斯而不是德国增六——四部评分器会把增六和弦读成属七（F♯ 当成 G♭ 七音），在评分器能识别增六之前不出增六写作题 |
@@ -357,4 +365,20 @@ Side-B 最忌讳三件事同时出现：
 
 - Side-B 的关卡单、播放器顶栏、讲解页（节点写 `tool: { feature, q }`）、实验下方、结算页的错误建议都可以直接跳到工具。关卡的工具 = 关卡自己的 `tools` + 对应 A 面关卡的工具（learn_ui 的 `unitTools`，包括 `extraTools`）。关卡进行中跳走前先记下进度，顶栏出现"回到 Side-B"。
 - A 面关卡可以写 `extraTools`："和弦的角色"（T-S-D-T）、"罗马数字"、"终止式"、"和弦符号与罗马数字"、"套路进行 1 / 2"加了五度圈（五度圈能标出调里各级和弦）；关卡单、题卡 / 引导卡下方（learn_ui.cardTools）、结束页都会显示，B 面对应关卡（B2-2、B2-5）通过 A 面链接自动带上。
+
+## 扩展关与考试（2026-10-04 用户要求）
+
+- **扩展关**（2026-10-04 用户更正）：不是把 A 面扩展关的题卡拼起来，而是每个 B 面关卡都有一关**新写的 B 面关卡**（id `<关卡>x`，如 `B1-1x`；进度存 `progress.units['bx:<关卡>']`），节奏和普通关一样（发现 → 讲解 → 实验 → 挑战），把对应 A 面关卡**以及挂在这些关卡上的支线关卡**的进阶关和综合测验重新、更细地讲一遍，所以讲解更长（校验放宽：挑战 6–10 题、最多约 25 分钟）。在 B 面播放器里玩；内容在 `sideb_ext_<章>.js`，由 `sideb_content.extLevelById` 登记。B2-12（综合关）没有对应的 A 面关卡，不设扩展关。
+- **评级**：B 面不用星级，用字母评级——A+ ≥ 95%、A ≥ 85%、B ≥ 75%、C ≥ 60%（过关）、D ≥ 50%、E < 50%；没通过（例如实操没到门槛）最多 D。`sideb_engine.gradeOf`。
+- **章节测试**（`T-<章>`）：可选，不挡下一章；本章普通关全部 Clear 后开放；过关线 60%，实操按"章节测试"模式（门槛 60%，成绩另存为 `id@chapter`）。
+- **EX 章节测试**（`TX-<章>`）：本章平均（普通关 + 扩展关）≥ 60% 开放，不看章节测试是否通过；过关线 60%，实操按 EX 模式（门槛 70%，`id@ex`）。
+- **Side-B Final**（`FIN`）：所有章节测试都通过（≥ 60%）才开放；**EX Final**（`FINX`）：所有章节测试和 EX 章节测试都通过才开放（过关线同样 60%）。
+- **出题**（`sideb_content.examById` + `EXAM_MIX`；每次开考用新种子重新抽题，题目打乱，实操排在最后）：
+  - 章节测试：本章 B 面普通关 25 道 + A 面本章 10 道（含 A 面进阶关与支线关）+ 本章 B 面扩展关 5 道；本章有实操就加 1 个实操
+  - EX 章节测试：本章 B 面扩展关 25 道 + 本章 B 面普通关 10 道 + A 面本章 5 道；本章有实操就加 1 个实操
+  - Side-B Final：B 面普通关 50 道 + B 面扩展关 5 道 + A 面所有章节 5 道 + 2 个实操（来自不同的章）
+  - Side-B EX Final：B 面普通关 5 道 + B 面扩展关 50 道 + A 面所有章节 5 道 + 2 个实操
+  - 扩展关还没写好的章，扩展关名额用普通关的题补；题不够时生成器题换种子再出。A 面的连线题转成"这一对配什么"的选择题，讲解卡跳过。
+- **毕业证书**（`sideb_cert.js`）：通过 Final 发"毕业证书"，通过 EX Final 发"优秀毕业证书"并写一句"更广阔的音乐世界，自己去探索吧"；两者都有全屏毕业动画（EX 更华丽：光芒、烟花、两波彩纸、更长的号角）；证书可填名字（只存本机）、可打印 / 存 PDF。
+- **打印练习卷**（`sideb_print.js`）：关卡、扩展关、考试都能打印，题目页 + 答案解析页 + 出处；听辨题、打拍题、实操纸上做不了，跳过并注明。
 

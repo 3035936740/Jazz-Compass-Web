@@ -2,7 +2,7 @@
 // 变换的定义与出处见 neo_views.js、harmony_connections.js；画布见 neo_canvas.js
 import { mountNeoCanvas } from "./neo_canvas.js?v=20261001-ui";
 import { mountHarmonyWheel } from "./harmony_connections_ui.js?v=20260915-2";
-import { renderTonnetz, renderTower, renderChordStaff, neoViewText } from "./neo_views.js?v=20261002-r21";
+import { renderTonnetz, renderTower, renderChordStaff, neoViewText } from "./neo_views.js?v=20261004-m5";
 import { harmonyNeighborhood, mergeConnectionGraphs } from "./harmony_connections.js?v=20260915-2";
 
 /**

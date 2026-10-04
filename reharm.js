@@ -6,7 +6,7 @@
 //   爵士：加七音、同功能代理、副属、三全音替代：ref:omt-pb-substitutions ref:omt2e-iivi
 //   布鲁斯：I7 IV7 V7 全部是属七，属七可以有任何功能：ref:omt-pb-blues
 import { harmonizeMelody } from './harmonize.js';
-import { parseRoman, realize, romanOf, seventhFor, melodyRole, QUALITIES, MAJOR } from './prog_library.js';
+import { parseRoman, realize, romanOf, seventhFor, melodyRole, QUALITIES, MAJOR } from './prog_library.js?v=20261004-w8';
 import { parsePitch } from './pitch_spelling.js';
 
 const NOTE = (zh, en, ja = en) => ({ zh, ja, en });

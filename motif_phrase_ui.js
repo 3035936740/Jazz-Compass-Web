@@ -2,7 +2,7 @@
 // 乐句型 / 乐段一键生成并标出 基本乐思 重复 碎片化 对比乐思 终止；扩充（重复 拉长 再来一次 后缀）前后对照
 // 逻辑与依据见 motif_phrase.js（ref:omt2e-form-concepts ref:omt2e-phrase ref:omt2e-phrase-expansion）
 import { keyInfo, parseMotif, TRANSFORMS, TRANSFORM_IDS, buildPhrase, expandPhrase, phraseBars, phraseEvents, totalBeats, spellNote } from './motif_phrase.js';
-import { parseRoman, realize } from './prog_library.js';
+import { parseRoman, realize } from './prog_library.js?v=20261004-w8';
 import { melodyStaff } from './tool_staff.js';
 import { el, button, option, field, language, midiToFrequency } from './module_kit.js';
 

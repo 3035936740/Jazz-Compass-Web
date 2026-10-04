@@ -1,4 +1,4 @@
-import { midiName } from './classical_voicing.js';
+import { midiName } from './classical_voicing.js?v=20261004-w7';
 import { initAppShell } from "./app_shell.js?v=20261004-r26";
 import { noteToFrequency, noteToSemitoneValue, semitoneToFreq, semitoneToMidi, resolveRootOctave, chordNotesToFrequencies } from "./note_frequency.js?v=20261002-split";
 import { getAudioContext, interruptPlayback, interruptIfActive, connectOutput, suppressQueued, playChord, createHeldPianoVoice, createPianoTone, createSimpleTone } from "./audio_engine.js?v=20261003-a3";
@@ -7,11 +7,11 @@ import { mountSubPages } from "./sub_pages.js?v=20261003-u2";
 import { FEATURE_UNIT } from "./learn_feature_unit.js?v=20261003-f1";
 import { mountSiteSearch } from "./site_search.js?v=20261003-s4";
 import { satbToVoices, sendToStaff } from "./staff_handoff.js?v=20261003-h1";
-import { loadResume, clearResume } from "./learn_engine.js?v=20261004-s4";
-import { EnhancedChordConverter, JazzBrain, ClassicalHarmonyConnector } from "./jazz_compass.js?v=20261002-no";
-import * as lang from "./lang.js?v=20261004-r44";
-import { drawClassicalStaff } from "./classical_staff.js?v=20261004-a2";
-import { renderChordConversion } from "./chord_convert_panel.js?v=20261003-v3";
+import { loadResume, clearResume } from "./learn_engine.js?v=20261005-q1";
+import { EnhancedChordConverter, JazzBrain, ClassicalHarmonyConnector } from "./jazz_compass.js?v=20261004-w7";
+import * as lang from "./lang.js?v=20261004-w6";
+import { drawClassicalStaff } from "./classical_staff.js?v=20261004-m5";
+import { renderChordConversion } from "./chord_convert_panel.js?v=20261004-w6";
 
 /**
  * 按需载入：各个工具面板的代码第一次用到时才下载（手机上首屏只下载必要的代码，打开快很多）。
@@ -53,9 +53,9 @@ const load_counterpoint_ui = () => import("./counterpoint_ui.js?v=20261004-w1");
 const mountCounterpoint = lazy(load_counterpoint_ui, 'mountCounterpoint');
 const load_nonchord_ui = () => import("./nonchord_ui.js?v=20261002-quest");
 const mountNonChordTones = lazy(load_nonchord_ui, 'mountNonChordTones');
-const load_harmonize_ui = () => import("./harmonize_ui.js?v=20261002-quest");
+const load_harmonize_ui = () => import("./harmonize_ui.js?v=20261004-w8");
 const mountHarmonizer = lazy(load_harmonize_ui, 'mountHarmonizer');
-const load_figured_bass_ui = () => import("./figured_bass_ui.js?v=20261002-quest");
+const load_figured_bass_ui = () => import("./figured_bass_ui.js?v=20261004-w8");
 const mountFiguredBass = lazy(load_figured_bass_ui, 'mountFiguredBass');
 const load_jazz_more_ui = () => import("./jazz_more_ui.js?v=20261002-quest");
 const mountJazzMore = lazy(load_jazz_more_ui, 'mountJazzMore');
@@ -69,39 +69,39 @@ const load_instruments_ui = () => import("./instruments_ui.js?v=20261002-quest")
 const mountInstruments = lazy(load_instruments_ui, 'mountInstruments');
 const load_fretboard_ui = () => import("./fretboard_ui.js?v=20261002-quest");
 const mountFretboard = lazy(load_fretboard_ui, 'mountFretboard');
-const load_progression_ui = () => import("./progression_ui.js?v=20261003-p5");
+const load_progression_ui = () => import("./progression_ui.js?v=20261004-m5");
 const mountProgression = lazy(load_progression_ui, 'mountProgression');
-const load_motif_phrase_ui = () => import("./motif_phrase_ui.js?v=20261003-t3");
+const load_motif_phrase_ui = () => import("./motif_phrase_ui.js?v=20261004-w9");
 const mountMotifPhrase = lazy(load_motif_phrase_ui, 'mountMotifPhrase');
-const load_poly_meter_ui = () => import("./poly_meter_ui.js?v=20261004-w5");
+const load_poly_meter_ui = () => import("./poly_meter_ui.js?v=20261005-q1");
 const mountPolyMeter = lazy(load_poly_meter_ui, 'mountPolyMeter');
 const load_canon_ui = () => import("./canon_ui.js?v=20261003-t3");
 const mountCanon = lazy(load_canon_ui, 'mountCanon');
-const load_dictation_ui = () => import("./dictation_ui.js?v=20261003-t4");
+const load_dictation_ui = () => import("./dictation_ui.js?v=20261004-m5");
 const mountDictation = lazy(load_dictation_ui, 'mountDictation');
-const load_prog_quiz_ui = () => import("./prog_quiz_ui.js?v=20261003-q1");
+const load_prog_quiz_ui = () => import("./prog_quiz_ui.js?v=20261004-w9");
 const mountProgQuiz = lazy(load_prog_quiz_ui, 'mountProgQuiz');
-const load_reharm_ui = () => import("./reharm_ui.js?v=20261003-t3");
+const load_reharm_ui = () => import("./reharm_ui.js?v=20261004-w9");
 const mountReharm = lazy(load_reharm_ui, 'mountReharm');
 const load_ear_training_ui = () => import("./ear_training_ui.js?v=20261002-quest");
 const mountEarTraining = lazy(load_ear_training_ui, 'mountEarTraining');
 const load_chord_symbols_ui = () => import("./chord_symbols_ui.js?v=20261003-r32");
 const mountChordSymbols = lazy(load_chord_symbols_ui, 'mountChordSymbols');
-const load_staff_reading_ui = () => import("./staff_reading_ui.js?v=20261004-w5");
+const load_staff_reading_ui = () => import("./staff_reading_ui.js?v=20261005-q1");
 const mountStaffReading = lazy(load_staff_reading_ui, 'mountStaffReading');
-const load_learn_ui = () => import("./learn_ui.js?v=20261004-w5");
+const load_learn_ui = () => import("./learn_ui.js?v=20261005-p6");
 const mountLearn = lazy(load_learn_ui, 'mountLearn');
 const load_lcc_ui = () => import("./lcc_ui.js?v=20261002-i18n");
 const mountLccExplorer = lazy(load_lcc_ui, 'mountLccExplorer');
 const load_jazz_toolbox_ui = () => import("./jazz_toolbox_ui.js?v=20261002-i18n");
 const mountJazzToolbox = lazy(load_jazz_toolbox_ui, 'mountJazzToolbox');
-const load_blues_ui = () => import("./blues_ui.js?v=20261002-i18n");
+const load_blues_ui = () => import("./blues_ui.js?v=20261004-w7");
 const mountBluesToolbox = lazy(load_blues_ui, 'mountBluesToolbox');
-const load_about_page = () => import("./about_page.js?v=20261004-w5");
+const load_about_page = () => import("./about_page.js?v=20261004-x1");
 const showAbout = lazy(load_about_page, 'showAbout', { hostOf: () => document.getElementById('panel-about-body') });
-const load_neo_panel = () => import("./neo_panel.js?v=20261003-n1");
+const load_neo_panel = () => import("./neo_panel.js?v=20261004-m5");
 const initNeoPanel = lazy(load_neo_panel, 'initNeoPanel');
-const load_circle_panel = () => import("./circle_panel.js?v=20261003-c5");
+const load_circle_panel = () => import("./circle_panel.js?v=20261004-w7");
 const createCirclePanel = lazy(load_circle_panel, 'createCirclePanel');
 
 // Canvas colours come from the CSS theme tokens so drawings follow light/dark.
@@ -475,7 +475,7 @@ document.addEventListener("DOMContentLoaded", () => {
       id, name: window.__(`nav_${id}`) || id, intro: window.__(`intro_${id}`) || '',
       allNames: Object.values(window.__all?.(`nav_${id}`) || {}).join(' '),
     })),
-    units: () => import("./learn_content.js?v=20261004-w3").then((m) => [...m.UNITS, ...m.SIDES]), lang: window.__lang, anchor: document.getElementById('share-link'),
+    units: () => import("./learn_content.js?v=20261005-p3").then((m) => [...m.UNITS, ...m.SIDES]), lang: window.__lang, anchor: document.getElementById('share-link'),
   });
 
   const conv = new EnhancedChordConverter();
@@ -2166,7 +2166,10 @@ document.addEventListener("DOMContentLoaded", () => {
       // 斯波索宾数据里的符号带中文变体名（如 T不完全、T双三），只在显示时翻译，内部仍用原符号
       const displayClassicalSymbol = symbol => String(symbol)
         .replace(/不完全/g, clt("cl_variant_incomplete"))
-        .replace(/双三/g, clt("cl_variant_doubled_third"));
+        .replace(/双三/g, clt("cl_variant_doubled_third"))
+        .replace(/_阻碍/g, clt("cl_variant_deceptive"))
+        // 大小调合并的功能库里，与大调同名但音不同的小调条目（如小调的 VI = A♭）
+        .replace(/ᵐ$/, clt("cl_variant_minor"));
        if (report) {
          const activeSegment = classicalSegments[classicalSegments.length - 1];
          if (!activeSegment) {
@@ -2282,8 +2285,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const solved = classical.voiceSequence(sequenceEntries);
         let status = chainBar.querySelector('.classical-voicing-status');
         if (!status) { status = document.createElement('div'); status.className = 'classical-voicing-status'; status.setAttribute('role', 'status'); chainBar.append(status); }
-        if (!solved.ok) { status.textContent = solved.reason; return; }
-        status.textContent = clt("cl_satb_checked");
+        if (!solved.ok && !solved.voices) { status.textContent = solved.reason; return; }
+        // 没有合法声部连接时仍按顺序播放（用违反规则最少的配置），但明确提示这种写法不对
+        status.classList.toggle("is-warning", Boolean(solved.fallback));
+        status.textContent = solved.fallback
+          ? clt("cl_voicing_fallback", { reason: solved.reason, issues: [...new Set((solved.problems || []).flatMap((p) => p.issues))].map(localizeClassicalText).join("、") || "—" })
+          : clt("cl_satb_checked");
         sequence.forEach((step, i) => { step.freqs = solved.voices[i].map(n => 440 * 2 ** ((n - 69) / 12)); });
         const voiceTable = document.createElement('div'); voiceTable.className = 'classical-voice-table';
         solved.voices.forEach((v,i) => { const row = document.createElement('div'); row.textContent = `${sequenceEntries[i].symbol}   ${v.map(midiName).join(' / ')}`; voiceTable.append(row); });

@@ -1,5 +1,5 @@
 // 新工具共用：把一条旋律（{ midi, beats, rest }）画成单行五线谱（沿用 learn_visuals.js 的谱例），以及简单的拍数 → 时值换算
-import { renderVisual } from './learn_visuals.js?v=20261003-r31';
+import { renderVisual } from './learn_visuals.js?v=20261004-m5';
 import { spellNote } from './motif_phrase.js';
 
 const DURATIONS = [[4, 'w', false], [3, 'h', true], [2, 'h', false], [1.5, 'q', true], [1, 'q', false], [0.75, 'e', true], [0.5, 'e', false], [0.25, 's', false]];

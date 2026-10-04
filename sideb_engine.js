@@ -3,9 +3,9 @@
 //
 // 原则：音乐优先于分数，发现优先于背诵，成就感优先于惩罚感。任何增加难度的设计，都要同时增加反馈、理解感或成就感——
 // 所以 60% 是"掌握门槛"而不是"惩罚门槛"：没过时讲解、实验、实操的进度全部保留，只补弱项（补弱挑战），不用整关重来。
-import { gradeCard, isDone } from './learn_engine.js?v=20261004-s4';
-import { SKILLS } from './sideb_errors.js?v=20261004-w5';
-import { GENERATORS } from './learn_generators.js?v=20261004-g4';
+import { gradeCard, isDone } from './learn_engine.js?v=20261005-q1';
+import { SKILLS } from './sideb_errors.js?v=20261004-z9';
+import { GENERATORS } from './learn_generators.js?v=20261005-q1';
 
 /** 一关的五段：发现 → 解释 → 实验 → 挑战 → 实操（只有关键技能关才有实操） */
 export const SECTION_ORDER = ['discover', 'explain', 'experiment', 'challenge', 'lab'];
@@ -28,7 +28,14 @@ export const LAB_MODES = {
 };
 
 export const sidebUnlocked = (progress) => Boolean(progress.unlockAll) || isDone(progress, 'final-ex');
-export const bKey = (id) => `b:${id}`;
+/** 进度键：普通关 / 考试 b:<id>；扩展关的 id 是 <关卡>x（如 B1-1x），存在 bx:<关卡> */
+/** 评级（Side-B 不用星级）：A+ ≥ 95%、A ≥ 85%、B ≥ 75%、C ≥ 60%（过关线）、D ≥ 50%、E < 50%；没通过（例如实操没到门槛）最多 D */
+export const GRADES = [['A+', 0.95], ['A', 0.85], ['B', 0.75], ['C', 0.6], ['D', 0.5], ['E', 0]];
+export function gradeOf(score, passed = true) {
+  const g = GRADES.find(([, line]) => (score ?? 0) >= line - 1e-9)[0];
+  return passed || ['D', 'E'].includes(g) ? g : 'D';
+}
+export const bKey = (id) => (/^B\d+-\d+x$/.test(id) ? `bx:${id.slice(0, -1)}` : `b:${id}`);
 
 /** Side-B 关卡按地图顺序一关一关开放（第一关在解锁后就开放） */
 export function sidebLevelUnlocked(levels, index, progress) {
@@ -197,13 +204,14 @@ export function validateLevel(level) {
   let run = 0;
   ['discover', 'explain', 'experiment'].forEach((s) => (level.sections?.[s] || []).forEach((n) => { run = n.type === 'page' ? run + 1 : 0; if (run > 2) problems.push('reading-run'); }));
   const count = challengeCount(level);
-  if (count < 6 || count > 8) problems.push('challenge-size');
+  // 扩展关（把 A 面 4 个进阶关 + 综合测验重新讲一遍）讲解更长：挑战 6–10 题、最多约 25 分钟
+  if (count < 6 || count > (level.ext ? 10 : 8)) problems.push('challenge-size');
   const challenge = level.sections?.challenge || [];
   if (challenge.some((n) => isAssessed(n) && !(n.skills || []).length)) problems.push('missing-skills');
   const varied = challenge.reduce((n, node) => n + (node.type === 'gen' ? (node.count ?? 1) : node.variants?.length > 1 ? 1 : 0), 0);
   if (varied * 2 < count) problems.push('retry-memorizable');
   if ((level.sections?.lab || []).length && !(level.sections?.experiment || []).some((n) => n.type === 'experiment')) problems.push('lab-without-experiment');
-  if (estimateMinutes(level) > (level.core ? 20 : 15)) problems.push('too-long');
+  if (estimateMinutes(level) > (level.ext ? 25 : level.core ? 20 : 15)) problems.push('too-long');
   if (!all.some((n) => n.breakthrough) && !(level.sections?.lab || []).some((n) => n.breakthrough)) problems.push('no-breakthrough');
   return [...new Set(problems)];
 }
@@ -245,7 +253,9 @@ export function materialize(nodes, { seed = 1, attempt = 0 } = {}) {
 /** 这一关这一次的具体内容（讲解不变，挑战换题） */
 export function levelForAttempt(level, attempt = 0) {
   const seed = seedOf(level.id);
-  const sections = Object.fromEntries(Object.entries(level.sections || {}).map(([s, nodes]) => [s, materialize(nodes.map((n) => ({ ...n, section: s })), { seed, attempt })]));
+  // 考试（level.draw）每次开考重新抽一套题
+  const source = typeof level.draw === 'function' ? level.draw(attempt) : level.sections || {};
+  const sections = Object.fromEntries(Object.entries(source).map(([s, nodes]) => [s, materialize(nodes.map((n) => ({ ...n, section: s })), { seed, attempt })]));
   return { ...level, sections, attempt };
 }
 
@@ -293,26 +303,29 @@ export function levelWeights(level) {
 export function summarizeB(session, level, labResults = {}, { context = 'level' } = {}) {
   const graded = session.records.filter((r) => r.first && !r.ungraded && !TEACHING_TYPES.includes(r.type) && r.type !== 'lab');
   const challenge = graded.length ? graded.reduce((sum, r) => sum + r.score, 0) / graded.length : (challengeCount(level) ? 0 : 1);
-  const line = LAB_LINES[context] ?? LAB_LINES.level;
   const labs = mandatoryLabs(level).map((n) => {
-    const res = labResults[n.lab];
+    // 章节测试 / EX 的实操成绩单独存（id@chapter、id@ex），门槛也按节点自己的模式
+    const mode = n.mode || 'level';
+    const res = labResults[mode !== 'level' ? `${n.lab}@${mode}` : n.lab];
+    const line = LAB_LINES[n.mode || context] ?? LAB_LINES.level;
     const score = res ? Math.max(0, Math.min(1, (res.score ?? 0) / 100)) : 0;
     const hard = Boolean(res?.hardFail?.length);
-    return { id: n.lab, score, line, ok: Boolean(res) && !hard && score >= line, hardFail: hard, done: Boolean(res) };
+    return { id: n.lab, mode, score, line, ok: Boolean(res) && !hard && score >= line, hardFail: hard, done: Boolean(res) };
   });
   const w = levelWeights(level);
   const labScore = labs.length ? labs.reduce((s, l) => s + l.score, 0) / labs.length : 0;
   const score = w.challenge * challenge + w.labs * labScore;
   const labsOk = labs.every((l) => l.ok);
-  const passed = score >= PASS_LINE - 1e-9 && labsOk;
-  const stars = !passed ? 0 : score >= 0.9 ? 3 : score >= 0.75 ? 2 : 1;
+  // 考试可以有自己的过关线（所有考试都是 60%）
+  const passed = score >= (level.passLine ?? PASS_LINE) - 1e-9 && labsOk;
+  const grade = gradeOf(score, passed);
   const skills = Object.fromEntries(SKILLS.map((s) => [s, { got: 0, total: 0 }]));
   graded.forEach((r) => r.skills.forEach((s) => { if (skills[s]) { skills[s].got += r.score; skills[s].total += 1; } }));
   const errors = {};
   session.records.forEach((r) => r.errors.forEach((e) => { errors[e] = (errors[e] || 0) + 1; }));
   const weak = weakSkills(skills);
   const next = passed ? 'clear' : !labsOk ? 'revise-lab' : 'recovery';
-  return { score, accuracy: score, challenge, labs, passed, stars, skills, errors, weak, next };
+  return { score, accuracy: score, challenge, labs, passed, grade, skills, errors, weak, next };
 }
 /** 弱项：做过的技能里得分率最低的（低于 60% 的全部列出，最多 2 个；都不低于 60% 时取最低的一个） */
 export function weakSkills(skills) {
@@ -416,21 +429,30 @@ export function overallMastery(store) {
 }
 
 // ---------------- 通关记录、章节平均与 EX 解锁 ----------------
-/** EX 章节测试的解锁线：这一章的平均分 ≥ 70%；EX 结业挑战：所有章节的平均 ≥ 75% */
-export const CHAPTER_EX_LINE = 0.7;
-export const FINAL_EX_LINE = 0.75;
+/**
+ * Side-B 的考试（都是可选的，不挡下一章）：
+ *   章节测试：本章的普通关全部 Clear 后开放；只出普通关的题（不含扩展关）；过关线 60%，实操 ≥ 60%
+ *   EX 章节测试：本章平均（普通关 + 扩展关）≥ 60% 开放，不看章节测试过没过；过关线 60%，实操 ≥ 70%
+ *   Final：所有章节测试都通过（≥ 60%）才开放；EX Final：所有章节测试和 EX 章节测试都通过才开放
+ */
+export const CHAPTER_EX_OPEN = 0.6;
+export const CHAPTER_EX_LINE = 0.6;
+export const FINAL_EX_LINE = 0.6;
 
 /**
- * 记一次结算：best 取最好的一次总分；通过才算 Clear（done），星级取最好的一次；seen 记下已经看过的段（失败后不用重看）
- * 补弱挑战通过（recovered）：Clear、一星，best 至少记 60%
+ * 记一次结算：best 取最好的一次总分；通过才算 Clear（done），评级取通过的那几次里最好的；seen 记下已经看过的段（失败后不用重看）
+ * 补弱挑战通过（recovered）：Clear、评级 C，best 至少记 60%
  */
 export function completeBLevel(progress, levelId, summary, { recovered = false, seen } = {}) {
   const key = bKey(levelId);
   const prev = progress.units[key] || {};
   const best = Math.max(prev.best ?? 0, summary.score ?? summary.accuracy ?? 0, recovered ? PASS_LINE : 0);
   const done = Boolean(prev.done) || summary.passed || recovered;
-  const stars = Math.max(prev.stars ?? 0, summary.passed ? summary.stars : recovered ? 1 : 0);
-  const entry = { ...prev, best, done, stars, ...(seen ? { seen: [...new Set([...(prev.seen || []), ...seen])] } : {}) };
+  const rank = (g) => (g ? GRADES.length - GRADES.findIndex(([x]) => x === g) : 0);
+  const now = summary.passed ? summary.grade || gradeOf(summary.score ?? summary.accuracy ?? 0) : recovered ? 'C' : null;
+  const grade = rank(now) > rank(prev.grade) ? now : prev.grade;
+  const { stars: _old, ...rest } = prev;
+  const entry = { ...rest, best, done, ...(grade ? { grade } : {}), ...(seen ? { seen: [...new Set([...(prev.seen || []), ...seen])] } : {}) };
   return { ...progress, units: { ...progress.units, [key]: entry } };
 }
 /** 一章的平均分：每关取最好的一次，没玩过的算 0 */
@@ -438,13 +460,23 @@ export function chapterAverage(levels, progress) {
   if (!levels.length) return 0;
   return levels.reduce((sum, level) => sum + (progress.units[bKey(level.id)]?.best ?? 0), 0) / levels.length;
 }
+/** 扩展关的进度键（A 面播放器里玩，结果存在同一份 progress 里） */
+export const extKey = (id) => bKey(`${id}x`);
+/** 本章平均（含扩展关）：每个普通关算一项，有扩展关的关卡再多一项扩展关的最好成绩 */
+export function chapterAverageWithExt(levels, progress, hasExt = () => false) {
+  const items = levels.flatMap((level) => [progress.units[bKey(level.id)]?.best ?? 0, ...(hasExt(level) ? [progress.units[extKey(level.id)]?.best ?? 0] : [])]);
+  return items.length ? items.reduce((a, b) => a + b, 0) / items.length : 0;
+}
+const examDone = (progress, id) => Boolean(progress.units[bKey(id)]?.done);
+export const chapterTestOpen = (levels, progress) => Boolean(progress.unlockAll) || (sidebUnlocked(progress) && levels.length > 0 && levels.every((l) => isDone(progress, bKey(l.id))));
+export const chapterExOpen = (levels, progress, hasExt) => Boolean(progress.unlockAll) || (sidebUnlocked(progress) && chapterAverageWithExt(levels, progress, hasExt) >= CHAPTER_EX_OPEN - 1e-9);
+export const finalOpen = (chapterIds, progress) => Boolean(progress.unlockAll) || (sidebUnlocked(progress) && chapterIds.every((c) => examDone(progress, `T-${c}`)));
+export const finalExOpen = (chapterIds, progress) => Boolean(progress.unlockAll) || (sidebUnlocked(progress) && chapterIds.every((c) => examDone(progress, `T-${c}`) && examDone(progress, `TX-${c}`)));
 /** 所有章节的平均：各章平均分再取平均 */
 export function overallAverage(chapters, progress) {
   const list = chapters.filter((levels) => levels.length);
   return list.length ? list.reduce((sum, levels) => sum + chapterAverage(levels, progress), 0) / list.length : 0;
 }
-export const sidebChapterExUnlocked = (levels, progress) => Boolean(progress.unlockAll) || (sidebUnlocked(progress) && chapterAverage(levels, progress) >= CHAPTER_EX_LINE);
-export const sidebFinalExUnlocked = (chapters, progress) => Boolean(progress.unlockAll) || (sidebUnlocked(progress) && overallAverage(chapters, progress) >= FINAL_EX_LINE);
 
 // ---------------- 存储 ----------------
 const KEYS = { resume: 'jc-sideb-resume', labs: 'jc-sideb-labs', mastery: 'jc-sideb-skills', side: 'jc-learn-side', breakthroughs: 'jc-sideb-breakthroughs' };

@@ -4,13 +4,13 @@
 import {
   prepareEntries, searchEntries, realizeAll, versionOf, functionsOf, voiceProgression, playbackEvents, OPERATIONS, melodyCheck,
   KEYS, rotations, romanOf, QUALITIES, spell,
-} from './prog_library.js?v=20261003-p2';
+} from './prog_library.js?v=20261004-w8';
 import { ENTRIES, FEEL_TAGS, CATEGORIES, KINDS, SOURCES, FAMILIES } from './prog_library_data.js?v=20261003-p2';
 import { el, button, option, field, language, midiToFrequency, cite, sourcesFooter } from './module_kit.js';
-import { renderVisual } from './learn_visuals.js?v=20261003-r31';
+import { renderVisual } from './learn_visuals.js?v=20261004-m5';
 import { sendToStaff, satbToVoices } from './staff_handoff.js?v=20261003-h1';
 import { bassLine } from './prog_quiz.js';
-import { worksheetHTML, openWorksheet } from './worksheet.js?v=20261003-w1';
+import { worksheetHTML, openWorksheet } from './worksheet.js?v=20261004-y1';
 import { referenceById } from './references.js';
 
 const TEXT = {

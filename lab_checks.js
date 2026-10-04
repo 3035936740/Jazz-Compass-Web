@@ -19,12 +19,13 @@
 //     单拍子每拍一个四分音符（4/4 等）、复拍子每拍一个附点四分音符（6/8 等）（ref:omt2e-simple-meter ref:omt2e-compound-meter）
 //   复节奏 / 节拍调制：ref:wiki-polyrhythm ref:wiki-metric-modulation
 //   类别对位：沿用 counterpoint.js 的逐条规则（ref:omt-species1 ref:omt-species2 ref:omt-species3 ref:omt-species4 ref:omt2e-intro）
+//   在谱上写集合类的成员（Tn / In 相关的同一集合类）：ref:omt2e-normal-order ref:omt2e-prime-form；写十二音行的行形式：ref:omt2e-twelve-tone ref:omt2e-row-naming
 //   集合级运算：ref:omt2e-normal-order ref:omt2e-prime-form ref:omt2e-ic-vector（沿用 post_tonal.js）
 import { checkSATB, identifyChord, PARTS, groupFourPart } from './satb_check.js?v=20261004-r32';
-import { parseRoman, realize } from './prog_library.js';
-import { voiceMeasures } from './staff_edit.js?v=20261003-e1';
+import { parseRoman, realize } from './prog_library.js?v=20261004-w8';
+import { voiceMeasures } from './staff_edit.js?v=20261004-w6';
 import { durationBeats, pitchMidi } from './staff_reading.js';
-import { normalOrder, primeForm, intervalVector } from './post_tonal.js';
+import { normalOrder, primeForm, intervalVector, rowForm } from './post_tonal.js';
 import { metricModulation, PRESETS } from './poly_meter.js';
 import { parseChordSymbol } from './chord_symbols.js';
 import { parseNote } from './pitch_spelling.js';
@@ -620,6 +621,83 @@ export function checkSetClass(submission, { pcs }) {
   ]);
 }
 
+// ---------------- 谱上的集合类与十二音行 ----------------
+/** 两行谱上同一时刻开始的音合成一组（被连音线连过来的不算新起音），按时间排好 */
+function onsetGroups(submission) {
+  const meter = submission.meter || [4, 4];
+  const groups = new Map();
+  (submission.voices || []).forEach((events) => {
+    let prev = null;
+    timedEvents(events || [], meter, submission.key || 0).forEach(({ beat, e }) => {
+      const midis = e.rest ? [] : e.notes.map(noteMidi);
+      const tiedIn = Boolean(prev && prev.tie && midis.length && midis.every((m) => prev.midis.includes(m)));
+      prev = { tie: !e.rest && e.tie, midis };
+      if (!midis.length || tiedIn) return;
+      const k = Math.round(beat * 1000);
+      groups.set(k, [...(groups.get(k) || []), ...midis]);
+    });
+  });
+  return [...groups.entries()].sort((a, b) => a[0] - b[0]).map(([, midis]) => midis);
+}
+const pcsOf = (midis) => [...new Set(midis.map(mod))].sort((a, b) => a - b);
+const zeroed = (pcs) => { const n = normalOrder(pcs); return n.map((x) => mod(x - n[0])).join(','); };
+/**
+ * 写出同一集合类的几个成员（如三个 (014) 三和弦）：满分 100
+ *   核心   成员正确 50（每个和弦一份；音级集合的原型不是要求的那个就不给这一份）
+ *   技术   彼此不同 20（标准顺序不重复）；Tn 与 In 两种关系都要出现 30（各 15：移位相关 = 标准顺序移到 0 相同；倒影相关 = 不同但原型相同）
+ * @param {{ prime: number[], count: number }} params
+ */
+export function checkSetWrite(submission, { prime = [0, 1, 4], count = 3 } = {}) {
+  const want = prime.join(',');
+  const chords = onsetGroups(submission).filter((m) => m.length >= 2).map(pcsOf);
+  const share = 50 / count;
+  const members = []; const memberDed = []; const info = [];
+  for (let i = 0; i < count; i += 1) {
+    const pcs = chords[i];
+    if (!pcs) { memberDed.push(deduct(share, fill(t('第 {i} 个和弦还没写', '第 {i} 和音がまだない', 'Chord {i} is missing'), { i: i + 1 }), 'incomplete-work')); continue; }
+    const got = primeForm(pcs).join(',');
+    if (got === want) { members.push(pcs); info.push(fill(t('第 {i} 个 [{p}] 属于 ({w})', '第 {i} [{p}] は ({w})', 'Chord {i} [{p}] belongs to ({w})'), { i: i + 1, p: normalOrder(pcs).join(','), w: prime.join('') })); }
+    else memberDed.push(deduct(share, fill(t('第 {i} 个和弦 [{p}] 的原型是 ({g})，不是 ({w})', '第 {i} 和音 [{p}] のプライム・フォームは ({g})、({w}) ではない', 'Chord {i} [{p}] has prime form ({g}), not ({w})'), { i: i + 1, p: normalOrder(pcs).join(','), g: got.replace(/,/g, ''), w: prime.join('') }), 'prime-form'));
+  }
+  const normals = members.map((pcs) => normalOrder(pcs).join(','));
+  const dupes = normals.length - new Set(normals).size;
+  const distinctDed = [...coverageDeduction(20, members.length, count), ...(dupes ? [deduct(10 * dupes, t('有重复的和弦：每个成员的音级集合要不一样', '同じ和音がある：成員ごとに違う音集合に', 'Repeated chords: each member should be a different pitch-class set'), 'set-relation')] : [])];
+  let tn = false; let inv = false;
+  for (let a = 0; a < members.length; a += 1) for (let b = a + 1; b < members.length; b += 1) {
+    if (normals[a] === normals[b]) continue;
+    if (zeroed(members[a]) === zeroed(members[b])) tn = true; else inv = true;
+  }
+  const relDed = [...(tn ? [] : [deduct(15, t('还没有一对移位（Tn）相关的成员', '移高（Tn）関係のペアがまだない', 'No pair related by transposition (Tn) yet'), 'set-relation')]), ...(inv ? [] : [deduct(15, t('还没有一对倒影（In）相关的成员', '反転（In）関係のペアがまだない', 'No pair related by inversion (In) yet'), 'set-relation')])];
+  return rubric([
+    item('members', 'core', 50, t('成员正确', '成員が正しい', 'Members of the set class'), memberDed, info),
+    item('distinct', 'technical', 20, t('彼此不同', '互いに違う', 'All different'), distinctDed),
+    item('relations', 'technical', 30, t('Tn 与 In 关系', 'Tn と In の関係', 'Tn and In relations'), relDed),
+  ]);
+}
+
+/**
+ * 十二音行的行形式（如在低音谱表写出 P0 的 I0）：满分 100
+ *   核心   顺序正确 60（每个位置 5 分）；技术 十二个音级都出现 20；完成度 正好 12 个音 20
+ *   硬性条件：上面给出的行被改动
+ * @param {{ row: number[], form: string, givenStaff?: number, answerStaff?: number }} params
+ */
+export function checkRowForm(submission, { row = [], form = 'I0', givenStaff = 0, answerStaff = 1 } = {}) {
+  const seq = (events) => { let prev = null; const out = []; timedEvents(events || [], submission.meter || [4, 4], submission.key || 0).forEach(({ e }) => { const midis = e.rest ? [] : e.notes.map(noteMidi); const tiedIn = Boolean(prev && prev.tie && midis.length && midis.every((m) => prev.midis.includes(m))); prev = { tie: !e.rest && e.tie, midis }; if (midis.length && !tiedIn) out.push(mod(midis[0])); }); return out; };
+  const given = seq(submission.voices?.[givenStaff]);
+  const hardFail = given.join(',') === row.map(mod).join(',') ? [] : [{ error: 'row-changed', text: fill(t('上面给出的音列被改动了：应该是 {r}', '与えられた音列が変わっている：正しくは {r}', 'The given row was changed: it should be {r}'), { r: row.join('–') }) }];
+  const answer = seq(submission.voices?.[answerStaff]);
+  const want = rowForm(row, form);
+  const orderDed = want.map((pc, i) => (answer[i] === pc ? null : deduct(5, answer[i] === undefined ? fill(t('第 {i} 个音还没写（应为 {w}）', '第 {i} 音がまだない（{w} のはず）', 'Note {i} is missing (should be {w})'), { i: i + 1, w: pc }) : fill(t('第 {i} 个音是 {g}，应为 {w}', '第 {i} 音は {g}、正しくは {w}', 'Note {i} is {g}; it should be {w}'), { i: i + 1, g: answer[i], w: pc }), 'row-form'))).filter(Boolean);
+  const missing = [...Array(12).keys()].filter((pc) => !answer.includes(pc));
+  const aggDed = missing.length ? [deduct(Math.min(20, missing.length * 2), fill(t('缺少音级 {m}（十二个音级都要出现）', '音級 {m} がない（12 音すべて必要）', 'Missing pitch classes {m} (all twelve must appear)'), { m: missing.join(', ') }), 'row-form')] : [];
+  const countDed = answer.length === 12 ? [] : [deduct(answer.length > 12 ? 10 : 20 * (1 - Math.min(12, answer.length) / 12), fill(t('写了 {n} 个音，应该正好 12 个', '{n} 音書いた、ちょうど 12 音のはず', '{n} notes written; there should be exactly 12'), { n: answer.length }), 'incomplete-work')];
+  return { ...rubric([
+    item('order', 'core', 60, fill(t('{f} 的顺序', '{f} の順序', 'Order of {f}'), { f: form }), orderDed),
+    item('aggregate', 'technical', 20, t('十二个音级都出现', '12 音級がそろう', 'All twelve pitch classes'), aggDed),
+    item('count', 'completeness', 20, t('正好 12 个音', 'ちょうど 12 音', 'Exactly twelve notes'), countDed),
+  ], hardFail), want };
+}
+
 // ---------------- 统一入口 ----------------
 // ---------------- 类别对位（定旋律预先写在一行谱上，玩家在另一行写对位） ----------------
 /** 规则代码 → 评分项与扣分（error 规则扣得多、warning 只扣一点）；错误类型给 sideb_errors 用 */
@@ -715,7 +793,7 @@ export function checkSpecies(submission, { species = 1, cantus = [], position = 
   return { ...rubric(items, hardFail), bars };
 }
 
-export const CHECKERS = { fourPart: checkFourPart, jazzVoicing: checkJazzVoicing, rhythm: checkRhythm, rhythmGrid: checkRhythm, polyGrid: checkPolyGrid, tempo: checkTempoLab, setClass: checkSetClass, species: checkSpecies };
+export const CHECKERS = { fourPart: checkFourPart, jazzVoicing: checkJazzVoicing, rhythm: checkRhythm, rhythmGrid: checkRhythm, polyGrid: checkPolyGrid, tempo: checkTempoLab, setClass: checkSetClass, species: checkSpecies, setWrite: checkSetWrite, rowForm: checkRowForm };
 /** 按实操说明（spec.check + spec.params）给一次提交打分：{ score 0–100, max, passed（没有硬性失败）, hardFail, items } */
 export function evaluateLab(spec, submission) {
   const checker = CHECKERS[spec?.check];

@@ -116,3 +116,56 @@ test('recovery challenges can always be built from the pool for every weak skill
     });
   });
 });
+
+test('exams: question mix (B main / B extension / A side), labs last, fresh draw per attempt, unlock rules', async () => {
+  const { examById, chapterLevels, isPlayable } = await import('./sideb_content.js');
+  const E = await import('./sideb_engine.js');
+  const t = examById('T-harmony'); const tx = examById('TX-harmony');
+  assert.ok(t && tx && examById('FIN') && examById('FINX'));
+  assert.equal(t.passLine, 0.6); assert.equal(tx.passLine, 0.6); assert.equal(examById("FINX").passLine, 0.6);
+  // 题量：章节测试 25 + 5 + 10 = 40，Final 50 + 5 + 5 = 60；实操在最后（每章 1 个、Final 2 个）
+  assert.equal(t.sections.challenge.length, 40); assert.equal(tx.sections.challenge.length, 40);
+  assert.equal(examById('FIN').sections.challenge.length, 60); assert.equal(examById('FINX').sections.challenge.length, 60);
+  assert.equal(t.sections.lab.length, 1); assert.equal(examById('FIN').sections.lab.length, 2); assert.equal(examById('FINX').sections.lab.length, 2);
+  assert.ok(t.sections.lab.every((n) => n.mode === 'chapter') && tx.sections.lab.every((n) => n.mode === 'ex'));
+  // 普通章节测试：10 道 A 面题，其余都来自本章 B 面
+  const aCount = (lv) => lv.sections.challenge.filter((n) => /\.A-/.test(n.id)).length;
+  assert.equal(aCount(t), 10); assert.equal(aCount(tx), 5); assert.equal(aCount(examById('FIN')), 5);
+  const { extLevelById } = await import('./sideb_content.js');
+  const harmonyLevels = chapterLevels('harmony');
+  const extIds = new Set(harmonyLevels.map((l) => extLevelById(`${l.id}x`)).filter(Boolean).flatMap((l) => [...(l.sections?.challenge || []), ...(l.pool || [])].map((n) => n.id)));
+  const ids = new Set([...harmonyLevels.flatMap((l) => [...(l.sections?.challenge || []), ...(l.pool || [])].map((n) => n.id)), ...extIds]);
+  const rawOf = (n) => n.id.split('.').slice(2).join('.').replace(/~[mxf]\d+$/, '');
+  // 第 2 章已有扩展关：普通章节测试里正好 5 道来自扩展关
+  if (extIds.size) assert.equal(t.sections.challenge.filter((n) => extIds.has(rawOf(n))).length, 5);
+  assert.ok(t.sections.challenge.filter((n) => !/\.A-/.test(n.id)).every((n) => ids.has(rawOf(n))));
+  // 每次开考重新抽题
+  const a0 = E.levelForAttempt(t, 0); const a1 = E.levelForAttempt(t, 1);
+  assert.notDeepEqual(a0.sections.challenge.map((n) => n.id), a1.sections.challenge.map((n) => n.id));
+  const levels = chapterLevels('basics').filter(isPlayable);
+  const p = { units: {}, unlockAll: false };
+  p.units['final-ex'] = { done: true };
+  assert.equal(E.chapterTestOpen(levels, p), false);
+  levels.forEach((l) => { p.units[E.bKey(l.id)] = { done: true, best: 0.65 }; });
+  assert.equal(E.chapterTestOpen(levels, p), true, 'all regular levels cleared → chapter test opens');
+  // EX：本章平均（含扩展关）≥ 60%，与章节测试过没过无关
+  const hasExt = () => true;
+  assert.equal(E.chapterExOpen(levels, p, hasExt), false, 'extensions not played yet pull the average down');
+  levels.forEach((l) => { p.units[E.extKey(l.id)] = { done: true, best: 0.6 }; });
+  assert.equal(E.chapterExOpen(levels, p, hasExt), true);
+  // Final 要全部章节测试；EX Final 还要全部 EX 章节测试
+  assert.equal(E.finalOpen(['basics'], p), false);
+  p.units[E.bKey('T-basics')] = { done: true, best: 0.7 };
+  assert.equal(E.finalOpen(['basics'], p), true);
+  assert.equal(E.finalExOpen(['basics'], p), false);
+  p.units[E.bKey('TX-basics')] = { done: true, best: 0.8 };
+  assert.equal(E.finalExOpen(['basics'], p), true);
+  // 考试里的实操按 id@mode 取成绩、按模式设门槛：普通关的成绩不算
+  const lvl = E.levelForAttempt(t, 0);
+  const session = E.createBSession(lvl);
+  const lab = t.sections.lab[0].lab;
+  const plain = E.summarizeB(session, lvl, { [lab]: { score: 100, hardFail: [] } });
+  assert.equal(plain.labs[0].done, false);
+  const exam = E.summarizeB(session, lvl, { [`${lab}@chapter`]: { score: 59, hardFail: [] } });
+  assert.equal(exam.labs[0].ok, false, 'chapter-test lab line is 60%');
+});

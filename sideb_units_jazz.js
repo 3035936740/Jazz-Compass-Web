@@ -522,7 +522,7 @@ export const LEVEL_B4_6 = {
     experiment: [
       { id: 'b46-x1', type: 'experiment', toy: 'scale', ref: ['wiki-jazz-minor', 'wiki-altered-scale', 'wiki-harmonic-minor', 'wiki-harmonic-major'],
         prompt: t('在几个主音上听旋律小调、它的几个调式、和声小调和和声大调。特征音（高亮的那个）在哪里？', 'いくつかの主音で旋律的短音階とその旋法、和声的短音階・和声的長音階を聴こう。特性音（ハイライト）はどこ？', 'On a few tonics, hear melodic minor and some of its modes, harmonic minor and harmonic major. Where is the tell-tale note (highlighted)?'),
-        params: { tonics: ['C', 'G', 'A♭', 'D', 'F'], sets: MM_SETS },
+        params: { sets: MM_SETS },
         breakthrough: { id: 'b46-family', text: t('你在一个音阶家族里认出了七个不同的颜色。', '1 つの音階の家族に 7 つの色を見分けた。', 'You found seven colours inside one scale family.') } },
     ],
     challenge: [
@@ -606,7 +606,7 @@ export const LEVEL_B4_7 = {
     experiment: [
       { id: 'b47-x1', type: 'experiment', toy: 'scale', ref: ['wiki-whole-tone', 'wiki-octatonic', 'wiki-bebop-scale'],
         prompt: t('在不同主音上听全音音阶、两种减音阶和 bebop 属音阶。从 C 和从 E♭ 开始的半全减音阶，音一样吗？', '異なる主音で全音音階・2 種類のディミニッシュ・ビバップ・ドミナントを聴こう。C と E♭ から始める半全ディミニッシュは同じ音？', 'On different tonics, hear the whole-tone scale, both diminished scales and the bebop dominant. Do half–whole diminished scales from C and from E♭ share their notes?'),
-        params: { tonics: ['C', 'D', 'E♭', 'F', 'G'], sets: SYM_SETS },
+        params: { sets: SYM_SETS },
         breakthrough: { id: 'b47-symmetry', text: t('你发现了：对称的音阶换了起点，音却没变。', '対称な音階は始まりを変えても音が変わらない——それに気づいた。', 'You found it: a symmetric scale changes its starting point but not its notes.') } },
     ],
     challenge: [
