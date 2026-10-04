@@ -81,8 +81,9 @@ function checkCard(card, where, fileText, fileName) {
   } else if (card.type === 'match') {
     assert.ok(card.pairs.length >= 2, `${where}: pairs`);
     card.pairs.forEach(([a, b]) => assert.ok(isText(a) && isText(b), `${where}: pair text`));
-    const rights = card.pairs.map(([, b]) => JSON.stringify(b));
-    assert.equal(new Set(rights).size, rights.length, `${where}: right-hand items must be distinct`);
+    // 右边允许完全相同的答案（判分时可以互换），但左边必须各不相同，右边至少要有两种不同的答案
+    assert.equal(new Set(card.pairs.map(([a]) => JSON.stringify(a))).size, card.pairs.length, `${where}: left-hand items must be distinct`);
+    assert.ok(new Set(card.pairs.map(([, b]) => JSON.stringify(b))).size >= 2, `${where}: right-hand items all the same`);
   } else {
     assert.fail(`${where}: unknown type ${card.type}`);
   }
@@ -212,12 +213,28 @@ test('choice questions have four options and matching questions four pairs (lear
     if (card.type === 'match') {
       assert.ok(card.pairs.length >= 4, `fewer than 4 pairs: ${zh(card.prompt)}`);
       assert.equal(new Set(card.pairs.map(([a]) => zh(a))).size, card.pairs.length, `duplicate left item: ${zh(card.prompt)}`);
-      assert.equal(new Set(card.pairs.map(([, b]) => zh(b))).size, card.pairs.length, `duplicate right item: ${zh(card.prompt)}`);
+      // 右边可以有完全相同的答案（三种语言都一样）：判分时这两项可以互换；只是中文相同、别的语言不同就不行
+      const rights = new Map();
+      card.pairs.forEach(([, b]) => { const k = zh(b); const full = JSON.stringify(b); assert.ok(!rights.has(k) || rights.get(k) === full, `right items share a Chinese label but differ elsewhere: ${zh(card.prompt)}`); rights.set(k, full); });
     }
   }
   // 每一条补充都还对得上某道原题（题目改了就会在这里报出来）：补过的卡去掉第 4 个选项再算键
   const allKeys = new Set(all.filter((card) => card.type === 'choice' && card.options.length === 4).map((card) => decoyKey({ ...card, options: card.options.slice(0, 3) })));
   const stale = [...Object.keys(EXTRA_OPTIONS)].filter((k) => !allKeys.has(k));
   assert.deepEqual(stale, [], 'extra options whose question no longer exists');
-  assert.ok(Object.keys(EXTRA_PAIRS).length >= 60);
+  assert.ok(Object.keys(EXTRA_PAIRS).length >= 55);
 });
+
+test('matching: identical right-hand answers are interchangeable (e.g. two clefs on the second line from the top)', async () => {
+  const { gradeCard } = await import('./learn_engine.js');
+  const card = UNITS.find((u) => u.id === 'staff').cards.find((c) => c.type === 'match' && zh(c.prompt).includes('谱号'));
+  const same = card.pairs.map((p, i) => i).filter((i) => zh(card.pairs[i][1]) === '从上数第二线');
+  assert.equal(same.length, 2);
+  const straight = Object.fromEntries(card.pairs.map((_, i) => [i, i]));
+  const swapped = { ...straight, [same[0]]: same[1], [same[1]]: same[0] };
+  assert.equal(gradeCard(card, straight), true);
+  assert.equal(gradeCard(card, swapped), true, 'swapping the two identical answers is still correct');
+  const wrong = { ...straight, 0: same[0], [same[0]]: 0 };
+  assert.equal(gradeCard(card, wrong), false);
+});
+

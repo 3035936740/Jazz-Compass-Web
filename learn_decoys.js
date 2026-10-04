@@ -644,7 +644,6 @@ export const EXTRA_OPTIONS = {
 /** 连线题补上的真实配对（prompt：配对扩展后题干要跟着改的） */
 export const EXTRA_PAIRS = {
   d6h1100: { pairs: [['D♯', 'E♭']] },
-  d1lqpiox: { pairs: [[t('次中音谱号', 'テノール記号', 'tenor clef'), t('C：从上数第二线', 'C：上から 2 本目', 'C: second line from the top')]] },
   dhbez79: { pairs: [[t('四分休止符', '4 分休符', 'quarter rest'), '1']] },
   dwmm39k: { pairs: [[t('E 大调', 'E 長調', 'E major'), '4']] },
   d1viylt6: { prompt: t('三种小调与关系大调 ↔ 特点', '3 種類の短音階と平行調 ↔ 特徴', 'The three minors and the relative major ↔ what marks them'), pairs: [[t('关系大调', '平行調（長調）', 'relative major'), t('主音比小调主音高小三度', '主音が短調の主音より短 3 度上', 'tonic a minor third above the minor tonic')]] },

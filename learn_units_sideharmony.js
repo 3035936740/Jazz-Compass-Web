@@ -191,6 +191,8 @@ export const UNITS = [
   // ======================= 套路进行 1：四和弦套路 =======================
   {
     id: 'schemas', parent: 'functions', section: 'harmony', feature: 'progression', icon: '1564',
+    // 五度圈上可以把调里各级和弦（罗马数字）标出来
+    extraTools: [{ feature: 'circle' }],
     title: t('套路进行 1：四和弦套路与数字写法', '定番進行 1：4 コードの型と数字表記', 'Schemas 1: four-chord schemas and number names'),
     blurb: t('4361、1564 这样的数字怎么读，doo-wop、singer/songwriter、hopscotch 三种四和弦套路，旋转与调性模糊，王道与卡农', '4361・1564 の読み方、doo-wop・singer/songwriter・hopscotch、ローテーションと調性のあいまいさ、王道進行とカノン', 'Reading numbers like 4361 and 1564, doo-wop, singer/songwriter and hopscotch, rotations and ambiguity, royal road and the Canon'),
     cards: [
@@ -370,6 +372,8 @@ export const UNITS = [
   // ======================= 套路进行 2：借用、小调与七和弦变形 =======================
   {
     id: 'schemas2', parent: 'chromatic', section: 'harmony', feature: 'progression', icon: 'iv',
+    // 五度圈上可以把调里各级和弦（罗马数字）标出来
+    extraTools: [{ feature: 'circle' }],
     title: t('套路进行 2：借用、小调与变形', '定番進行 2：借用・短調・変形', 'Schemas 2: borrowing, minor and variants'),
     blurb: t('IV–iv–I、小调的平行大调参照写法、按上下文加七音、副属与三全音替代、后门与 line cliché', 'IV–iv–I、短調の同主長調基準の書き方、文脈による七の和音、副属とトライトーン代理、裏口進行とライン・クリシェ', 'IV–iv–I, the parallel-major reference in minor, sevenths by context, applied chords and tritone subs, the backdoor and the line cliché'),
     cards: [
@@ -717,6 +721,8 @@ export const UNITS = [
   // ======================= 和弦符号与罗马数字对照 =======================
   {
     id: 'symbols2', parent: 'symbols', section: 'harmony', feature: 'chordsymbols', icon: 'G/B',
+    // 五度圈上可以把调里各级和弦（罗马数字）标出来
+    extraTools: [{ feature: 'circle' }],
     title: t('和弦符号与罗马数字：两套记法对照', 'コード記号とローマ数字：2 つの表記', 'Chord symbols vs Roman numerals'),
     blurb: t('绝对与相对、斜线和弦与转位数字、流行的 6 与古典的 6、sus 与 add', '絶対と相対、スラッシュ・コードと転回形の数字、ポップスの 6 と古典の 6、sus と add', 'Absolute vs relative, slash chords vs figures, the pop 6 vs the classical 6, sus and add'),
     cards: [

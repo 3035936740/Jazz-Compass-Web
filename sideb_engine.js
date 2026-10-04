@@ -3,9 +3,9 @@
 //
 // 原则：音乐优先于分数，发现优先于背诵，成就感优先于惩罚感。任何增加难度的设计，都要同时增加反馈、理解感或成就感——
 // 所以 60% 是"掌握门槛"而不是"惩罚门槛"：没过时讲解、实验、实操的进度全部保留，只补弱项（补弱挑战），不用整关重来。
-import { gradeCard, isDone } from './learn_engine.js?v=20261003-s3';
-import { SKILLS } from './sideb_errors.js?v=20261004-b2';
-import { GENERATORS } from './learn_generators.js?v=20261004-g3';
+import { gradeCard, isDone } from './learn_engine.js?v=20261004-s4';
+import { SKILLS } from './sideb_errors.js?v=20261004-w5';
+import { GENERATORS } from './learn_generators.js?v=20261004-g4';
 
 /** 一关的五段：发现 → 解释 → 实验 → 挑战 → 实操（只有关键技能关才有实操） */
 export const SECTION_ORDER = ['discover', 'explain', 'experiment', 'challenge', 'lab'];
@@ -113,7 +113,7 @@ export function gradeNode(node, response) {
     case 'page': case 'demo': case 'guide': case 'experiment':
       return { ok: true, score: 1, errors: [] };
     case 'discover':
-      // 发现：先让耳朵 / 眼睛找答案；答了只给反馈（"原来如此"），不计分
+      // 发现：先让耳朵 / 眼睛找答案；答了只给反馈（揭晓发现），不计分
       return { ok: node.answer === undefined || response === node.answer, score: 1, errors: [], ungraded: true };
     case 'choice': case 'listen': {
       const ok = response === node.answer;
@@ -183,7 +183,7 @@ export function estimateMinutes(level) {
 const challengeCount = (level) => (level.sections?.challenge || []).reduce((n, node) => n + (node.type === 'gen' ? (node.count ?? 1) : isAssessed(node) ? 1 : 0), 0);
 /**
  * 关卡设计自检：把"B 面更深但不更闷"的原则写成可以测试的规则。返回问题列表（空 = 合格）
- *   - 至少一个"发现"节点，并写明这一关的"原来如此"（insight）——先听 / 看 / 操作，再解释
+ *   - 至少一个"发现"节点，并写明这一关的发现（insight）——先听 / 看 / 操作，再解释
  *   - 讲解不能连续超过 2 页：讲 2～3 个点就要有互动、试听或操作
  *   - 挑战 6～8 题；每题标技能；至少一半的题会换题（生成器或多个变体），重试测的是掌握不是记答案
  *   - 有实操就必须先有实验（先玩再考）

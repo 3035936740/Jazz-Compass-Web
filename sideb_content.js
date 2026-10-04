@@ -1,8 +1,12 @@
 // Side-B（翻面课程）的地图：6 章 43 关的元数据（编号、标题、对应 A 面关卡、有没有实操、是否核心关）。
 // 关卡内容（五段节点）在 sideb_units_<章>.js，按 id 挂进 LEVELS[...].content；还没做好的关卡在地图上显示"制作中"。
 // 设计见 SIDE_B_DESIGN.md。
-import { LEVEL_B2_4 } from './sideb_units_harmony.js?v=20261004-u1';
-import { LEVEL_B4_10 } from './sideb_units_rhythm.js?v=20261004-u1';
+import { LEVEL_B2_4 } from './sideb_units_harmony.js?v=20261004-u2';
+import { LEVEL_B4_10 } from './sideb_units_rhythm.js?v=20261004-u2';
+import { LEVEL_B2_1, LEVEL_B2_2, LEVEL_B2_3, LEVEL_B2_5, LEVEL_B2_6, LEVEL_B2_7, LEVEL_B2_8, LEVEL_B2_9, LEVEL_B2_10, LEVEL_B2_11, LEVEL_B2_12 } from './sideb_units_harmony2.js?v=20261004-w1';
+import { LEVEL_B3_1, LEVEL_B3_2, LEVEL_B3_3, LEVEL_B3_4, LEVEL_B3_5 } from './sideb_units_melody.js?v=20261004-w1';
+import { LEVEL_B4_1, LEVEL_B4_2, LEVEL_B4_3, LEVEL_B4_4, LEVEL_B4_5, LEVEL_B4_6, LEVEL_B4_7, LEVEL_B4_8, LEVEL_B4_9 } from './sideb_units_jazz.js?v=20261004-w5';
+import { LEVEL_B1_1, LEVEL_B1_2, LEVEL_B1_3, LEVEL_B1_4, LEVEL_B1_5, LEVEL_B1_6, LEVEL_B1_7 } from './sideb_units_basics.js?v=20261004-u2';
 
 const t = (zh, ja, en) => ({ zh, ja, en });
 
@@ -38,13 +42,13 @@ export const B_LEVELS = [
   L('B2-8', 'harmony', t('离调与转调', '一時的転調と転調', 'Tonicization and modulation'), ['tonicization', 'modulation2'], { lab: true, core: true }),
   L('B2-9', 'harmony', t('半音化和声：混合、那不勒斯、增六', '半音階的和声：借用・ナポリ・増六', 'Chromatic harmony: mixture, Neapolitan, augmented sixths'), ['chromatic', 'schemas2'], { lab: true }),
   L('B2-10', 'harmony', t('五度圈与调关系', '五度圏と調の関係', 'The circle of fifths and key relations'), ['circle']),
-  L('B2-11', 'harmony', t('新里曼变换', 'ネオ・リーマン変換', 'Neo-Riemannian transformations'), ['neoriemann']),
+  L('B2-11', 'harmony', t('新黎曼变换', 'ネオ・リーマン変換', 'Neo-Riemannian transformations'), ['neoriemann']),
   L('B2-12', 'harmony', t('和声综合：从分析到写作', '和声の総合：分析から作曲へ', 'Harmony synthesis: from analysis to writing'), [], { lab: true, core: true }),
   L('B3-1', 'melody', t('移调乐器与总谱阅读', '移調楽器と総譜の読み方', 'Transposing instruments and score reading'), ['instruments']),
   L('B3-2', 'melody', t('指板上的和声', '指板の上の和声', 'Harmony on the fretboard'), ['fretboard']),
   L('B3-3', 'melody', t('非和弦音分析', '非和声音の分析', 'Analysing embellishing tones'), ['nonchord', 'nctmore']),
   L('B3-4', 'melody', t('类别对位 I–II', '類別対位法 I–II', 'Species counterpoint I–II'), ['counterpoint', 'species'], { lab: true, core: true }),
-  L('B3-5', 'melody', t('类别对位 III–IV 与模仿', '類別対位法 III–IV と模倣', 'Species counterpoint III–IV and imitation'), ['species', 'canon'], { lab: true }),
+  L('B3-5', 'melody', t('类别对位 III–IV 与模仿', '類別対位法 III–IV と模倣', 'Species counterpoint III–IV and imitation'), ['species', 'canon'], { lab: true, core: true }),
   L('B4-1', 'jazz', t('节奏 II：连音、切分、摇摆与反拍', 'リズム II：連符・シンコペーション・スウィング・裏拍', 'Rhythm II: tuplets, syncopation, swing, off-beats'), ['swing', 'dictation'], { lab: true }),
   L('B4-2', 'jazz', t('布鲁斯：形式、音阶与和声', 'ブルース：形式・音階・和声', 'Blues: form, scale and harmony'), ['blues', 'bluesscale', 'blues2']),
   L('B4-3', 'jazz', t('ii–V–I 与和弦—音阶', 'ii–V–I とコード・スケール', 'ii–V–I and chord–scale theory'), ['jazz', 'chordscale']),
@@ -67,7 +71,14 @@ export const B_LEVELS = [
 ];
 
 /** 已经做好的关卡内容（其余显示"制作中"） */
-const CONTENT = { 'B2-4': LEVEL_B2_4, 'B4-10': LEVEL_B4_10 };
+const CONTENT = {
+  'B1-1': LEVEL_B1_1, 'B1-2': LEVEL_B1_2, 'B1-3': LEVEL_B1_3, 'B1-4': LEVEL_B1_4, 'B1-5': LEVEL_B1_5, 'B1-6': LEVEL_B1_6, 'B1-7': LEVEL_B1_7,
+  'B2-1': LEVEL_B2_1, 'B2-2': LEVEL_B2_2, 'B2-3': LEVEL_B2_3, 'B2-4': LEVEL_B2_4, 'B2-5': LEVEL_B2_5, 'B2-6': LEVEL_B2_6,
+  'B2-7': LEVEL_B2_7, 'B2-8': LEVEL_B2_8, 'B2-9': LEVEL_B2_9, 'B2-10': LEVEL_B2_10, 'B2-11': LEVEL_B2_11, 'B2-12': LEVEL_B2_12,
+  'B3-1': LEVEL_B3_1, 'B3-2': LEVEL_B3_2, 'B3-3': LEVEL_B3_3, 'B3-4': LEVEL_B3_4, 'B3-5': LEVEL_B3_5,
+  'B4-1': LEVEL_B4_1, 'B4-2': LEVEL_B4_2, 'B4-3': LEVEL_B4_3, 'B4-4': LEVEL_B4_4, 'B4-5': LEVEL_B4_5, 'B4-6': LEVEL_B4_6, 'B4-7': LEVEL_B4_7, 'B4-8': LEVEL_B4_8, 'B4-9': LEVEL_B4_9,
+  'B4-10': LEVEL_B4_10,
+};
 B_LEVELS.forEach((level) => { if (CONTENT[level.id]) Object.assign(level, CONTENT[level.id], { id: level.id, chapter: level.chapter, title: level.title, a: level.a }); });
 
 export const levelById = (id) => B_LEVELS.find((level) => level.id === id) || null;

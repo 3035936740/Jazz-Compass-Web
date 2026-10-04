@@ -9,7 +9,11 @@ export function gradeCard(card, response) {
     const label = (id) => JSON.stringify(card.bank?.find((b) => b.id === id)?.label ?? id);
     return Array.isArray(response) && response.length === card.answer.length && response.every((value, i) => value === card.answer[i] || label(value) === label(card.answer[i]));
   }
-  if (card.type === 'match') return card.pairs.every((_, i) => response?.[i] === i);
+  if (card.type === 'match') {
+    // 右边文字完全相同的两项可以互换（例如两个"从上数第二线"）：连到任何一个都算对
+    const right = (j) => JSON.stringify(card.pairs[j]?.[1]);
+    return card.pairs.every((_, i) => response?.[i] === i || (response?.[i] !== undefined && right(response[i]) === right(i)));
+  }
   return true;
 }
 

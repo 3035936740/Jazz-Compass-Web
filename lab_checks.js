@@ -18,6 +18,7 @@
 //     切分 = 弱位置上的节奏重音，可以由连音线、附点、休止或力度造成（ref:omt2e-rhythm-more）；
 //     单拍子每拍一个四分音符（4/4 等）、复拍子每拍一个附点四分音符（6/8 等）（ref:omt2e-simple-meter ref:omt2e-compound-meter）
 //   复节奏 / 节拍调制：ref:wiki-polyrhythm ref:wiki-metric-modulation
+//   类别对位：沿用 counterpoint.js 的逐条规则（ref:omt-species1 ref:omt-species2 ref:omt-species3 ref:omt-species4 ref:omt2e-intro）
 //   集合级运算：ref:omt2e-normal-order ref:omt2e-prime-form ref:omt2e-ic-vector（沿用 post_tonal.js）
 import { checkSATB, identifyChord, PARTS, groupFourPart } from './satb_check.js?v=20261004-r32';
 import { parseRoman, realize } from './prog_library.js';
@@ -27,6 +28,8 @@ import { normalOrder, primeForm, intervalVector } from './post_tonal.js';
 import { metricModulation, PRESETS } from './poly_meter.js';
 import { parseChordSymbol } from './chord_symbols.js';
 import { parseNote } from './pitch_spelling.js';
+import { checkCounterpoint } from './counterpoint.js';
+import { MESSAGES as CP_MESSAGES } from './counterpoint_messages.js?v=20261004-w1';
 
 const t = (zh, ja, en) => ({ zh, ja, en });
 const mod = (n) => ((n % 12) + 12) % 12;
@@ -64,9 +67,21 @@ const QUALITY_TO_SATB = { maj: 'maj', min: 'min', dim: 'dim', aug: 'aug', dom7: 
 const SEVENTHS = ['dom7', 'maj7', 'min7', 'hdim7', 'dim7', 'minmaj7'];
 /** 各性质的组成音（相对根音的半音数；顺序 = 根、三、五、七，下标就是转位） */
 const QUALITY_SETS = { maj: [0, 4, 7], min: [0, 3, 7], dim: [0, 3, 6], aug: [0, 4, 8], dom7: [0, 4, 7, 10], maj7: [0, 4, 7, 11], min7: [0, 3, 7, 10], hdim7: [0, 3, 6, 10], dim7: [0, 3, 6, 9], minmaj7: [0, 3, 7, 11] };
-/** 'ii6' 'V6/5' 'V7' 'I6/4' 'viiø7' → { rootPc, quality（satb_check 的名字）, position } */
+const LETTER_NAMES = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
+/**
+ * 'ii6' 'V6/5' 'V7' 'I6/4' 'viiø7' → { rootPc, quality（satb_check 的名字）, position }
+ * 副属和弦 'V/V' 'V6/5/V' 'vii°7/V'：先求出被离调的和弦的根音，再把斜杠前面的部分放到以它为主音的调里解读（ref:omt2e-tonicization）
+ * 'N6' = ♭II6（那不勒斯六和弦，ref:omt2e-neapolitan）
+ */
 export function parseRomanFigure(text, keyName = 'C') {
   let base = String(text).trim();
+  if (/^N6$/i.test(base)) base = 'bII6';
+  const applied = /^(.+?)\/([b#♭♯]?(?:VII|VI|IV|V|III|II|I|vii|vi|iv|v|iii|ii|i)[°ø+]?)$/.exec(base);
+  if (applied && !/^\d/.test(applied[2])) {
+    const target = parseRomanFigure(applied[2], keyName);
+    if (!target) return null;
+    return parseRomanFigure(applied[1], LETTER_NAMES[target.rootPc]);
+  }
   let position = 0;
   let seventh = false;
   for (const [fig, pos, isSeventh] of FIGURES) {
@@ -606,7 +621,101 @@ export function checkSetClass(submission, { pcs }) {
 }
 
 // ---------------- 统一入口 ----------------
-export const CHECKERS = { fourPart: checkFourPart, jazzVoicing: checkJazzVoicing, rhythm: checkRhythm, rhythmGrid: checkRhythm, polyGrid: checkPolyGrid, tempo: checkTempoLab, setClass: checkSetClass };
+// ---------------- 类别对位（定旋律预先写在一行谱上，玩家在另一行写对位） ----------------
+/** 规则代码 → 评分项与扣分（error 规则扣得多、warning 只扣一点）；错误类型给 sideb_errors 用 */
+const SPECIES_GROUPS = {
+  frame: ['start-interval', 'final-interval', 'final-step', 'final-contrary', 'penultimate', 'cadence-suspension'],
+  consonance: ['dissonance', 'downbeat-dissonance', 'weak-not-passing', 'weak-unexplained', 'suspension-preparation', 'suspension-resolution', 'suspension-type'],
+  parallels: ['parallel-perfect', 'direct-perfect', 'downbeat-parallel', 'downbeat-parallel-3', 'weak-perfect-run', 'suspension-repeat'],
+  rhythm: ['rhythm', 'note-value', 'eighth-placement'],
+};
+const speciesGroup = (rule) => Object.keys(SPECIES_GROUPS).find((g) => SPECIES_GROUPS[g].includes(rule)) || 'line';
+const speciesError = (issue) => {
+  if (issue.rule === 'parallel-perfect' || issue.rule.startsWith('downbeat-parallel') || issue.rule === 'weak-perfect-run') return /5|12/.test(issue.params?.interval || '') ? 'parallel-fifths' : 'parallel-octaves';
+  if (issue.rule === 'direct-perfect') return 'direct-fifths';
+  if (issue.rule.startsWith('suspension')) return 'suspension';
+  if (issue.rule === 'voice-crossing' || issue.rule === 'voice-overlap') return 'voice-crossing';
+  return { frame: 'cp-frame', consonance: 'cp-dissonance', rhythm: 'cp-rhythm', line: 'cp-line' }[speciesGroup(issue.rule)] || 'cp-line';
+};
+const SPECIES_POINTS = { frame: 10, consonance: 8, parallels: 12.5, rhythm: 5, line: 5 };
+const pitchName = (n) => `${n.letter}${({ 1: '#', 2: 'x', '-1': 'b', '-2': 'bb' })[n.alter ?? 0] || ''}${n.octave}`;
+/** 一行谱 → 按小节分好的 [{ p, d, tieIn }]（跨小节线的音拆成两段，后一段 tieIn），以及写了几个音 */
+function staffBars(events, meter, key, barBeats) {
+  const bars = [];
+  let prev = null;
+  timedEvents(events, meter, key).forEach(({ beat, e }) => {
+    const beats = durationBeats(e.duration, e.dots);
+    const p = e.rest || !e.notes?.length ? null : pitchName(e.notes[0]);
+    const tieIn = Boolean(p && prev && prev.tie && prev.p === p);
+    let at = beat; let left = beats; let first = true;
+    while (left > EPS) {
+      const bar = Math.floor(at / barBeats + EPS);
+      const room = (bar + 1) * barBeats - at;
+      const d = Math.min(left, room);
+      (bars[bar] ||= []).push({ p, d: round(d), ...(p && (tieIn || !first) ? { tieIn: true } : {}) });
+      at += d; left -= d; first = false;
+    }
+    prev = { p, tie: !e.rest && e.tie };
+  });
+  return bars;
+}
+/**
+ * 类别对位（满分 100，权重可以用 params.weights 改）：
+ *   核心   开头与终止 20（do / sol 开始、级进反向到 do、倒数第二个音程是小三度或大六度）
+ *          协和与不协和 25（第一类全协和；第二类弱拍只有经过音；第三类经过音 / 辅助音 / 双辅助音 / 换音；第四类挂留的预备与级进下行解决）
+ *   技术   无平行 / 直接完全协和 25
+ *   完成度 节奏与小节 15（每类该有的时值；没写完的小节按比例扣）
+ *   质量   旋律线条 15（旋律不协和音程、高点、音域、反复、交叉 / 超越等）
+ *   硬性条件：定旋律被改动
+ * @param {{ voices, key, meter }} submission 五线谱编辑器的内容（定旋律在 cantusStaff 那一行）
+ * @param {{ species, cantus: string[], position?, cantusStaff?, weights? }} params
+ */
+export function checkSpecies(submission, { species = 1, cantus = [], position = 'above', cantusStaff, weights = {} }) {
+  const W = { frame: 20, consonance: 25, parallels: 25, rhythm: 15, line: 15, ...weights };
+  const meter = submission.meter || [4, 4];
+  const barBeats = (meter[0] * 4) / meter[1];
+  const cfStaff = cantusStaff ?? (position === 'above' ? 1 : 0);
+  const cfBars = staffBars(submission.voices?.[cfStaff], meter, submission.key || 0, barBeats);
+  const cfNotes = cfBars.flat().filter((n) => n.p && !n.tieIn).map((n) => n.p);
+  const hardFail = [];
+  const same = cfNotes.length === cantus.length && cfNotes.every((p, i) => p === cantus[i]);
+  if (!same) hardFail.push({ error: 'cantus-changed', text: fill(t('定旋律被改动了：应该是 {c}', '定旋律が変わっている：正しくは {c}', 'The cantus firmus was changed: it should be {c}'), { c: cantus.join(' ') }) });
+  const raw = staffBars(submission.voices?.[1 - cfStaff], meter, submission.key || 0, barBeats).slice(0, cantus.length);
+  const written = raw.filter((bar) => bar?.some((n) => n.p)).length;
+  const bars = cantus.map((_, i) => (raw[i]?.length ? raw[i] : [{ p: null, d: barBeats }]));
+  let issues = []; let annotations = [];
+  if (written) {
+    try { ({ issues, annotations } = checkCounterpoint({ species, cantus, bars, position })); } catch (err) { issues = [{ rule: 'rhythm', bar: 0, severity: 'error', params: {} }]; }
+  }
+  const msg = (issue) => {
+    const where = issue.bar !== undefined ? fill(t('第 {n} 小节：', '第 {n} 小節：', 'Bar {n}: '), { n: issue.bar + 1 }) : t('', '', '');
+    return t(...['zh', 'ja', 'en'].map((l) => where[l] + (CP_MESSAGES[l]?.[issue.rule] || issue.rule).replace(/\{(\w+)\}/g, (_, k) => issue.params?.[k] ?? '')));
+  };
+  // 没写的小节：节奏项按比例扣，其他项只按写了的部分给分；空小节本身引出的"节奏不对"不再重复扣
+  const emptyBars = new Set(bars.map((b, i) => (b.every((n) => !n.p) ? i : -1)).filter((i) => i >= 0));
+  const ENDING = ['final-interval', 'final-step', 'final-contrary', 'penultimate', 'cadence-suspension'];
+  const unfinished = emptyBars.has(bars.length - 1);
+  const real = issues.filter((i) => !(emptyBars.has(i.bar) && i.rule === 'rhythm') && !(unfinished && ENDING.includes(i.rule)));
+  const by = (group) => real.filter((i) => speciesGroup(i.rule) === group).map((i) => deduct(i.severity === 'error' ? SPECIES_POINTS[group] : 3, msg(i), speciesError(i)));
+  // 第四类：弱拍的音要用连音线连进下一个强拍（同音高重新奏出不算挂留，ref:omt-species4）
+  const untied = species === 4 ? bars.slice(1).map((bar, i) => (bar[0]?.p && !bar[0].tieIn && bar[0].p === bars[i].at(-1)?.p ? i + 1 : -1)).filter((i) => i >= 0) : [];
+  const dissonantAt = (bar) => annotations.some((a) => a.bar === bar && a.index === 0 && a.cls === 'dissonant');
+  const tieText = (i) => fill(t('第 {n} 小节：强拍的 {p} 应该用连音线从上一小节连过来（不要重新奏出）', '第 {n} 小節：強拍の {p} は前の小節からタイでつなぐ（弾き直さない）', 'Bar {n}: tie the downbeat {p} over from the previous bar (don’t re-strike it)'), { n: i + 1, p: bars[i][0].p });
+  // 不协和的强拍重新奏出 = 挂留没有成立（扣在"协和与不协和"）；协和的只扣节奏
+  const tieDeductions = untied.filter((i) => !dissonantAt(i)).map((i) => deduct(3, tieText(i), 'missing-tie'));
+  const strikeDeductions = untied.filter(dissonantAt).map((i) => deduct(SPECIES_POINTS.consonance, tieText(i), 'suspension'));
+  const cover = (max) => coverageDeduction(max, written, cantus.length);
+  const items = [
+    item('frame', 'core', W.frame, t('开头与终止', '開始と終止', 'Opening and cadence'), [...cover(W.frame), ...by('frame')]),
+    item('consonance', 'core', W.consonance, t('协和与不协和的处理', '協和・不協和の扱い', 'Consonance and dissonance'), [...cover(W.consonance), ...by('consonance'), ...strikeDeductions]),
+    item('parallels', 'technical', W.parallels, t('无平行 / 直接完全协和', '平行・並達の完全協和なし', 'No parallel or direct perfect intervals'), [...cover(W.parallels), ...by('parallels')]),
+    item('rhythm', 'completeness', W.rhythm, t('节奏与小节', 'リズムと小節', 'Rhythm and bars'), [...cover(W.rhythm), ...by('rhythm'), ...tieDeductions]),
+    item('line', 'quality', W.line, t('旋律线条', '旋律線', 'Melodic line'), [...cover(W.line), ...by('line')]),
+  ];
+  return { ...rubric(items, hardFail), bars };
+}
+
+export const CHECKERS = { fourPart: checkFourPart, jazzVoicing: checkJazzVoicing, rhythm: checkRhythm, rhythmGrid: checkRhythm, polyGrid: checkPolyGrid, tempo: checkTempoLab, setClass: checkSetClass, species: checkSpecies };
 /** 按实操说明（spec.check + spec.params）给一次提交打分：{ score 0–100, max, passed（没有硬性失败）, hardFail, items } */
 export function evaluateLab(spec, submission) {
   const checker = CHECKERS[spec?.check];

@@ -1,15 +1,15 @@
 // 乐理闯关界面：关卡地图（主关 + 进阶分支 + 综合测验 + 结业挑战）、关卡播放器（引导卡 / 选择 / 填空 / 连线）、
 // 图示、提示与解析、去工具里看看（带学习记录，回来时还是同一题）、结算
 // 题目与依据见 learn_content.js / learn_units_*.js / learn_branches_*.js；生成题见 learn_generators.js；规则见 learn_engine.js
-import { UNITS, SECTIONS, SIDES } from './learn_content.js?v=20261004-s8';
+import { UNITS, SECTIONS, SIDES } from './learn_content.js?v=20261004-w3';
 import {
   createSession, currentItem, answer, advance, isFinished, progressRatio, loadProgress, saveProgress, completeUnit, isUnlocked, nextUnitIndex, shuffle,
   levelKey, parseLevelKey, isLevelUnlocked, isDone, MIX_SLOT, buildMixedCards, buildFinalCards, FINAL_KEY, FINAL_EX_KEY, finalUnlocked, finalExUnlocked,
   buildChapterCards, chapterKey, parseChapterKey, chapterUnlocked, chapterExUnlocked,
   saveResume, loadResume, clearResume, unitLevelKeys, setLevelStars, emptyProgress,
   loadReview, saveReview, recordMistake, recordReviewAnswer, dueReview, exportProgress, importProgress, starsFor, isSideLevelUnlocked, unitFullyDone,
-} from './learn_engine.js?v=20261003-s3';
-import { expandCards } from './learn_generators.js?v=20261004-g3';
+} from './learn_engine.js?v=20261004-s4';
+import { expandCards } from './learn_generators.js?v=20261004-g4';
 import { worksheetHTML, openWorksheet, printable } from './worksheet.js?v=20261003-w1';
 import { renderVisual } from './learn_visuals.js?v=20261003-r31';
 import { el, button, language, midiToFrequency, cite } from './module_kit.js';
@@ -591,7 +591,7 @@ export function mountLearn(target, { playChord }) {
       else detail.appendChild(el('p', 'learn-muted', t.branchLocked));
     }
     paint();
-    sheet.append(track, detail, toolButton(unit.feature, unit.toolQuery || null, t.tool(toolName(unit.feature)), 'learn-link'),
+    sheet.append(track, detail, ...unitTools(unit).map((tool) => toolButton(tool.feature, tool.q, t.tool(toolName(tool.feature)), 'learn-link')),
       withIcon(button('learn-link learn-print', '', () => printUnit(unit)), 'book', t.printSheet));
     return sheet;
   }
@@ -714,6 +714,16 @@ export function mountLearn(target, { playChord }) {
     persist(true);
     if (globalThis.location) globalThis.location.hash = `#${feature}${query ? `?q=${encodeURIComponent(query)}` : ''}`;
   }
+  /** 一个关卡相关的工具：主工具（unit.feature）+ extraTools（例如功能与罗马数字关卡也能用五度圈标出各级和弦），去重 */
+  function unitTools(unit) {
+    const list = [{ feature: unit.feature, q: unit.toolQuery || null }, ...(unit.extraTools || []).map((x) => ({ feature: x.feature, q: x.q || null }))];
+    return list.filter((x, i) => x.feature && list.findIndex((y) => y.feature === x.feature && y.q === x.q) === i);
+  }
+  /** 题卡 / 引导卡下方的工具：卡上写的工具优先，再加上本关的工具（含 extraTools，例如罗马数字关卡的五度圈）；考试等没有单一关卡时用本关的主工具 */
+  function cardTools(card, level) {
+    const list = [...(card.tool ? [{ feature: card.tool.feature, q: card.tool.q || null }] : []), ...(level.unit ? unitTools(level.unit) : level.feature ? [{ feature: level.feature, q: null }] : [])];
+    return list.filter((x, i) => x.feature && list.findIndex((y) => y.feature === x.feature && (y.q || null) === (x.q || null)) === i);
+  }
   function toolButton(feature, query, label, className = 'learn-btn ghost') {
     const b = button(className, label, () => goToTool(feature, query));
     b.classList.add('learn-tool-jump');
@@ -783,10 +793,10 @@ export function mountLearn(target, { playChord }) {
     if (card.demo?.keys) body.appendChild(miniKeyboard(card.demo.keys));
     if (card.demo?.play) body.appendChild(withIcon(button('learn-btn ghost', '', () => playDemo(card.demo)), 'play', t.play));
     // 每张引导卡都能一键去相关的工具看看（题卡没写就用本关对应的工具）
-    const tool = card.tool || (level.feature ? { feature: level.feature } : null);
-    if (tool) {
+    const tools = cardTools(card, level);
+    if (tools.length) {
       const row = el('div', 'learn-tool-row');
-      row.append(toolButton(tool.feature, tool.q, t.openTool(toolName(tool.feature))), el('p', 'learn-muted', t.toolNote));
+      row.append(...tools.map((tool) => toolButton(tool.feature, tool.q, t.openTool(toolName(tool.feature)))), el('p', 'learn-muted', t.toolNote));
       body.appendChild(row);
     }
     const src = el('p', 'learn-source', `${t.source} `);
@@ -838,8 +848,7 @@ export function mountLearn(target, { playChord }) {
       withIcon(button('learn-link', '', () => { hintBox.textContent = tx(card.hint); hintBox.classList.add('is-open'); }), 'bulb', t.hint),
       withIcon(button('learn-link', '', () => { hintBox.textContent = tx(card.explain); hintBox.classList.add('is-open'); }), 'book', t.explain),
     );
-    const tool = card.tool || (level.feature ? { feature: level.feature } : null);
-    if (tool) help.appendChild(toolButton(tool.feature, tool.q, t.openTool(toolName(tool.feature)), 'learn-link'));
+    cardTools(card, level).forEach((tool) => help.appendChild(toolButton(tool.feature, tool.q, t.openTool(toolName(tool.feature)), 'learn-link')));
     const check = button('learn-btn primary wide', t.check, () => {
       const firstTry = !currentItem(session)?.retry;
       const result = answer(session, getResponse());
@@ -1201,7 +1210,7 @@ export function mountLearn(target, { playChord }) {
         row.appendChild(button('learn-btn primary', nextTitle, () => startLevel(levelKey(unit.id, slot + 1))));
       }
       if (slot === 0 && index >= 0 && index < UNITS.length - 1) row.appendChild(button('learn-btn ghost', `${t.nextUnit} · ${tx(UNITS[index + 1].title)}`, () => startLevel(UNITS[index + 1].id)));
-      row.appendChild(toolButton(unit.feature, unit.toolQuery || null, t.tool(toolName(unit.feature)), 'learn-link'));
+      unitTools(unit).forEach((tool) => row.appendChild(toolButton(tool.feature, tool.q, t.tool(toolName(tool.feature)), 'learn-link')));
     }
     row.appendChild(button('learn-btn ghost', t.backToMap, () => renderMap()));
     shell.appendChild(row);
@@ -1260,7 +1269,7 @@ export function mountLearn(target, { playChord }) {
   function showSideB(then, { animate = true } = {}) {
     if (!sideBOpen()) { renderMap(); return; }
     stop(); closeSheets();
-    const mount = () => import('./sideb_ui.js?v=20261004-v9').then(({ mountSideB }) => {
+    const mount = () => import('./sideb_ui.js?v=20261004-w5').then(({ mountSideB }) => {
       writeSide('b');
       root.classList.add('is-side-b');
       sideB = mountSideB(root, {
@@ -1268,6 +1277,10 @@ export function mountLearn(target, { playChord }) {
         onFlipBack: () => flipTo(() => flipBack()),
         openA: (id) => { flipBack(false); target.openUnit(id); },
         aTitle: (id) => tx((UNITS.find((u) => u.id === id) || SIDES.find((side) => side.id === id))?.title) || id,
+        // 去工具：B 面关卡对应的 A 面关卡用到的工具（含 extraTools），以及节点上单独写的工具
+        toolsFor: (ids) => { const seen = new Set(); return ids.flatMap((id) => { const u = UNITS.find((x) => x.id === id) || SIDES.find((x) => x.id === id); return u ? unitTools(u) : []; }).filter((x) => { const k = `${x.feature}|${x.q || ''}`; if (seen.has(k)) return false; seen.add(k); return true; }); },
+        toolName,
+        openTool: (feature, query) => goToTool(feature, query),
         progressView: () => { progress = loadProgress(); return sideBView(); },
       });
       then?.(sideB);

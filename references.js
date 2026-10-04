@@ -42,7 +42,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/01%3A_Fundamentals/1.12%3A_Major_Scales_Scale_Degrees_and_Key_Signatures',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['pitch_spelling.js', 'staff_reading.js', 'staff_reading_ui.js', 'composition.js', 'staff_edit.js', 'prog_quiz.js', 'circle_panel.js', 'learn_branches_basics.js', 'learn_branches_jazz.js', 'learn_units_basics.js', 'learn_units_sidebasics.js', 'learn_generators.js'],
+    usedIn: ['pitch_spelling.js', 'staff_reading.js', 'staff_reading_ui.js', 'composition.js', 'staff_edit.js', 'prog_quiz.js', 'circle_panel.js', 'sideb_units_basics.js', 'sideb_toys.js', 'sideb_units_harmony2.js', 'learn_branches_basics.js', 'learn_branches_jazz.js', 'learn_units_basics.js', 'learn_units_sidebasics.js', 'learn_generators.js'],
     usedFor: { zh: '音阶级数 1–7 的编号（第 n 级与主音相距 n 度），用于七声音阶按音级拼写', ja: '音階の度数 1–7（第 n 音は主音から n 度）——七音音階の綴りに使用', en: 'Scale degrees 1–7 (degree n lies a generic nth above the tonic) — used to spell heptatonic scales by letter' },
   },
   {
@@ -53,7 +53,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/01%3A_Fundamentals/1.18%3A_Inversion_and_Figured_Bass',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['figured_bass.js', 'figured_bass_ui.js', 'prog_library.js', 'lab_checks.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_sideharmony.js', 'learn_generators.js'],
+    usedIn: ['figured_bass.js', 'figured_bass_ui.js', 'prog_library.js', 'lab_checks.js', 'sideb_units_harmony2.js', 'sideb_toys.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_sideharmony.js', 'learn_generators.js'],
     usedFor: { zh: '数字低音：低音之上的音程、三和弦与七和弦各位置的数字与简写、变音记号', ja: '数字付き低音：低音からの音程、三和音・七の和音の数字と省略形、変化記号', en: 'Figured bass: intervals above the bass, full and abbreviated figures, accidentals' },
   },
   {
@@ -64,7 +64,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/01%3A_Fundamentals/1.19%3A_Roman_Numerals_and_SATB_Chord_Construction',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['figured_bass.js', 'figured_bass_ui.js', 'harmonize.js', 'satb_check.js', 'classical_voicing.js', 'prog_library.js', 'prog_library_ui.js', 'lab_checks.js', 'sideb_units_harmony.js', 'learn_branches_basics.js', 'learn_branches_harmony.js', 'learn_branches_jazz.js', 'learn_units_harmony.js', 'learn_units_jazz.js', 'learn_units_sideharmony.js', 'learn_generators.js'],
+    usedIn: ['figured_bass.js', 'figured_bass_ui.js', 'harmonize.js', 'satb_check.js', 'classical_voicing.js', 'prog_library.js', 'prog_library_ui.js', 'lab_checks.js', 'sideb_units_harmony.js', 'sideb_units_harmony2.js', 'sideb_toys.js', 'learn_branches_basics.js', 'learn_branches_harmony.js', 'learn_branches_jazz.js', 'learn_units_harmony.js', 'learn_units_jazz.js', 'learn_units_sideharmony.js', 'learn_generators.js'],
     usedFor: { zh: '罗马数字的大小写与 ° + ø 记号；SATB 的六条规则、四个声部的音域、间距（女中–男高最常出错）、交叉、重复（导音与和弦七音不重复）（四部和声检查与 Side-B 四部写作 I）', ja: 'ローマ数字の大文字・小文字と ° + ø。SATB の 6 規則、4 声部の音域、間隔（A–T が最も誤りやすい）、交差、重複（導音と第 7 音は重複しない）（4 声体チェックと Side-B 4 声体 I）', en: 'Roman-numeral case and the °, + and ø signs; the six SATB rules, voice ranges, spacing (alto–tenor most error-prone), crossing, doubling (never the leading tone or seventh) (four-part checker and Side-B Four-part writing I)' },
   },
   {
@@ -85,7 +85,7 @@ export const REFERENCES = [
     url: 'https://openmusictheory.github.io/intervals.html',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-01',
-    usedIn: ['counterpoint.js', 'ear_training.js', 'ear_training_ui.js', 'ear_training.test.mjs', 'pitch_spelling.js', 'chord_spelling.test.mjs', 'canon.js', 'canon_ui.js', 'composition.js', 'staff_edit.js', 'circle_panel.js', 'learn_branches_basics.js', 'learn_units_basics.js', 'learn_units_melody.js', 'learn_units_sidemelody.js', 'learn_generators.js'],
+    usedIn: ['counterpoint.js', 'ear_training.js', 'ear_training_ui.js', 'ear_training.test.mjs', 'pitch_spelling.js', 'chord_spelling.test.mjs', 'canon.js', 'canon_ui.js', 'composition.js', 'staff_edit.js', 'circle_panel.js', 'sideb_units_basics.js', 'sideb_toys.js', 'sideb_units_melody.js', 'learn_branches_basics.js', 'learn_units_basics.js', 'learn_units_melody.js', 'learn_units_sidemelody.js', 'learn_generators.js'],
     usedFor: { zh: '和声与旋律中的协和、不协和音程分类', ja: '和声的・旋律的な協和音程と不協和音程の分類', en: 'Harmonic and melodic consonance and dissonance classes' },
   },
   {
@@ -271,7 +271,7 @@ export const REFERENCES = [
     url: 'https://en.wikipedia.org/wiki/Altered_scale',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['chord_symbols.js', 'chord_symbols_ui.js', 'chord_symbols.test.mjs', 'jazz_compass.js', 'learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_generators.js'],
+    usedIn: ['chord_symbols.js', 'chord_symbols_ui.js', 'chord_symbols.test.mjs', 'jazz_compass.js', 'sideb_units_jazz.js', 'learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_generators.js'],
     usedFor: { zh: 'alt 和弦：7alt 代替 C7♯5♭9♯9♯11 等写法；保留根音、大三度、小七度，其余音变化（♭9、♯9、♭5／♯11、♯5／♭13）', ja: 'alt コード：根音・長 3 度・短 7 度を残し他を変化させる。7alt 表記', en: 'The alt chord: 7alt replacing C7♯5♭9♯9♯11 etc.; root, major third and minor seventh kept, all else altered' },
   },
   {
@@ -282,7 +282,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/01%3A_Fundamentals/1.05%3A_Half_Steps_Whole_Steps_and_Accidentals',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['learn_branches_basics.js', 'learn_units_basics.js', 'learn_generators.js'],
+    usedIn: ['sideb_units_basics.js', 'sideb_toys.js', 'learn_branches_basics.js', 'learn_units_basics.js', 'learn_generators.js'],
     usedFor: { zh: '半音、全音、升降号与同音异名（教程入门关）', ja: '半音・全音・変化記号・異名同音（チュートリアル）', en: 'Half and whole steps, accidentals and enharmonics (tutorial basics)' },
   },
   {
@@ -293,7 +293,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/01%3A_Fundamentals/1.09%3A_Simple_Meter_and_Time_Signatures',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['staff_reading.js', 'staff_reading_ui.js', 'dictation.js', 'lab_checks.js', 'learn_branches_basics.js', 'learn_units_basics.js', 'learn_generators.js'],
+    usedIn: ['staff_reading.js', 'staff_reading_ui.js', 'dictation.js', 'lab_checks.js', 'sideb_units_basics.js', 'sideb_toys.js', 'learn_branches_basics.js', 'learn_units_basics.js', 'learn_generators.js'],
     usedFor: { zh: '拍、二/三/四拍子、单拍子与拍号（教程节拍关）', ja: '拍・単純拍子と拍子記号（チュートリアル）', en: 'Beat, duple/triple/quadruple, simple meter and time signatures (tutorial)' },
   },
   {
@@ -304,7 +304,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/01%3A_Fundamentals/1.10%3A_Compound_Meter_and_Time_Signatures',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['staff_reading.js', 'staff_reading_ui.js', 'lab_checks.js', 'learn_branches_basics.js', 'learn_units_basics.js', 'learn_generators.js'],
+    usedIn: ['staff_reading.js', 'staff_reading_ui.js', 'lab_checks.js', 'sideb_units_basics.js', 'sideb_toys.js', 'sideb_labs.js', 'learn_branches_basics.js', 'learn_units_basics.js', 'learn_generators.js'],
     usedFor: { zh: '复拍子：每拍分成三份、拍号上方表示分份数（教程节拍关）', ja: '複合拍子：1 拍 = 3 分割（チュートリアル）', en: 'Compound meter: beats divide in three; the top number counts divisions (tutorial)' },
   },
   {
@@ -326,7 +326,7 @@ export const REFERENCES = [
     url: 'https://openmusictheory.github.io/firstSpecies.html',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-01',
-    usedIn: ['counterpoint.js', 'satb_check.js', 'canon.js', 'canon_ui.js', 'lab_checks.js', 'sideb_units_harmony.js', 'learn_branches_melody.js', 'learn_units_melody.js', 'learn_units_sideharmony.js', 'learn_units_sidemelody.js'],
+    usedIn: ['counterpoint.js', 'satb_check.js', 'canon.js', 'canon_ui.js', 'lab_checks.js', 'sideb_units_harmony.js', 'sideb_units_basics.js', 'sideb_units_harmony2.js', 'sideb_units_melody.js', 'sideb_labs.js', 'learn_branches_melody.js', 'learn_units_melody.js', 'learn_units_sideharmony.js', 'learn_units_sidemelody.js'],
     usedFor: { zh: '第一类对位：开始与结束、平行与直接完全协和、声部交叉；为什么避免平行五八度（融合压过声部独立、稳定音程连续让音乐停滞）、直接八度、交叉与超越，反向进行最能保持独立（Side-B 四部写作 I）', ja: '第一類：開始と終止、並行・直行の完全協和、声部交差。平行 5・8 度を避ける理由（融合が独立に勝つ、安定した響きの連続が止める）、並達 8 度、交差と超越、反行が独立を保つ（Side-B 4 声体 I）', en: 'First species: openings and cadences, parallel and direct perfect intervals, voice crossing; why parallels are avoided (fusion over independence, stable sonorities stall motion), direct octaves, crossing and overlap, contrary motion preserves independence (Side-B Four-part writing I)' },
   },
   {
@@ -337,7 +337,7 @@ export const REFERENCES = [
     url: 'https://openmusictheory.github.io/secondSpecies.html',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-01',
-    usedIn: ['counterpoint.js', 'learn_branches_melody.js', 'learn_units_melody.js', 'learn_generators.js'],
+    usedIn: ['counterpoint.js', 'sideb_units_melody.js', 'lab_checks.js', 'learn_branches_melody.js', 'learn_units_melody.js', 'learn_generators.js'],
     usedFor: { zh: '第二类对位：强拍协和、弱拍经过音、强拍间的进行', ja: '第二類：強拍の協和、弱拍の経過音、強拍間の進行', en: 'Second species: consonant downbeats, weak-beat passing tones, downbeat-to-downbeat motion' },
   },
   {
@@ -348,7 +348,7 @@ export const REFERENCES = [
     url: 'https://openmusictheory.github.io/thirdSpecies.html',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-01',
-    usedIn: ['counterpoint.js', 'learn_branches_melody.js', 'learn_units_melody.js'],
+    usedIn: ['counterpoint.js', 'sideb_units_melody.js', 'lab_checks.js', 'learn_branches_melody.js', 'learn_units_melody.js'],
     usedFor: { zh: '第三类对位：经过音、辅助音、双辅助音与换音', ja: '第三類：経過音・刺繍音・二重刺繍音・カンビアータ', en: 'Third species: passing, neighbour and double-neighbour tones and the nota cambiata' },
   },
   {
@@ -359,7 +359,7 @@ export const REFERENCES = [
     url: 'https://openmusictheory.github.io/fourthSpecies.html',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-01',
-    usedIn: ['counterpoint.js', 'learn_branches_melody.js', 'learn_units_melody.js', 'learn_generators.js'],
+    usedIn: ['counterpoint.js', 'sideb_units_melody.js', 'lab_checks.js', 'sideb_labs.js', 'learn_branches_melody.js', 'learn_units_melody.js', 'learn_generators.js'],
     usedFor: { zh: '第四类对位：挂留的预备与解决、允许的挂留类型', ja: '第四類：掛留の予備と解決、許される掛留', en: 'Fourth species: preparing and resolving suspensions and the permitted types' },
   },
   {
@@ -370,7 +370,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/02%3A_Counterpoint_and_Galant_Schemas/2.01%3A_Introduction_to_Species_Counterpoint',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-01',
-    usedIn: ['counterpoint.js', 'learn_branches_basics.js', 'learn_branches_melody.js', 'learn_units_melody.js', 'learn_generators.js'],
+    usedIn: ['counterpoint.js', 'sideb_units_melody.js', 'lab_checks.js', 'learn_branches_basics.js', 'learn_branches_melody.js', 'learn_units_melody.js', 'learn_generators.js'],
     usedFor: { zh: '类别对位导论：协和分类、四种声部进行、以级进到达终止', ja: '類別対位法の導入：協和の分類、四種の進行、順次進行での終止', en: 'Introduction: consonance classes, the four kinds of motion, stepwise arrival at the final' },
   },
   {
@@ -392,7 +392,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/02%3A_Counterpoint_and_Galant_Schemas/2.07%3A_Gradus_ad_Parnassum_Exercises',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-01',
-    usedIn: ['counterpoint_ui.js', 'learn_branches_melody.js'],
+    usedIn: ['counterpoint_ui.js', 'sideb_units_melody.js', 'learn_branches_melody.js'],
     usedFor: { zh: 'Fux 各终止音所用的定旋律一览', ja: 'Fux が各終止音で用いた定旋律の一覧', en: 'The cantus firmi Fux uses for each modal final' },
   },
   {
@@ -403,7 +403,7 @@ export const REFERENCES = [
     url: 'https://github.com/MarkGotham/species',
     license: 'MIT',
     accessed: '2026-10-01',
-    usedIn: ['fux_species_data.js', 'scripts/build-fux-data.py', 'counterpoint_ui.js'],
+    usedIn: ['fux_species_data.js', 'scripts/build-fux-data.py', 'counterpoint_ui.js', 'sideb_units_melody.js', 'sideb_labs.js'],
     usedFor: { zh: 'Fux《Gradus ad Parnassum》二声部 46 个练习的原书解答（Norton/Mann 1965 版图号）', ja: 'Fux『グラドゥス・アド・パルナッスム』二声部 46 課題の原典解答（Norton/Mann 1965 年版の図番号）', en: 'Fux’s own solutions to the 46 two-voice exercises (figure numbers of the 1965 Norton/Mann edition)' },
   },
   {
@@ -414,7 +414,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/04%3A_Diatonic_Harmony_Tonicization_and_Modulation/4.04%3A_Embellishing_Tones',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-01',
-    usedIn: ['nonchord.js', 'nonchord_ui.js', 'prog_library.js', 'learn_branches_melody.js', 'learn_units_melody.js', 'learn_units_sideharmony.js', 'learn_units_sidejazz.js', 'learn_generators.js'],
+    usedIn: ['nonchord.js', 'nonchord_ui.js', 'prog_library.js', 'sideb_units_melody.js', 'sideb_toys.js', 'learn_branches_melody.js', 'learn_units_melody.js', 'learn_units_sideharmony.js', 'learn_units_sidejazz.js', 'learn_generators.js'],
     usedFor: { zh: '经过音、辅助音、倚音、逃音、延留音、上行延留音、先现音与持续音的定义', ja: '経過音・刺繍音・倚音・逸音・掛留音・リターデイション・先取音・保続音の定義', en: 'Definitions of passing, neighbour, appoggiatura, escape, suspension, retardation, anticipation and pedal tones' },
   },
   {
@@ -458,7 +458,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/04%3A_Diatonic_Harmony_Tonicization_and_Modulation/4.01%3A_Introduction_to_Harmony_Cadences_and_Phrase_Endings',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-01',
-    usedIn: ['harmonize.js', 'harmonize_ui.js', 'motif_phrase.js', 'reharm.js', 'composition.js', 'dictation.js', 'dictation_ui.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_side.js', 'learn_units_sidebasics.js', 'learn_units_sideharmony.js', 'learn_units_sidejazz.js'],
+    usedIn: ['harmonize.js', 'harmonize_ui.js', 'motif_phrase.js', 'reharm.js', 'composition.js', 'dictation.js', 'dictation_ui.js', 'sideb_units_harmony2.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_side.js', 'learn_units_sidebasics.js', 'learn_units_sideharmony.js', 'learn_units_sidejazz.js'],
     usedFor: { zh: '主、属功能的和弦，PAC、IAC、HC 的判定条件', ja: '主・属機能の和音と PAC・IAC・HC の条件', en: 'Tonic and dominant chords; conditions for PAC, IAC and HC' },
   },
   {
@@ -689,7 +689,7 @@ export const REFERENCES = [
     url: 'https://en.wikipedia.org/wiki/Canon_(music)',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-03',
-    usedIn: ['canon.js', 'canon_ui.js', 'learn_units_sidemelody.js'],
+    usedIn: ['canon.js', 'canon_ui.js', 'sideb_units_melody.js', 'sideb_toys.js', 'learn_units_sidemelody.js'],
     usedFor: { zh: '卡农：导句与答句、轮唱、严格与自由卡农、倒影卡农、逆行与扩大卡农', ja: 'カノン：先行声部と後続声部・輪唱・厳格 / 自由カノン・反行カノン', en: 'Canon: leader and follower, rounds, strict and free canons, inversion, retrograde and mensuration canons' },
   },
   {
@@ -777,7 +777,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/07%3A_Popular_Music/7.13%3A_Pentatonic_Harmony',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-03',
-    usedIn: ['learn_units_sidebasics.js'],
+    usedIn: ['sideb_units_basics.js', 'learn_units_sidebasics.js'],
     usedFor: { zh: '五声和声：五声音阶的音作和弦根音 和弦性质可以不同 出现音级交错', ja: 'ペンタトニック和声：音階の音を和音の根音に、品質はさまざま', en: 'Pentatonic harmony: scale notes as chord roots of any quality; scale-degree conflicts' },
   },
   {
@@ -788,7 +788,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/02%3A_Counterpoint_and_Galant_Schemas/2.13%3A_Galant_schemas__The_Rule_of_the_Octave_and_Harmonizing_the_Scale_with_Sequences',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-03',
-    usedIn: ['learn_units_sideharmony.js'],
+    usedIn: ['sideb_units_harmony2.js', 'sideb_labs.js', 'learn_units_sideharmony.js'],
     usedFor: { zh: '八度法则：每个低音音级配一个和弦（接近 Fenaroli 1775）；从平行六和弦到原位、属、七和弦的四步；用模进配音阶', ja: 'オクターヴの規則：バスの各音度に和音（フェナローリ 1775 に近い）、平行の六から 4 段階、反復進行で音階を和声付け', en: 'The Rule of the Octave (close to Fenaroli 1775), built in four steps from parallel sixths; harmonizing the scale with sequences' },
   },
   {
@@ -799,7 +799,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/04%3A_Diatonic_Harmony_Tonicization_and_Modulation/4.03%3A_Strengthening_Endings_with_Strong_Predominants',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-01',
-    usedIn: ['harmonize.js', 'harmonize_ui.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_sidebasics.js', 'learn_units_sidejazz.js'],
+    usedIn: ['harmonize.js', 'harmonize_ui.js', 'sideb_units_harmony2.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_sidebasics.js', 'learn_units_sidejazz.js'],
     usedFor: { zh: '强下属 ii6 与 IV；ii 在 IV 之后、从不在其前', ja: '強い下属和音 ii6 と IV、ii は IV の後で前には来ない', en: 'Strong predominants ii6 and IV; ii follows IV, never precedes it' },
   },
   {
@@ -810,7 +810,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/04%3A_Diatonic_Harmony_Tonicization_and_Modulation/4.06%3A_Prolonging_Tonic_at_Phrase_Beginnings_with_V6_and_Inverted_V7s',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-01',
-    usedIn: ['harmonize.js', 'harmonize_ui.js', 'learn_branches_harmony.js'],
+    usedIn: ['harmonize.js', 'harmonize_ui.js', 'sideb_units_harmony2.js', 'learn_branches_harmony.js'],
     usedFor: { zh: '乐句开头用 V6 与转位 V7 延长主和弦', ja: 'フレーズ冒頭で V6 と転回 V7 により主和音を延長', en: 'Prolonging tonic at phrase beginnings with V6 and inverted V7s' },
   },
   {
@@ -821,7 +821,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/04%3A_Diatonic_Harmony_Tonicization_and_Modulation/4.07%3A_Performing_Harmonic_Analysis_Using_the_Phrase_Model',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-01',
-    usedIn: ['harmonize.js', 'harmonize_ui.js', 'dictation.js', 'reharm.js', 'dictation_ui.js', 'reharm_ui.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_sidebasics.js', 'learn_units_sidejazz.js'],
+    usedIn: ['harmonize.js', 'harmonize_ui.js', 'dictation.js', 'reharm.js', 'dictation_ui.js', 'reharm_ui.js', 'sideb_units_harmony2.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_sidebasics.js', 'learn_units_sidejazz.js'],
     usedFor: { zh: '乐句模型 Tb–PD–D–Te 与以终止式结束乐句', ja: 'フレーズ・モデル Tb–PD–D–Te と終止', en: 'The phrase model Tb–PD–D–Te and ending phrases with cadences' },
   },
   {
@@ -854,7 +854,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/04%3A_Diatonic_Harmony_Tonicization_and_Modulation/4.11%3A_La_(Scale_Degree_6)_in_the_Bass_at_Beginnings_Middles_and_Endings',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-01',
-    usedIn: ['harmonize.js', 'harmonize_ui.js', 'learn_branches_harmony.js', 'learn_units_harmony.js'],
+    usedIn: ['harmonize.js', 'harmonize_ui.js', 'sideb_units_harmony2.js', 'learn_branches_harmony.js', 'learn_units_harmony.js'],
     usedFor: { zh: 'vi 连接主和弦区与强下属；V–vi 阻碍进行', ja: 'vi は主和音領域と強い下属和音をつなぐ；V–vi の偽終止的進行', en: 'vi connects tonic to strong predominants; V–vi deceptive motion' },
   },
   {
@@ -905,7 +905,7 @@ export const REFERENCES = [
     author: '四川音乐学院',
     url: 'https://www.sccm.edu.cn/course/yueli/look/ylmd.pdf',
     accessed: '2026-10-01',
-    usedIn: ['chinese_modes.js', 'chinese_modes_ui.js', 'learn_branches_basics.js', 'learn_units_basics.js'],
+    usedIn: ['chinese_modes.js', 'chinese_modes_ui.js', 'sideb_units_basics.js', 'learn_branches_basics.js', 'learn_units_basics.js'],
     usedFor: { zh: '五声正音与四个偏音、九声阶名、五种五声调式的结构与色彩、宫角大三度判断宫系统', ja: '五声の正音と四つの偏音、九声の階名、五種の五声旋法の構造と色彩、宮–角の長三度による宮系統の判別', en: 'Five principal tones and four auxiliary tones, the nine degree names, structure and colour of the five pentatonic modes, and identifying the Gong system by the Gong–Jue major third' },
   },
   {
@@ -1029,7 +1029,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/06%3A_Jazz/6.06%3A_Substitutions',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['jazz_theory.js', 'jazz_more_ui.js', 'learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_generators.js'],
+    usedIn: ['jazz_theory.js', 'jazz_more_ui.js', 'sideb_units_jazz.js', 'sideb_labs.js', 'learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_generators.js'],
     usedFor: { zh: '三全音替代、副属替代与调式交替', ja: '裏コード・セカンダリー・ドミナント・モーダル・インターチェンジ', en: 'Tritone substitution, applied-chord substitution and mode mixture' },
   },
   {
@@ -1040,7 +1040,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/06%3A_Jazz/6.02%3A_Chord_Symbols',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['chord_spelling.js', 'chord_spelling.test.mjs', 'chord_symbols_ui.js', 'chord_symbols.js', 'prog_library.js', 'chord_convert_panel.js', 'lab_checks.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_sideharmony.js', 'learn_units_sidejazz.js'],
+    usedIn: ['chord_spelling.js', 'chord_spelling.test.mjs', 'chord_symbols_ui.js', 'chord_symbols.js', 'prog_library.js', 'chord_convert_panel.js', 'lab_checks.js', 'sideb_units_harmony2.js', 'sideb_toys.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_sideharmony.js', 'learn_units_sidejazz.js'],
     usedFor: { zh: '和弦符号的默认音程（七度为小、延伸音为大/纯）、9/11/13 为复音程、♭9/♯11 等变化音的含义——用于按音级拼写和弦音', ja: 'コード・シンボルの既定の音程、9/11/13 の複音程、♭9・♯11 などの変化——コード音の綴りに使用', en: 'Default intervals in chord symbols, 9/11/13 as compound intervals, the meaning of ♭9/♯11 — used to spell chord tones by letter' },
   },
   {
@@ -1051,7 +1051,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/06%3A_Jazz/6.03%3A_Jazz_Voicings',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['jazz_theory.js', 'jazz_more_ui.js', 'chord_symbols.js', 'chord_symbols_ui.js', 'prog_library.js', 'lab_checks.js', 'sideb_labs.js', 'learn_branches_harmony.js', 'learn_branches_jazz.js', 'learn_units_harmony.js', 'learn_units_jazz.js', 'learn_generators.js'],
+    usedIn: ['jazz_theory.js', 'jazz_more_ui.js', 'chord_symbols.js', 'chord_symbols_ui.js', 'prog_library.js', 'lab_checks.js', 'sideb_labs.js', 'sideb_units_jazz.js', 'sideb_toys.js', 'learn_branches_harmony.js', 'learn_branches_jazz.js', 'learn_units_harmony.js', 'learn_units_jazz.js', 'learn_generators.js'],
     usedFor: { zh: '上方声部用三音与七音、省略五音的配置；有低音手时可省根音；13 音放在七音上方（否则像 6 音）；低音区音靠太近会浑浊；"懒"的声部进行（保持 → 级进 → 三度 → 少用大跳）与 3→7、9→13 线条（Side-B 爵士配置实操的评分项）', ja: '上声部を三度と七度にし五度を省くヴォイシング。ベースがいれば根音も省ける。13th は第 7 音の上（下だと 6th）。低音域の密集は濁る。「怠け者」の声部進行（保留 → 順次 → 3 度 → 跳躍は控えめ）と 3→7・9→13 の線（Side-B ジャズ実習の採点項目）', en: 'Third-and-seventh upper voices with the fifth omitted; the root may be left to a bassist; the 13th above the 7th (or it sounds like a 6th); close spacing low down is muddy; “lazy” voice leading (hold → step → skip → few leaps) and the 3→7, 9→13 lines (scoring items in the Side-B jazz-voicing lab)' },
   },
   {
@@ -1127,7 +1127,7 @@ export const REFERENCES = [
     url: 'https://en.wikipedia.org/wiki/So_What_chord',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['jazz_theory.js', 'jazz_more_ui.js', 'learn_branches_jazz.js', 'learn_units_jazz.js'],
+    usedIn: ['jazz_theory.js', 'jazz_more_ui.js', 'sideb_units_jazz.js', 'learn_branches_jazz.js', 'learn_units_jazz.js'],
     usedFor: { zh: 'So What 和弦的音程构成与用法', ja: 'ソー・ホワット・コードの構成と用法', en: 'Construction and use of the So What chord' },
   },
   {
@@ -1138,7 +1138,7 @@ export const REFERENCES = [
     url: 'https://en.wikipedia.org/wiki/Upper_structure',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['jazz_theory.js', 'jazz_more_ui.js', 'learn_branches_jazz.js', 'learn_units_jazz.js'],
+    usedIn: ['jazz_theory.js', 'jazz_more_ui.js', 'sideb_units_jazz.js', 'learn_branches_jazz.js', 'learn_units_jazz.js'],
     usedFor: { zh: '属七和弦上的高结构三和弦表', ja: '属七上のアッパー・ストラクチャー・トライアド一覧', en: 'Upper-structure triads over a dominant seventh' },
   },
   {
@@ -1149,7 +1149,7 @@ export const REFERENCES = [
     url: 'https://en.wikipedia.org/wiki/Bebop_scale',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['jazz_theory.js', 'jazz_more_ui.js', 'learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_generators.js'],
+    usedIn: ['jazz_theory.js', 'jazz_more_ui.js', 'sideb_units_jazz.js', 'learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_generators.js'],
     usedFor: { zh: '四种 bebop 音阶与 Barry Harris 的六度减音阶', ja: '四種のビバップ・スケールとバリー・ハリスの 6th ディミニッシュ', en: 'The four bebop scales and Barry Harris’s sixth-diminished scales' },
   },
   {
@@ -1180,7 +1180,7 @@ export const REFERENCES = [
     url: 'https://en.wikipedia.org/wiki/Twelve-bar_blues',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['jazz_theory.js', 'jazz_more_ui.js', 'prog_library_data.js', 'learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_units_sidejazz.js', 'learn_generators.js'],
+    usedIn: ['jazz_theory.js', 'jazz_more_ui.js', 'prog_library_data.js', 'sideb_units_jazz.js', 'sideb_toys.js', 'learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_units_sidejazz.js', 'learn_generators.js'],
     usedFor: { zh: '基本、quick change、bebop 与小调布鲁斯的和弦表', ja: '基本・クイック・チェンジ・ビバップ・マイナーのブルース', en: 'Basic, quick-change, bebop and minor blues charts' },
   },
   {
@@ -1212,7 +1212,7 @@ export const REFERENCES = [
     author: 'George Russell',
     url: 'https://georgerussell.com/lydian-chromatic-concept',
     accessed: '2026-10-01',
-    usedIn: ['lcc_ui.js', 'lcc_lab_ui.js', 'learn_branches_jazz.js', 'learn_units_jazz.js'],
+    usedIn: ['lcc_ui.js', 'lcc_lab_ui.js', 'sideb_units_jazz.js', 'learn_branches_jazz.js', 'learn_units_jazz.js'],
     usedFor: { zh: 'Lydian 父本音阶与音调顺序', ja: 'リディアン親音階と調性的秩序', en: 'Lydian parent scales and tonal order' },
   },
   {
@@ -1429,7 +1429,7 @@ export const REFERENCES = [
     url: 'https://en.wikipedia.org/wiki/Transposing_instrument',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['instruments.js', 'instruments_ui.js', 'instruments.test.mjs', 'learn_branches_melody.js', 'learn_units_melody.js'],
+    usedIn: ['instruments.js', 'instruments_ui.js', 'instruments.test.mjs', 'sideb_units_melody.js', 'sideb_toys.js', 'learn_branches_melody.js', 'learn_units_melody.js'],
     usedFor: { zh: '八度移调乐器；长号、大号按实音记谱；英式铜管乐队的长号记谱', ja: 'オクターヴ移調楽器、トロンボーン・チューバの実音記譜、英国式ブラスバンドの例外', en: 'Octave-transposing instruments; trombone and tuba at concert pitch; the British brass band exception' },
   },
   {
@@ -1440,7 +1440,7 @@ export const REFERENCES = [
     url: 'https://smbutterfield.github.io/ibmt17-18/12-reading-scores/a2-ex-insttransandrange.html',
     license: 'CC BY-SA',
     accessed: '2026-10-02',
-    usedIn: ['instruments.js', 'instruments_ui.js', 'instruments.test.mjs', 'learn_branches_melody.js', 'learn_units_melody.js'],
+    usedIn: ['instruments.js', 'instruments_ui.js', 'instruments.test.mjs', 'sideb_units_melody.js', 'sideb_toys.js', 'learn_branches_melody.js', 'learn_units_melody.js'],
     usedFor: { zh: '不移调乐器清单、各移调乐器的音程与方向、实音与书写音的反向换算及例题', ja: '非移調楽器の一覧、各移調楽器の音程と方向、実音と記譜音の逆方向の換算と例題', en: 'Non-transposing instruments, each transposition’s interval and direction, converting in the opposite direction, worked examples' },
   },
   {
@@ -1471,7 +1471,7 @@ export const REFERENCES = [
     author: 'Applied Guitar Theory',
     url: 'https://appliedguitartheory.com/lessons/caged-guitar-theory-system/',
     accessed: '2026-10-02',
-    usedIn: ['fretboard.js', 'fretboard_ui.js', 'fretboard.test.mjs', 'learn_branches_melody.js', 'learn_units_melody.js'],
+    usedIn: ['fretboard.js', 'fretboard_ui.js', 'fretboard.test.mjs', 'sideb_units_melody.js', 'sideb_toys.js', 'learn_branches_melody.js', 'learn_units_melody.js'],
     usedFor: { zh: 'CAGED 五个开放和弦形及音程标注、平移规则、C→A→G→E→D 的相接顺序与例子', ja: 'CAGED の五つのオープン・コードの形と音程、平行移動、C→A→G→E→D の接続と例', en: 'The five CAGED open shapes with interval labels, moving them, the C→A→G→E→D connection order and examples' },
   },
   {
@@ -1482,7 +1482,7 @@ export const REFERENCES = [
     url: 'https://en.wikipedia.org/wiki/Standard_tuning',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['fretboard.js', 'fretboard_ui.js', 'fretboard.test.mjs', 'learn_branches_melody.js', 'learn_units_melody.js', 'learn_generators.js'],
+    usedIn: ['fretboard.js', 'fretboard_ui.js', 'fretboard.test.mjs', 'sideb_units_melody.js', 'sideb_toys.js', 'learn_branches_melody.js', 'learn_units_melody.js', 'learn_generators.js'],
     usedFor: { zh: '吉他、贝斯、曼陀林、尤克里里的标准调弦', ja: 'ギター・ベース・マンドリン・ウクレレの標準チューニング', en: 'Standard tunings of guitar, bass, mandolin and ukulele' },
   },
   {
@@ -1566,7 +1566,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/01%3A_Fundamentals/1.02%3A_Notation_of_Notes_Clefs_and_Ledger_Lines',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['staff_reading.js', 'staff_diagram.js', 'staff_reading_ui.js', 'learn_units_basics.js'],
+    usedIn: ['staff_reading.js', 'staff_diagram.js', 'staff_reading_ui.js', 'sideb_units_basics.js', 'learn_units_basics.js'],
     usedFor: { zh: '五线谱、音符、谱号与加线（教程）', ja: '五線譜・音符・音部記号・加線（チュートリアル）', en: 'Staff, notes, clefs and ledger lines (tutorial)' },
   },
   {
@@ -1577,7 +1577,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/01%3A_Fundamentals/1.03%3A_Reading_Clefs',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['staff_reading.js', 'staff_diagram.js', 'staff_reading_ui.js', 'learn_branches_basics.js', 'learn_units_basics.js', 'learn_generators.js'],
+    usedIn: ['staff_reading.js', 'staff_diagram.js', 'staff_reading_ui.js', 'sideb_units_basics.js', 'sideb_toys.js', 'learn_branches_basics.js', 'learn_units_basics.js', 'learn_generators.js'],
     usedFor: { zh: '七个音名循环、各谱号的用途（教程）', ja: '7 つの音名の循環と音部記号の用途（チュートリアル）', en: 'The looping letter names and what each clef is for (tutorial)' },
   },
   {
@@ -1599,7 +1599,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/04%3A_Diatonic_Harmony_Tonicization_and_Modulation/4.02%3A_Strengthening_Endings_with_V7',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-03',
-    usedIn: ['satb_check.js', 'lab_checks.js', 'sideb_units_harmony.js', 'learn_units_sideharmony.js'],
+    usedIn: ['satb_check.js', 'lab_checks.js', 'sideb_units_harmony.js', 'sideb_units_harmony2.js', 'learn_units_sideharmony.js'],
     usedFor: { zh: 'V7–I：七音的不协和加强 V 指向 I；默认解决得到三根一三的 I（正常）；不完整 V7 只能重复根音（重复 ti 或 fa 会平行八度）；导音下跳只在内声部、只跳到 sol（四部和声检查与 Side-B 四部写作 I）', ja: 'V7–I：第 7 音の不協和が I への力を強める。基本の解決は根音 3・第 3 音 1 の I（普通）。不完全 V7 は根音だけを重複（ti・fa の重複は平行 8 度）。導音の下行跳躍は内声のみ・sol へ（4 声体チェックと Side-B 4 声体 I）', en: 'V7–I: the seventh’s dissonance strengthens the pull to I; the default resolution gives a I with three roots and a third (normal); an incomplete V7 doubles only the root (doubling ti or fa gives parallel octaves); the leading-tone drop is inner-voice only and goes to sol (four-part checker and Side-B Four-part writing I)' },
   },
   {
@@ -1610,7 +1610,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/04%3A_Diatonic_Harmony_Tonicization_and_Modulation/4.13%3A_Predominant_Seventh_Chords',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-03',
-    usedIn: ['satb_check.js', 'lab_checks.js', 'sideb_units_harmony.js', 'learn_units_sideharmony.js'],
+    usedIn: ['satb_check.js', 'lab_checks.js', 'sideb_units_harmony.js', 'sideb_units_harmony2.js', 'learn_units_sideharmony.js'],
     usedFor: { zh: '和弦七音往下级进解决、通常由级进或共同音进入（四部和声检查）', ja: '和音の第 7 音は順次下行で解決（4 声体チェック）', en: 'The chordal seventh resolves down by step and is usually approached by step or common tone (four-part checker)' },
   },
   {
@@ -1676,7 +1676,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/01%3A_Fundamentals/1.06%3A_American_Standard_Pitch_Notation_(ASPN)',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['staff_reading.js', 'staff_reading_ui.js', 'learn_branches_basics.js', 'learn_units_basics.js', 'learn_generators.js'],
+    usedIn: ['staff_reading.js', 'staff_reading_ui.js', 'sideb_units_basics.js', 'sideb_toys.js', 'learn_branches_basics.js', 'learn_units_basics.js', 'learn_generators.js'],
     usedFor: { zh: '音高记号 C4、音高与音级的区别（教程）', ja: '音高表記 C4、ピッチとピッチクラスの違い（チュートリアル）', en: 'Pitch labels like C4; pitch versus pitch class (tutorial)' },
   },
   {
@@ -1698,7 +1698,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/01%3A_Fundamentals/1.11%3A_Other_Rhythmic_Essentials',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['lab_checks.js', 'sideb_labs.js', 'learn_branches_basics.js', 'learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_generators.js'],
+    usedIn: ['lab_checks.js', 'sideb_labs.js', 'sideb_units_basics.js', 'sideb_units_jazz.js', 'learn_branches_basics.js', 'learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_generators.js'],
     usedFor: { zh: '三连音、二连音与切分（教程）；切分 = 弱位置上的节奏重音，可由连音线、附点、休止或力度造成（Side-B 节奏实操的切分判定）', ja: '3 連符・2 連符・シンコペーション（チュートリアル）。シンコペーション = 裏のリズム的アクセント、タイ・付点・休符・強弱で生じる（Side-B リズム実習の判定）', en: 'Triplets, duplets and syncopation (tutorial); syncopation = off-beat rhythmic accents created by ties, dots, rests or dynamics (the syncopation check in Side-B rhythm labs)' },
   },
   {
@@ -1709,7 +1709,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/01%3A_Fundamentals/1.13%3A_Minor_Scales_Scale_Degrees_and_Key_Signatures',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['staff_reading.js', 'staff_reading_ui.js', 'learn_branches_basics.js', 'learn_branches_harmony.js', 'learn_units_basics.js', 'learn_generators.js'],
+    usedIn: ['staff_reading.js', 'staff_reading_ui.js', 'sideb_units_basics.js', 'sideb_toys.js', 'learn_branches_basics.js', 'learn_branches_harmony.js', 'learn_units_basics.js', 'learn_generators.js'],
     usedFor: { zh: '三种小调音阶、关系调与同主音调（教程）', ja: '3 種類の短音階・平行調と同主調（チュートリアル）', en: 'The three minor scales; relative and parallel keys (tutorial)' },
   },
   {
@@ -1720,7 +1720,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/01%3A_Fundamentals/1.14%3A_Introduction_to_Diatonic_Modes_and_the_Chromatic_Scale',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['prog_library_data.js', 'learn_branches_basics.js', 'learn_branches_jazz.js', 'learn_units_basics.js', 'learn_generators.js'],
+    usedIn: ['prog_library_data.js', 'sideb_units_basics.js', 'sideb_toys.js', 'learn_branches_basics.js', 'learn_branches_jazz.js', 'learn_units_basics.js', 'learn_generators.js'],
     usedFor: { zh: '七种自然音调式的明暗顺序与特征音、半音阶（教程）', ja: '7 つの旋法の明暗の順と特徴音、半音階（チュートリアル）', en: 'The seven diatonic modes from bright to dark, their colour notes, the chromatic scale (tutorial)' },
   },
   {
@@ -1731,7 +1731,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/01%3A_Fundamentals/1.15%3A_Intervals',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['learn_branches_basics.js', 'learn_units_basics.js', 'learn_generators.js'],
+    usedIn: ['sideb_units_basics.js', 'sideb_toys.js', 'learn_branches_basics.js', 'learn_units_basics.js', 'learn_generators.js'],
     usedFor: { zh: '音程的度数与性质、增减、复音程与转位（教程）', ja: '音程の度数と種類・増減・複音程・転回（チュートリアル）', en: 'Interval size and quality, augmented/diminished, compound intervals and inversion (tutorial)' },
   },
   {
@@ -1742,7 +1742,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/01%3A_Fundamentals/1.16%3A_Triads',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_generators.js'],
+    usedIn: ['sideb_units_harmony2.js', 'sideb_toys.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_generators.js'],
     usedFor: { zh: '三和弦的根音、三音、五音与四种性质（教程）', ja: '三和音の根音・第 3 音・第 5 音と 4 つの種類（チュートリアル）', en: 'Root, third and fifth; the four triad qualities (tutorial)' },
   },
   {
@@ -1753,7 +1753,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/01%3A_Fundamentals/1.17%3A_Seventh_Chords',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['prog_library.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_sideharmony.js', 'learn_generators.js'],
+    usedIn: ['prog_library.js', 'sideb_units_harmony2.js', 'sideb_toys.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_sideharmony.js', 'learn_generators.js'],
     usedFor: { zh: '五种常见七和弦及其别名（教程）', ja: '5 種類の七の和音とその別名（チュートリアル）', en: 'The five common seventh chords and their other names (tutorial)' },
   },
   {
@@ -1764,7 +1764,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/01%3A_Fundamentals/1.20%3A_Texture',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['learn_branches_basics.js', 'learn_units_basics.js'],
+    usedIn: ['sideb_units_basics.js', 'sideb_toys.js', 'learn_branches_basics.js', 'learn_units_basics.js'],
     usedFor: { zh: '单声部、支声、主调与复调织体（教程）', ja: 'モノフォニー・ヘテロフォニー・ホモフォニー・ポリフォニー（チュートリアル）', en: 'Monophony, heterophony, homophony and polyphony (tutorial)' },
   },
   {
@@ -1775,7 +1775,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/03%3A_Form/3.01%3A_Foundational_Concepts_for_Phrase-Level_Forms',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['motif_phrase.js', 'motif_phrase_ui.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_sideharmony.js'],
+    usedIn: ['motif_phrase.js', 'motif_phrase_ui.js', 'sideb_units_harmony2.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_sideharmony.js'],
     usedFor: { zh: '曲式的层级与动机（教程）', ja: '楽式の階層と動機（チュートリアル）', en: 'The hierarchy of form and motives (tutorial)' },
   },
   {
@@ -1786,7 +1786,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/03%3A_Form/3.02%3A_The_Phrase_Archetypes_and_Unique_Forms',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['motif_phrase.js', 'motif_phrase_ui.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_sideharmony.js'],
+    usedIn: ['motif_phrase.js', 'motif_phrase_ui.js', 'sideb_units_harmony2.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_sideharmony.js'],
     usedFor: { zh: '乐句、乐段（前句与后句）与句子式（呈示与展开）（教程）', ja: 'フレーズ・楽節（前楽句と後楽句）・文型（提示と継続）（チュートリアル）', en: 'Phrase, period (antecedent and consequent) and sentence (presentation and continuation) (tutorial)' },
   },
   {
@@ -1797,7 +1797,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/03%3A_Form/3.06%3A_Binary_Form',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['learn_branches_harmony.js', 'learn_units_harmony.js'],
+    usedIn: ['sideb_units_harmony2.js', 'learn_branches_harmony.js', 'learn_units_harmony.js'],
     usedFor: { zh: '二部曲式：两个反复段、单纯与再现（教程）', ja: '二部形式：2 つの反復部分、単純と回帰（チュートリアル）', en: 'Binary form: two reprises, simple and rounded (tutorial)' },
   },
   {
@@ -1808,7 +1808,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/03%3A_Form/3.07%3A_Ternary_Form',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['learn_branches_harmony.js', 'learn_units_harmony.js'],
+    usedIn: ['sideb_units_harmony2.js', 'learn_branches_harmony.js', 'learn_units_harmony.js'],
     usedFor: { zh: '三部曲式 ABA（教程）', ja: '三部形式 ABA（チュートリアル）', en: 'Ternary form ABA (tutorial)' },
   },
   {
@@ -1830,7 +1830,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/04%3A_Diatonic_Harmony_Tonicization_and_Modulation/4.05%3A_Strengthening_Endings_with_Cadential_6_4',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['sideb_labs.js', 'learn_branches_harmony.js', 'learn_units_harmony.js'],
+    usedIn: ['sideb_labs.js', 'sideb_units_harmony2.js', 'learn_branches_harmony.js', 'learn_units_harmony.js'],
     usedFor: { zh: '终止四六和弦：6 到 5、4 到 3（教程）', ja: '終止の四六の和音：6 から 5、4 から 3（チュートリアル）', en: 'Cadential 6/4: 6 to 5 and 4 to 3 (tutorial)' },
   },
   {
@@ -1841,7 +1841,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/04%3A_Diatonic_Harmony_Tonicization_and_Modulation/4.09%3A_6_4_Chords_as_Forms_of_Prolongation',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['learn_branches_harmony.js', 'learn_units_harmony.js'],
+    usedIn: ['sideb_units_harmony2.js', 'learn_branches_harmony.js', 'learn_units_harmony.js'],
     usedFor: { zh: '经过、辅助与琶音四六和弦（教程）', ja: '経過・刺繍・分散の四六の和音（チュートリアル）', en: 'Passing, neighbour and arpeggiating 6/4 chords (tutorial)' },
   },
   {
@@ -1852,7 +1852,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/04%3A_Diatonic_Harmony_Tonicization_and_Modulation/4.14%3A_Tonicization',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['prog_library.js', 'prog_library_data.js', 'learn_branches_harmony.js', 'learn_branches_jazz.js', 'learn_units_harmony.js', 'learn_units_sideharmony.js', 'learn_units_sidejazz.js', 'learn_generators.js'],
+    usedIn: ['prog_library.js', 'prog_library_data.js', 'sideb_units_harmony2.js', 'sideb_labs.js', 'lab_checks.js', 'learn_branches_harmony.js', 'learn_branches_jazz.js', 'learn_units_harmony.js', 'learn_units_sideharmony.js', 'learn_units_sidejazz.js', 'learn_generators.js'],
     usedFor: { zh: '离调与副属和弦 V/x 的读法（教程）', ja: '一時的転調と副属和音 V/x の読み方（チュートリアル）', en: 'Tonicization and applied chords such as V/ii (tutorial)' },
   },
   {
@@ -1863,7 +1863,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/04%3A_Diatonic_Harmony_Tonicization_and_Modulation/4.15%3A_Extended_Tonicization_and_Modulation_to_Closely_Related_Keys',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['learn_branches_harmony.js', 'learn_branches_jazz.js', 'learn_units_harmony.js', 'learn_units_jazz.js', 'learn_units_sideharmony.js'],
+    usedIn: ['sideb_units_harmony2.js', 'learn_branches_harmony.js', 'learn_branches_jazz.js', 'learn_units_harmony.js', 'learn_units_jazz.js', 'learn_units_sideharmony.js'],
     usedFor: { zh: '转调：直接转调与共同和弦转调（教程）', ja: '転調：直接転調と共通和音による転調（チュートリアル）', en: 'Modulation: direct and pivot-chord (tutorial)' },
   },
   {
@@ -1874,7 +1874,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/05%3A_Chromaticism/5.01%3A_Modal_Mixture',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['prog_library.js', 'prog_library_data.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_sidebasics.js', 'learn_units_sideharmony.js'],
+    usedIn: ['prog_library.js', 'prog_library_data.js', 'sideb_units_harmony2.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_sidebasics.js', 'learn_units_sideharmony.js'],
     usedFor: { zh: '调式混合：从同主音小调借来的和弦（教程）', ja: '同主調からの借用和音（チュートリアル）', en: 'Modal mixture: chords borrowed from the parallel minor (tutorial)' },
   },
   {
@@ -1885,7 +1885,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/05%3A_Chromaticism/5.02%3A_Neapolitan_6th_(II6)',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['composition.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_side.js', 'learn_generators.js'],
+    usedIn: ['composition.js', 'sideb_units_harmony2.js', 'sideb_labs.js', 'lab_checks.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_side.js', 'learn_generators.js'],
     usedFor: { zh: '那不勒斯六和弦 ♭II6（教程）', ja: 'ナポリの六の和音 ♭II6（チュートリアル）', en: 'The Neapolitan sixth ♭II6 (tutorial)' },
   },
   {
@@ -1896,7 +1896,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/05%3A_Chromaticism/5.03%3A_Augmented_Sixth_Chords',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_sideharmony.js'],
+    usedIn: ['sideb_units_harmony2.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_sideharmony.js'],
     usedFor: { zh: '意大利、法国、德国增六和弦（教程）', ja: 'イタリア・フランス・ドイツの増六の和音（チュートリアル）', en: 'Italian, French and German augmented sixth chords (tutorial)' },
   },
   {
@@ -1918,7 +1918,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/05%3A_Chromaticism/5.14%3A_Neo-Riemannian_Triadic_Progressions',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['neo_views.js', 'learn_branches_harmony.js', 'learn_branches_modern.js', 'learn_units_harmony.js', 'learn_generators.js'],
+    usedIn: ['neo_views.js', 'sideb_units_harmony2.js', 'sideb_toys.js', 'learn_branches_harmony.js', 'learn_branches_modern.js', 'learn_units_harmony.js', 'learn_generators.js'],
     usedFor: { zh: '新黎曼变换 P、R、L、S、N、H（教程）', ja: 'ネオ・リーマン変換 P・R・L・S・N・H（チュートリアル）', en: 'Neo-Riemannian transformations P, R, L, S, N, H (tutorial)' },
   },
   {
@@ -1929,7 +1929,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/06%3A_Jazz/6.01%3A_Swing_Rhythms',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['learn_branches_jazz.js', 'learn_units_jazz.js'],
+    usedIn: ['sideb_units_jazz.js', 'sideb_toys.js', 'learn_branches_jazz.js', 'learn_units_jazz.js'],
     usedFor: { zh: '摇摆八分音符与反拍重音（教程）', ja: 'スウィングの 8 分音符とバックビート（チュートリアル）', en: 'Swing eighths and backbeat (tutorial)' },
   },
   {
@@ -1940,7 +1940,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/06%3A_Jazz/6.04%3A_iiVI',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['prog_library.js', 'prog_library_data.js', 'reharm.js', 'composition.js', 'learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_units_side.js', 'learn_units_sidejazz.js', 'learn_generators.js'],
+    usedIn: ['prog_library.js', 'prog_library_data.js', 'reharm.js', 'composition.js', 'sideb_units_jazz.js', 'learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_units_side.js', 'learn_units_sidejazz.js', 'learn_generators.js'],
     usedFor: { zh: '大调与小调的 ii–V–I 和弦性质（教程）', ja: '長調と短調の ii–V–I のコードの種類（チュートリアル）', en: 'Chord qualities of ii–V–I in major and minor (tutorial)' },
   },
   {
@@ -1962,7 +1962,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/06%3A_Jazz/6.07%3A_Chord-Scale_Theory',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['learn_branches_basics.js', 'learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_generators.js'],
+    usedIn: ['sideb_units_jazz.js', 'sideb_toys.js', 'learn_branches_basics.js', 'learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_generators.js'],
     usedFor: { zh: '和弦—音阶对应、各级和弦用哪个调式（教程）', ja: 'コード・スケールの対応と各和音の旋法（チュートリアル）', en: 'Chord–scale relationships and which mode fits each chord (tutorial)' },
   },
   {
@@ -1973,7 +1973,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/06%3A_Jazz/6.08%3A_Blues_Harmony',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['learn_branches_jazz.js', 'learn_units_jazz.js'],
+    usedIn: ['sideb_units_jazz.js', 'sideb_toys.js', 'learn_branches_jazz.js', 'learn_units_jazz.js'],
     usedFor: { zh: '布鲁斯里的属七和弦与常见变体（教程）', ja: 'ブルースの属七とバリエーション（チュートリアル）', en: 'Dominant sevenths in the blues and common variants (tutorial)' },
   },
   {
@@ -1984,7 +1984,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/06%3A_Jazz/6.09%3A_Blues_Melodies_and_the_Blues_Scale',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_generators.js'],
+    usedIn: ['sideb_units_jazz.js', 'sideb_toys.js', 'learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_generators.js'],
     usedFor: { zh: '布鲁斯音阶、大调布鲁斯音阶与 aab 歌词（教程）', ja: 'ブルース・スケール、メジャー・ブルース・スケールと aab の歌詞（チュートリアル）', en: 'The blues scale, the major blues scale and aab lyrics (tutorial)' },
   },
   {
@@ -2028,7 +2028,7 @@ export const REFERENCES = [
     url: 'https://en.wikipedia.org/wiki/Jazz_minor_scale',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_generators.js'],
+    usedIn: ['sideb_units_jazz.js', 'learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_generators.js'],
     usedFor: { zh: '旋律小调（爵士小调）及其七个调式的名称（教程）', ja: '旋律短音階（ジャズ・マイナー）と 7 つの旋法の名前（チュートリアル）', en: 'The jazz minor scale and the names of its seven modes (tutorial)' },
   },
   {
@@ -2039,7 +2039,7 @@ export const REFERENCES = [
     url: 'https://en.wikipedia.org/wiki/Harmonic_minor_scale',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['learn_branches_harmony.js', 'learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_generators.js'],
+    usedIn: ['sideb_units_jazz.js', 'learn_branches_harmony.js', 'learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_generators.js'],
     usedFor: { zh: '和声小调、增二度及其七个调式（教程）', ja: '和声短音階・増 2 度と 7 つの旋法（チュートリアル）', en: 'The harmonic minor scale, its augmented second and its seven modes (tutorial)' },
   },
   {
@@ -2050,7 +2050,7 @@ export const REFERENCES = [
     url: 'https://en.wikipedia.org/wiki/Harmonic_major_scale',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_generators.js'],
+    usedIn: ['sideb_units_jazz.js', 'learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_generators.js'],
     usedFor: { zh: '和声大调：降低第六级的大调（教程）', ja: '和声長音階：第 6 音を下げた長音階（チュートリアル）', en: 'The harmonic major scale: major with a lowered sixth (tutorial)' },
   },
   {
@@ -2061,7 +2061,7 @@ export const REFERENCES = [
     url: 'https://en.wikipedia.org/wiki/Whole-tone_scale',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_generators.js'],
+    usedIn: ['sideb_units_jazz.js', 'learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_generators.js'],
     usedFor: { zh: '全音音阶的对称性与增三和弦（教程）', ja: '全音音階の対称性と増三和音（チュートリアル）', en: 'The whole-tone scale, its symmetry and augmented triads (tutorial)' },
   },
   {
@@ -2072,7 +2072,7 @@ export const REFERENCES = [
     url: 'https://en.wikipedia.org/wiki/Octatonic_scale',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_generators.js'],
+    usedIn: ['sideb_units_jazz.js', 'learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_generators.js'],
     usedFor: { zh: '八声音阶 / 减音阶的两种排列与爵士用法（教程）', ja: '八音音階（ディミニッシュ・スケール）の 2 つの形とジャズでの使い方（チュートリアル）', en: 'The octatonic / diminished scale, its two modes and jazz usage (tutorial)' },
   },
   {
@@ -2116,7 +2116,7 @@ export const REFERENCES = [
     url: 'https://en.wikipedia.org/wiki/Negative_harmony',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_generators.js'],
+    usedIn: ['sideb_units_jazz.js', 'sideb_toys.js', 'learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_generators.js'],
     usedFor: { zh: '负和声：以主音–属音中点为轴的镜像；源自 Ernst Levy，Steve Coleman 命名（教程）', ja: 'ネガティブ・ハーモニー：主音–属音の中点で折り返す。Ernst Levy に由来し Steve Coleman が命名（チュートリアル）', en: 'Negative harmony: reflection across the tonic–dominant midpoint; from Ernst Levy, named by Steve Coleman (tutorial)' },
   },
   {
@@ -2127,7 +2127,7 @@ export const REFERENCES = [
     url: 'https://en.wikipedia.org/wiki/Circle_of_fifths',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['learn_branches_harmony.js', 'learn_branches_world.js', 'learn_units_harmony.js', 'learn_generators.js'],
+    usedIn: ['sideb_units_harmony2.js', 'sideb_toys.js', 'learn_branches_harmony.js', 'learn_branches_world.js', 'learn_units_harmony.js', 'learn_generators.js'],
     usedFor: { zh: '五度圈：顺时针上行五度、逆时针上行四度、相邻调号差一个升降号、内圈关系小调（教程）', ja: '五度圏：時計回りで 5 度上・反時計回りで 4 度上、隣は調号 1 つ違い、内側は平行短調（チュートリアル）', en: 'Circle of fifths: clockwise up fifths, counterclockwise up fourths, neighbours differ by one accidental, relative minors (tutorial)' },
   },
   {
@@ -2149,7 +2149,7 @@ export const REFERENCES = [
     url: 'https://en.wikipedia.org/wiki/Closely_related_key',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['learn_branches_harmony.js', 'learn_generators.js'],
+    usedIn: ['sideb_units_harmony2.js', 'sideb_toys.js', 'learn_branches_harmony.js', 'learn_generators.js'],
     usedFor: { zh: '近关系调：ii、iii、IV、V、vi 与同主音小调（教程）', ja: '近親調：ii・iii・IV・V・vi と同主短調（チュートリアル）', en: 'Closely related keys: ii, iii, IV, V, vi and the parallel minor (tutorial)' },
   },
   {

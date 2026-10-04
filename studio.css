@@ -1,0 +1,199 @@
+/* Jazz Compass — quiet surfaces, clear notation, room to listen. */
+:root {
+    --theme-bg: #1e201e;
+    --theme-panel: #262825;
+    --theme-panel-raised: #2d302c;
+    --theme-text: #eeeae0;
+    --theme-muted: #b1b2a8;
+    --theme-dim: #94998e;
+    --theme-line: #41443d;
+    --theme-line-strong: #707568;
+    --theme-accent: #dda286;
+    --theme-accent-ink: #25251f;
+    --theme-wash: #ffffff08;
+    --accent: var(--theme-accent);
+    --accent-2: var(--theme-accent);
+    --tone: #748f81;
+    --bass: #8a82a1;
+    --root: #b56346;
+}
+:root[data-theme="light"] {
+    --theme-bg: #f6f5f0;
+    --theme-panel: #fdfcf8;
+    --theme-panel-raised: #f1f0e9;
+    --theme-text: #2f342d;
+    --theme-muted: #6b7166;
+    --theme-dim: #797e71;
+    --theme-line: #dddfd3;
+    --theme-line-strong: #a4aa98;
+    --theme-accent: #9d492e;
+    --theme-accent-ink: #fffaf4;
+    --theme-wash: #3e493309;
+}
+* { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--theme-line-strong) transparent; }
+*::-webkit-scrollbar { display: block; width: 6px; height: 6px; }
+*::-webkit-scrollbar-thumb { background: var(--theme-line); border-radius: 4px; }
+body { font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif !important; font-size: 14px; line-height: 1.6; }
+button, input, select { font: inherit; }
+button { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--theme-accent) !important; outline-offset: 4px; }
+input:focus-visible, select:focus-visible { outline: 2px solid var(--theme-accent) !important; outline-offset: 2px; }
+.container { display: grid; width: min(1344px, calc(100% - 96px)); max-width: none; margin: 0 auto; padding: 0 0 36px; grid-template-columns: 192px minmax(0, 1fr); gap: 0 56px; }
+.app-header { align-items: center; min-height: 124px; margin: 0 0 42px; padding: 24px 0; border-bottom: 1px solid var(--theme-line); }
+.brand-mark { width: 46px; height: 46px; color: var(--theme-accent); flex-shrink: 0; }
+.brand-lockup { gap: 14px; }
+.eyebrow { font-size: 10px; font-weight: 600; letter-spacing: .19em; color: var(--theme-accent); margin-bottom: 5px; }
+.title-block h1 { font-size: 22px; line-height: 1.35; font-weight: 600; letter-spacing: .08em; }
+.subtitle { font-size: 11px; margin-top: 5px; letter-spacing: .08em; }
+.header-tools { width: auto; gap: 18px; }
+.theme-switch, .notation-switch { min-height: 30px; padding: 2px; border: 0 !important; background: transparent !important; box-shadow: none !important; border-radius: 4px !important; }
+.control-label, .notation-label { border: 0; font-size: 11px; padding: 5px 9px !important; }
+.theme-btn, .notation-btn { min-height: 30px; font-size: 11px; padding: 5px 10px !important; }
+.theme-btn.active, .notation-btn.active { background: var(--theme-panel-raised) !important; color: var(--theme-text) !important; font-weight: 600; }
+.feature-nav { position: sticky; top: 28px; padding: 0; gap: 4px; border: 0 !important; border-radius: 0; background: transparent !important; box-shadow: none !important; counter-reset: tool; }
+.feature-nav::before { content: "LIBRARY / 工具目录"; padding: 1px 12px 20px; font-size: 10px; font-weight: 400; letter-spacing: .1em; }
+.feature-btn { display: flex; align-items: center; gap: 12px; min-height: 43px; padding: 10px 12px; min-width: 0; border: 0; border-radius: 4px; font-size: 13px; font-weight: 400; line-height: 1.5; transition: background .15s, color .15s; }
+.feature-btn::after { counter-increment: tool; content: counter(tool, decimal-leading-zero); order: -1; color: var(--theme-dim); font: 10px "Consolas", monospace; }
+.feature-btn.active { color: var(--theme-accent) !important; background: var(--theme-wash) !important; font-weight: 600; }
+.feature-btn.active::before { left: 0; top: 12px; bottom: 12px; width: 2px; background: var(--theme-accent) !important; }
+.feature-btn.active::after { color: var(--theme-accent); }
+.feature-btn[data-feature="ref"], .feature-btn[data-feature="about"] { margin-top: 17px; }
+.panels { display: flex; flex-direction: column; min-width: 0; gap: 0; }
+.workspace-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 0 0 30px; }
+.workspace-index { color: var(--theme-accent); margin: 0 0 10px; font: 10px "Consolas", monospace; letter-spacing: .12em; }
+.workspace-heading h2 { margin: 0; font: 500 34px/1.4 "Noto Serif CJK SC", "Songti SC", "SimSun", Georgia, serif; letter-spacing: .08em; }
+#workspace-description { margin: 10px 0 0; font-size: 12px; color: var(--theme-muted); letter-spacing: .04em; }
+.staff-motif { width: 145px; height: 62px; color: var(--theme-accent); opacity: .65; margin-right: 5px; }
+.panel { width: 100%; border-radius: 5px !important; border: 1px solid var(--theme-line) !important; box-shadow: none !important; backdrop-filter: none; }
+:root[data-theme="light"] .panel, :root[data-theme="light"] .feature-nav, :root[data-theme="light"] .theme-switch, :root[data-theme="light"] .notation-switch { box-shadow: none !important; }
+.panel-header { padding: 24px 28px; gap: 14px; min-height: 90px; flex-wrap: wrap; }
+.panel-header label { display: flex; flex-direction: column; gap: 7px; font-size: 12px; }
+.panel-header input, .panel-header select { min-height: 40px; min-width: 0; padding: 9px 12px; font-size: 14px; }
+.panel-header > button { min-height: 40px; align-self: flex-end; font-weight: 500; padding: 8px 23px; font-size: 13px; }
+.panel-body { padding: 28px; }
+:is(#panel-blues, #panel-lcc, #panel-cst, #panel-neo) > .panel-header:first-child { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
+:is(#panel-blues, #panel-lcc, #panel-cst, #panel-neo) > .panel-header:first-child input { width: 100%; }
+input[type="range"] { border: 0 !important; background: transparent !important; box-shadow: none !important; padding: 0; min-height: 20px; }
+#panel-chord .panel-header { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; }
+#panel-chord .panel-header label { width: 100%; }
+#chord-input { width: 100%; font: 21px/1.3 "Consolas", monospace; height: 48px; padding-left: 15px; background: var(--theme-panel) !important; }
+#panel-chord #chord-run { height: 48px; min-width: 100px; }
+.chord-examples { grid-column: 1 / -1; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--theme-muted); font-size: 11px; }
+.chord-examples > span { margin-right: 3px; }
+#panel-chord .chord-examples button { min-height: 28px; padding: 3px 9px; background: transparent !important; color: var(--theme-muted) !important; border: 1px solid var(--theme-line) !important; font: 11px "Consolas", monospace; }
+#panel-chord .chord-examples button:hover { background: var(--theme-wash) !important; border-color: var(--theme-line-strong) !important; }
+.chord-result-heading { display: flex; justify-content: space-between; align-items: center; background: transparent !important; }
+.result-eyebrow { color: var(--theme-muted); font-size: 11px; letter-spacing: .08em; background: transparent !important; }
+.chord-symbol { margin: 5px 0 0; font: 400 50px/1.2 Georgia, "Times New Roman", serif; letter-spacing: -.04em; }
+.chord-note-count { font-size: 11px; color: var(--theme-muted); }
+#panel-chord-body > .note-grid { display: flex; margin: 23px 0 30px; gap: 0; }
+#panel-chord-body .note-cell { display: flex; align-items: baseline; gap: 20px; min-width: 82px; padding: 0 24px; border: 0 !important; border-right: 1px solid var(--theme-line) !important; border-radius: 0; background: transparent !important; box-shadow: none !important; }
+#panel-chord-body .note-cell:first-child { padding-left: 0; }
+#panel-chord-body .note-cell:last-child { border-right: 0 !important; }
+#panel-chord-body .note { font: 25px/1.2 Georgia, serif; color: var(--theme-text); }
+#panel-chord-body .note-cell.root-note .note { color: var(--theme-accent); }
+.note-interval { font: 11px "Consolas", monospace; color: var(--theme-muted); }
+.piano-section { margin: 0; border: 0; border-top: 1px solid var(--theme-line); border-radius: 0; padding: 24px 0 0; background: transparent !important; }
+.piano-section-head { margin-bottom: 20px; align-items: center; background: transparent !important; }
+.piano-section-head strong { font-size: 14px; font-weight: 500; }
+.piano-caption { font-size: 11px; margin-top: 5px; }
+.chord-play-button { min-height: 36px; padding: 7px 13px; font-size: 12px; border-color: var(--theme-line-strong); border-radius: 4px; }
+.chord-play-button span { font-size: 9px; margin-right: 4px; color: var(--theme-accent); }
+.piano-keyboard { height: 166px; padding: 0 0 5px; margin: 0; border-radius: 0; }
+.piano-white-wrap { flex: 1 0 34px; min-width: 34px; }
+.piano-white-key, :root[data-theme="light"] .piano-white-key { background: #f5f3eb !important; color: #777b70; border-color: #b8bbae !important; border-radius: 0 0 4px 4px; box-shadow: inset 0 -4px 0 #e0e1d6; }
+.piano-white-key:first-child { border-radius: 0 0 4px 4px; }
+.piano-black-key, :root[data-theme="light"] .piano-black-key { width: 56%; right: -28%; background: #30372f !important; border-color: #232920 !important; border-radius: 0 0 3px 3px; box-shadow: inset 0 -5px 0 #242b22, 0 3px 3px #0002; color: #c0c5b7; }
+.piano-key.is-active, :root[data-theme="light"] .piano-key.is-active { background: #adbbac !important; color: #293b2d; box-shadow: inset 0 -4px 0 #91a38e; }
+.piano-key.is-bass, :root[data-theme="light"] .piano-key.is-bass { background: #c3b8ce !important; color: #43334b; box-shadow: inset 0 -4px 0 #a396b0; }
+.piano-key.is-root, :root[data-theme="light"] .piano-key.is-root { background: #c68466 !important; color: #fff9ee; box-shadow: inset 0 -4px 0 #ab694e; }
+.piano-key.is-root.is-bass { border-bottom: 4px solid var(--bass) !important; }
+.piano-key:hover { filter: brightness(1.08); }
+.piano-key:active { transform: translateY(2px); }
+.piano-key:focus-visible { outline-offset: -4px; z-index: 4; }
+.piano-key-label { bottom: 12px; font: 11px "Consolas", monospace; }
+.piano-black-key .piano-key-label { font-size: 9px; }
+.piano-legend { gap: 20px; align-items: center; margin-top: 14px; color: var(--theme-muted); font-size: 10px; }
+.piano-legend i { width: 7px; height: 7px; border-radius: 1px; box-shadow: none; }
+.legend-root { background: var(--root); }
+.legend-bass { background: var(--bass); }
+.legend-tone { background: var(--tone); }
+.piano-range { margin-left: auto; font: 10px "Consolas", monospace; }
+.workspace-footer { display: flex; justify-content: space-between; gap: 16px; margin-top: 21px; color: var(--theme-dim); font-size: 10px; letter-spacing: .08em; }
+.workspace-footer > span:first-child { font-size: 9px; letter-spacing: .16em; }
+.result-card { border-radius: 4px !important; }
+.panel-body .note-cell { border-radius: 4px; }
+.input-error { margin: 4px 0; color: var(--theme-accent); }
+#neo-canvas-container { display: block !important; min-height: 0 !important; padding: 0 !important; background: var(--theme-panel) !important; }
+#neo-canvas-container canvas { touch-action: none; display: block; }
+.neo-graph-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--theme-line); color: var(--theme-muted); font-size: 11px; }
+.neo-graph-toolbar > div { display: flex; gap: 5px; }
+.neo-graph-toolbar button { min-width: 30px; min-height: 30px; padding: 4px 9px; border: 1px solid var(--theme-line); border-radius: 4px; background: transparent; color: var(--theme-text); cursor: pointer; }
+.neo-graph-toolbar button:hover { background: var(--theme-wash); }
+.neo-graph-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 12px 16px; border-top: 1px solid var(--theme-line); color: var(--theme-muted); font-size: 10px; }
+.neo-graph-legend > span { display: inline-flex; align-items: center; gap: 7px; }
+.neo-graph-legend i { width: 20px; border-top: 1px solid var(--theme-line-strong); }
+.neo-graph-legend .is-extended { border-top-style: dashed; }
+.neo-graph-help { margin-left: auto; }
+#panel-neo-body > .neo-view-switch { background: transparent; }
+.classical-toolbar { align-items: flex-end; }
+.classical-chain-primary-actions button { width: auto; white-space: nowrap; }
+.classical-rec-card { padding-bottom: 34px !important; }
+.classical-view-tab, .classical-function-tab { font-weight: 500; }
+.classical-view-tabs { box-shadow: none; }
+.func-seq-degree, .func-seq-chord, .scale-pitch-name { color: var(--theme-text); }
+@media (min-width: 841px) and (max-width: 1100px) {
+    .container { width: calc(100% - 48px); grid-template-columns: 166px minmax(0, 1fr); gap: 0 28px; }
+    .header-tools { gap: 4px; }
+    .control-label, .notation-label { display: none; }
+}
+@media (max-width: 840px) {
+    .container { display: block; width: calc(100% - 40px); padding: 0 0 28px; }
+    .app-header { flex-direction: row; min-height: 105px; gap: 16px; margin-bottom: 20px; padding: 20px 0; }
+    .header-tools { width: auto; flex-wrap: wrap; justify-content: flex-end; gap: 2px; }
+    .control-label, .notation-label { display: none; }
+    .feature-nav { position: static; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; gap: 4px; padding: 0 0 12px; margin: 0 0 25px !important; border-bottom: 1px solid var(--theme-line) !important; }
+    .feature-nav::before, .feature-btn::after { display: none; }
+    .feature-btn { width: auto; flex: 0 0 auto; min-height: 37px; padding: 8px 12px; white-space: nowrap; font-size: 12px; }
+    .feature-btn[data-feature="ref"], .feature-btn[data-feature="about"] { margin-top: 0; }
+    .feature-btn.active::before { display: none; }
+    .workspace-heading { padding-bottom: 24px; }
+    .workspace-heading h2 { font-size: 29px; }
+    .staff-motif { width: 110px; }
+    .piano-section-head { flex-direction: row; }
+}
+@media (max-width: 520px) {
+    .container { width: calc(100% - 28px); }
+    .brand-mark { width: 33px; height: 38px; }
+    .brand-lockup { gap: 8px; }
+    .eyebrow { display: block; font-size: 8px; }
+    .title-block h1 { font-size: 17px; }
+    .subtitle { font-size: 9px; letter-spacing: 0; }
+    .header-tools { max-width: 132px; gap: 3px; }
+    .theme-btn, .notation-btn { font-size: 10px; min-height: 26px; padding: 4px 8px !important; }
+    .theme-switch, .notation-switch { min-height: 28px; }
+    .workspace-heading { gap: 10px; }
+    .workspace-heading h2 { font-size: 27px; }
+    #workspace-description { font-size: 11px; max-width: 250px; line-height: 1.8; }
+    .staff-motif { width: 60px; min-width: 60px; }
+    .panel-header, .panel-body { padding: 20px 16px !important; }
+    #panel-chord #chord-run { min-width: 70px; padding: 8px 16px; }
+    #chord-input { font-size: 18px; }
+    .chord-symbol { font-size: 43px; }
+    #panel-chord-body .note-cell { min-width: 58px; gap: 10px; padding: 0 14px; margin: 4px 0; }
+    .piano-section-head { align-items: center; gap: 10px; }
+    .piano-section-head strong { font-size: 13px; }
+    .chord-play-button { width: auto; white-space: nowrap; font-size: 11px; padding: 7px 9px; }
+    .piano-keyboard { height: 142px; }
+    .piano-white-wrap { min-width: 29px; flex-basis: 29px; }
+    .piano-legend { gap: 13px; }
+    .piano-range { font-size: 9px; }
+    .classical-toolbar > button { align-self: end; }
+    #panel-ref .panel-header { grid-template-columns: minmax(0, 1fr); gap: 20px !important; }
+    #ref-family-section { padding-top: 18px; border-top: 1px solid var(--theme-line); }
+    #ref-scale-section, #ref-family-section { min-width: 0; }
+    #panel-ref select { width: 100%; min-width: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
+}

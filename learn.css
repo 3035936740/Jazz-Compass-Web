@@ -622,10 +622,10 @@ line.lv-ruler { stroke: var(--theme-line-strong); stroke-width: 2; }
 .sideb-strip-seg.is-recovery { box-shadow: inset 0 0 0 2px var(--brass-b); color: var(--brass-b); }
 .sideb-strip-name { position: relative; z-index: 1; }
 .sideb-strip-fill { position: absolute; inset: auto auto 0 0; height: 3px; background: var(--tone); transition: width .3s; }
-.sideb-node { position: relative; display: grid; gap: 12px; min-height: 180px; }
+.sideb-node { position: relative; display: grid; gap: 12px; min-height: 180px; align-content: start; }
 .sideb-node-title { margin: 0; font: 800 20px/1.3 var(--font-display, inherit); }
 .sideb-text { margin: 0; font-size: 16px; line-height: 1.75; }
-.sideb-badge { justify-self: start; padding: 2px 10px; border-radius: 999px; background: rgba(156, 101, 13, .12); color: var(--brass-b); font-size: 12px; font-weight: 700; }
+.sideb-badge { justify-self: start; align-self: start; padding: 1px 8px; border: 1px dashed var(--brass-b); border-radius: 6px; background: transparent; color: var(--brass-b); font-size: 11px; font-weight: 700; line-height: 1.6; letter-spacing: .02em; }
 .sideb-ref { margin: 0; font-size: 11px; color: var(--ink-soft); opacity: .8; }
 .sideb-play-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .sideb-play { min-height: 40px; }
@@ -878,3 +878,58 @@ line.lv-ruler { stroke: var(--theme-line-strong); stroke-width: 2; }
 .sideb-toy-picker { display: grid; gap: 6px; padding: 8px 0; border-bottom: 1px dashed var(--theme-line); }
 .sideb-toy-head-line { margin: 0; font-weight: 700; font-size: 14px; }
 .sideb-toy-keys .learn-visual { max-width: 100%; overflow-x: auto; }
+/* 第 2 章的实验 */
+.sideb-toy-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; }
+.sideb-toy-card { display: grid; gap: 2px; justify-items: center; padding: 8px 4px; border: 1px solid var(--theme-line-strong); border-radius: 10px; background: var(--theme-panel); color: var(--theme-text); cursor: pointer; font: inherit; }
+.sideb-toy-card strong { font: 800 16px/1.2 var(--serif, serif); }
+.sideb-toy-card small { color: var(--ink-soft); font-size: 11px; }
+.sideb-toy-card.is-mark { border-color: var(--brass-b); background: rgba(196, 136, 30, .14); }
+.sideb-toy-slots { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(90px, 1fr); gap: 8px; overflow-x: auto; }
+.sideb-toy-slot { display: grid; align-content: start; gap: 4px; padding: 8px; border-radius: 10px; background: var(--theme-panel-raised); border-top: 4px solid var(--theme-line-strong); }
+.sideb-toy-slot.fn-T { border-top-color: var(--fn-tonic, #2f6fd0); }
+.sideb-toy-slot.fn-PD { border-top-color: var(--fn-sub, #2c8a57); }
+.sideb-toy-slot.fn-D { border-top-color: var(--fn-dom, #c4690f); }
+.sideb-toy-fn { font: 800 12px/1 var(--font-display, inherit); color: var(--ink-soft); }
+.sideb-toy-trail, .sideb-toy-meta { margin: 0; font-size: 13px; color: var(--ink-soft); }
+
+/* ---- Side-B：去工具 ---- */
+.sideb-player-tools { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.sideb-chip.sideb-tool { border-style: dashed; border-color: var(--tone); color: var(--tone-deep); background: transparent; }
+.sideb-chip.sideb-tool:hover, .sideb-chip.sideb-tool:focus-visible { background: var(--tone-wash); }
+.sideb-tool-link { justify-self: start; margin-top: 4px; }
+.sideb-toollinks { margin-top: 2px; }
+
+/* ---- Side-B 第 3 章的实验 ---- */
+.sideb-toy-board { overflow-x: auto; padding-bottom: 4px; }
+.sideb-fret-svg { display: block; width: 100%; min-width: 420px; height: auto; color: var(--ink); }
+.sideb-fret-wire { stroke: var(--ink-soft); stroke-width: 1; opacity: .55; }
+.sideb-fret-nut { stroke: var(--ink); stroke-width: 4; }
+.sideb-fret-string { stroke: var(--ink-soft); stroke-width: 1.2; }
+.sideb-fret-num { fill: var(--ink-soft); font: 600 9px/1 var(--font-ui, inherit); }
+.sideb-fret-dot circle { fill: var(--paper); stroke: var(--tone); stroke-width: 2; }
+.sideb-fret-dot text { fill: var(--ink); font: 700 8px/1 var(--font-ui, inherit); }
+.sideb-fret-dot.is-root circle { fill: var(--tone); }
+.sideb-fret-dot.is-root text { fill: #fff; }
+.sideb-fret-dot.shape-A circle { stroke: var(--brass-b); }
+.sideb-fret-dot.shape-A.is-root circle { fill: var(--brass-b); }
+.sideb-fret-dot.shape-G circle { stroke-dasharray: 3 2; }
+.sideb-fret-dot.shape-D circle { stroke-width: 3; }
+.sideb-toy-cell.is-fixed { align-content: center; min-height: 26px; color: var(--ink-soft); font: 600 13px/1.4 var(--font-mono, monospace); }
+.sideb-toy-species .sideb-toy-voices { grid-template-columns: auto repeat(var(--cols), minmax(40px, 1fr)); overflow-x: auto; justify-items: stretch; }
+.sideb-help { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; padding-top: 2px; border-top: 1px dashed var(--rule); }
+
+/* ---- Side-B 第 4 章的实验 ---- */
+.sideb-toy-swing-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.sideb-swing-beat { display: flex; gap: 3px; padding: 4px; border-radius: 10px; background: rgba(38, 48, 77, .06); }
+.sideb-swing-beat.is-back { box-shadow: inset 0 0 0 2px var(--brass-b); }
+.sideb-swing-long, .sideb-swing-short { height: 22px; border-radius: 6px; background: var(--tone); transition: flex-grow .25s ease; }
+.sideb-swing-short { opacity: .55; }
+.sideb-toy-blues-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.sideb-blues-bar { position: relative; display: grid; justify-items: center; gap: 1px; padding: 6px 4px; border-radius: 10px; background: var(--theme-panel); box-shadow: inset 0 0 0 1px var(--theme-line-strong); transition: background .15s, box-shadow .15s; }
+.sideb-blues-bar small { position: absolute; top: 3px; left: 6px; font-size: 10px; color: var(--ink-soft); }
+.sideb-blues-bar strong { font: 800 14px/1.3 var(--font-display, inherit); }
+.sideb-blues-bar span { font-size: 11px; color: var(--ink-soft); }
+.sideb-blues-bar.fn-IV, .sideb-blues-bar.fn-iv { background: var(--tone-wash); }
+.sideb-blues-bar.fn-V, .sideb-blues-bar.fn-iih { background: rgba(196, 136, 30, .14); }
+.sideb-blues-bar.is-now { box-shadow: inset 0 0 0 3px var(--tone); }
+@media (prefers-reduced-motion: reduce) { .sideb-swing-long, .sideb-swing-short, .sideb-blues-bar { transition: none; } }

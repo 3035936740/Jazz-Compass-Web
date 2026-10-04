@@ -32,14 +32,15 @@ test('the Side-B map: 6 chapters, 43 levels, every A-side link exists', () => {
     l.a.forEach((a) => assert.ok(ids.has(a), `${l.id} → ${a}`));
     LANGS.forEach((k) => assert.ok(l.title[k], `${l.id} title.${k}`));
   });
-  assert.deepEqual(playable.map((l) => l.id), ['B2-4', 'B4-10']);
+  assert.ok(playable.length >= 2 && ['B2-4', 'B4-10'].every((id) => playable.some((l) => l.id === id)));
 });
 
 test('playable levels pass the design guardrails (insight, ≤2 pages in a row, 6–8 challenge questions, retries change, time, breakthrough)', () => {
   playable.forEach((level) => {
     assert.deepEqual(validateLevel(level), [], level.id);
     assert.ok(estimateMinutes(level) <= (level.core ? 20 : 15), `${level.id}: ${estimateMinutes(level)} min`);
-    assert.deepEqual(levelSections(level), ['discover', 'explain', 'experiment', 'challenge', 'lab'], level.id);
+    // 五段顺序固定；实操只出现在地图上标了实操的关卡
+    assert.deepEqual(levelSections(level), ['discover', 'explain', 'experiment', 'challenge', ...(level.lab ? ['lab'] : [])], level.id);
     assert.ok(level.insight, `${level.id} insight`);
   });
 });
@@ -79,7 +80,14 @@ test('every attempt materializes valid questions: the right answer is among the 
 
 test('audio stays in a playable range; teaching chords are what the text says', () => {
   const midis = [];
-  const walk = (v) => { if (Array.isArray(v)) v.forEach(walk); else if (v && typeof v === 'object') Object.entries(v).forEach(([k, x]) => { if ((k === 'chords' || k === 'midis' || k === 'notes') && Array.isArray(x)) midis.push(...x.flat(2).filter(Number.isFinite)); else if (k === 'midi' && Number.isFinite(x)) midis.push(x); else walk(x); }); };
+  // 只看真正要播放的音频（audio 对象）：{ chords }、{ notes }、{ rhythm: { tracks: [{ midi | midis }] } }
+  const fromAudio = (a) => {
+    if (!a) return;
+    if (a.chords) midis.push(...a.chords.flat());
+    if (a.notes) midis.push(...a.notes.flat(2).filter(Number.isFinite));
+    (a.rhythm?.tracks || []).forEach((tr) => midis.push(...(tr.midis || [tr.midi])));
+  };
+  const walk = (v) => { if (Array.isArray(v)) v.forEach(walk); else if (v && typeof v === 'object') Object.entries(v).forEach(([k, x]) => { if (k === 'audio') fromAudio(x); else walk(x); }); };
   playable.forEach((level) => walk(level.sections));
   assert.ok(midis.length > 20);
   midis.forEach((m) => assert.ok(m >= 36 && m <= 96, String(m)));

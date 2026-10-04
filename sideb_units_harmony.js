@@ -32,7 +32,7 @@ export const LEVEL_B2_4 = {
         options: [t('版本 B', 'バージョン B', 'Version B'), t('版本 A', 'バージョン A', 'Version A'), t('听不出区别', '違いが分からない', 'No difference')],
         answer: 0,
         insight: {
-          title: t('原来如此：平行五度让两条线融在一起', 'なるほど：平行 5 度は 2 本の線を溶け合わせる', 'Aha: parallel fifths fuse the lines'),
+          title: t('平行五度让两条线融在一起', '平行 5 度は 2 本の線を溶け合わせる', 'Parallel fifths fuse the lines'),
           text: t('版本 A 的两个声部一直保持纯五度（加八度）同向移动，听起来像一条加厚的线；版本 B 反向进行，两条线各走各的。OMT 的解释：平行五度、八度让"融合"压过"声部独立"，连续的稳定音程还会让音乐失去变化和动力；反向进行最能保持声部独立。四部写作的规则，保护的就是"听得见几条线"。',
             'A の 2 声は完全 5 度（＋オクターヴ）のまま同じ向きに動き、1 本の太い線に聞こえる。B は反行で、2 本がそれぞれの道を行く。OMT によれば、平行 5・8 度は「融合」を「声部の独立」より強め、安定した音程の連続は変化と推進力を止める。反行は独立を最もよく保つ。4 声体の規則が守っているのは「何本の線が聞こえるか」なのだ。',
             'In A the voices move together a perfect fifth (plus octaves) apart and sound like one thickened line; in B they move in contrary motion and each goes its own way. OMT: parallel fifths and octaves promote fusion over independence, and consecutive stable intervals stall variety and motion; contrary motion best preserves independence. The part-writing rules protect how many lines you can hear.'),

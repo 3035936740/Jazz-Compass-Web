@@ -171,3 +171,29 @@ test('four-part input is flexible: any split between the staves, tied-over notes
   const missing = checkFourPart(sub, params);
   assert.ok(missing.hardFail.some((h) => /第 2 小节第 1 拍：同时有 3 个音/.test(h.text.zh)), JSON.stringify(missing.hardFail.map((h) => h.text.zh)));
 });
+
+test('species counterpoint lab: Fux C cantus, first and fourth species', async () => {
+  const { checkSpecies } = await import('./lab_checks.js');
+  const pn = (p) => ({ letter: p[0], octave: Number(p.slice(-1)), alter: null, cents: 0 });
+  const w = (p, duration = 'w', tie = false) => (p ? { rest: false, duration, dots: 0, tie, notes: [pn(p)] } : { rest: true, duration, dots: 0, tie: false, notes: [] });
+  const cantus = 'C3 E3 F3 G3 E3 A3 G3 E3 F3 E3 D3 C3'.split(' ');
+  const cf = cantus.map((p) => w(p));
+  const sub = (cp, bass = cf) => ({ key: 0, meter: [4, 4], clef: 'grand', voices: [cp, bass] });
+  const first = 'C4 B3 A3 B3 B3 C4 D4 E4 D4 C4 B3 C4'.split(' ').map((p) => w(p));
+  assert.equal(checkSpecies(sub(first), { species: 1, cantus }).score, 100);
+  // 连续五度：每处扣在"无平行"项里
+  const parallels = checkSpecies(sub('G3 B3 C4 D4 G3 C4 B3 G3 A3 G3 B3 C4'.split(' ').map((p) => w(p))), { species: 1, cantus });
+  assert.ok(parallels.score < 70 && parallels.items.find((i) => i.id === 'parallels').deductions.some((d) => d.error === 'parallel-fifths'));
+  // 空白 = 0 分；写了一半：没写的部分不能白拿分，也不报"结尾不对"
+  assert.equal(checkSpecies(sub([]), { species: 1, cantus }).score, 0);
+  const half = checkSpecies(sub(first.slice(0, 6)), { species: 1, cantus });
+  assert.ok(half.score < 60 && !half.items.flatMap((i) => i.deductions).some((d) => d.error === 'cp-frame'));
+  // 改动定旋律 = 硬性失败
+  assert.equal(checkSpecies(sub(first, cf.slice(0, 11)), { species: 1, cantus }).passed, false);
+  // 第四类：弱拍连到强拍的挂留链 = 100；不连（重新奏出不协和的强拍）扣在"协和与不协和"
+  const ys = 'C4 G4 F4 E4 G4 F4 E4 C4 D4 C4 B3'.split(' ');
+  const fourth = [w(null, 'h'), w(ys[0], 'h', true), ...ys.slice(1).flatMap((y, i) => [w(ys[i], 'h'), w(y, 'h', i < ys.length - 2)]), w('C4')];
+  assert.equal(checkSpecies(sub(fourth), { species: 4, cantus }).score, 100);
+  const untied = checkSpecies(sub(fourth.map((e) => ({ ...e, tie: false }))), { species: 4, cantus });
+  assert.ok(untied.score < 80 && untied.items.find((i) => i.id === 'consonance').deductions.some((d) => d.error === 'suspension'));
+});

@@ -2,6 +2,7 @@
 // 规则见 counterpoint.js；定旋律与 Fux 解答来自 ref:gotham-species（数据）与 ref:omt2e-gradus（定旋律一览）
 import { checkCounterpoint, checkCantus, parseCounterpointText, RULES } from './counterpoint.js';
 import { FUX_TWO_VOICE } from './fux_species_data.js';
+import { MESSAGES } from './counterpoint_messages.js?v=20261004-w1';
 import { parsePitch } from './pitch_spelling.js';
 import { renderStaff } from './staff_svg.js?v=20261002-fix';
 import { el, button, option, field, language, midiToFrequency, sourcesFooter, tabs, relatedLinks, midiExportButton } from './module_kit.js';
@@ -63,78 +64,6 @@ const TEXT = {
   },
 };
 
-/** 规则说明（按代码），{x} 为参数 */
-const MESSAGES = {
-  zh: {
-    'cf-length': '定旋律宜为 8–16 个音（现为 {count}）。', 'cf-ends': '定旋律应以 do 开始并结束。', 'cf-approach': '定旋律应级进到达最后的主音（re–do 或 ti–do）。',
-    'cf-range': '定旋律音域不宜超过十度（现为 {span} 度）。', 'cf-climax': '定旋律的最高音应只出现一次。', 'cf-leap-recovery': '四度及以上的跳进之后应反向级进。',
-    'cf-leap-run': '不要连续三次跳进。', 'cf-leap-direction': '不要同方向连续跳进。',
-    'melodic-dissonance': '旋律中出现不协和音程 {interval}（增减音程、七度或超过八度）。',
-    'start-interval': '开头音程为 {interval}：上方对位应从 do 或 sol（同度、五度、八度）开始，下方对位应从 do 开始。',
-    'final-interval': '结尾音程为 {interval}，应为同度或八度（do）。', 'final-step': '应以级进到达最后的八度或同度。',
-    'final-contrary': '最后的音程应以反向级进到达。', 'penultimate': '倒数第二个音程为 {interval}，宜为小三度或大六度。',
-    'dissonance': '出现不协和音程 {interval}；第一类只能用协和音程。', 'unison-inner': '同度只用于开头和结尾。',
-    'parallel-perfect': '连续两个相同的完全协和音程（{interval}）。', 'direct-perfect': '以同向进行进入完全协和音程 {interval}（直接五度/八度）。',
-    'imperfect-run': '同一种不完全协和音程（{interval}）连续超过三次。', 'voice-crossing': '声部交叉。', 'voice-overlap': '声部超越（越过另一声部的前一个音）。',
-    'range': '对位音域不宜超过十二度（现为 {span} 度）。', 'climax': '对位应只有一个最高点，且不与定旋律的最高点重合。',
-    'repetition': '同音反复超过一次（{count} 次）。', 'similar-leap': '同向进行时不宜跳进。',
-    'rhythm': '这一小节的节奏不符合该类别的写法。', 'downbeat-dissonance': '强拍出现不协和音程 {interval}。', 'downbeat-unison': '强拍宜避免同度。',
-    'downbeat-parallel': '相邻两小节的强拍是相同的完全协和音程（{interval}）。', 'downbeat-outline': '相邻强拍之间勾勒出不协和的旋律音程。',
-    'downbeat-imperfect-run': '连续超过三个小节的强拍是同一种不完全协和音程（{interval}）。', 'weak-not-passing': '弱拍的不协和音 {interval} 不是级进的经过音。',
-    'downbeat-unison-3': '第三类的强拍不能是同度。', 'downbeat-parallel-3': '连续三个小节的强拍是相同的完全协和音程（{interval}）。',
-    'weak-unexplained': '不协和音 {interval} 不是经过音、辅助音、双辅助音或换音。',
-    'suspension-preparation': '强拍不协和音 {interval} 没有以连线的协和音预备。', 'suspension-resolution': '挂留音 {interval} 没有级进下行解决到协和音。',
-    'suspension-type': '挂留 {type} 不在允许之列（上方：7–6、4–3、9–8；下方：2–3、5–6、4–5）。', 'suspension-repeat': '不要连续使用 {type} 挂留。',
-    'weak-perfect-run': '相邻弱拍出现相同的完全协和音程（{interval}）。', 'cadence-suspension': '终止宜用上方 7–6 或下方 2–3 挂留（现为 {type}）。',
-    'eighth-placement': '八分音符应成对出现在弱拍（第二或第四个四分音符）。', 'note-value': '时值 {value} 不在第五类可用的音符之内。',
-  },
-  ja: {
-    'cf-length': '定旋律は 8–16 音が目安です（現在 {count}）。', 'cf-ends': '定旋律は do で始まり do で終わります。', 'cf-approach': '最後の主音へは順次進行（re–do または ti–do）で到達します。',
-    'cf-range': '定旋律の音域は十度以内が目安です（現在 {span} 度）。', 'cf-climax': '定旋律の最高音は一度だけ現れるようにします。', 'cf-leap-recovery': '四度以上の跳躍の後は反対方向へ順次進行します。',
-    'cf-leap-run': '跳躍を三回続けないでください。', 'cf-leap-direction': '同じ方向への跳躍を続けないでください。',
-    'melodic-dissonance': '旋律に不協和な音程 {interval}（増減音程・七度・八度超）があります。',
-    'start-interval': '開始音程は {interval}。上の対旋律は do か sol（一度・五度・八度）、下の対旋律は do で始めます。',
-    'final-interval': '終止音程は {interval}。一度か八度（do）にします。', 'final-step': '最後の八度・一度へは順次進行で到達します。',
-    'final-contrary': '最後の音程へは反行の順次進行で到達します。', 'penultimate': '最後から二番目の音程は {interval}。短三度か長六度が適切です。',
-    'dissonance': '不協和音程 {interval} があります。第一類は協和音程のみです。', 'unison-inner': '一度は最初と最後だけに使います。',
-    'parallel-perfect': '同じ完全協和音程（{interval}）が続いています。', 'direct-perfect': '並行して完全協和音程 {interval} に進んでいます（直行五度・八度）。',
-    'imperfect-run': '同じ不完全協和音程（{interval}）が三回を超えて続いています。', 'voice-crossing': '声部が交差しています。', 'voice-overlap': '声部が相手の直前の音を越えています。',
-    'range': '対旋律の音域は十二度以内が目安です（現在 {span} 度）。', 'climax': '対旋律の最高点は一つにし、定旋律の最高点と重ねないようにします。',
-    'repetition': '同音の反復が一回を超えています（{count} 回）。', 'similar-leap': '並行進行での跳躍は避けます。',
-    'rhythm': 'この小節のリズムはこの類の書き方に合っていません。', 'downbeat-dissonance': '強拍に不協和音程 {interval} があります。', 'downbeat-unison': '強拍の一度は避けます。',
-    'downbeat-parallel': '隣り合う小節の強拍が同じ完全協和音程（{interval}）です。', 'downbeat-outline': '隣り合う強拍の間に不協和な旋律音程があります。',
-    'downbeat-imperfect-run': '三小節を超えて強拍が同じ不完全協和音程（{interval}）です。', 'weak-not-passing': '弱拍の不協和音 {interval} が順次進行の経過音になっていません。',
-    'downbeat-unison-3': '第三類の強拍は一度にできません。', 'downbeat-parallel-3': '三小節続けて強拍が同じ完全協和音程（{interval}）です。',
-    'weak-unexplained': '不協和音 {interval} が経過音・刺繍音・二重刺繍音・カンビアータのいずれでもありません。',
-    'suspension-preparation': '強拍の不協和音 {interval} がタイで結ばれた協和音で予備されていません。', 'suspension-resolution': '掛留音 {interval} が順次下行して協和音へ解決していません。',
-    'suspension-type': '掛留 {type} は許されていません（上：7–6・4–3・9–8、下：2–3・5–6・4–5）。', 'suspension-repeat': '{type} の掛留を続けて使わないでください。',
-    'weak-perfect-run': '隣り合う弱拍が同じ完全協和音程（{interval}）です。', 'cadence-suspension': '終止は上の 7–6 か下の 2–3 の掛留が適切です（現在 {type}）。',
-    'eighth-placement': '八分音符は対にして弱拍（二つ目か四つ目の四分音符）に置きます。', 'note-value': '音価 {value} は第五類で使えません。',
-  },
-  en: {
-    'cf-length': 'A cantus firmus is usually 8–16 notes long (now {count}).', 'cf-ends': 'The cantus should begin and end on do.', 'cf-approach': 'Approach the final tonic by step (re–do or ti–do).',
-    'cf-range': 'Keep the cantus within a tenth (now a {span}th).', 'cf-climax': 'The highest note of the cantus should appear only once.', 'cf-leap-recovery': 'Follow a leap of a fourth or more with a step in the opposite direction.',
-    'cf-leap-run': 'No more than two leaps in a row.', 'cf-leap-direction': 'No consecutive leaps in the same direction.',
-    'melodic-dissonance': 'Dissonant melodic interval {interval} (augmented/diminished, seventh or wider than an octave).',
-    'start-interval': 'Opening interval is {interval}: a line above starts on do or sol (unison, fifth, octave); a line below starts on do.',
-    'final-interval': 'Final interval is {interval}; end on a unison or octave (do).', 'final-step': 'Arrive at the final octave or unison by step.',
-    'final-contrary': 'Approach the final interval by contrary stepwise motion.', 'penultimate': 'The penultimate interval is {interval}; a minor third or major sixth is expected.',
-    'dissonance': 'Dissonance {interval}: first species uses consonances only.', 'unison-inner': 'Use unisons only for the first and last intervals.',
-    'parallel-perfect': 'Two of the same perfect interval in a row ({interval}).', 'direct-perfect': 'Similar motion into the perfect interval {interval} (direct fifth/octave).',
-    'imperfect-run': 'More than three of the same imperfect consonance ({interval}) in a row.', 'voice-crossing': 'Voice crossing.', 'voice-overlap': 'Voice overlap (passing the other voice’s previous note).',
-    'range': 'Keep the counterpoint within a twelfth (now a {span}th).', 'climax': 'Give the counterpoint a single climax that does not coincide with the cantus climax.',
-    'repetition': 'More than one repeated note ({count}).', 'similar-leap': 'Avoid combining similar motion with leaps.',
-    'rhythm': 'The rhythm of this bar does not fit the species.', 'downbeat-dissonance': 'Dissonance {interval} on a downbeat.', 'downbeat-unison': 'Avoid unisons on downbeats.',
-    'downbeat-parallel': 'Two consecutive bars begin with the same perfect interval ({interval}).', 'downbeat-outline': 'Consecutive downbeats outline a dissonant melodic interval.',
-    'downbeat-imperfect-run': 'More than three bars in a row begin with the same imperfect consonance ({interval}).', 'weak-not-passing': 'Weak-beat dissonance {interval} is not a stepwise passing tone.',
-    'downbeat-unison-3': 'Third-species downbeats may not be unisons.', 'downbeat-parallel-3': 'Three consecutive bars begin with the same perfect interval ({interval}).',
-    'weak-unexplained': 'Dissonance {interval} is not a passing, neighbour, double-neighbour or cambiata tone.',
-    'suspension-preparation': 'Downbeat dissonance {interval} is not prepared by a tied consonance.', 'suspension-resolution': 'Suspension {interval} does not resolve down by step to a consonance.',
-    'suspension-type': 'Suspension {type} is not permitted (above: 7–6, 4–3, 9–8; below: 2–3, 5–6, 4–5).', 'suspension-repeat': 'Do not use {type} suspensions twice in a row.',
-    'weak-perfect-run': 'Consecutive weak beats form the same perfect interval ({interval}).', 'cadence-suspension': 'Cadence with a 7–6 above or 2–3 below (now {type}).',
-    'eighth-placement': 'Eighth notes come in pairs on weak beats (second or fourth quarter).', 'note-value': 'Duration {value} is not a fifth-species note value.',
-  },
-};
 
 const VALUE_SUFFIX = { 4: 'w', 2: 'h', 1: 'q', 0.5: 'e' };
 const DEFAULT_VALUE = { 1: 4, 2: 2, 3: 1, 4: 2, 5: 1 };

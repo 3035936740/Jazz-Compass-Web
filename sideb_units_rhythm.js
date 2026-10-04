@@ -39,7 +39,7 @@ export const LEVEL_B4_10 = {
         options: [t('完全一样：四音音型就是两条线合起来的节奏', '同じ：4 音の型は 2 本の線を合わせたリズム', 'The same: the ostinato is the two lines combined'), t('毫无关系', 'まったく関係ない', 'Unrelated'), t('四音音型只和"三下"那条线一样', '「3 回」の線とだけ同じ', 'It matches only the three-beat line'), t('四音音型快了一倍', '4 音の型は 2 倍速い', 'The ostinato is twice as fast')],
         answer: 0,
         insight: {
-          title: t('原来如此：复节奏的"合成节奏"', 'なるほど：ポリリズムの「合成リズム」', 'Aha: the composite rhythm'),
+          title: t('复节奏的"合成节奏"', 'ポリリズムの「合成リズム」', 'The composite rhythm'),
           text: t('把一个循环平均切成 6 格：三下落在第 1、3、5 格，两下落在第 1、4 格。合起来就是第 1、3、4、5 格——"长、短、短、长"。"Carol of the Bells"的四音固定音型正是 2 对 3 hemiola 的复合节奏。知道 3:2 是一回事；能听出、打出、写出它的合成节奏，才是会了。',
             '1 周期を 6 マスに分けると、3 回は 1・3・5 マス目、2 回は 1・4 マス目。合わせて 1・3・4・5——「長・短・短・長」。「キャロル・オブ・ザ・ベル」の 4 音オスティナートはまさに 2 対 3 のヘミオラの合成リズム。3:2 を知っているのと、その合成リズムを聴いて・叩いて・書けるのは別のこと。',
             'Cut one cycle into 6 cells: the threes land on cells 1, 3, 5 and the twos on 1 and 4. Together: 1, 3, 4, 5 — long, short, short, long. The four-note ostinato of “Carol of the Bells” is exactly the composite of a 2-against-3 hemiola. Knowing “3:2” is one thing; hearing, tapping and writing its composite is knowing it.'),

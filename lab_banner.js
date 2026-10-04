@@ -5,10 +5,10 @@
 //   chapter 章节测试：最多检查 3 次，只写哪里扣分，不给改法
 //   ex      B-EX：评分 + 少提示 + 独立完成——不能检查，只能提交一次，提交后才看到完整评分单
 // 结果写进 localStorage（sideb_engine.saveLabResult），再回到课程 #learn?q=@lab-return:<id>。
-import { LABS, parseLabRef } from './sideb_labs.js?v=20261004-l3';
-import { evaluateLab } from './lab_checks.js?v=20261004-l3';
-import { saveLabResult, loadLabResults, LAB_MODES, LAB_LINES, breakthroughFor, loadBreakthroughs, saveBreakthrough } from './sideb_engine.js?v=20261004-b3';
-import { ERRORS } from './sideb_errors.js?v=20261004-b2';
+import { LABS, parseLabRef } from './sideb_labs.js?v=20261004-w5';
+import { evaluateLab } from './lab_checks.js?v=20261004-w1';
+import { saveLabResult, loadLabResults, LAB_MODES, LAB_LINES, breakthroughFor, loadBreakthroughs, saveBreakthrough } from './sideb_engine.js?v=20261004-w5';
+import { ERRORS } from './sideb_errors.js?v=20261004-w5';
 import { celebrate as flashBreakthrough } from './sideb_fx.js?v=20261004-f1';
 
 const TEXT = {

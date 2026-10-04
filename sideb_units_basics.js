@@ -20,6 +20,8 @@
 const t = (zh, ja, en) => ({ zh, ja, en });
 const G = (id, gen, count, skills, params) => ({ id, type: 'gen', gen, count, skills, ...(params ? { params } : {}) });
 const nn = (p) => ({ p, d: 'w', lit: true });
+/** 同一列叠几个音（和弦 / 和声音程） */
+const chordCol = (ps, col) => ps.map((p) => ({ p, d: 'w', col }));
 
 // ===================== B1-1 音高、拼写与记谱的精确性 =====================
 export const LEVEL_B1_1 = {
@@ -35,7 +37,7 @@ export const LEVEL_B1_1 = {
         options: [t('同一个键；八度编号跟着字母 B 算在下面一个八度', '同じ鍵。オクターヴ番号は文字 B に従い、下のオクターヴに数える', 'The same key; the number follows the letter B, which belongs to the octave below'), t('不同的键', '違う鍵', 'Different keys'), t('同一个键，其中一个写错了', '同じ鍵で、どちらかが書き間違い', 'The same key; one of them is a typo')],
         answer: 0,
         insight: {
-          title: t('原来如此：编号跟着字母，不跟着琴键', 'なるほど：番号は鍵ではなく文字に従う', 'Aha: the number follows the letter, not the key'),
+          title: t('编号跟着字母，不跟着琴键', '番号は鍵ではなく文字に従う', 'The number follows the letter, not the key'),
           text: t('ASPN 的每个八度从 C 开始编号，中央 C 是 C4。升降号不改变八度编号：B♯3 和 C4 同音，但 B♯ 仍然算在下面那个八度。同一个键可以有好几个名字（同音异名），写哪一个由音乐语境决定。', 'ASPN の各オクターヴは C から番号を振り、中央の C は C4。臨時記号は番号を変えない：B♯3 と C4 は同じ音だが、B♯ は下のオクターヴのまま。同じ鍵にいくつも名前があり（異名同音）、どれを書くかは文脈で決まる。', 'ASPN numbers each octave from C; middle C is C4. Accidentals do not change the octave number: B♯3 sounds the same as C4, but B♯ still belongs to the octave below. One key has several names (enharmonic equivalents); context decides which to write.'),
         },
       },
@@ -134,7 +136,7 @@ export const LEVEL_B1_2 = {
         options: [t('A 是三拍、每拍分二（3/4）；B 是两拍、每拍分三（6/8）', 'A は 3 拍で 1 拍を 2 つに（3/4）、B は 2 拍で 1 拍を 3 つに（6/8）', 'A is three beats split in two (3/4); B is two beats split in three (6/8)'), t('两段一样，都是 6 拍', '同じ、どちらも 6 拍', 'The same — both six beats'), t('A 是 6/8，B 是 3/4', 'A が 6/8、B が 3/4', 'A is 6/8, B is 3/4')],
         answer: 0,
         insight: {
-          title: t('原来如此：拍号说的是"怎么分组"', 'なるほど：拍子記号は「まとめ方」を言っている', 'Aha: a meter is about grouping'),
+          title: t('拍号说的是"怎么分组"', '拍子記号は「まとめ方」を言っている', 'A meter is about grouping'),
           text: t('单拍子每拍分成两份，复拍子每拍分成三份。复拍子拍号上面的数是"分拍"的个数：6/8 = 六个八分音符分成两拍（附点四分音符为一拍），是复二拍子；3/4 是单三拍子。连符尾也按拍来连：同样十二个十六分音符，单拍子四个一组，复拍子六个一组。', '単純拍子は 1 拍を 2 つ、複合拍子は 3 つに分ける。複合拍子の上の数は「分割」の数：6/8 = 8 分音符 6 つを 2 拍に（付点 4 分が 1 拍）、複合 2 拍子。3/4 は単純 3 拍子。連桁も拍ごとに：同じ 16 分音符 12 個でも単純拍子は 4 つ、複合拍子は 6 つずつ。', 'Simple meters split each beat in two, compound meters in three. In compound meters the top number counts divisions: 6/8 = six eighths in two dotted-quarter beats (compound duple); 3/4 is simple triple. Beams follow the beat: twelve sixteenths go in fours in simple meter, in sixes in compound.'),
         },
       },
@@ -220,11 +222,11 @@ export const LEVEL_B1_3 = {
         id: 'b13-d1', type: 'discover', ref: 'omt2e-intervals',
         prompt: t('听 C–F♯，再听 C–G♭。听起来一样吗？为什么它们的名字不一样？', 'C–F♯、次に C–G♭ を聴こう。同じ響き？ なぜ名前が違う？', 'Hear C–F♯, then C–G♭. Do they sound the same? Why are their names different?'),
         play: [{ label: 'C–F♯', audio: { notes: [60, 66], mode: 'harmonic' } }, { label: 'C–G♭', audio: { notes: [60, 66], mode: 'harmonic' } }],
-        visual: { kind: 'notation', staves: [{ clef: 'treble' }], notes: [{ p: ['C4', 'F#4'], d: 'w' }, { p: ['C4', 'Gb4'], d: 'w' }], cols: 2 },
+        visual: { kind: 'notation', staves: [{ clef: 'treble' }], notes: [...chordCol(['C4', 'F#4'], 0), ...chordCol(['C4', 'Gb4'], 1)], cols: 2 },
         options: [t('一样（都是 6 个半音）；C–F 数四个字母是四度，C–G 数五个字母是五度', '同じ（どちらも半音 6）。C–F は文字 4 つで 4 度、C–G は 5 つで 5 度', 'The same (six half steps); C–F spans four letters (a fourth), C–G five (a fifth)'), t('不一样，F♯ 更高', '違う、F♯ のほうが高い', 'Different — F♯ is higher'), t('一样，名字只是习惯', '同じ、名前は慣習だけ', 'The same; the names are just habit')],
         answer: 0,
         insight: {
-          title: t('原来如此：先数字母，再数半音', 'なるほど：まず文字、次に半音', 'Aha: letters first, then half steps'),
+          title: t('先数字母，再数半音', 'まず文字、次に半音', 'Letters first, then half steps'),
           text: t('音程的度数数的是线和间（也就是字母），和升降号无关；性质再看半音。所以 6 个半音可以是增四度（C–F♯），也可以是减五度（C–G♭）——同音异名的音程。', '度数は線と間（つまり文字）を数え、臨時記号は関係ない。性質は半音で決める。だから半音 6 つは増 4 度（C–F♯）にも減 5 度（C–G♭）にもなる——異名同音の音程。', 'Interval size counts lines and spaces — letters — regardless of accidentals; quality then comes from the half steps. Six half steps can be an augmented fourth (C–F♯) or a diminished fifth (C–G♭): enharmonic intervals.'),
         },
       },
@@ -237,13 +239,13 @@ export const LEVEL_B1_3 = {
           t('第一步，只看字母，把两个音都算进去：C 到 E 是 C、D、E 三个字母——三度。不管加了什么升降号，度数都不变。', '第 1 段階：文字だけを見て両端を数える。C から E は C・D・E の 3 つ——3 度。臨時記号が何でも度数は同じ。', 'Step one: letters only, counting both ends: C to E is C, D, E — a third, whatever the accidentals.'),
           t('第二步，数半音定性质：一、四、五、八度是纯音程；二、三、六、七度分大、小。增音程比纯或大音程大半音，减音程比纯或小音程小半音。只看半音的写法叫"半音音程"：C4–E4 = 4 个半音（i4）。', '第 2 段階：半音を数えて性質を決める。1・4・5・8 度は完全音程、2・3・6・7 度は長・短。増は完全・長より半音大きく、減は完全・短より半音小さい。半音だけで表すと C4–E4 = 半音 4 つ（i4）。', 'Step two: count half steps for the quality. Unisons, fourths, fifths and octaves are perfect; seconds, thirds, sixths and sevenths major or minor. Augmented is a half step larger than perfect or major; diminished a half step smaller than perfect or minor. Counting only half steps: C4–E4 is i4.'),
         ],
-        visual: { kind: 'notation', staves: [{ clef: 'treble' }], notes: [{ p: ['C4', 'E4'], d: 'w' }, { p: ['C4', 'Eb4'], d: 'w' }, { p: ['C4', 'E#4'], d: 'w' }], cols: 3 },
+        visual: { kind: 'notation', staves: [{ clef: 'treble' }], notes: [...chordCol(['C4', 'E4'], 0), ...chordCol(['C4', 'Eb4'], 1), ...chordCol(['C4', 'E#4'], 2)], cols: 3 },
       },
       {
         id: 'b13-e2', type: 'demo', ref: 'omt2e-intervals',
         title: t('转位：加起来等于 9', '転回：足すと 9', 'Inversion: sizes add up to 9'),
         steps: [
-          { text: t('把下面的 C 移高八度：C–E（大三度）变成 E–C（小六度）。', '下の C を 1 オクターヴ上へ：C–E（長 3 度）が E–C（短 6 度）に。', 'Move the lower C up an octave: C–E (a major third) becomes E–C (a minor sixth).'), visual: { kind: 'notation', staves: [{ clef: 'treble' }], notes: [{ p: ['C4', 'E4'], d: 'w' }, { p: ['E4', 'C5'], d: 'w' }], cols: 2 }, audio: { notes: [[60, 64], [64, 72]], mode: 'chords' } },
+          { text: t('把下面的 C 移高八度：C–E（大三度）变成 E–C（小六度）。', '下の C を 1 オクターヴ上へ：C–E（長 3 度）が E–C（短 6 度）に。', 'Move the lower C up an octave: C–E (a major third) becomes E–C (a minor sixth).'), visual: { kind: 'notation', staves: [{ clef: 'treble' }], notes: [...chordCol(['C4', 'E4'], 0), ...chordCol(['E4', 'C5'], 1)], cols: 2 }, audio: { notes: [[60, 64], [64, 72]], mode: 'chords' } },
           { text: t('转位的两个度数加起来总是 9：三度 ↔ 六度、二度 ↔ 七度、四度 ↔ 五度。性质：纯还是纯，大变小、小变大，增变减、减变增。', '転回すると度数の和は必ず 9：3 度 ↔ 6 度、2 度 ↔ 7 度、4 度 ↔ 5 度。性質：完全は完全、長 ↔ 短、増 ↔ 減。', 'Inverted sizes always add to 9: thirds ↔ sixths, seconds ↔ sevenths, fourths ↔ fifths. Quality: perfect stays perfect, major ↔ minor, augmented ↔ diminished.') },
           { text: t('用处：底下的音是个难算的调时，先转位再算。例如大七度转位是小二度，增六度转位是减三度。', '使い道：下の音が難しい調の主音のときは、転回してから数える。長 7 度の転回は短 2 度、増 6 度の転回は減 3 度。', 'Why it helps: when the lower note is an awkward key, invert first. A major seventh inverts to a minor second; an augmented sixth to a diminished third.') },
         ],
@@ -312,7 +314,7 @@ export const LEVEL_B1_4 = {
         options: [t('一样远：一个在上方五度，一个在下方五度', '同じ距離：片方は 5 度上、片方は 5 度下', 'Equally far: one a fifth above, one a fifth below'), t('F 离 C 更近，所以叫"下"属音', 'F のほうが C に近いから「下」属音', 'F is closer to C, hence “sub”'), t('没有关系', '関係ない', 'Unrelated')],
         answer: 0,
         insight: {
-          title: t('原来如此：sub- 是"在主音下方"', 'なるほど：sub- は「主音の下」', 'Aha: sub- means “below the tonic”'),
+          title: t('sub- 是"在主音下方"', 'sub- は「主音の下」', 'Sub- means “below the tonic”'),
           text: t('音级名称有来历：dominant（属音）来自中世纪理论，指主音上方五度的重要性；mediant（中音）在主音和属音中间；super- 是"上方"，上主音在主音上方二度；sub- 是"下方"：下主音、下中音、下属音分别是上主音、中音、属音在主音下方的倒影。（本书把主音下方半音的音叫导音。）', '音度の名前には由来がある：dominant（属音）は中世の理論で、主音の 5 度上の重要性から。mediant（中音）は主音と属音の真ん中。super- は「上」で上主音は主音の 2 度上。sub- は「下」：下中音・下属音などは中音・属音などの主音の下の鏡像。（主音の半音下の音はこの本では導音と呼ぶ。）', 'Scale-degree names have origins: “dominant” comes from medieval theory and the importance of the fifth above the tonic; the mediant lies midway between tonic and dominant; super- means above, so the supertonic is a second above; sub- means below: submediant and subdominant are the mirror images, below the tonic, of the mediant and dominant. (The text calls the note a half step below the tonic the leading tone.)'),
         },
       },
@@ -417,7 +419,7 @@ export const LEVEL_B1_5 = {
         options: [t('Lydian → Ionian 降了第四音，Ionian → Mixolydian 降了第七音', 'リディア → イオニアで第 4 音が、イオニア → ミクソリディアで第 7 音が下がった', 'Lydian → Ionian lowers 4; Ionian → Mixolydian lowers 7'), t('三段完全一样', '3 つとも同じ', 'All three are identical'), t('每段都换了好几个音', 'どれも何音も変わった', 'Several notes change each time')],
         answer: 0,
         insight: {
-          title: t('原来如此：调式的明暗是一条链', 'なるほど：旋法の明暗は 1 本の鎖', 'Aha: modal brightness is a chain'),
+          title: t('调式的明暗是一条链', '旋法の明暗は 1 本の鎖', 'Modal brightness is a chain'),
           text: t('把同一个主音上的七种调式按明暗排：Lydian（升四）→ Ionian → Mixolydian（降七）→ Dorian（再降三）→ Aeolian（再降六）→ Phrygian（再降二）→ Locrian（再降五）。对照各调式的全音半音排列，相邻两个只差一个音。含 mi 的三个比较亮，含 me 的四个比较暗。', '同じ主音の 7 つの旋法を明暗順に並べると：リディア（♯4）→ イオニア → ミクソリディア（♭7）→ ドリア（さらに ♭3）→ エオリア（さらに ♭6）→ フリギア（さらに ♭2）→ ロクリア（さらに ♭5）。全音半音の並びを比べると、隣どうしは 1 音しか違わない。mi を含む 3 つは明るく、me を含む 4 つは暗い。', 'Order the seven modes on one tonic by brightness: Lydian (♯4) → Ionian → Mixolydian (♭7) → Dorian (also ♭3) → Aeolian (also ♭6) → Phrygian (also ♭2) → Locrian (also ♭5). Compare their step patterns: neighbours differ by a single note. The three with mi are brighter, the four with me darker.'),
         },
       },
@@ -503,7 +505,7 @@ export const LEVEL_B1_6 = {
         options: [t('同一组音：五声可以用五度来解释', '同じ組：ペンタトニックは 5 度で説明できる', 'The same set: the pentatonic can be explained by fifths'), t('不同的音', '違う音', 'Different notes'), t('只有三个音相同', '3 音だけ同じ', 'Only three notes in common')],
         answer: 0,
         insight: {
-          title: t('原来如此：五个音、没有半音', 'なるほど：5 音、半音なし', 'Aha: five notes, no half steps'),
+          title: t('五个音、没有半音', '5 音、半音なし', 'Five notes, no half steps'),
           text: t('五声音阶是自然音阶的子集，只有五个音，相邻音之间没有半音，可以用连续的五度来解释。中国五声的五个音叫宫、商、角、徵、羽；以 C 为宫就是 C D E G A。', 'ペンタトニックは全音階の部分集合で、5 音だけ、隣り合う音の間に半音がなく、連続する 5 度で説明できる。中国の五声は宮・商・角・徵・羽。C を宮とすると C D E G A。', 'The pentatonic is a subset of the diatonic collection with only five notes and no half steps between neighbours, explainable as a chain of fifths. The five Chinese notes are gong, shang, jue, zhi, yu; with C as gong: C D E G A.'),
         },
       },
@@ -602,7 +604,7 @@ export const LEVEL_B1_7 = {
         options: [t('B（复调）；A 是主调', 'B（ポリフォニー）。A はホモフォニー', 'B (polyphony); A is homophony'), t('A', 'A', 'A'), t('两种都一样', 'どちらも同じ', 'Both the same')],
         answer: 0,
         insight: {
-          title: t('原来如此：织体 = 声部之间的关系', 'なるほど：テクスチュア = 声部どうしの関係', 'Aha: texture is the relationship between voices'),
+          title: t('织体 = 声部之间的关系', 'テクスチュア = 声部どうしの関係', 'Texture is the relationship between voices'),
           text: t('织体说的是各声部的密度和相互关系：单声部（一条无伴奏旋律）、支声（同一旋律的几种变体同时进行）、主调（声部节奏一致、一起换和声）、复调（几条节奏各异的独立旋律）。大多数音乐会在几种织体之间转换。', 'テクスチュアは声部の密度と関わり方：モノフォニー（伴奏なしの旋律 1 本）、ヘテロフォニー（同じ旋律の変奏が同時に）、ホモフォニー（同じリズムで一緒に和声を変える）、ポリフォニー（リズムの違う独立した旋律）。多くの音楽はその間を行き来する。', 'Texture is the density and interaction of voices: monophony (one unaccompanied line), heterophony (variants of one melody at once), homophony (voices moving together in rhythm, changing harmony together), polyphony (independent lines with separate rhythms). Most music moves between them.'),
         },
       },

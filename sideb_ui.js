@@ -1,18 +1,18 @@
 // Side-B（翻面课程）界面：翻面地图、关卡卡片、关卡播放器（发现 / 解释 / 实验 / 挑战 / 实操）、结算页、补弱挑战。
 // 规则在 sideb_engine.js，评分在 lab_checks.js，内容在 sideb_content.js / sideb_units_*.js；设计见 SIDE_B_DESIGN.md。
-// 原则：音乐优先于分数，发现优先于背诵，成就感优先于惩罚感——失败只补弱项，每关有"原来如此"和胜利瞬间。
-import { B_CHAPTERS, B_LEVELS, levelById, chapterLevels, isPlayable } from './sideb_content.js?v=20261004-c2';
+// 原则：音乐优先于分数，发现优先于背诵，成就感优先于惩罚感——失败只补弱项，每关有一个"发现"（insight）和胜利瞬间。
+import { B_CHAPTERS, B_LEVELS, levelById, chapterLevels, isPlayable } from './sideb_content.js?v=20261004-w5';
 import {
   bKey, levelSections, levelForAttempt, createBSession, completeSection, recordAnswer, gradeNode, summarizeB, retrySession,
   buildRecovery, startRecovery, recordRecovery, recoveryResult, completeBLevel, chapterAverage, overallAverage, sidebUnlocked,
   mergeMastery, overallMastery, loadMastery, saveMastery, loadBResume, saveBResume, clearBResume, bestLabResults, saveLabResult, LAB_LINES,
-  breakthroughFor, loadBreakthroughs, saveBreakthrough, estimateMinutes, CHAPTER_EX_LINE, FINAL_EX_LINE, PASS_LINE,
-} from './sideb_engine.js?v=20261004-b3';
-import { SKILLS, SKILL_NAMES, recommend } from './sideb_errors.js?v=20261004-b2';
-import { LABS, labHref } from './sideb_labs.js?v=20261004-l3';
-import { loadProgress, saveProgress, isDone } from './learn_engine.js?v=20261003-s3';
+  breakthroughFor, loadBreakthroughs, saveBreakthrough, estimateMinutes, CHAPTER_EX_LINE, FINAL_EX_LINE, PASS_LINE, isAssessed,
+} from './sideb_engine.js?v=20261004-w5';
+import { SKILLS, SKILL_NAMES, recommend } from './sideb_errors.js?v=20261004-w5';
+import { LABS, labHref } from './sideb_labs.js?v=20261004-w5';
+import { loadProgress, saveProgress, isDone } from './learn_engine.js?v=20261004-s4';
 import { renderVisual } from './learn_visuals.js?v=20261003-r31';
-import { satbStaff, rhythmGrid, playAudio, satbToy, polyToy, tapPad, spellToy, meterToy, intervalToy, scaleToy, textureToy } from './sideb_toys.js?v=20261004-y4';
+import { satbStaff, rhythmGrid, playAudio, satbToy, polyToy, tapPad, spellToy, meterToy, intervalToy, scaleToy, textureToy, chordToy, keyChordsToy, progressionToy, plrToy, keyRelToy, transposeToy, fretToy, nctToy, speciesToy, canonToy, swingToy, bluesToy, chordScaleToy, guideToy, negativeToy } from './sideb_toys.js?v=20261004-w5';
 import { celebrate } from './sideb_fx.js?v=20261004-f1';
 
 const TEXT = {
@@ -22,10 +22,10 @@ const TEXT = {
     chapterAvg: (p) => `本章平均 ${p}%`, soon: '制作中', locked: '先通关上一关', best: (p) => `最好 ${p}%`,
     boss: '章节测试', bossSoon: '章节测试（制作中）', exRule: (p) => `B 面 EX 章节测试：本章平均 ≥ ${Math.round(CHAPTER_EX_LINE * 100)}% 开放（现在 ${p}%）`,
     final: 'Side-B Final（制作中）', finalEx: (p) => `B 面 EX 结业挑战：所有章节平均 ≥ ${Math.round(FINAL_EX_LINE * 100)}% 开放（现在 ${p}%）`,
-    minutes: (n) => `约 ${n} 分钟`, aLinks: '对应 A 面', start: '开始', cont: '继续上次', fromChallenge: '直接去挑战（讲解已看过）', rewatch: '从头再看一遍', labTag: '含实操', coreTag: '核心关',
+    minutes: (n) => `约 ${n} 分钟`, aLinks: '对应 A 面', tools: '相关工具', toolGo: (n) => `去工具：${n}`, toolPlay: (n) => `打开「${n}」接着玩`, toolLook: (n) => `打开「${n}」看看`, start: '开始', cont: '继续上次', fromChallenge: '直接去挑战（讲解已看过）', rewatch: '从头再看一遍', labTag: '含实操', coreTag: '核心关',
     sections: { discover: '发现', explain: '解释', experiment: '实验', challenge: '挑战', lab: '实操', recovery: '补弱' },
     exit: '回到地图', next: '继续', check: '确定', retry: '再试一次', correct: '答对了', wrong: '还差一点', answerWas: (a) => `答案：${a}`, practice: '小练习 · 不计分',
-    insight: '原来如此', prev: '上一步', nextStep: '下一步', play: '播放', stepOf: (i, n) => `${i} / ${n}`,
+    insight: ['发现', '关键在这里', '换个角度', '听出来了', '这就是原因', '小结', '记一笔', '背后的道理', '你注意到了'], prev: '上一步', nextStep: '下一步', play: '播放', stepOf: (i, n) => `${i} / ${n}`,
     labOpen: '打开工具开始', labAgain: '回到工具接着改', labBest: (s) => `目前最好 ${s}/100`, labNone: '还没有提交', labLine: (p) => `过关线 ${p}%，没有硬性错误`, labDone: '实操完成，看结算',
     clear: 'CLEAR', notYet: '还差一点', score: '整关分', challenge: '挑战', lab: '实操', stars: (n) => `${'★'.repeat(n)}${'☆'.repeat(3 - n)}`,
     skillsTitle: '这一关的能力', masteryTitle: 'Side-B 累计', breakthroughs: '这一关的突破', errorsTitle: '可以再练练', go: '去看看',
@@ -40,10 +40,10 @@ const TEXT = {
     chapterAvg: (p) => `章平均 ${p}%`, soon: '制作中', locked: '前のステージをクリアしよう', best: (p) => `ベスト ${p}%`,
     boss: '章末テスト', bossSoon: '章末テスト（制作中）', exRule: (p) => `B 面 EX 章末テスト：章平均 ${Math.round(CHAPTER_EX_LINE * 100)}% 以上で開放（今 ${p}%）`,
     final: 'Side-B Final（制作中）', finalEx: (p) => `B 面 EX 修了チャレンジ：全章平均 ${Math.round(FINAL_EX_LINE * 100)}% 以上で開放（今 ${p}%）`,
-    minutes: (n) => `約 ${n} 分`, aLinks: 'A 面の対応', start: 'はじめる', cont: '続きから', fromChallenge: 'チャレンジへ（解説は見た）', rewatch: '最初から見る', labTag: '実習あり', coreTag: '重点',
+    minutes: (n) => `約 ${n} 分`, aLinks: 'A 面の対応', tools: '関連ツール', toolGo: (n) => `ツールへ：${n}`, toolPlay: (n) => `「${n}」を開いて続ける`, toolLook: (n) => `「${n}」を開いてみる`, start: 'はじめる', cont: '続きから', fromChallenge: 'チャレンジへ（解説は見た）', rewatch: '最初から見る', labTag: '実習あり', coreTag: '重点',
     sections: { discover: '発見', explain: '解説', experiment: '実験', challenge: 'チャレンジ', lab: '実習', recovery: '補強' },
     exit: 'マップへ', next: '次へ', check: '決定', retry: 'もう一度', correct: '正解', wrong: 'あと少し', answerWas: (a) => `答え：${a}`, practice: 'ミニ練習・採点なし',
-    insight: 'なるほど', prev: '前へ', nextStep: '次へ', play: '再生', stepOf: (i, n) => `${i} / ${n}`,
+    insight: ['発見', 'ここがポイント', '見方を変えると', '聴き取れた', 'これが理由', 'まとめ', 'メモ', 'しくみ', '気づいたこと'], prev: '前へ', nextStep: '次へ', play: '再生', stepOf: (i, n) => `${i} / ${n}`,
     labOpen: 'ツールを開いて始める', labAgain: 'ツールに戻って直す', labBest: (s) => `現在のベスト ${s}/100`, labNone: 'まだ提出なし', labLine: (p) => `合格ライン ${p}%・致命的な誤りなし`, labDone: '実習完了、結果へ',
     clear: 'CLEAR', notYet: 'あと少し', score: 'ステージ得点', challenge: 'チャレンジ', lab: '実習', stars: (n) => `${'★'.repeat(n)}${'☆'.repeat(3 - n)}`,
     skillsTitle: 'このステージの力', masteryTitle: 'Side-B 累計', breakthroughs: 'このステージのブレイクスルー', errorsTitle: 'もう少し練習', go: '見てみる',
@@ -58,10 +58,10 @@ const TEXT = {
     chapterAvg: (p) => `Chapter average ${p}%`, soon: 'In the works', locked: 'Clear the previous level first', best: (p) => `Best ${p}%`,
     boss: 'Chapter test', bossSoon: 'Chapter test (in the works)', exRule: (p) => `Side-B EX chapter test: opens at a chapter average ≥ ${Math.round(CHAPTER_EX_LINE * 100)}% (now ${p}%)`,
     final: 'Side-B Final (in the works)', finalEx: (p) => `Side-B EX final: opens at an overall average ≥ ${Math.round(FINAL_EX_LINE * 100)}% (now ${p}%)`,
-    minutes: (n) => `about ${n} min`, aLinks: 'Side A', start: 'Start', cont: 'Continue', fromChallenge: 'Go to the challenge (seen the lessons)', rewatch: 'Watch from the start', labTag: 'Lab', coreTag: 'Core',
+    minutes: (n) => `about ${n} min`, aLinks: 'Side A', tools: 'Related tools', toolGo: (n) => `Open tool: ${n}`, toolPlay: (n) => `Keep playing in “${n}”`, toolLook: (n) => `Open “${n}” to check`, start: 'Start', cont: 'Continue', fromChallenge: 'Go to the challenge (seen the lessons)', rewatch: 'Watch from the start', labTag: 'Lab', coreTag: 'Core',
     sections: { discover: 'Discover', explain: 'Explain', experiment: 'Experiment', challenge: 'Challenge', lab: 'Lab', recovery: 'Recovery' },
     exit: 'Back to the map', next: 'Next', check: 'Check', retry: 'Try again', correct: 'Correct', wrong: 'Not quite', answerWas: (a) => `Answer: ${a}`, practice: 'Quick practice · not scored',
-    insight: 'Aha', prev: 'Back', nextStep: 'Next', play: 'Play', stepOf: (i, n) => `${i} / ${n}`,
+    insight: ['Discovery', 'The key point', 'Another angle', 'You heard it', 'Here’s why', 'In short', 'Worth noting', 'Under the hood', 'What you noticed'], prev: 'Back', nextStep: 'Next', play: 'Play', stepOf: (i, n) => `${i} / ${n}`,
     labOpen: 'Open the tool and start', labAgain: 'Back to the tool to improve', labBest: (s) => `Best so far ${s}/100`, labNone: 'Not submitted yet', labLine: (p) => `Pass line ${p}%, no fatal errors`, labDone: 'Lab done — see results',
     clear: 'CLEAR', notYet: 'Almost', score: 'Level score', challenge: 'Challenge', lab: 'Lab', stars: (n) => `${'★'.repeat(n)}${'☆'.repeat(3 - n)}`,
     skillsTitle: 'This level', masteryTitle: 'Side-B overall', breakthroughs: 'Breakthroughs here', errorsTitle: 'Worth another look', go: 'Go',
@@ -102,9 +102,9 @@ const hashOf = (text) => [...String(text)].reduce((h, c) => ((h * 33) ^ c.charCo
 
 /**
  * @param {HTMLElement} root 学习页的内容区（和 A 面共用）
- * @param {{ playChord, onFlipBack: () => void, openA: (unitId) => void, aTitle: (unitId) => string, progressView: () => object }} options
+ * @param {{ playChord, onFlipBack: () => void, openA: (unitId) => void, aTitle: (unitId) => string, progressView: () => object, toolsFor?: (unitIds) => Array<{ feature, q }>, toolName?: (feature) => string, openTool?: (feature, query) => void }} options
  */
-export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) => id, progressView = () => loadProgress() }) {
+export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) => id, progressView = () => loadProgress(), toolsFor = () => [], toolName = (f) => f, openTool }) {
   const t = TEXT[lang()];
   let stops = [];
   const stopAll = () => { stops.forEach((f) => { try { f(); } catch (_) { /* ignore */ } }); stops = []; };
@@ -327,6 +327,13 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
       lv.a.forEach((id) => links.appendChild(btn('sideb-chip', aTitle(id), () => openA?.(id))));
       sheet.appendChild(links);
     }
+    const tools = levelTools(lv);
+    if (tools.length && openTool) {
+      const links = el('p', 'sideb-alinks sideb-toollinks');
+      links.appendChild(el('span', '', `${t.tools}：`));
+      tools.forEach((tool) => links.appendChild(toolChip(tool, toolName(tool.feature))));
+      sheet.appendChild(links);
+    }
     if (!isPlayable(lv)) { sheet.appendChild(el('p', 'sideb-sheet-note', t.soon)); }
     else if (!levelOpen(lv)) { sheet.appendChild(el('p', 'sideb-sheet-note', t.locked)); }
     else {
@@ -433,6 +440,18 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
     persist();
     renderNode();
   }
+  /** 这一关相关的工具：关卡自己写的 tools + 对应 A 面关卡的工具（learn_ui 给出，含五度圈这类 extraTools） */
+  function levelTools(lv) {
+    const list = [...(lv?.tools || []), ...toolsFor(lv?.a || [])];
+    return list.filter((x, i) => list.findIndex((y) => y.feature === x.feature && (y.q || '') === (x.q || '')) === i);
+  }
+  /** 去工具：关卡进行中先记下进度（顶栏会出现"回到 Side-B"），再跳过去 */
+  function goTool(tool) {
+    if (!tool?.feature || !openTool) return;
+    if (level && session && !session.result) persist();
+    openTool(tool.feature, tool.q || null);
+  }
+  const toolChip = (tool, label = t.toolGo(toolName(tool.feature)), cls = 'sideb-chip sideb-tool') => { const b = btn(cls, label, () => goTool(tool)); b.dataset.feature = tool.feature; return b; };
   /** 通知顶栏的"回到 Side-B"按钮更新（script.js 监听 learn-resume-change） */
   const notify = () => globalThis.window?.dispatchEvent?.(new globalThis.window.CustomEvent('learn-resume-change'));
   /** 记下这一关的进度：顶栏按钮的提示要写出是哪一关、停在哪一段（实操 / 挑战 / 结算……） */
@@ -481,6 +500,8 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
     const shell = el('div', `sideb-player ${toneOf(level.chapter)}`);
     const top = el('div', 'sideb-player-top');
     top.append(btn('learn-link sideb-exit', t.exit, () => { persist(); renderMap(); }), el('span', 'sideb-player-code', level.id), el('span', 'sideb-player-title', tx(level.title)));
+    const tools = levelTools(level);
+    if (tools.length && openTool) { const box = el('span', 'sideb-player-tools'); tools.slice(0, 3).forEach((tool) => box.appendChild(toolChip(tool, toolName(tool.feature)))); box.setAttribute('aria-label', t.tools); top.appendChild(box); }
     const strip = el('ol', 'sideb-strip');
     const sections = levelSections(lvl);
     sections.forEach((s, i) => {
@@ -531,7 +552,18 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
       record: (result) => { answered = true; session = recordAnswer(session, node, result); persist(); },
       registerDebug: (fn) => { answerNow = fn; },
     });
+    toolHelp(node, body);
     if (debugOn()) body.before(debugBar(node, { skip: () => advance(), answerNow: answerNow && ((ok) => { if (!answered) answerNow(ok); }) }));
+  }
+  /** 挑战题下方的"去工具"：题目自己写的 tool 优先，再加本关的相关工具（最多 3 个）；跳过去之前记下进度，回来接着这一题 */
+  function toolHelp(node, body) {
+    if (!openTool || node.type === 'lab' || !isAssessed(node)) return;
+    const list = [...(node.tool ? [node.tool] : []), ...levelTools(level)];
+    const tools = list.filter((x, i) => list.findIndex((y) => y.feature === x.feature && (y.q || '') === (x.q || '')) === i).slice(0, 3);
+    if (!tools.length) return;
+    const row = el('div', 'sideb-help');
+    tools.forEach((tool) => row.appendChild(toolChip(tool, t.toolLook(toolName(tool.feature)), 'learn-link sideb-tool-link')));
+    body.appendChild(row);
   }
   function title(body, text) { if (text) body.appendChild(el('h4', 'sideb-node-title', tx(text))); }
   function paragraphs(body, text) { [].concat(text ?? []).forEach((p) => body.appendChild(el('p', 'sideb-text', tx(p)))); }
@@ -562,6 +594,7 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
         const v = visualOf(node.visual); if (v) body.appendChild(v);
         if (node.audio) playRow(body, [{ label: t.play, audio: node.audio }]);
         playRow(body, node.play);
+        if (node.tool && openTool) body.appendChild(toolChip(node.tool, t.toolGo(toolName(node.tool.feature)), 'learn-link sideb-tool-link'));
         refLine(body, node.ref);
         done();
         return;
@@ -596,11 +629,12 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
     };
     show();
   }
-  /** 揭晓"原来如此"：卡片 + 一个柔和的大三和弦 */
-  function revealInsight(body, insight) {
+  /** 揭晓发现：卡片 + 一个柔和的大三和弦。卡片上的小标题从 9 个词里随机取一个（按节点与第几次尝试取种子，重试时会换），避免每页都是同一句感叹 */
+  function revealInsight(body, insight, seed = '') {
     if (!insight) return;
     const card = el('div', 'sideb-insight');
-    card.append(el('span', 'sideb-insight-kicker', t.insight), el('strong', '', tx(insight.title)), el('p', '', tx(insight.text)));
+    const kicker = t.insight[hashOf(`${seed}:${session.attempt || 0}`) % t.insight.length];
+    card.append(el('span', 'sideb-insight-kicker', kicker), el('strong', '', tx(insight.title)), el('p', '', tx(insight.text)));
     body.appendChild(card);
     playChord?.([523.25, 659.25, 783.99], 1.2, { interrupt: false });
   }
@@ -628,14 +662,16 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
   const pickOption = (body, node, ok) => body.querySelector(`.sideb-option[data-k="${ok ? node.answer : (node.answer + 1) % node.options.length}"]`)?.dispatchEvent(new globalThis.window.Event('click', { bubbles: true }));
   function renderDiscover(node, body, footer, shell, { done, record, registerDebug }) {
     paragraphs(body, node.prompt);
+    const v = visualOf(node.visual); if (v) body.appendChild(v);
+    if (node.audio) playRow(body, [{ label: t.play, audio: node.audio }]);
     playRow(body, node.play);
     if (node.play?.[0]) sound(node.play[0].audio);
-    if (!node.options) { revealInsight(body, node.insight); done(); return; }
+    if (!node.options) { revealInsight(body, node.insight, node.id); done(); return; }
     registerDebug((ok) => pickOption(body, node, ok));
     const list = optionButtons(node, body, (k) => {
       markOptions(list, k, node.answer);
       record(gradeNode(node, k));
-      revealInsight(body, node.insight);
+      revealInsight(body, node.insight, node.id);
       refLine(body, node.ref);
       done();
     });
@@ -733,10 +769,12 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
       if (b) { saveBreakthrough(b.id); session.breakthroughs = [...new Set([...(session.breakthroughs || []), b.id])]; persist(); celebrate(shell, b.text); }
     };
     let toy = null;
-    const TOYS = { spell: spellToy, meter: meterToy, interval: intervalToy, scale: scaleToy, texture: textureToy, poly: polyToy };
+    const TOYS = { spell: spellToy, meter: meterToy, interval: intervalToy, scale: scaleToy, texture: textureToy, poly: polyToy, chord: chordToy, keyChords: keyChordsToy, progression: progressionToy, plr: plrToy, keyRel: keyRelToy, transpose: transposeToy, fret: fretToy, nct: nctToy, species: speciesToy, canon: canonToy, swing: swingToy, blues: bluesToy, chordScale: chordScaleToy, guide: guideToy, negative: negativeToy };
     if (node.toy === 'satb') toy = satbToy(body, node.params, { playChord, onSolved: solved });
-    else if (TOYS[node.toy]) toy = TOYS[node.toy](body, node.params, { playChord, renderVisual });
+    else if (TOYS[node.toy]) toy = TOYS[node.toy](body, node.params, { playChord, renderVisual, onSolved: solved });
     if (toy?.destroy) stops.push(toy.destroy);
+    const tool = node.tool || levelTools(level)[0];
+    if (tool && openTool) body.appendChild(toolChip(tool, t.toolPlay(toolName(tool.feature)), 'learn-link sideb-tool-link'));
     refLine(body, node.ref);
     done();
   }
@@ -834,6 +872,7 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
         const row = el('div', 'sideb-rec');
         row.append(el('strong', '', `${tx(r.label)} ×${r.count}`), el('span', '', tx(r.advice)));
         if (r.go?.a) row.appendChild(btn('sideb-chip', `A · ${aTitle(r.go.a)}`, () => openA?.(r.go.a)));
+        if (r.go?.tool?.feature && openTool) row.appendChild(toolChip(r.go.tool, toolName(r.go.tool.feature)));
         if (r.go?.b && levelById(r.go.b) && isPlayable(levelById(r.go.b)) && r.go.b !== level.id) row.appendChild(btn('sideb-chip', r.go.b, () => startLevel(r.go.b)));
         box.appendChild(row);
       });
@@ -881,6 +920,7 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
       record: (result) => { answered = true; session = recordRecovery(session, node, result); persist(); },
       registerDebug: (fn) => { answerNow = fn; },
     });
+    toolHelp(node, body);
     if (debugOn()) {
       const skip = () => { session = { ...session, recovery: { ...session.recovery, node: session.recovery.node + 1 } }; persist(); renderRecovery(); };
       body.before(debugBar(node, { skip, recovering: true, answerNow: answerNow && ((ok) => { if (!answered) answerNow(ok); }) }));

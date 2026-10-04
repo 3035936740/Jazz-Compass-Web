@@ -1192,16 +1192,16 @@ export function mountStaffReading(target, { playChord }) {
   /** 链接参数：#staff?q=bass、#staff?q=alto:C4、#staff?q=grand；#staff?q=@import 从其他工具送来的谱 */
   function applyQuery(q) {
     if (!q) return;
-    // Side-B 实操：#staff?q=@lab:<id>[@chapter|@ex]——第一次打开时按任务准备谱表（之后保留玩家写到一半的内容，回来接着改），
+    // Side-B 实操：#staff?q=@lab:<id>[@chapter|@ex]——第一次打开时按任务准备谱表（setup.prefill 预先写好的音，例如对位的定旋律；之后保留玩家写到一半的内容，回来接着改），
     // 挂上任务条（检查 / 提交时把当前的谱交给评分器）
     if (String(q).startsWith('@lab:')) {
       const ref = String(q).slice(5);
-      import('./lab_banner.js?v=20261004-l6').then(({ mountLabBanner, isFirstVisit }) => import('./sideb_labs.js?v=20261004-l3').then(({ LABS, parseLabRef }) => {
+      import('./lab_banner.js?v=20261004-w5').then(({ mountLabBanner, isFirstVisit }) => import('./sideb_labs.js?v=20261004-w5').then(({ LABS, parseLabRef }) => {
         const setup = LABS[parseLabRef(ref).id]?.setup;
         if (setup) {
           snapshot();
           const fresh = setup.clear && isFirstVisit(ref);
-          Object.assign(state, { clef: setup.clef || state.clef, key: setup.key ?? state.key, meter: setup.meter || state.meter, selected: null, picked: false, ...(fresh ? { voices: [[], []] } : {}) });
+          Object.assign(state, { clef: setup.clef || state.clef, key: setup.key ?? state.key, meter: setup.meter || state.meter, selected: null, picked: false, ...(fresh ? { voices: setup.prefill ? clone(setup.prefill) : [[], []] } : {}) });
           save();
           renderAll();
         }

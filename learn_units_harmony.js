@@ -117,6 +117,8 @@ const ALL = [
   },
   {
     id: 'functions', section: 'harmony', feature: 'harmonize', icon: 'T',
+    // 五度圈上可以把调里各级和弦（罗马数字）标出来，方便看主、下属、属的位置
+    extraTools: [{ feature: 'circle' }],
     title: t('和弦的角色：家、准备、想回家', '和音の役割：家・準備・帰りたい', 'Chord roles: home, getting ready, longing'),
     blurb: t('主、下属、属与终止式', '主・下属・属と終止', 'Tonic, predominant, dominant & cadences'),
     cards: [
@@ -341,6 +343,8 @@ const ALL = [
   },
   {
     id: 'roman', section: 'harmony', feature: 'classical', icon: 'IV',
+    // 五度圈上可以把调里各级和弦（罗马数字）标出来，方便看主、下属、属的位置
+    extraTools: [{ feature: 'circle' }],
     title: t('罗马数字：给和弦编号', 'ローマ数字：和音に番号をつける', 'Roman numerals: numbering the chords'),
     blurb: t('大写、小写、°；大调和小调里每级和弦的性质', '大文字・小文字・°、長調と短調の各和音の種類', 'Upper case, lower case and °; chord qualities in major and minor'),
     cards: [
@@ -381,6 +385,8 @@ const ALL = [
   },
   {
     id: 'cadences', section: 'harmony', feature: 'progression', icon: '.',
+    // 五度圈上可以把调里各级和弦（罗马数字）标出来
+    extraTools: [{ feature: 'circle' }],
     title: t('终止式：音乐的标点', '終止形：音楽の句読点', 'Cadences: musical punctuation'),
     blurb: t('完全正格、不完全正格、半终止、变格、阻碍终止', '完全終止・不完全終止・半終止・変格終止・偽終止', 'Perfect and imperfect authentic, half, plagal and deceptive'),
     cards: [
