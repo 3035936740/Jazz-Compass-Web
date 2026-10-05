@@ -18,7 +18,8 @@ import { primeForm, intervalVector, transpose, invert, mod12, formatSet } from '
 import { THAATS, thaatSemitones } from './world_modes.js';
 import { writtenToConcert } from './instruments.js';
 import { midiAt } from './fretboard.js';
-import { shuffle } from './learn_engine.js?v=20261005-boss2';
+import { clarifyQuestion } from './learn_question_clarity.js?v=20261006-clarity1';
+import { shuffle } from './learn_engine.js?v=20261006-clarity1';
 
 const t = (zh, ja, en) => ({ zh, ja, en });
 const fmt = (template, values) => Object.fromEntries(Object.entries(template).map(([lang, text]) => [lang, text.replace(/\{(\w+)\}/g, (_, key) => {
@@ -370,7 +371,7 @@ export const GENERATORS = {
   bluesScale: { ref: 'omt2e-blues-scale', make(rng) {
     const root = pick(rng, ['C', 'G', 'D', 'A', 'E', 'F', 'Bb']);
     const notes = [[0, 0], [2, 3], [3, 5], [3, 6], [4, 7], [6, 10]].map(([s, n]) => spellAbove(root, s, n));
-    return fill(rng, { ref: 'omt2e-blues-scale', prompt: fmt(t('{r} 布鲁斯音阶：{a} {b} {c} ___ {d} {e}', '{r} ブルース・スケール：{a} {b} {c} ___ {d} {e}', '{r} blues scale: {a} {b} {c} ___ {d} {e}'), { r: pn(root), a: pn(notes[0]), b: pn(notes[1]), c: pn(notes[2]), d: pn(notes[4]), e: pn(notes[5]) }),
+    return fill(rng, { ref: 'omt2e-blues-scale', prompt: fmt(t('{r} 小调布鲁斯音阶（经过音按升四级 fi 拼写）：{a} {b} {c} ___ {d} {e}', '{r} マイナー・ブルース（経過音は上げた第 4 音 fi で綴る）：{a} {b} {c} ___ {d} {e}', '{r} minor blues scale (spell the passing tone as raised degree 4, fi): {a} {b} {c} ___ {d} {e}'), { r: pn(root), a: pn(notes[0]), b: pn(notes[1]), c: pn(notes[2]), d: pn(notes[4]), e: pn(notes[5]) }),
       answer: [pn(notes[3])], extra: [pn(spellAbove(root, 2, 4)), pn(spellAbove(root, 5, 9)), pn(spellAbove(root, 4, 6))],
       audio: { notes: ascendingMidis([...notes, root]), mode: 'melody' },
       hint: t('do–me–fa–fi–sol–te：缺的是 fi（升高的第 4 音）。', 'do–me–fa–fi–sol–te：抜けているのは fi（上げた第 4 音）。', 'do–me–fa–fi–sol–te: the missing note is fi (raised 4th).'),
@@ -453,7 +454,7 @@ export const GENERATORS = {
     const root = pick(rng, EASY_ROOTS);
     const top = spellAbove(root, steps, semis);
     const [low, high] = pitchNames([root, top]);
-    return choice(rng, { ref: 'omt2e-intervals', prompt: fmt(t('{a} 到 {b} 是什么音程？', '{a} から {b} は何の音程？', 'What interval is {a} up to {b}?'), { a: pn(root), b: pn(top) }),
+    return choice(rng, { ref: 'omt2e-intervals', prompt: fmt(t('按所写字母，从 {a} 上行到 {b} 是什么音程？', '書かれた文字に従い、{a} から {b} へ上行する音程は？', 'Using the written letters, what is the ascending interval from {a} to {b}?'), { a: low, b: high }),
       // 干扰项先取半音数接近的音程；不够三个时再按远近补上
       correct: name, wrong: (() => { const others = INTERVALS.filter((i) => i[0] !== code).sort((a, b) => Math.abs(a[2] - semis) - Math.abs(b[2] - semis)); const near = others.filter((i) => Math.abs(i[2] - semis) <= 2); return (near.length >= 3 ? near : others.slice(0, 3)).map((i) => i[3]); })(),
       visual: { kind: 'staff', notes: [low, high] }, audio: { notes: [parsePitch(low).midi, parsePitch(high).midi], mode: 'melody' },
@@ -461,10 +462,13 @@ export const GENERATORS = {
       explain: fmt(t('{a}–{b}：{s} 个字母、{n} 个半音 = {q}。', '{a}–{b}：{s} 文字・半音 {n} = {q}。', '{a}–{b}: {s} letters, {n} half steps = {q}.'), { a: pn(root), b: pn(top), s: steps + 1, n: semis, q: name }) });
   } },
   intervalEar: { ref: 'omt-intervals', make(rng, { codes = ['m2', 'M2', 'm3', 'M3', 'P4', 'A4', 'P5', 'm6', 'M6', 'm7', 'M7', 'P8'], harmonic = false } = {}) {
-    const [code, , semis, name] = intervalByCode(pick(rng, codes));
+    const [code, , semis, writtenName] = intervalByCode(pick(rng, codes));
+    // 纯听音不能分辨增四度和减五度：同半音数只保留一个听觉选项。
+    const label = c => intervalByCode(c)[2] === 6 ? t('三全音（增四度／减五度）', 'トライトーン（増 4 度／減 5 度）', 'tritone (augmented 4th / diminished 5th)') : intervalByCode(c)[3];
+    const name = semis === 6 ? label(code) : writtenName;
     const low = 55 + Math.floor(rng() * 10);
     return choice(rng, { ref: 'omt-intervals', prompt: t('听：这是什么音程？', '聴いて：何の音程？', 'Listen: which interval?'),
-      correct: name, wrong: codes.filter((c) => c !== code).map((c) => intervalByCode(c)[3]),
+      correct: name, wrong: codes.filter((c) => intervalByCode(c)[2] !== semis).map(label),
       audio: { notes: [low, low + semis], mode: harmonic ? 'harmonic' : 'melody' },
       hint: t('可以重听几次，先判断宽窄（几个半音）。', '何度か聴き直して、まず広さ（半音いくつ）を判断。', 'Replay it; first judge how wide it is in half steps.'),
       explain: fmt(t('{n}：{s} 个半音。', '{n}：半音 {s}。', '{n}: {s} half steps.'), { n: name, s: semis }) });
@@ -839,7 +843,7 @@ export const GENERATORS = {
       explain: fmt(t('1200 ÷ {n} ≈ {s} 音分。', '1200 ÷ {n} ≈ {s} セント。', '1200 ÷ {n} ≈ {s} cents.'), { n, s: label(step) }) });
   } },
   ratioCents: { ref: 'wiki-harmonic-series', make(rng) {
-    const items = [['2/1', 1200, t('八度', 'オクターヴ', 'octave')], ['3/2', 702, t('纯五度', '完全 5 度', 'perfect fifth')], ['4/3', 498, t('纯四度', '完全 4 度', 'perfect fourth')], ['5/4', 386, t('纯律大三度', '純正長 3 度', 'just major third')], ['6/5', 316, t('纯律小三度', '純正短 3 度', 'just minor third')], ['7/4', 969, t('七度泛音的小七度', '第 7 倍音の短 7 度', 'harmonic seventh')], ['11/9', 347, t('中立三度', '中立 3 度', 'neutral third')]];
+    const items = [['2/1', 1200, t('八度', 'オクターヴ', 'octave')], ['3/2', 702, t('纯五度', '完全 5 度', 'perfect fifth')], ['4/3', 498, t('纯四度', '完全 4 度', 'perfect fourth')], ['5/4', 386, t('纯律大三度', '純正長 3 度', 'just major third')], ['6/5', 316, t('纯律小三度', '純正短 3 度', 'just minor third')], ['7/4', 969, t('第 7 分音对应的小七度', '第 7 倍音の短 7 度', 'harmonic seventh')], ['11/9', 347, t('中立三度', '中立 3 度', 'neutral third')]];
     const [ratio, cents, name] = pick(rng, items);
     return choice(rng, { ref: ratio === '11/9' ? 'wiki-neutral-third' : 'wiki-harmonic-series', prompt: fmt(t('频率比 {r}（{n}）大约多少音分？', '周波数比 {r}（{n}）は約何セント？', 'About how many cents is the ratio {r} ({n})?'), { r: ratio, n: name }),
       correct: String(cents), wrong: items.filter((i) => i[0] !== ratio).map((i) => String(i[1])),
@@ -850,7 +854,7 @@ export const GENERATORS = {
   harmonicNumber: { ref: 'wiki-harmonic-series', make(rng) {
     const items = [[2, t('一个八度', 'オクターヴ', 'an octave')], [3, t('纯五度', '完全 5 度', 'a perfect fifth')], [4, t('纯四度', '完全 4 度', 'a perfect fourth')]];
     const [n, label] = pick(rng, items);
-    return choice(rng, { ref: 'wiki-harmonic-series', prompt: fmt(t('第 {n} 泛音比第 {m} 泛音高多少？', '第 {n} 倍音は第 {m} 倍音よりどれだけ高い？', 'How far above harmonic {m} is harmonic {n}?'), { n, m: n - 1 }),
+    return choice(rng, { ref: 'wiki-harmonic-series', prompt: fmt(t('第 {n} 分音比第 {m} 分音高多少？', '第 {n} 倍音は第 {m} 倍音よりどれだけ高い？', 'How far above harmonic {m} is harmonic {n}?'), { n, m: n - 1 }),
       correct: label, wrong: items.map((i) => i[1]).concat([t('一个大三度', '長 3 度', 'a major third')]),
       audio: { notes: [36 + 12 * Math.log2(n - 1), 36 + 12 * Math.log2(n)], mode: 'melody' },
       hint: t('频率比 n:(n−1)：2:1 八度，3:2 五度，4:3 四度。', '比 n:(n−1)：2:1 オクターヴ、3:2 は 5 度、4:3 は 4 度。', 'The ratio n:(n−1): 2:1 octave, 3:2 fifth, 4:3 fourth.'),
@@ -962,6 +966,12 @@ export const GENERATORS = {
       explain: fmt(t('这是{n}。', 'これは{n}。', 'That was a {n}.'), { n: name }) });
   } },
 };
+
+// A、B 和考试共用生成器，直接调用 make 也应拿到完整的判分条件。
+for (const [name, generator] of Object.entries(GENERATORS)) {
+  const make = generator.make;
+  generator.make = (rng, params) => clarifyQuestion(make(rng, params), name);
+}
 
 /** 题卡中的生成器占位展开成具体题卡 */
 export function expandCards(cards, rng = Math.random) {

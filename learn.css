@@ -651,6 +651,7 @@ line.lv-ruler { stroke: var(--theme-line-strong); stroke-width: 2; }
 .sideb-step-count { justify-self: start; color: var(--ink-soft); font-size: 12px; font-weight: 700; }
 .sideb-derive-step { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 15px; }
 .sideb-derive-step input { width: 9em; padding: 8px 10px; border: 2px solid var(--theme-line-strong); border-radius: 10px; background: var(--theme-panel); color: var(--theme-text); font: inherit; }
+.sideb-input-hint { flex-basis: 100%; color: var(--theme-muted); font-size: 13px; line-height: 1.5; }
 .sideb-fill-slots { margin: 0; font-size: 18px; letter-spacing: .04em; }
 .sideb-footer { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
 .sideb-visual { overflow-x: auto; }

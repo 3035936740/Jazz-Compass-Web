@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { UNITS, SECTIONS, FEATURE_UNIT, SIDES } from './learn_content.js';
 import { REFERENCES } from './references.js';
 import { GENERATORS } from './learn_generators.js';
@@ -233,8 +233,15 @@ test('choice questions have four options and matching questions four pairs (lear
       card.pairs.forEach(([, b]) => { const k = zh(b); const full = JSON.stringify(b); assert.ok(!rights.has(k) || rights.get(k) === full, `right items share a Chinese label but differ elsewhere: ${zh(card.prompt)}`); rights.set(k, full); });
     }
   }
-  // 每一条补充都还对得上某道原题（题目改了就会在这里报出来）：补过的卡去掉第 4 个选项再算键
-  const allKeys = new Set(all.filter((card) => card.type === 'choice' && card.options.length === 4).map((card) => decoyKey({ ...card, options: card.options.slice(0, 3) })));
+  // 干扰项绑定原始题卡；最终题干还会补上独立作答所需的背景条件。
+  const allKeys = new Set();
+  const sourceFiles = readdirSync(new URL('.', import.meta.url)).filter(f => /^learn_(units|branches)_.+\.js$/.test(f));
+  const visit = value => {
+    if (!value || typeof value !== 'object') return;
+    if (value.type === 'choice' && value.options.length === 3) allKeys.add(decoyKey(value));
+    else Object.values(value).forEach(visit);
+  };
+  for (const file of sourceFiles) visit(await import(`./${file}`));
   const stale = [...Object.keys(EXTRA_OPTIONS)].filter((k) => !allKeys.has(k));
   assert.deepEqual(stale, [], 'extra options whose question no longer exists');
   assert.ok(Object.keys(EXTRA_PAIRS).length >= 55);

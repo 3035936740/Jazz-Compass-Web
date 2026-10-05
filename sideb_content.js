@@ -6,17 +6,18 @@ import { LEVEL_B4_10 } from './sideb_units_rhythm.js?v=20261004-u2';
 import { LEVEL_B2_1, LEVEL_B2_2, LEVEL_B2_3, LEVEL_B2_5, LEVEL_B2_6, LEVEL_B2_7, LEVEL_B2_8, LEVEL_B2_9, LEVEL_B2_10, LEVEL_B2_11, LEVEL_B2_12 } from './sideb_units_harmony2.js?v=20261004-w6';
 import { LEVEL_B3_1, LEVEL_B3_2, LEVEL_B3_3, LEVEL_B3_4, LEVEL_B3_5 } from './sideb_units_melody.js?v=20261004-w1';
 import { LEVEL_B4_1, LEVEL_B4_2, LEVEL_B4_3, LEVEL_B4_4, LEVEL_B4_5, LEVEL_B4_6, LEVEL_B4_7, LEVEL_B4_8, LEVEL_B4_9 } from './sideb_units_jazz.js?v=20261004-w6';
-import { LEVEL_B5_1, LEVEL_B5_2, LEVEL_B5_3, LEVEL_B5_4 } from './sideb_units_world.js?v=20261004-x1';
+import { LEVEL_B5_1, LEVEL_B5_2, LEVEL_B5_3, LEVEL_B5_4 } from './sideb_units_world.js?v=20261006-clarity1';
 import { LEVEL_B6_1, LEVEL_B6_2, LEVEL_B6_3, LEVEL_B6_4, LEVEL_B6_5 } from './sideb_units_modern.js?v=20261004-x1';
-import { UNITS, SIDES } from './learn_content.js?v=20261005-boss2';
+import { UNITS, SIDES } from './learn_content.js?v=20261006-clarity1';
 import { EXT_BASICS } from './sideb_ext_basics.js?v=20261004-y3';
-import { EXT_HARMONY } from './sideb_ext_harmony.js?v=20261004-m4';
+import { EXT_HARMONY } from './sideb_ext_harmony.js?v=20261006-clarity1';
 import { EXT_MELODY } from './sideb_ext_melody.js?v=20261004-m4';
 import { EXT_JAZZ } from './sideb_ext_jazz.js?v=20261005-p2';
-import { EXT_WORLD } from './sideb_ext_world.js?v=20261005-p2';
-import { EXT_MODERN } from './sideb_ext_modern.js?v=20261005-p2';
+import { EXT_WORLD } from './sideb_ext_world.js?v=20261006-clarity1';
+import { EXT_MODERN } from './sideb_ext_modern.js?v=20261006-clarity1';
 import { LEVEL_B1_1, LEVEL_B1_2, LEVEL_B1_3, LEVEL_B1_4, LEVEL_B1_5, LEVEL_B1_6, LEVEL_B1_7 } from './sideb_units_basics.js?v=20261004-w6';
-import { EXAM_TASKS } from './sideb_exam_tasks.js?v=20261005-boss2';
+import { EXAM_TASKS } from './sideb_exam_tasks.js?v=20261006-clarity1';
+import { clarifyLevel } from './learn_question_clarity.js?v=20261006-clarity1';
 
 const t = (zh, ja, en) => ({ zh, ja, en });
 
@@ -91,7 +92,7 @@ const CONTENT = {
   'B6-1': LEVEL_B6_1, 'B6-2': LEVEL_B6_2, 'B6-3': LEVEL_B6_3, 'B6-4': LEVEL_B6_4, 'B6-5': LEVEL_B6_5,
   'B4-10': LEVEL_B4_10,
 };
-B_LEVELS.forEach((level) => { if (CONTENT[level.id]) Object.assign(level, CONTENT[level.id], { id: level.id, chapter: level.chapter, title: level.title, a: level.a }); });
+B_LEVELS.forEach((level) => { if (CONTENT[level.id]) Object.assign(level, clarifyLevel(CONTENT[level.id], level.id), { id: level.id, chapter: level.chapter, title: level.title, a: level.a }); });
 
 export const levelById = (id) => B_LEVELS.find((level) => level.id === id) || null;
 export const chapterLevels = (chapterId) => B_LEVELS.filter((level) => level.chapter === chapterId);
@@ -237,8 +238,8 @@ export function extLevelById(id) {
         `This extension previews connections to later topics. New terms and experiments are developed in ${destinations('en')}. For now, follow the examples and compare; later lessons explain them systematically.`)] };
     const firstPage = content.sections.explain.findIndex((n) => n.type === 'page');
     const sections = previewOf.length ? { ...content.sections, explain: content.sections.explain.map((n, i) => i === firstPage ? { ...n, text: [...preview.text, ...[].concat(n.text || [])] } : n) } : content.sections;
-    extCache.set(id, { ...content, sections, previewOf, id, base: base.id, ext: true, chapter: base.chapter, a: base.a, lab: Boolean(content.sections?.lab?.length),
-      title: t(`${base.title.zh} · 扩展关`, `${base.title.ja}・拡張ステージ`, `${base.title.en} · extension`) });
+    extCache.set(id, clarifyLevel({ ...content, sections, previewOf, id, base: base.id, ext: true, chapter: base.chapter, a: base.a, lab: Boolean(content.sections?.lab?.length),
+      title: t(`${base.title.zh} · 扩展关`, `${base.title.ja}・拡張ステージ`, `${base.title.en} · extension`) }));
   }
   return extCache.get(id);
 }

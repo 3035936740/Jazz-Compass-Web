@@ -1,21 +1,21 @@
 // Side-B（翻面课程）界面：翻面地图、关卡卡片、关卡播放器（发现 / 解释 / 实验 / 挑战 / 实操）、结算页、补弱挑战。
 // 规则在 sideb_engine.js，评分在 lab_checks.js，内容在 sideb_content.js / sideb_units_*.js；设计见 SIDE_B_DESIGN.md。
 // 原则：音乐优先于分数，发现优先于背诵，成就感优先于惩罚感——失败只补弱项，每关有一个"发现"（insight）和胜利瞬间。
-import { B_CHAPTERS, B_LEVELS, levelById, lookupLevel, chapterLevels, isPlayable, extLevelById, hasExtLevel } from './sideb_content.js?v=20261005-boss2';
+import { B_CHAPTERS, B_LEVELS, levelById, lookupLevel, chapterLevels, isPlayable, extLevelById, hasExtLevel } from './sideb_content.js?v=20261006-clarity1';
 import {
   bKey, levelSections, levelForAttempt, createBSession, completeSection, recordAnswer, gradeNode, summarizeB, retrySession,
   buildRecovery, startRecovery, recordRecovery, recoveryResult, completeBLevel, chapterAverage, overallAverage, sidebUnlocked,
   mergeMastery, overallMastery, loadMastery, saveMastery, loadBResume, saveBResume, clearBResume, bestLabResults, saveLabResult, LAB_LINES,
   breakthroughFor, loadBreakthroughs, saveBreakthrough, estimateMinutes, PASS_LINE, isAssessed,
   extKey, gradeOf, chapterAverageWithExt, chapterTestOpen, chapterExOpen, finalOpen, finalExOpen, CHAPTER_EX_OPEN,
-} from './sideb_engine.js?v=20261005-boss2';
+} from './sideb_engine.js?v=20261006-clarity1';
 import { SKILLS, SKILL_NAMES, recommend } from './sideb_errors.js?v=20261004-z9';
 import { LABS, labHref, labResultKey } from './sideb_labs.js?v=20261004-x1';
-import { loadProgress, saveProgress, isDone } from './learn_engine.js?v=20261005-boss2';
+import { loadProgress, saveProgress, isDone } from './learn_engine.js?v=20261006-clarity1';
 import { renderVisual } from './learn_visuals.js?v=20261004-m5';
 import { satbStaff, rhythmGrid, playAudio, satbToy, polyToy, tapPad, spellToy, meterToy, intervalToy, scaleToy, textureToy, chordToy, keyChordsToy, progressionToy, plrToy, keyRelToy, transposeToy, fretToy, nctToy, speciesToy, canonToy, swingToy, bluesToy, chordScaleToy, guideToy, negativeToy, xuangongToy, worldToy, harmonicsToy, temperToy, pcToy, collectionToy, setToy, matrixToy, jiToy } from './sideb_toys.js?v=20261005-p4';
 import { celebrate } from './sideb_fx.js?v=20261004-f1';
-import { sidebWorksheet, openWorksheet } from './sideb_print.js?v=20261005-q1';
+import { sidebWorksheet, openWorksheet } from './sideb_print.js?v=20261006-clarity1';
 import { certificate, awardCert, loadCerts, graduationShow } from './sideb_cert.js?v=20261004-y1';
 import { referenceById } from './references.js';
 
@@ -838,7 +838,12 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
       const input = el('input');
       input.type = step.kind === 'number' ? 'number' : 'text';
       input.step = 'any';
+      if (step.inputHint) {
+        input.placeholder = tx(step.inputHint);
+        input.title = tx(step.inputHint);
+      }
       row.append(el('span', '', tx(step.label)), input);
+      if (step.inputHint) row.appendChild(el('small', 'sideb-input-hint', tx(step.inputHint)));
       body.appendChild(row);
       return input;
     });

@@ -2,7 +2,7 @@
 // 能印的：选择题（含讲解里的小练习、所有变体）、填空题、推导题（几步写答案）；生成器题按固定种子出几道；
 // 听辨题（只有声音没有谱例）、打拍题、实操纸上做不了，跳过并在卷首注明听力题的数量。
 import { worksheetHTML, openWorksheet } from './worksheet.js?v=20261004-y1';
-import { materialize, seedOf } from './sideb_engine.js?v=20261005-boss2';
+import { materialize, seedOf } from './sideb_engine.js?v=20261006-clarity1';
 
 const t = (zh, ja, en) => ({ zh, ja, en });
 const HEAD = {
@@ -22,7 +22,7 @@ function toCards(node) {
   }
   if (node.type === 'fill' && node.bank && node.answer) return [{ ...base, type: 'fill', prompt: node.prompt, bank: node.bank, answer: node.answer, ...(audioOnly ? { audio: true } : {}) }];
   if (node.type === 'derive' && node.steps?.length) {
-    return [{ ...base, type: 'write', prompt: node.prompt, steps: node.steps.map((s) => ({ label: s.label, answer: s.answerText ?? s.answer })) }];
+    return [{ ...base, type: 'write', prompt: node.prompt, steps: node.steps.map((s) => ({ label: s.inputHint ? { zh: `${s.label.zh ?? s.label} ${s.inputHint.zh}`, ja: `${s.label.ja ?? s.label} ${s.inputHint.ja}`, en: `${s.label.en ?? s.label} ${s.inputHint.en}` } : s.label, answer: s.answerText ?? s.answer })) }];
   }
   return node.type === 'listen' ? [{ type: 'choice', audio: true }] : [];
 }

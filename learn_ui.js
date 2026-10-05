@@ -1,15 +1,15 @@
 // 乐理闯关界面：关卡地图（主关 + 进阶分支 + 综合测验 + 结业挑战）、关卡播放器（引导卡 / 选择 / 填空 / 连线）、
 // 图示、提示与解析、去工具里看看（带学习记录，回来时还是同一题）、结算
 // 题目与依据见 learn_content.js / learn_units_*.js / learn_branches_*.js；生成题见 learn_generators.js；规则见 learn_engine.js
-import { UNITS, SECTIONS, SIDES } from './learn_content.js?v=20261005-boss2';
+import { UNITS, SECTIONS, SIDES } from './learn_content.js?v=20261006-clarity1';
 import {
   createSession, currentItem, answer, advance, isFinished, progressRatio, loadProgress, saveProgress, completeUnit, isUnlocked, nextUnitIndex, shuffle,
   levelKey, parseLevelKey, isLevelUnlocked, levelPrerequisites, isDone, MIX_SLOT, buildMixedCards, buildFinalCards, FINAL_KEY, FINAL_EX_KEY, finalUnlocked, finalExUnlocked,
   buildChapterCards, chapterKey, parseChapterKey, chapterUnlocked, chapterExUnlocked, chapterRevisitPrerequisites,
   saveResume, loadResume, clearResume, unitLevelKeys, setLevelStars, emptyProgress,
   loadReview, saveReview, recordMistake, recordReviewAnswer, dueReview, exportProgress, importProgress, starsFor, isSideLevelUnlocked, unitFullyDone,
-} from './learn_engine.js?v=20261005-boss2';
-import { expandCards } from './learn_generators.js?v=20261005-q1';
+} from './learn_engine.js?v=20261006-clarity1';
+import { expandCards } from './learn_generators.js?v=20261006-clarity1';
 import { worksheetHTML, openWorksheet, printable } from './worksheet.js?v=20261004-y1';
 import { renderVisual } from './learn_visuals.js?v=20261004-m5';
 import { el, button, language, midiToFrequency, cite } from './module_kit.js';
@@ -1302,7 +1302,7 @@ export function mountLearn(target, { playChord }) {
   function showSideB(then, { animate = true } = {}) {
     if (!sideBOpen()) { renderMap(); return; }
     stop(); closeSheets();
-    const mount = () => import('./sideb_ui.js?v=20261005-boss2').then(({ mountSideB }) => {
+    const mount = () => import('./sideb_ui.js?v=20261006-clarity1').then(({ mountSideB }) => {
       writeSide('b');
       root.classList.add('is-side-b');
       sideB = mountSideB(root, {

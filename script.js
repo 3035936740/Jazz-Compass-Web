@@ -7,7 +7,7 @@ import { mountSubPages } from "./sub_pages.js?v=20261003-u2";
 import { FEATURE_UNIT } from "./learn_feature_unit.js?v=20261003-f1";
 import { mountSiteSearch } from "./site_search.js?v=20261003-s4";
 import { satbToVoices, sendToStaff } from "./staff_handoff.js?v=20261003-h1";
-import { loadResume, clearResume } from "./learn_engine.js?v=20261005-boss2";
+import { loadResume, clearResume } from "./learn_engine.js?v=20261006-clarity1";
 import { EnhancedChordConverter, JazzBrain, ClassicalHarmonyConnector } from "./jazz_compass.js?v=20261004-w7";
 import * as lang from "./lang.js?v=20261004-w6";
 import { drawClassicalStaff } from "./classical_staff.js?v=20261004-m5";
@@ -89,7 +89,7 @@ const load_chord_symbols_ui = () => import("./chord_symbols_ui.js?v=20261003-r32
 const mountChordSymbols = lazy(load_chord_symbols_ui, 'mountChordSymbols');
 const load_staff_reading_ui = () => import("./staff_reading_ui.js?v=20261005-q1");
 const mountStaffReading = lazy(load_staff_reading_ui, 'mountStaffReading');
-const load_learn_ui = () => import("./learn_ui.js?v=20261005-boss2");
+const load_learn_ui = () => import("./learn_ui.js?v=20261006-clarity1");
 const mountLearn = lazy(load_learn_ui, 'mountLearn');
 const load_lcc_ui = () => import("./lcc_ui.js?v=20261002-i18n");
 const mountLccExplorer = lazy(load_lcc_ui, 'mountLccExplorer');
@@ -475,7 +475,7 @@ document.addEventListener("DOMContentLoaded", () => {
       id, name: window.__(`nav_${id}`) || id, intro: window.__(`intro_${id}`) || '',
       allNames: Object.values(window.__all?.(`nav_${id}`) || {}).join(' '),
     })),
-    units: () => import("./learn_content.js?v=20261005-boss2").then((m) => [...m.UNITS, ...m.SIDES]), lang: window.__lang, anchor: document.getElementById('share-link'),
+    units: () => import("./learn_content.js?v=20261006-clarity1").then((m) => [...m.UNITS, ...m.SIDES]), lang: window.__lang, anchor: document.getElementById('share-link'),
   });
 
   const conv = new EnhancedChordConverter();

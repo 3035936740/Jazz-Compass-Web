@@ -261,7 +261,7 @@ const EXT_B2_1 = {
       },
       {
         id: 'b21x-e8', type: 'discover', practice: true, ref: 'omt2e-figured-bass',
-        prompt: t('低音是 F，上面有 A、D、B（叠回三度是 G B D F）。数字低音写？', 'バスは F、上に A・D・B（3 度に積み直すと G B D F）。数字は？', 'The bass is F with A, D, B above (restacked: G B D F). The figures are…'),
+        prompt: t('低音是 F，上面有 G、D、B（叠回三度是 G B D F）。数字低音写？', 'バスは F、上に G・D・B（3 度に積み直すと G B D F）。数字は？', 'The bass is F with G, D, B above (restacked: G B D F). The figures are…'),
         options: ['4/2', '6/5', '4/3', '7'],
         answer: 0,
         insight: { title: t('七音在低音', '第 7 音がバス', 'The seventh in the bass'), text: t('根音是 G，低音 F 是七音 → 第三转位 → 4/2。', '根音は G、バスの F は第 7 音 → 第 3 転回 → 4/2。', 'The root is G; the bass F is the seventh → third inversion → 4/2.') },
@@ -820,7 +820,7 @@ const EXT_B2_4 = {
       {
         id: 'b24x-c2', type: 'choice', error: 'parallel-fifths', skills: ['voiceLeading'], ref: 'omt-species1',
         variants: [
-          { prompt: t('两个声部：C3–G4（纯十二度）接 D3–A3（纯五度），同时上行。算平行吗？', '2 声部：C3–G4（完全 12 度）から D3–A3（完全 5 度）、ともに上行。平行？', 'C3–G4 (a twelfth) to D3–A3 (a fifth), both rising. Parallel?'), options: [t('算：P12 接 P5 等同 P5 接 P5', 'はい：P12 → P5 は P5 → P5 と同じ', 'Yes: P12 to P5 counts as P5 to P5'), t('不算：大小不同', 'いいえ：大きさが違う', 'No: different sizes'), t('不算：只有同度才算', 'いいえ：同度だけ', 'No: only unisons count')] },
+          { prompt: t('两个声部：C3–G4（纯十二度）接 D4–A4（纯五度），同时上行。算平行吗？', '2 声部：C3–G4（完全 12 度）から D4–A4（完全 5 度）、ともに上行。平行？', 'C3–G4 (a twelfth) to D4–A4 (a fifth), both rising. Parallel?'), options: [t('算：P12 接 P5 等同 P5 接 P5', 'はい：P12 → P5 は P5 → P5 と同じ', 'Yes: P12 to P5 counts as P5 to P5'), t('不算：大小不同', 'いいえ：大きさが違う', 'No: different sizes'), t('不算：只有同度才算', 'いいえ：同度だけ', 'No: only unisons count')] },
           { prompt: t('P8 接 P5（两个声部同向）允许吗？', 'P8 → P5（同方向）は許される？', 'P8 to P5 (same direction) — allowed?'), options: [t('允许（大小不同），但最好之后接不完全协和', '許される（大きさが違う）が、後に不完全協和がよい', 'Allowed (different sizes), though ideally followed by an imperfect consonance'), t('不允许，等同平行八度', '許されない、平行 8 度と同じ', 'Not allowed — same as parallel octaves')] },
           { prompt: t('为什么要避免平行五八度？', 'なぜ平行 5・8 度を避ける？', 'Why avoid parallel fifths and octaves?'), options: [t('音的融合压过独立，两条线听成一条', '音の融合が独立を上回り、2 本が 1 本に聞こえる', 'Fusion overrides independence; two lines sound as one'), t('因为它们不协和', '不協和だから', 'Because they are dissonant'), t('因为音域太宽', '音域が広すぎるから', 'Because the range is too wide')] },
         ],

@@ -4,10 +4,11 @@
 // ref:omt2e-rhythm ref:omt2e-major-scales ref:omt2e-cadences ref:omt2e-sevenths
 // ref:omt2e-substitutions ref:wiki-cent ref:omt2e-pitch-class
 const t = (zh, ja, en) => ({ zh, ja, en });
+import { clarifyQuestion } from './learn_question_clarity.js?v=20261006-clarity1';
 const step = (label, kind, answer) => ({ label, kind, answer });
-const task = (chapter, i, ref, prompt, steps, skills) => ({
+const task = (chapter, i, ref, prompt, steps, skills) => clarifyQuestion({
   id: `task-${chapter}-${i}`, type: 'derive', ref, prompt, steps, skills, error: 'calc',
-});
+}, chapter);
 
 export const EXAM_TASKS = {
   basics: [
@@ -52,11 +53,11 @@ export const EXAM_TASKS = {
     ], ['identify', 'spell', 'voiceLeading'])),
 
   world: [100, 110, 120, 130].map((frequency, i) => task('world', i, 'wiki-harmonic-series',
-    t(`基音 ${frequency} Hz。比较泛音列与八度等价：先算频率，再把第 4 泛音降低两个八度。`, `基音 ${frequency} Hz。倍音列とオクターヴ等価を比べ、周波数を計算して第 4 倍音を 2 オクターヴ下げる。`, `The fundamental is ${frequency} Hz. Compare the harmonic series with octave equivalence: calculate frequencies, then lower the fourth harmonic by two octaves.`), [
-      step(t('第 2 泛音频率（Hz）', '第 2 倍音の周波数（Hz）', 'Second harmonic (Hz)'), 'number', frequency * 2),
-      step(t('第 3 泛音频率（Hz）', '第 3 倍音の周波数（Hz）', 'Third harmonic (Hz)'), 'number', frequency * 3),
-      step(t('第 4 泛音频率（Hz）', '第 4 倍音の周波数（Hz）', 'Fourth harmonic (Hz)'), 'number', frequency * 4),
-      step(t('第 4 泛音降低两个八度后的频率（Hz）', '第 4 倍音を 2 オクターヴ下げた周波数', 'Fourth harmonic down two octaves (Hz)'), 'number', frequency),
+    t(`基音 ${frequency} Hz。比较泛音列与八度等价：先算频率，再把第 4 分音降低两个八度。`, `基音 ${frequency} Hz。倍音列とオクターヴ等価を比べ、周波数を計算して第 4 倍音を 2 オクターヴ下げる。`, `The fundamental is ${frequency} Hz. Compare the harmonic series with octave equivalence: calculate frequencies, then lower the fourth harmonic by two octaves.`), [
+      step(t('第 2 分音频率（Hz）', '第 2 倍音の周波数（Hz）', 'Second harmonic (Hz)'), 'number', frequency * 2),
+      step(t('第 3 分音频率（Hz）', '第 3 倍音の周波数（Hz）', 'Third harmonic (Hz)'), 'number', frequency * 3),
+      step(t('第 4 分音频率（Hz）', '第 4 倍音の周波数（Hz）', 'Fourth harmonic (Hz)'), 'number', frequency * 4),
+      step(t('第 4 分音降低两个八度后的频率（Hz）', '第 4 倍音を 2 オクターヴ下げた周波数', 'Fourth harmonic down two octaves (Hz)'), 'number', frequency),
     ], ['calc', 'identify'])),
 
   modern: [1, 2, 3, 5].map((n, i) => task('modern', i, 'omt2e-normal-order',

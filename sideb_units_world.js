@@ -229,13 +229,13 @@ export const LEVEL_B5_3 = {
         title: t('泛音列里的音程', '倍音列の中の音程', 'Intervals in the harmonic series'),
         text: [
           t('第 1、2 个泛音相差八度（2:1），第 2、3 个相差纯五度（3:2）——这正是五度相生律用的"八度之后最简单的比"。越往上，相邻泛音越靠近。', '第 1・第 2 倍音は 8 度（2:1）、第 2・第 3 倍音は完全 5 度（3:2）——ピタゴラス音律が使う「オクターヴの次に簡単な比」。上へ行くほど隣どうしが近づく。', 'Harmonics 1 and 2 are an octave apart (2:1), 2 and 3 a perfect fifth (3:2) — the “next simplest ratio after the octave” used by Pythagorean tuning. Higher up, neighbouring harmonics get closer and closer.'),
-          t('泛音和十二平均律并不完全一致：有些明显偏低或偏高。例如第 7 个泛音（7:4 相对第 4 个）比平均律的小七度低约 31 音分，第 11 个泛音落在两个平均律音之间。', '倍音は 12 平均律と完全には一致しない：明らかに低い・高いものがある。たとえば第 7 倍音（第 4 倍音に対して 7:4）は平均律の短 7 度より約 31 セント低く、第 11 倍音は平均律の 2 音の間に落ちる。', 'Harmonics do not quite match equal temperament: some are clearly flat or sharp. The 7th harmonic (7:4 against the 4th) is about 31 cents below an equal-tempered minor seventh, and the 11th falls between two equal-tempered notes.'),
+          t('泛音和十二平均律并不完全一致：有些明显偏低或偏高。例如第 7 分音（7:4 相对第 4 分音）比平均律的小七度低约 31 音分，第 11 分音落在两个平均律音之间。', '倍音は 12 平均律と完全には一致しない：明らかに低い・高いものがある。たとえば第 7 倍音（第 4 倍音に対して 7:4）は平均律の短 7 度より約 31 セント低く、第 11 倍音は平均律の 2 音の間に落ちる。', 'Harmonics do not quite match equal temperament: some are clearly flat or sharp. The 7th harmonic (7:4 against the 4th) is about 31 cents below an equal-tempered minor seventh, and the 11th falls between two equal-tempered notes.'),
         ],
         tool: { feature: 'micro' },
       },
       {
         id: 'b53-e2', type: 'discover', practice: true, ref: 'wiki-harmonic-series',
-        prompt: t('基音是 100 Hz，第 3 个泛音是多少赫兹？', '基音が 100 Hz のとき、第 3 倍音は何 Hz？', 'With a 100 Hz fundamental, what is the 3rd harmonic?'),
+        prompt: t('基音是 100 Hz，第 3 分音是多少赫兹？', '基音が 100 Hz のとき、第 3 倍音は何 Hz？', 'With a 100 Hz fundamental, what is the 3rd harmonic?'),
         options: ['300 Hz', '150 Hz', '103 Hz'],
         answer: 0,
         insight: { title: t('整数倍', '整数倍', 'Integer multiples'), text: t('第 n 个泛音 = 基音 × n：第 3 个是 300 Hz，和第 2 个（200 Hz）相差纯五度 3:2。', '第 n 倍音 = 基音 × n：第 3 倍音は 300 Hz、第 2 倍音（200 Hz）と完全 5 度 3:2。', 'The nth harmonic = fundamental × n: the 3rd is 300 Hz, a 3:2 fifth above the 2nd (200 Hz).') },
@@ -251,9 +251,9 @@ export const LEVEL_B5_3 = {
       {
         id: 'b53-c1', type: 'choice', error: 'harmonic-series', skills: ['calc'], ref: 'wiki-harmonic-series',
         variants: [
-          { prompt: t('基音 110 Hz，第 4 个泛音是？', '基音 110 Hz の第 4 倍音は？', 'Fundamental 110 Hz: the 4th harmonic is…'), options: ['440 Hz', '220 Hz', '330 Hz', '550 Hz'] },
-          { prompt: t('第 2 个和第 3 个泛音之间是什么音程？', '第 2 倍音と第 3 倍音の間の音程は？', 'What interval lies between harmonics 2 and 3?'), options: [t('纯五度（3:2）', '完全 5 度（3:2）', 'a perfect fifth (3:2)'), t('八度（2:1）', '8 度（2:1）', 'an octave (2:1)'), t('大三度（5:4）', '長 3 度（5:4）', 'a major third (5:4)'), t('纯四度（4:3）', '完全 4 度（4:3）', 'a perfect fourth (4:3)')] },
-          { prompt: t('第 4 个和第 5 个泛音之间是什么音程？', '第 4 倍音と第 5 倍音の間の音程は？', 'What interval lies between harmonics 4 and 5?'), options: [t('大三度（5:4）', '長 3 度（5:4）', 'a major third (5:4)'), t('小三度（6:5）', '短 3 度（6:5）', 'a minor third (6:5)'), t('纯四度（4:3）', '完全 4 度（4:3）', 'a perfect fourth (4:3)'), t('纯五度（3:2）', '完全 5 度（3:2）', 'a perfect fifth (3:2)')] },
+          { prompt: t('基音 110 Hz，第 4 分音是？', '基音 110 Hz の第 4 倍音は？', 'Fundamental 110 Hz: the 4th harmonic is…'), options: ['440 Hz', '220 Hz', '330 Hz', '550 Hz'] },
+          { prompt: t('第 2 分音和第 3 分音之间是什么音程？', '第 2 倍音と第 3 倍音の間の音程は？', 'What interval lies between harmonics 2 and 3?'), options: [t('纯五度（3:2）', '完全 5 度（3:2）', 'a perfect fifth (3:2)'), t('八度（2:1）', '8 度（2:1）', 'an octave (2:1)'), t('大三度（5:4）', '長 3 度（5:4）', 'a major third (5:4)'), t('纯四度（4:3）', '完全 4 度（4:3）', 'a perfect fourth (4:3)')] },
+          { prompt: t('第 4 分音和第 5 分音之间是什么音程？', '第 4 倍音と第 5 倍音の間の音程は？', 'What interval lies between harmonics 4 and 5?'), options: [t('大三度（5:4）', '長 3 度（5:4）', 'a major third (5:4)'), t('小三度（6:5）', '短 3 度（6:5）', 'a minor third (6:5)'), t('纯四度（4:3）', '完全 4 度（4:3）', 'a perfect fourth (4:3)'), t('纯五度（3:2）', '完全 5 度（3:2）', 'a perfect fifth (3:2)')] },
         ],
         answer: 0,
         explain: t('第 n 个泛音 = 基音 × n；相邻两个泛音 n、n+1 的比是 (n+1):n。', '第 n 倍音 = 基音 × n。隣の倍音 n と n+1 の比は (n+1):n。', 'The nth harmonic = fundamental × n; neighbours n and n+1 are in the ratio (n+1):n.'),
@@ -270,7 +270,7 @@ export const LEVEL_B5_3 = {
       {
         id: 'b53-c3', type: 'choice', error: 'harmonic-series', skills: ['calc'], ref: 'wiki-harmonic-series',
         variants: [
-          { prompt: t('第 7 个泛音和平均律的小七度相比？', '第 7 倍音を平均律の短 7 度と比べると？', 'Compared with an equal-tempered minor seventh, the 7th harmonic is…'), options: [t('低约 31 音分', '約 31 セント低い', 'about 31 cents flat'), t('完全一样', 'まったく同じ', 'exactly the same'), t('高约 31 音分', '約 31 セント高い', 'about 31 cents sharp'), t('低一个半音', '半音低い', 'a semitone flat')] },
+          { prompt: t('第 7 分音和平均律的小七度相比？', '第 7 倍音を平均律の短 7 度と比べると？', 'Compared with an equal-tempered minor seventh, the 7th harmonic is…'), options: [t('低约 31 音分', '約 31 セント低い', 'about 31 cents flat'), t('完全一样', 'まったく同じ', 'exactly the same'), t('高约 31 音分', '約 31 セント高い', 'about 31 cents sharp'), t('低一个半音', '半音低い', 'a semitone flat')] },
           { prompt: t('越往泛音列的高处，相邻泛音之间的距离？', '倍音列の上のほうほど、隣の倍音どうしの距離は？', 'Higher up the series, the distance between neighbouring harmonics…'), options: [t('越来越近', 'どんどん近くなる', 'gets smaller'), t('越来越远', 'どんどん遠くなる', 'gets larger'), t('一直是八度', 'ずっと 8 度', 'stays an octave'), t('一直是五度', 'ずっと 5 度', 'stays a fifth')] },
         ],
         answer: 0,
