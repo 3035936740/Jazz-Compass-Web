@@ -675,7 +675,7 @@ const ALL = [
 ];
 
 // 关卡顺序（从简到难）
-const ORDER = ['triads', 'sevenths', 'inversions', 'symbols', 'chordplus', 'voicing', 'roman', 'figured', 'functions', 'cadences', 'sixfour', 'form', 'forms', 'tonicization', 'chromatic', 'circle', 'neoriemann'];
+const ORDER = ['triads', 'sevenths', 'inversions', 'symbols', 'chordplus', 'roman', 'figured', 'voicing', 'cadences', 'functions', 'sixfour', 'form', 'forms', 'tonicization', 'chromatic', 'circle', 'neoriemann'];
 export const UNITS = ORDER.map((id) => {
   const unit = ALL.find((u) => u.id === id);
   if (!unit) throw new Error(`unknown unit ${id}`);

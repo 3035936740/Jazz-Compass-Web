@@ -1,14 +1,14 @@
 // 乐理闯关界面：关卡地图（主关 + 进阶分支 + 综合测验 + 结业挑战）、关卡播放器（引导卡 / 选择 / 填空 / 连线）、
 // 图示、提示与解析、去工具里看看（带学习记录，回来时还是同一题）、结算
 // 题目与依据见 learn_content.js / learn_units_*.js / learn_branches_*.js；生成题见 learn_generators.js；规则见 learn_engine.js
-import { UNITS, SECTIONS, SIDES } from './learn_content.js?v=20261003-s7';
+import { UNITS, SECTIONS, SIDES } from './learn_content.js?v=20261005-curriculum1';
 import {
   createSession, currentItem, answer, advance, isFinished, progressRatio, loadProgress, saveProgress, completeUnit, isUnlocked, nextUnitIndex, shuffle,
-  levelKey, parseLevelKey, isLevelUnlocked, isDone, MIX_SLOT, buildMixedCards, buildFinalCards, FINAL_KEY, FINAL_EX_KEY, finalUnlocked, finalExUnlocked,
+  levelKey, parseLevelKey, isLevelUnlocked, levelPrerequisites, isDone, MIX_SLOT, buildMixedCards, buildFinalCards, FINAL_KEY, FINAL_EX_KEY, finalUnlocked, finalExUnlocked,
   buildChapterCards, chapterKey, parseChapterKey, chapterUnlocked, chapterExUnlocked,
   saveResume, loadResume, clearResume, unitLevelKeys, setLevelStars, emptyProgress,
   loadReview, saveReview, recordMistake, recordReviewAnswer, dueReview, exportProgress, importProgress, starsFor, isSideLevelUnlocked, unitFullyDone,
-} from './learn_engine.js?v=20261003-s3';
+} from './learn_engine.js?v=20261005-curriculum1';
 import { expandCards } from './learn_generators.js?v=20261003-g2';
 import { worksheetHTML, openWorksheet, printable } from './worksheet.js?v=20261003-w1';
 import { renderVisual } from './learn_visuals.js?v=20261003-r31';
@@ -565,7 +565,7 @@ export function mountLearn(target, { playChord }) {
       const tile = button(`learn-track-tile${lvl.slot === 0 ? ' is-main' : ''}${lvl.slot === MIX_SLOT ? ' is-mix' : ''}${lvl.state?.done ? ' is-done' : ''}${lvl.open ? '' : ' is-locked'}`, '', () => { selected = lvl; paint(); });
       if (lvl.open) tile.appendChild(el('span', 'learn-track-mark', lvl.state?.done ? '✓' : lvl.short));
       else tile.appendChild(icon('lock'));
-      tile.setAttribute('aria-label', `${lvl.label}${lvl.open ? '' : ` · ${t.branchLocked}`}`);
+      tile.setAttribute('aria-label', `${lvl.label}${lvl.open ? '' : ` · ${prerequisiteText(unit, lvl.slot) || t.branchLocked}`}`);
       track.appendChild(tile);
       return tile;
     });
@@ -577,7 +577,7 @@ export function mountLearn(target, { playChord }) {
       if (lvl.slot === MIX_SLOT || lvl.slot === 0) detail.appendChild(el('p', 'learn-muted', lvl.desc));
       detail.appendChild(el('div', 'learn-node-stars', starText(lvl.state)));
       if (lvl.open) detail.appendChild(button('learn-btn primary wide', lvl.state?.done ? t.replay : t.start, () => startLevel(lvl.key)));
-      else detail.appendChild(el('p', 'learn-muted', t.branchLocked));
+      else detail.appendChild(el('p', 'learn-muted', prerequisiteText(unit, lvl.slot) || t.branchLocked));
     }
     paint();
     sheet.append(track, detail, toolButton(unit.feature, unit.toolQuery || null, t.tool(toolName(unit.feature)), 'learn-link'),
@@ -626,11 +626,18 @@ export function mountLearn(target, { playChord }) {
 
 
   /** 支线大关卡：从主关圆钮旁边岔出去的小圆钮（主关往右偏时放左边，免得窄屏放不下） */
+  function prerequisiteText(unit, slot) {
+    const missing = [...new Set([...(unit.parent ? unit.prerequisites || [] : []), ...levelPrerequisites(unit, slot)])].filter((id) => !isDone(progress, id));
+    if (!missing.length) return '';
+    const titles = missing.map((id) => tx(UNITS.find((u) => u.id === id)?.title || id)).join(' / ');
+    return ({ zh: `先完成基础主关：${titles}；再按顺序完成本分支。`, ja: `基礎メインを先にクリア：${titles}。その後この分岐を順番に進めます。`, en: `First clear these main lessons: ${titles}; then follow this branch in order.` })[lang];
+  }
+
   function sideNode(side, parent, k) {
     const open = isSideLevelUnlocked(side, 0, unlockView());
     const done = unitFullyDone(progress, side.id);
     const wrap = el('div', `learn-side${k % 4 === 1 ? ' is-left' : ''}${open ? '' : ' is-locked'}${done ? ' is-done' : ''}${isDone(progress, side.id) ? ' is-started' : ''}`);
-    const lockedText = t.sideLocked(tx(parent.title));
+    const lockedText = [t.sideLocked(tx(parent.title)), prerequisiteText(side, 0)].filter(Boolean).join(' · ');
     const bubble = button('learn-bubble learn-side-bubble', open ? side.icon : '', (event) => {
       event?.stopPropagation?.();
       toggleSheet(wrap, () => {
@@ -711,6 +718,13 @@ export function mountLearn(target, { playChord }) {
   }
 
   function startLevel(key) {
+    const info = levelInfo(key);
+    if (info.unit) {
+      const index = unitIndex(info.unit.id);
+      const open = index < 0 ? isSideLevelUnlocked(info.unit, info.slot, unlockView())
+        : info.slot === 0 || isLevelUnlocked(UNITS, index, info.slot, unlockView());
+      if (!open) { renderMap(); return; }
+    }
     closeSheets();
     const record = loadResume();
     if (record && record.key !== key) { clearResume(); notifyResume(); }
@@ -1187,7 +1201,9 @@ export function mountLearn(target, { playChord }) {
       const { slot, unit } = level;
       if (slot < MIX_SLOT) {
         const nextTitle = slot + 1 === MIX_SLOT ? t.mix : `${t.adv(slot + 1)} · ${tx(unit.branch?.[slot]?.title)}`;
-        row.appendChild(button('learn-btn primary', nextTitle, () => startLevel(levelKey(unit.id, slot + 1))));
+        const nextOpen = index < 0 ? isSideLevelUnlocked(unit, slot + 1, unlockView()) : isLevelUnlocked(UNITS, index, slot + 1, unlockView());
+        if (nextOpen) row.appendChild(button('learn-btn primary', nextTitle, () => startLevel(levelKey(unit.id, slot + 1))));
+        else row.appendChild(el('p', 'learn-muted', prerequisiteText(unit, slot + 1) || t.branchLocked));
       }
       if (slot === 0 && index >= 0 && index < UNITS.length - 1) row.appendChild(button('learn-btn ghost', `${t.nextUnit} · ${tx(UNITS[index + 1].title)}`, () => startLevel(UNITS[index + 1].id)));
       row.appendChild(toolButton(unit.feature, unit.toolQuery || null, t.tool(toolName(unit.feature)), 'learn-link'));
@@ -1202,7 +1218,7 @@ export function mountLearn(target, { playChord }) {
     session = null;
   }
 
-  /** 供外部（工具面板的"看不懂？玩教程"按钮、链接）直接打开某一关；从工具跳来时即使没解锁也可以玩 */
+  /** 工具链接可直接打开基础主关；进阶与支线仍检查教学前置。 */
   target.openUnit = (id) => {
     if (id === FINAL_KEY || id === FINAL_EX_KEY || parseChapterKey(id)) { startLevel(id); return; }
     const { unitId } = parseLevelKey(id);

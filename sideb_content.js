@@ -8,7 +8,7 @@ import { LEVEL_B3_1, LEVEL_B3_2, LEVEL_B3_3, LEVEL_B3_4, LEVEL_B3_5 } from './si
 import { LEVEL_B4_1, LEVEL_B4_2, LEVEL_B4_3, LEVEL_B4_4, LEVEL_B4_5, LEVEL_B4_6, LEVEL_B4_7, LEVEL_B4_8, LEVEL_B4_9 } from './sideb_units_jazz.js?v=20261004-w6';
 import { LEVEL_B5_1, LEVEL_B5_2, LEVEL_B5_3, LEVEL_B5_4 } from './sideb_units_world.js?v=20261004-x1';
 import { LEVEL_B6_1, LEVEL_B6_2, LEVEL_B6_3, LEVEL_B6_4, LEVEL_B6_5 } from './sideb_units_modern.js?v=20261004-x1';
-import { UNITS, SIDES } from './learn_content.js?v=20261005-p3';
+import { UNITS, SIDES } from './learn_content.js?v=20261005-curriculum1';
 import { EXT_BASICS } from './sideb_ext_basics.js?v=20261004-y3';
 import { EXT_HARMONY } from './sideb_ext_harmony.js?v=20261004-m4';
 import { EXT_MELODY } from './sideb_ext_melody.js?v=20261004-m4';
@@ -16,6 +16,7 @@ import { EXT_JAZZ } from './sideb_ext_jazz.js?v=20261005-p2';
 import { EXT_WORLD } from './sideb_ext_world.js?v=20261005-p2';
 import { EXT_MODERN } from './sideb_ext_modern.js?v=20261005-p2';
 import { LEVEL_B1_1, LEVEL_B1_2, LEVEL_B1_3, LEVEL_B1_4, LEVEL_B1_5, LEVEL_B1_6, LEVEL_B1_7 } from './sideb_units_basics.js?v=20261004-w6';
+import { EXAM_TASKS } from './sideb_exam_tasks.js?v=20261005-curriculum1';
 
 const t = (zh, ja, en) => ({ zh, ja, en });
 
@@ -100,10 +101,9 @@ export const isPlayable = (level) => Boolean(level?.sections);
 // ---------------- 章节测试 / EX 章节测试 / Final / EX Final ----------------
 // 考试也是一个"关卡"（只有挑战段和实操段），用同一个播放器；id：T-<章>、TX-<章>、FIN、FINX。
 // 每次开考（attempt）用新的种子重新抽题（level.draw，见 sideb_engine.levelForAttempt），题目打乱混在一起，实操放在最后：
-//   普通章节测试：本章 B 面普通关 25 道 + A 面本章 10 道（含 A 面进阶关与支线关）+ 本章 B 面扩展关 5 道；本章有实操就加 1 个实操
-//   EX 章节测试：本章 B 面扩展关 25 道 + 本章 B 面普通关 10 道 + A 面本章 5 道；本章有实操就加 1 个实操（EX 模式）
-//   Side-B Final：B 面普通关 50 道 + B 面扩展关 5 道 + A 面所有章节 5 道 + 2 个实操（来自不同的章）
-//   Side-B EX Final：B 面普通关 5 道 + B 面扩展关 50 道 + A 面所有章节 5 道 + 2 个实操（EX 模式）
+//   普通章节测试：16 普通 + 2 扩展（冲评级）+ 6 A 面；EX：6 普通 + 16 扩展 + 2 A 面
+//   Final：20 普通 + 2 扩展（冲评级）+ 2 A 面；EX Final：2 普通 + 20 扩展 + 2 A 面
+//   每场 24 题，优先综合任务；章节最多 2 个不同实操，Final 3 个不同章节的实操。有实操时挑战 40% / 实操 60%。
 // 扩展关还没写好的章，扩展关的名额由普通关补上；题不够时生成器题换种子再出。
 const TEACHING = ['page', 'demo', 'guide', 'discover', 'experiment'];
 const assessed = (n) => n && !TEACHING.includes(n.type) && n.type !== 'lab' && !n.practice;
@@ -156,11 +156,17 @@ const EXAM_TITLE = {
 };
 /** 每种考试的题量：B 面普通关、B 面扩展关、A 面、实操 */
 export const EXAM_MIX = {
-  T: { main: 25, ext: 5, a: 10, labs: 1 },
-  TX: { main: 10, ext: 25, a: 5, labs: 1 },
-  FIN: { main: 50, ext: 5, a: 5, labs: 2 },
-  FINX: { main: 5, ext: 50, a: 5, labs: 2 },
+  T: { main: 16, ext: 2, a: 6, labs: 2 },
+  TX: { main: 6, ext: 16, a: 2, labs: 2 },
+  FIN: { main: 20, ext: 2, a: 2, labs: 3 },
+  FINX: { main: 2, ext: 20, a: 2, labs: 3 },
 };
+/** 优先给多步分析、推导、拼写和节奏任务约一半席位；其余题照常随机。 */
+function drawTasks(pool, count, rng, tag) {
+  const tasks = draw(pool.filter((n) => ['derive', 'analyze', 'spell', 'tap'].includes(n.type)), Math.ceil(count / 2), rng, tag);
+  const used = new Set(tasks.map((n) => n.id));
+  return [...tasks, ...draw(pool.filter((n) => !used.has(n.id)), count - tasks.length, rng, tag, pool)];
+}
 /** 考试关卡（找不到对应的章或没有可出的题时返回 null） */
 export function examById(id) {
   const m = /^(TX|T)-([a-z]+)$/.exec(id) || (/^FINX?$/.test(id) ? [id, id, null] : null);
@@ -174,21 +180,23 @@ export function examById(id) {
   const ex = kind === 'TX' || kind === 'FINX';
   const mix = EXAM_MIX[kind];
   const mode = ex ? 'ex' : 'chapter';
-  const mainPool = levels.flatMap(questionsOf);
-  const extPool = levels.map((l) => extLevelById(`${l.id}x`)).filter(Boolean).flatMap(questionsOf);
+  const mainPool = [...levels.flatMap(questionsOf), ...chapterIds.flatMap((c) => EXAM_TASKS[c] || [])];
+  const extPool = [...levels.map((l) => extLevelById(`${l.id}x`)).filter(Boolean).flatMap(questionsOf),
+    ...chapterIds.flatMap((c) => (EXAM_TASKS[c] || []).map((n) => ({ ...n, id: `x-${n.id}`, taskKey: n.id })))];
   const chapterLabs = chapterIds.map((c) => labsOf(chapterLevels(c).filter(isPlayable))).filter((l) => l.length);
   const sections = (attempt = 0) => {
     const rng = rngOf(seedOfText(id) + attempt * 7919);
-    const main = draw(mainPool, mix.main, rng, 'm');
+    const main = drawTasks(mainPool, mix.main, rng, 'm');
     const used = new Set(main.map((n) => n.id));
     // 扩展关的题不够（还没写好）时，用没抽过的普通关题补
-    const extLeft = draw(extPool, Math.min(mix.ext, extPool.length), rng, 'x');
+    const availableExt = extPool.filter((n) => !used.has(n.taskKey || n.id));
+    const extLeft = drawTasks(availableExt, Math.min(mix.ext, availableExt.length), rng, 'x').map((n) => ({ ...n, ratingOnly: !ex }));
     const filler = draw(mainPool.filter((n) => !used.has(n.id)), mix.ext - extLeft.length, rng, 'f', mainPool);
     const aSide = draw(aQuestions(chapterIds, rng), mix.a, rng, 'a');
     const challenge = shuffle([...main, ...extLeft, ...filler, ...aSide], rng).map((n, i) => ({ ...n, id: `${id}.${i}.${n.id}` }));
-    // 实操：章节测试从本章随机取 1 个；Final 从不同的章各取 1 个（共 2 个）
+    // 章节实操选不同任务；Final 从不同章节各选一个，形成跨领域作品。
     const labs = chapter
-      ? (chapterLabs[0] ? [chapterLabs[0][Math.floor(rng() * chapterLabs[0].length)]] : [])
+      ? shuffle(chapterLabs[0] || [], rng).slice(0, mix.labs)
       : shuffle(chapterLabs, rng).slice(0, mix.labs).map((list) => list[Math.floor(rng() * list.length)]);
     return { challenge, ...(labs.length ? { lab: labs.map((lab, i) => labNode(id, lab, mode, i)) } : {}) };
   };
@@ -198,6 +206,7 @@ export function examById(id) {
   return {
     id, exam: { T: 'chapter', TX: 'chapter-ex', FIN: 'final', FINX: 'final-ex' }[kind], chapter: chapter?.id || null,
     title: chapter ? EXAM_TITLE[kind](chapter) : EXAM_TITLE[kind](), passLine: 0.6, mix,
+    weights: { challenge: 0.4, labs: 0.6 },
     sections: first, draw: sections, minutes: Math.round(count * 1.1 + labCount * 6),
   };
 }
@@ -206,12 +215,30 @@ export function examById(id) {
 // 把对应 A 面关卡的 4 个进阶关 + 综合测验的内容重新、更细地讲一遍，所以讲解更长。内容在 sideb_ext_<章>.js。
 const EXT_CONTENT = { ...EXT_BASICS, ...EXT_HARMONY, ...EXT_MELODY, ...EXT_JAZZ, ...EXT_WORLD, ...EXT_MODERN };
 const extCache = new Map();
+// 先观察跨章节的联系，后续主关再展开；提示放在播放器讲解页里。
+const EXT_PREVIEWS = {
+  'B1-2': ['B4-1', 'B4-10'], 'B1-3': ['B2-5', 'B4-1'],
+  'B1-4': ['B2-1', 'B2-2'], 'B1-5': ['B2-5', 'B4-3'], 'B1-6': ['B2-5', 'B5-1'],
+  'B2-6': ['B4-4'], 'B2-9': ['B4-8'], 'B2-10': ['B4-8'],
+  'B4-2': ['B4-4'], 'B4-4': ['B4-8'], 'B4-6': ['B4-7'], 'B4-7': ['B6-2'],
+  'B6-1': ['B6-3'],
+};
 export function extLevelById(id) {
   const m = /^(B\d+-\d+)x$/.exec(String(id || ''));
   const base = m && levelById(m[1]);
   if (!base || !EXT_CONTENT[base.id]) return null;
   if (!extCache.has(id)) {
-    extCache.set(id, { ...EXT_CONTENT[base.id], id, base: base.id, ext: true, chapter: base.chapter, a: base.a, lab: Boolean(EXT_CONTENT[base.id].sections?.lab?.length),
+    const content = EXT_CONTENT[base.id];
+    const previewOf = EXT_PREVIEWS[base.id] || [];
+    const destinations = (lang) => previewOf.map((target) => `${target} ${levelById(target).title[lang]}`).join(' / ');
+    const preview = { id: `${id}-preview`, type: 'page',
+      title: t('先看联系，后面再展开', 'まず関連を見て、後で深める', 'See the connection now; develop it later'),
+      text: [t(`本扩展关会先展示与后续知识的联系；涉及的新术语和实验在 ${destinations('zh')} 正式展开。现在先跟着示例观察和比较，后续课程会系统讲解。`,
+        `この拡張ステージでは後続内容との関連を先に見ます。新しい用語や実験は ${destinations('ja')} で正式に扱います。今は例を観察・比較しましょう。`,
+        `This extension previews connections to later topics. New terms and experiments are developed in ${destinations('en')}. For now, follow the examples and compare; later lessons explain them systematically.`)] };
+    const firstPage = content.sections.explain.findIndex((n) => n.type === 'page');
+    const sections = previewOf.length ? { ...content.sections, explain: content.sections.explain.map((n, i) => i === firstPage ? { ...n, text: [...preview.text, ...[].concat(n.text || [])] } : n) } : content.sections;
+    extCache.set(id, { ...content, sections, previewOf, id, base: base.id, ext: true, chapter: base.chapter, a: base.a, lab: Boolean(content.sections?.lab?.length),
       title: t(`${base.title.zh} · 扩展关`, `${base.title.ja}・拡張ステージ`, `${base.title.en} · extension`) });
   }
   return extCache.get(id);

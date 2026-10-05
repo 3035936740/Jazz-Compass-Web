@@ -1,14 +1,14 @@
 // 乐理闯关的关卡内容：从简到难，每个工具面板里的概念都有对应的关卡
 // 主关题卡按分区写在 learn_units_<分区>.js，进阶关写在 learn_branches_<分区>.js；每个文件顶部列出它引用的全部资料（ref:<id>，见 references.js）
 // 修改题卡后运行 node scripts/annotate-learn.mjs 更新引用汇总与 references.js 的 usedIn
-import { UNITS as BASICS } from './learn_units_basics.js?v=20261004-m1';
-import { UNITS as HARMONY } from './learn_units_harmony.js?v=20261004-w6';
+import { UNITS as BASICS } from './learn_units_basics.js?v=20261005-curriculum1';
+import { UNITS as HARMONY } from './learn_units_harmony.js?v=20261005-curriculum1';
 import { UNITS as MELODY } from './learn_units_melody.js?v=20261002-r20';
 import { UNITS as JAZZ } from './learn_units_jazz.js?v=20261002-r20';
 import { UNITS as WORLD } from './learn_units_world.js?v=20261005-p2';
 import { UNITS as MODERN } from './learn_units_modern.js?v=20261004-m1';
 import { UNITS as SIDE_HARMONY_A } from './learn_units_side.js?v=20261004-w6';
-import { UNITS as SIDE_BASICS } from './learn_units_sidebasics.js?v=20261003-s3';
+import { UNITS as SIDE_BASICS } from './learn_units_sidebasics.js?v=20261005-curriculum1';
 import { UNITS as SIDE_HARMONY } from './learn_units_sideharmony.js?v=20261004-w6';
 import { UNITS as SIDE_MELODY } from './learn_units_sidemelody.js?v=20261003-s4';
 import { UNITS as SIDE_JAZZ } from './learn_units_sidejazz.js?v=20261003-s3';
@@ -44,6 +44,25 @@ import { withDecoys } from './learn_decoys.js?v=20261005-p3';
 
 const BRANCHES = { ...B_BASICS, ...B_HARMONY, ...B_MELODY, ...B_JAZZ, ...B_WORLD, ...B_MODERN };
 
+// 这些进阶关跨入后续主关：保留内容与存档键，学过对应基础后作为回访分支开放。
+const ADVANCED_PREREQUISITES = {
+  'rhythm:3': ['meter'],
+  'intervals:1': ['intervalqual'], 'intervals:2': ['intervalqual'], 'intervals:4': ['intervalqual'],
+  'minor:4': ['triads', 'roman'],
+  'modes:2': ['sevenths'], 'modes:4': ['sevenths', 'symbols'],
+  'pentatonic:3': ['heptatonic'],
+  'triads:3': ['roman'], 'triads:4': ['sevenths', 'inversions', 'roman'],
+  'sevenths:3': ['roman'],
+  'nctmore:3': ['species'],
+  'blues:3': ['jazz'],
+  'jazz:4': ['chordscale'],
+  'guidetone:3': ['jazzvoicing'], 'guidetone:4': ['substitutions', 'chordscale', 'lcc'],
+  'circle:4': ['substitutions'],
+  'posttonal:2': ['setclass'], 'posttonal:4': ['pitchclass'],
+  'collections:4': ['setclass'],
+  'micro:2': ['microharmony'],
+};
+
 /** 每个主关后面接 4 个进阶关（第 5 个"综合测验"在开局时从主关与进阶关里抽题） */
 /** 主关第一张引导卡配上"圈出来讲"的图（learn_tours.js）；dropKeys 表示图已经是键盘，不再另外显示小键盘 */
 function withTour(unit) {
@@ -75,7 +94,7 @@ export const UNITS = [...BASICS, ...HARMONY, ...MELODY, ...JAZZ, ...WORLD, ...MO
   return {
     ...toured,
     cards: applyMore(unit.id, toured.cards),
-    branch: (BRANCHES[unit.id] || []).map((level, k) => ({ ...level, cards: applyMore(`${unit.id}:${k + 1}`, level.cards) })),
+    branch: (BRANCHES[unit.id] || []).map((level, k) => ({ ...level, prerequisites: ADVANCED_PREREQUISITES[`${unit.id}:${k + 1}`] || [], cards: applyMore(`${unit.id}:${k + 1}`, level.cards) })),
   };
 });
 

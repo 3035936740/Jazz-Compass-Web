@@ -206,6 +206,26 @@ test('letter grades: A+ 95, A 85, B 75, C 60, D 50, E below; a failed attempt sh
   assert.equal(gradeOf(0.9, false), 'D'); assert.equal(gradeOf(0.3, false), 'E');
 });
 
+test('normal exams: extension mistakes only reduce high grades; core pass and mandatory labs remain required', async () => {
+  const { examById } = await import('./sideb_content.js');
+  const lvl = levelForAttempt(examById('T-harmony'), 2);
+  assert.equal(lvl.sections.challenge.filter((n) => n.ratingOnly).length, 2, 'generated questions retain the marker');
+  const run = (coreScore, extScore) => lvl.sections.challenge.reduce((s, n) => recordAnswer(s, n,
+    { score: n.ratingOnly ? extScore : coreScore, ok: true, errors: [] }), createBSession(lvl));
+  const labs = Object.fromEntries(lvl.sections.lab.map((n) => [`${n.lab}@chapter`, { score: 60, hardFail: [] }]));
+  const plain = summarizeB(run(0.6, 0), lvl, labs);
+  assert.equal(plain.passed, true, 'core 60% + labs 60% passes with extension 0%');
+  assert.equal(plain.grade, 'C');
+  assert.equal(summarizeB(run(0.5, 0), lvl, labs).passed, false, 'weak basics do not get free pass');
+  const perfectLabs = Object.fromEntries(lvl.sections.lab.map((n) => [`${n.lab}@chapter`, { score: 100, hardFail: [] }]));
+  assert.equal(summarizeB(run(1, 1), lvl, perfectLabs).grade, 'A+');
+  assert.ok(summarizeB(run(1, 0), lvl, perfectLabs).score < 1, 'extensions still matter to high scores');
+  const lowLabs = { ...labs, [`${lvl.sections.lab[0].lab}@chapter`]: { score: 59, hardFail: [] } };
+  assert.equal(summarizeB(run(1, 1), lvl, lowLabs).passed, false);
+  const tx = levelForAttempt(examById('TX-harmony'));
+  assert.ok(tx.sections.challenge.every((n) => !n.ratingOnly), 'EX extension questions are fully assessed');
+});
+
 test('best scores, chapter averages and the exam pass lines (all 60%)', () => {
   assert.deepEqual([CHAPTER_EX_LINE, FINAL_EX_LINE], [0.6, 0.6]);
   let p = setLevelStars(emptyProgress(), ['final-ex'], 1);

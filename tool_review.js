@@ -1,6 +1,6 @@
 // 工具里的错题进错题本：听写、四部和声检查、套路听辨答错时，生成一道选择题放进学习页的复习（和关卡里答错的题一样按间隔复习）
 // 卡片格式同 learn_engine.js：{ type: 'choice', prompt, options, answer: 0, audio?, visual?, explain?, tool: { feature, q } }
-import { loadReview, saveReview, recordMistake } from './learn_engine.js?v=20261005-q1';
+import { loadReview, saveReview, recordMistake } from './learn_engine.js?v=20261005-curriculum1';
 
 /**
  * @param {object} card 选择题（正确项放第一个，界面会打乱）

@@ -33,6 +33,21 @@ const refsOf = (card) => [].concat(card.ref ?? []);
 const sectionText = (section) => readFileSync(new URL(`./learn_units_${section}.js`, import.meta.url), 'utf8');
 const branchText = (section) => readFileSync(new URL(`./learn_branches_${section}.js`, import.meta.url), 'utf8');
 
+test('curriculum prerequisites precede dependent main lessons and cluster related subjects', () => {
+  const ids = UNITS.map((u) => u.id);
+  for (const [before, after] of [['intervals', 'pentatonic'], ['intervalqual', 'pentatonic'], ['modes', 'pentatonic'], ['roman', 'functions'], ['inversions', 'figured'], ['cadences', 'functions']]) {
+    assert.ok(ids.indexOf(before) < ids.indexOf(after), `${before} before ${after}`);
+  }
+  assert.equal(ids.indexOf('intervalqual'), ids.indexOf('intervals') + 1);
+  assert.equal(ids.indexOf('meter'), ids.indexOf('rhythm') + 1);
+  for (const u of [...UNITS, ...SIDES]) {
+    for (const prerequisite of [...(u.prerequisites || []), ...(u.branch || []).flatMap((b) => b.prerequisites || [])]) {
+      assert.ok(ids.includes(prerequisite), `${u.id}: valid prerequisite ${prerequisite}`);
+      assert.notEqual(prerequisite, u.id, 'no dependency on its own unit');
+    }
+  }
+});
+
 test('units are well formed and ordered by section', () => {
   const ids = new Set();
   const sectionOrder = SECTIONS.map((s) => s.id);

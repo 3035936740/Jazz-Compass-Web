@@ -159,6 +159,46 @@ test('progress export and import round-trip; foreign files are refused', async (
   assert.equal(importProgress('not json', storage), false);
 });
 
+test('future-topic branches and side quests require every prerequisite, preserve completed records and debug access', async () => {
+  const { isLevelUnlocked, isSideLevelUnlocked, unitLevelKeys, setLevelStars, MIX_SLOT } = await import('./learn_engine.js');
+  const { UNITS, SIDES } = await import('./learn_content.js');
+  for (const id of ['dictation', 'pentaharm']) {
+    const side = SIDES.find((s) => s.id === id);
+    let p = setLevelStars(emptyProgress(), unitLevelKeys(side.parent), 1);
+    assert.equal(isSideLevelUnlocked(side, 0, p), false, `${id}: parent alone insufficient`);
+    for (const prereq of side.prerequisites.slice(0, -1)) p = setLevelStars(p, [prereq], 1);
+    assert.equal(isSideLevelUnlocked(side, 0, p), false, 'one missing prerequisite still blocks');
+    p = setLevelStars(p, side.prerequisites, 1);
+    assert.equal(isSideLevelUnlocked(side, 0, p), true);
+    assert.equal(isSideLevelUnlocked(side, 1, p), false, 'branch still needs side main');
+    p = setLevelStars(p, [side.id], 1);
+    assert.equal(isSideLevelUnlocked(side, 1, p), true);
+    assert.equal(isSideLevelUnlocked(side, 0, setLevelStars(emptyProgress(), [side.id], 1)), true, 'completed side remains replayable');
+  }
+  const index = UNITS.findIndex((u) => u.id === 'guidetone');
+  let p = setLevelStars(emptyProgress(), ['guidetone', 'guidetone:1', 'guidetone:2', 'guidetone:3'], 1);
+  assert.equal(isLevelUnlocked(UNITS, index, 4, p), false);
+  p = setLevelStars(p, ['substitutions', 'chordscale', 'lcc'], 1);
+  assert.equal(isLevelUnlocked(UNITS, index, 4, p), true);
+  p = setLevelStars(p, ['guidetone:4', 'jazzvoicing'], 1);
+  assert.equal(isLevelUnlocked(UNITS, index, MIX_SLOT, p), true);
+  assert.equal(isLevelUnlocked(UNITS, index, 4, { ...emptyProgress(), unlockAll: true }), true);
+});
+
+test('normal A chapter tests do not draw advanced topics requiring later chapters', async () => {
+  const { buildChapterCards } = await import('./learn_engine.js');
+  const q = (tag) => ({ type: 'choice', tag });
+  const units = [{ id: 'current', cards: Array.from({ length: 18 }, () => q('main')), branch: [
+    { cards: [q('taught1'), q('taught2')] },
+    { prerequisites: ['future'], cards: [q('future1'), q('future2')] },
+  ] }];
+  for (const rng of [() => 0, () => 0.5, () => 0.99]) {
+    const cards = buildChapterCards(units, {}, rng);
+    assert.equal(cards.length, 20);
+    assert.ok(cards.every((c) => !c.tag.startsWith('future')));
+  }
+});
+
 test('side quests: unlock after the whole parent unit, feed only the EX final, and gate the EX final', async () => {
   const { isSideLevelUnlocked, unitFullyDone, finalExUnlocked, buildFinalCards, setLevelStars, unitLevelKeys, emptyProgress, levelKey } = await import('./learn_engine.js');
   const side = { id: 's', parent: 'a', cards: [{ type: 'choice', tag: 'side' }], branch: [1, 2, 3, 4].map((k) => ({ cards: [{ type: 'choice', tag: `side${k}` }] })) };

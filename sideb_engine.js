@@ -3,7 +3,7 @@
 //
 // 原则：音乐优先于分数，发现优先于背诵，成就感优先于惩罚感。任何增加难度的设计，都要同时增加反馈、理解感或成就感——
 // 所以 60% 是"掌握门槛"而不是"惩罚门槛"：没过时讲解、实验、实操的进度全部保留，只补弱项（补弱挑战），不用整关重来。
-import { gradeCard, isDone } from './learn_engine.js?v=20261005-q1';
+import { gradeCard, isDone } from './learn_engine.js?v=20261005-curriculum1';
 import { SKILLS } from './sideb_errors.js?v=20261004-z9';
 import { GENERATORS } from './learn_generators.js?v=20261005-q1';
 
@@ -244,7 +244,7 @@ export function materialize(nodes, { seed = 1, attempt = 0 } = {}) {
     if (node.type === 'gen') {
       const gen = GENERATORS[node.gen];
       if (!gen) throw new Error(`unknown generator ${node.gen}`);
-      return Array.from({ length: node.count ?? 1 }, (_, k) => ({ ...gen.make(rng, node.params || {}), id: `${node.id}#${attempt}.${k}`, skills: node.skills || [], section: node.section, breakthrough: node.breakthrough }));
+      return Array.from({ length: node.count ?? 1 }, (_, k) => ({ ...gen.make(rng, node.params || {}), id: `${node.id}#${attempt}.${k}`, skills: node.skills || [], section: node.section, breakthrough: node.breakthrough, ratingOnly: Boolean(node.ratingOnly) }));
     }
     if (node.variants?.length) return [{ ...node, ...node.variants[attempt % node.variants.length], id: `${node.id}~${attempt % node.variants.length}`, variants: undefined }];
     return [node];
@@ -281,7 +281,7 @@ export function completeSection(session, level) {
  */
 export function recordAnswer(session, node, result) {
   const tries = (session.attempts[node.id] || 0) + 1;
-  const record = { id: node.id, section: node.section, type: node.type, skills: node.skills || [], ok: result.ok, score: result.score, errors: result.errors || [], first: tries === 1, ungraded: Boolean(result.ungraded) };
+  const record = { id: node.id, section: node.section, type: node.type, skills: node.skills || [], ok: result.ok, score: result.score, errors: result.errors || [], first: tries === 1, ungraded: Boolean(result.ungraded), ratingOnly: Boolean(node.ratingOnly) };
   return { ...session, attempts: { ...session.attempts, [node.id]: tries }, records: [...session.records, record] };
 }
 
@@ -302,7 +302,12 @@ export function levelWeights(level) {
  */
 export function summarizeB(session, level, labResults = {}, { context = 'level' } = {}) {
   const graded = session.records.filter((r) => r.first && !r.ungraded && !TEACHING_TYPES.includes(r.type) && r.type !== 'lab');
-  const challenge = graded.length ? graded.reduce((sum, r) => sum + r.score, 0) / graded.length : (challengeCount(level) ? 0 : 1);
+  const rawChallenge = graded.length ? graded.reduce((sum, r) => sum + r.score, 0) / graded.length : (challengeCount(level) ? 0 : 1);
+  // 普通考试的少量扩展题用于冲评级。基础已达标时，扩展答错不会拉低到及格线以下。
+  const core = graded.filter((r) => !r.ratingOnly);
+  const coreChallenge = core.length ? core.reduce((sum, r) => sum + r.score, 0) / core.length : 0;
+  const challenge = graded.some((r) => r.ratingOnly)
+    ? Math.max(rawChallenge, Math.min(coreChallenge, level.passLine ?? PASS_LINE)) : rawChallenge;
   const labs = mandatoryLabs(level).map((n) => {
     // 章节测试 / EX 的实操成绩单独存（id@chapter、id@ex），门槛也按节点自己的模式
     const mode = n.mode || 'level';
@@ -325,7 +330,7 @@ export function summarizeB(session, level, labResults = {}, { context = 'level' 
   session.records.forEach((r) => r.errors.forEach((e) => { errors[e] = (errors[e] || 0) + 1; }));
   const weak = weakSkills(skills);
   const next = passed ? 'clear' : !labsOk ? 'revise-lab' : 'recovery';
-  return { score, accuracy: score, challenge, labs, passed, grade, skills, errors, weak, next };
+  return { score, accuracy: score, challenge, rawChallenge, coreChallenge, labs, passed, grade, skills, errors, weak, next };
 }
 /** 弱项：做过的技能里得分率最低的（低于 60% 的全部列出，最多 2 个；都不低于 60% 时取最低的一个） */
 export function weakSkills(skills) {
@@ -431,8 +436,8 @@ export function overallMastery(store) {
 // ---------------- 通关记录、章节平均与 EX 解锁 ----------------
 /**
  * Side-B 的考试（都是可选的，不挡下一章）：
- *   章节测试：本章的普通关全部 Clear 后开放；只出普通关的题（不含扩展关）；过关线 60%，实操 ≥ 60%
- *   EX 章节测试：本章平均（普通关 + 扩展关）≥ 60% 开放，不看章节测试过没过；过关线 60%，实操 ≥ 70%
+ *   章节测试：本章普通关全部 Clear 后开放；少量扩展题用于冲评级，基础达标时保留及格分；过关线 60%，实操 ≥ 60%
+ *   EX 章节测试：本章普通关和扩展关全部 Clear 且平均 ≥ 60% 开放，不看章节测试过没过；过关线 60%，实操 ≥ 70%
  *   Final：所有章节测试都通过（≥ 60%）才开放；EX Final：所有章节测试和 EX 章节测试都通过才开放
  */
 export const CHAPTER_EX_OPEN = 0.6;
@@ -469,7 +474,9 @@ export function chapterAverageWithExt(levels, progress, hasExt = () => false) {
 }
 const examDone = (progress, id) => Boolean(progress.units[bKey(id)]?.done);
 export const chapterTestOpen = (levels, progress) => Boolean(progress.unlockAll) || (sidebUnlocked(progress) && levels.length > 0 && levels.every((l) => isDone(progress, bKey(l.id))));
-export const chapterExOpen = (levels, progress, hasExt) => Boolean(progress.unlockAll) || (sidebUnlocked(progress) && chapterAverageWithExt(levels, progress, hasExt) >= CHAPTER_EX_OPEN - 1e-9);
+export const chapterExOpen = (levels, progress, hasExt = () => false) => Boolean(progress.unlockAll) || (chapterTestOpen(levels, progress)
+  && levels.filter(hasExt).every((l) => isDone(progress, extKey(l.id)))
+  && chapterAverageWithExt(levels, progress, hasExt) >= CHAPTER_EX_OPEN - 1e-9);
 export const finalOpen = (chapterIds, progress) => Boolean(progress.unlockAll) || (sidebUnlocked(progress) && chapterIds.every((c) => examDone(progress, `T-${c}`)));
 export const finalExOpen = (chapterIds, progress) => Boolean(progress.unlockAll) || (sidebUnlocked(progress) && chapterIds.every((c) => examDone(progress, `T-${c}`) && examDone(progress, `TX-${c}`)));
 /** 所有章节的平均：各章平均分再取平均 */

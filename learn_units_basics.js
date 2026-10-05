@@ -84,10 +84,10 @@ const ALL = [
         hint: t('看结束在哪个音，它在宫商角徵羽里排第几？', '終わりの音は宮商角徴羽のどれ？', 'Which of Gong–Yu is the final note?'),
         explain: t('调式看旋律的中心和结束音。A 在 C 宫里是"羽"，所以叫 A 羽调式。', '旋法は旋律の中心と終止音で決めます。A は C 宮の「羽」なので A 羽調式。', 'The mode follows the melody’s centre and final. A is Yu in C-Gong, so it is the A Yu mode.') },
       { type: 'choice', ref: 'sccm-ethnic-modes',
-        prompt: t('加进来的"偏音"（如变宫、清角）可以当调式的主音吗？', '加えた「偏音」（変宮・清角など）は旋法の主音になれる？', 'Can added auxiliary notes (Biangong, Qingjue…) be the tonic?'),
-        options: [t('不可以', 'なれない', 'No'), t('可以', 'なれる', 'Yes')], answer: 0,
-        hint: t('它们只是"配角"。', '彼らは「脇役」です。', 'They are only supporting actors.'),
-        explain: t('偏音只起辅助和色彩作用，不能作调式主音。', '偏音は補助と色彩のためで、主音にはなりません。', 'Auxiliary notes add colour only; they cannot be the tonic.') },
+        prompt: t('把 C 宫五声的 C D E G A 按高低排好，相邻两个音之间有半音吗？', 'C 宮五声の C D E G A を高さ順に並べると、隣り合う音の間に半音はある？', 'Put the C-Gong notes C D E G A in pitch order. Are any neighbouring notes a half step apart?'),
+        options: [t('没有', 'ない', 'No'), t('有', 'ある', 'Yes')], answer: 0,
+        hint: t('在键盘上数数每一步跨几个半音。', '鍵盤で各段差の半音を数えよう。', 'Count the half steps between neighbouring notes on the keyboard.'),
+        explain: t('没有。C–D、D–E、G–A 是全音，E–G、A–C 是三个半音；相邻音没有半音。', 'ない。C–D・D–E・G–A は全音、E–G・A–C は半音 3 つで、隣り合う音に半音はありません。', 'No. C–D, D–E and G–A are whole steps; E–G and A–C span three half steps. No neighbouring pair is a half step apart.') },
     ],
   },
   {
@@ -446,7 +446,7 @@ const ALL = [
 ];
 
 // 关卡顺序（从简到难）
-const ORDER = ['keys', 'staff', 'rhythm', 'meter', 'intervals', 'pentatonic', 'major', 'minor', 'intervalqual', 'modes', 'texture'];
+const ORDER = ['keys', 'staff', 'rhythm', 'meter', 'intervals', 'intervalqual', 'major', 'minor', 'modes', 'pentatonic', 'texture'];
 export const UNITS = ORDER.map((id) => {
   const unit = ALL.find((u) => u.id === id);
   if (!unit) throw new Error(`unknown unit ${id}`);

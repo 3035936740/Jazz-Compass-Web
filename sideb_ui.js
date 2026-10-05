@@ -1,17 +1,17 @@
 // Side-B（翻面课程）界面：翻面地图、关卡卡片、关卡播放器（发现 / 解释 / 实验 / 挑战 / 实操）、结算页、补弱挑战。
 // 规则在 sideb_engine.js，评分在 lab_checks.js，内容在 sideb_content.js / sideb_units_*.js；设计见 SIDE_B_DESIGN.md。
 // 原则：音乐优先于分数，发现优先于背诵，成就感优先于惩罚感——失败只补弱项，每关有一个"发现"（insight）和胜利瞬间。
-import { B_CHAPTERS, B_LEVELS, levelById, lookupLevel, chapterLevels, isPlayable, extLevelById, hasExtLevel } from './sideb_content.js?v=20261005-p3';
+import { B_CHAPTERS, B_LEVELS, levelById, lookupLevel, chapterLevels, isPlayable, extLevelById, hasExtLevel } from './sideb_content.js?v=20261005-curriculum1';
 import {
   bKey, levelSections, levelForAttempt, createBSession, completeSection, recordAnswer, gradeNode, summarizeB, retrySession,
   buildRecovery, startRecovery, recordRecovery, recoveryResult, completeBLevel, chapterAverage, overallAverage, sidebUnlocked,
   mergeMastery, overallMastery, loadMastery, saveMastery, loadBResume, saveBResume, clearBResume, bestLabResults, saveLabResult, LAB_LINES,
   breakthroughFor, loadBreakthroughs, saveBreakthrough, estimateMinutes, PASS_LINE, isAssessed,
   extKey, gradeOf, chapterAverageWithExt, chapterTestOpen, chapterExOpen, finalOpen, finalExOpen, CHAPTER_EX_OPEN,
-} from './sideb_engine.js?v=20261005-q1';
+} from './sideb_engine.js?v=20261005-curriculum1';
 import { SKILLS, SKILL_NAMES, recommend } from './sideb_errors.js?v=20261004-z9';
 import { LABS, labHref, labResultKey } from './sideb_labs.js?v=20261004-x1';
-import { loadProgress, saveProgress, isDone } from './learn_engine.js?v=20261005-q1';
+import { loadProgress, saveProgress, isDone } from './learn_engine.js?v=20261005-curriculum1';
 import { renderVisual } from './learn_visuals.js?v=20261004-m5';
 import { satbStaff, rhythmGrid, playAudio, satbToy, polyToy, tapPad, spellToy, meterToy, intervalToy, scaleToy, textureToy, chordToy, keyChordsToy, progressionToy, plrToy, keyRelToy, transposeToy, fretToy, nctToy, speciesToy, canonToy, swingToy, bluesToy, chordScaleToy, guideToy, negativeToy, xuangongToy, worldToy, harmonicsToy, temperToy, pcToy, collectionToy, setToy, matrixToy, jiToy } from './sideb_toys.js?v=20261005-p4';
 import { celebrate } from './sideb_fx.js?v=20261004-f1';
@@ -22,7 +22,9 @@ import { referenceById } from './references.js';
 const TEXT = {
   zh: {
     examT: '章节测试', examTX: 'EX 章节测试', examFIN: 'Side-B Final', examFINX: 'Side-B EX Final',
-    ruleT: '本章普通关全部通过后开放（可选，不挡下一章；不含扩展关）', ruleTX: (p) => `本章平均（含扩展关）≥ ${Math.round(CHAPTER_EX_OPEN * 100)}% 开放（现在 ${p}%）`,
+    ruleT: '本章普通关全部通过后开放（可选，不挡下一章）；少量扩展题用于冲高评级，基础达标可及格', ruleTX: (p) => `本章普通关和扩展关全部 Clear，且本章平均 ≥ ${Math.round(CHAPTER_EX_OPEN * 100)}% 后开放（现在 ${p}%）`,
+    examWeights: '有实操时：挑战占 40%，实操占 60%；优先抽多步综合题。普通考试的扩展题只影响高评级，基础挑战达标时保留及格分。',
+    extensionQuestion: '扩展题 · 冲高评级；基础达标时不影响及格',
     ruleFIN: (d, n) => `所有章节测试都通过（≥ 60%）才开放（${d}/${n}）`, ruleFINX: (d, n) => `所有章节测试和 EX 章节测试都通过才开放（${d}/${n}）`,
     examPass: (p) => `过关线 ${p}%`, examBest: (p) => `最好 ${p}%`, examDone: '已通过', examGo: '开始考试', examMix: (m, labs) => `B 面普通关 ${m.main} 道 · B 面扩展关 ${m.ext} 道 · A 面 ${m.a} 道，打乱混在一起${labs ? ` · 最后 ${labs} 个实操` : ''}；每次开考重新抽题`, printSheet: '打印练习卷（含答案）', certView: (k) => (k === 'final-ex' ? '查看优秀毕业证书' : '查看毕业证书'), examLockedNote: '还没开放', examRetry: '换一套题再考', examNoContent: '这一章还没有可以出的题',
     ext: '扩展关', extDesc: (m) => `把对应 A 面关卡（含挂在上面的支线关卡）的进阶关和综合测验重新、更细地讲一遍：节奏和普通关一样（发现 → 讲解 → 实验 → 挑战），讲解更长 · 约 ${m} 分钟`, extLocked: '通过本关后解锁扩展关', extGo: '开始扩展关', extBest: (g) => `扩展关 ${g}`, grade: (g) => `评级 ${g}`,
@@ -43,7 +45,9 @@ const TEXT = {
   },
   ja: {
     examT: '章末テスト', examTX: 'EX 章末テスト', examFIN: 'Side-B ファイナル', examFINX: 'Side-B EX ファイナル',
-    ruleT: '章の通常ステージをすべてクリアすると開放（任意。次の章は止めない。拡張ステージは含まない）', ruleTX: (p) => `章平均（拡張ステージを含む）${Math.round(CHAPTER_EX_OPEN * 100)}% 以上で開放（今 ${p}%）`,
+    ruleT: '章の通常ステージをすべてクリアすると開放（任意。次の章は止めない）。少数の拡張問題は高評価用で、基礎を満たせば合格可能', ruleTX: (p) => `章の通常・拡張ステージをすべて Clear、かつ章平均 ${Math.round(CHAPTER_EX_OPEN * 100)}% 以上で開放（今 ${p}%）`,
+    examWeights: '実習あり：挑戦 40%、実習 60%。多段階問題を優先。通常試験の拡張問題は高評価用で、基礎挑戦を満たせば合格点を保ちます。',
+    extensionQuestion: '拡張問題・高評価用。基礎を満たせば合格に影響しません',
     ruleFIN: (d, n) => `すべての章末テストに合格（60% 以上）で開放（${d}/${n}）`, ruleFINX: (d, n) => `すべての章末テストと EX 章末テストに合格で開放（${d}/${n}）`,
     examPass: (p) => `合格ライン ${p}%`, examBest: (p) => `最高 ${p}%`, examDone: '合格済み', examGo: 'テストを始める', examMix: (m, labs) => `B 面通常 ${m.main} 問・B 面拡張 ${m.ext} 問・A 面 ${m.a} 問をシャッフル${labs ? `・最後に実習 ${labs} つ` : ''}。受けるたびに出題し直し`, printSheet: '練習プリントを印刷（解答つき）', certView: (k) => (k === 'final-ex' ? '優秀修了証書を見る' : '修了証書を見る'), examLockedNote: 'まだ開放されていない', examRetry: '別の問題で再挑戦', examNoContent: 'この章にはまだ出題できる問題がない',
     ext: '拡張ステージ', extDesc: (m) => `対応する A 面ステージ（ぶら下がる支線ステージも含む）の発展ステージと総合テストを、もう一度もっと詳しく：流れは通常ステージと同じ（発見 → 解説 → 実験 → チャレンジ）、解説が長め・約 ${m} 分`, extLocked: 'このステージをクリアすると拡張ステージが開放', extGo: '拡張ステージを始める', extBest: (g) => `拡張 ${g}`, grade: (g) => `評価 ${g}`,
@@ -64,7 +68,9 @@ const TEXT = {
   },
   en: {
     examT: 'Chapter test', examTX: 'EX chapter test', examFIN: 'Side-B Final', examFINX: 'Side-B EX Final',
-    ruleT: 'Opens when every regular level of the chapter is cleared (optional — it never blocks the next chapter; no extension levels)', ruleTX: (p) => `Opens at a chapter average (extensions included) ≥ ${Math.round(CHAPTER_EX_OPEN * 100)}% (now ${p}%)`,
+    ruleT: 'Opens after every regular level is cleared (optional; next chapter stays open). A few extension questions target higher grades; core mastery can still pass', ruleTX: (p) => `Clear every regular and extension level, with chapter average ≥ ${Math.round(CHAPTER_EX_OPEN * 100)}% to open (now ${p}%)`,
+    examWeights: 'With labs: challenge 40%, labs 60%. Multi-step tasks are prioritized. Extension questions in regular exams target higher grades; meeting the core challenge standard preserves a passing challenge score.',
+    extensionQuestion: 'Extension question for higher grades; core mastery can still pass',
     ruleFIN: (d, n) => `Opens when every chapter test is passed (≥ 60%) (${d}/${n})`, ruleFINX: (d, n) => `Opens when every chapter test and EX chapter test is passed (${d}/${n})`,
     examPass: (p) => `Pass line ${p}%`, examBest: (p) => `Best ${p}%`, examDone: 'Passed', examGo: 'Start the test', examMix: (m, labs) => `${m.main} Side-B regular + ${m.ext} Side-B extension + ${m.a} Side-A questions, shuffled${labs ? `; ${labs} lab${labs > 1 ? 's' : ''} at the end` : ''}; a fresh draw every time`, printSheet: 'Print a worksheet (with answers)', certView: (k) => (k === 'final-ex' ? 'View the certificate with distinction' : 'View the certificate'), examLockedNote: 'Not open yet', examRetry: 'Retake with new questions', examNoContent: 'No questions available for this chapter yet',
     ext: 'Extension level', extDesc: (m) => `The matching Side-A levels’ advanced levels and mixed tests (side quests included), taught again in more depth: same flow as a regular level (discover → explain → experiment → challenge), longer lessons · about ${m} min`, extLocked: 'Clear this level to unlock its extension level', extGo: 'Start the extension level', extBest: (g) => `Extension ${g}`, grade: (g) => `Grade ${g}`,
@@ -339,6 +345,7 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
     const meta = el('p', 'sideb-exam-meta', [t.examPass(pct(exam.passLine ?? PASS_LINE)), t.minutes(exam.minutes), ...(state?.best ? [t.examBest(pct(state.best))] : []), ...(state?.done ? [t.examDone, t.grade(gradeFor(state))] : [])].join(' · '));
     card.appendChild(meta);
     if (exam.mix) card.appendChild(el('p', 'sideb-rule', t.examMix(exam.mix, exam.sections.lab?.length || 0)));
+    card.appendChild(el('p', 'sideb-rule', t.examWeights));
     const certKind = id === 'FIN' ? 'final' : id === 'FINX' ? 'final-ex' : null;
     if (certKind && state?.done && loadCerts()[certKind]) card.appendChild(btn('learn-btn ghost', t.certView(certKind), () => renderCert(certKind)));
     if (open) card.append(btn('learn-btn primary', t.examGo, () => startLevel(id)), printLink(exam));
@@ -685,6 +692,7 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
 
   function renderBody(node, body, footer, shell, { done, record, registerDebug = () => {} }) {
     if (node.practice) body.appendChild(el('span', 'sideb-badge', t.practice));
+    if (node.ratingOnly) body.appendChild(el('span', 'sideb-badge', t.extensionQuestion));
     switch (node.type) {
       case 'page': {
         title(body, node.title);

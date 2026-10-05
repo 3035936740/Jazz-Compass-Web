@@ -64,7 +64,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/01%3A_Fundamentals/1.19%3A_Roman_Numerals_and_SATB_Chord_Construction',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['figured_bass.js', 'figured_bass_ui.js', 'harmonize.js', 'satb_check.js', 'classical_voicing.js', 'prog_library.js', 'prog_library_ui.js', 'lab_checks.js', 'sideb_units_harmony.js', 'sideb_units_harmony2.js', 'sideb_toys.js', 'sideb_ext_basics.js', 'sideb_ext_harmony.js', 'learn_branches_basics.js', 'learn_branches_harmony.js', 'learn_branches_jazz.js', 'learn_units_harmony.js', 'learn_units_jazz.js', 'learn_units_sideharmony.js', 'learn_generators.js'],
+    usedIn: ['figured_bass.js', 'figured_bass_ui.js', 'harmonize.js', 'satb_check.js', 'classical_voicing.js', 'prog_library.js', 'prog_library_ui.js', 'lab_checks.js', 'sideb_units_harmony.js', 'sideb_units_harmony2.js', 'sideb_toys.js', 'sideb_ext_basics.js', 'sideb_ext_harmony.js', 'learn_branches_basics.js', 'learn_branches_harmony.js', 'learn_branches_jazz.js', 'learn_units_harmony.js', 'learn_units_jazz.js', 'learn_units_sideharmony.js', 'learn_generators.js', 'sideb_exam_tasks.js'],
     usedFor: { zh: '罗马数字的大小写与 ° + ø 记号；SATB 的六条规则、四个声部的音域、间距（女中–男高最常出错）、交叉、重复（导音与和弦七音不重复）（四部和声检查与 Side-B 四部写作 I）', ja: 'ローマ数字の大文字・小文字と ° + ø。SATB の 6 規則、4 声部の音域、間隔（A–T が最も誤りやすい）、交差、重複（導音と第 7 音は重複しない）（4 声体チェックと Side-B 4 声体 I）', en: 'Roman-numeral case and the °, + and ø signs; the six SATB rules, voice ranges, spacing (alto–tenor most error-prone), crossing, doubling (never the leading tone or seventh) (four-part checker and Side-B Four-part writing I)' },
   },
   {
@@ -414,7 +414,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/04%3A_Diatonic_Harmony_Tonicization_and_Modulation/4.04%3A_Embellishing_Tones',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-01',
-    usedIn: ['nonchord.js', 'nonchord_ui.js', 'prog_library.js', 'sideb_units_melody.js', 'sideb_toys.js', 'sideb_ext_melody.js', 'learn_branches_melody.js', 'learn_units_melody.js', 'learn_units_sideharmony.js', 'learn_units_sidejazz.js', 'learn_generators.js'],
+    usedIn: ['nonchord.js', 'nonchord_ui.js', 'prog_library.js', 'sideb_units_melody.js', 'sideb_toys.js', 'sideb_ext_melody.js', 'learn_branches_melody.js', 'learn_units_melody.js', 'learn_units_sideharmony.js', 'learn_units_sidejazz.js', 'learn_generators.js', 'sideb_exam_tasks.js'],
     usedFor: { zh: '经过音、辅助音、倚音、逃音、延留音、上行延留音、先现音与持续音的定义', ja: '経過音・刺繍音・倚音・逸音・掛留音・リターデイション・先取音・保続音の定義', en: 'Definitions of passing, neighbour, appoggiatura, escape, suspension, retardation, anticipation and pedal tones' },
   },
   {
@@ -1233,7 +1233,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/08%3A_20th-_and_21st-Century_Techniques/8.04%3A_Pitch-Class_Sets_Normal_Order_and_Transformations',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['post_tonal.js', 'post_tonal_ui.js', 'lab_checks.js', 'sideb_units_modern.js', 'sideb_toys.js', 'sideb_labs.js', 'sideb_ext_modern.js', 'learn_branches_modern.js', 'learn_units_modern.js', 'learn_generators.js'],
+    usedIn: ['post_tonal.js', 'post_tonal_ui.js', 'lab_checks.js', 'sideb_units_modern.js', 'sideb_toys.js', 'sideb_labs.js', 'sideb_ext_modern.js', 'learn_branches_modern.js', 'learn_units_modern.js', 'learn_generators.js', 'sideb_exam_tasks.js'],
     usedFor: { zh: '标准序的求法与 Tn、In 运算', ja: 'ノーマル・オーダーの求め方と Tn・In', en: 'Finding normal order; Tn and In' },
   },
   {
@@ -1429,7 +1429,7 @@ export const REFERENCES = [
     url: 'https://en.wikipedia.org/wiki/Transposing_instrument',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['instruments.js', 'instruments_ui.js', 'instruments.test.mjs', 'sideb_units_melody.js', 'sideb_toys.js', 'sideb_ext_melody.js', 'learn_branches_melody.js', 'learn_units_melody.js'],
+    usedIn: ['instruments.js', 'instruments_ui.js', 'instruments.test.mjs', 'sideb_units_melody.js', 'sideb_toys.js', 'sideb_ext_melody.js', 'learn_branches_melody.js', 'learn_units_melody.js', 'sideb_exam_tasks.js'],
     usedFor: { zh: '八度移调乐器；长号、大号按实音记谱；英式铜管乐队的长号记谱', ja: 'オクターヴ移調楽器、トロンボーン・チューバの実音記譜、英国式ブラスバンドの例外', en: 'Octave-transposing instruments; trombone and tuba at concert pitch; the British brass band exception' },
   },
   {
@@ -1731,7 +1731,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/01%3A_Fundamentals/1.15%3A_Intervals',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['sideb_units_basics.js', 'sideb_toys.js', 'sideb_ext_basics.js', 'learn_branches_basics.js', 'learn_units_basics.js', 'learn_generators.js'],
+    usedIn: ['sideb_units_basics.js', 'sideb_toys.js', 'sideb_ext_basics.js', 'learn_branches_basics.js', 'learn_units_basics.js', 'learn_generators.js', 'sideb_exam_tasks.js'],
     usedFor: { zh: '音程的度数与性质、增减、复音程与转位（教程）', ja: '音程の度数と種類・増減・複音程・転回（チュートリアル）', en: 'Interval size and quality, augmented/diminished, compound intervals and inversion (tutorial)' },
   },
   {
@@ -1940,7 +1940,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/06%3A_Jazz/6.04%3A_iiVI',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['prog_library.js', 'prog_library_data.js', 'reharm.js', 'composition.js', 'sideb_units_jazz.js', 'sideb_ext_harmony.js', 'sideb_ext_jazz.js', 'learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_units_side.js', 'learn_units_sidejazz.js', 'learn_generators.js'],
+    usedIn: ['prog_library.js', 'prog_library_data.js', 'reharm.js', 'composition.js', 'sideb_units_jazz.js', 'sideb_ext_harmony.js', 'sideb_ext_jazz.js', 'learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_units_side.js', 'learn_units_sidejazz.js', 'learn_generators.js', 'sideb_exam_tasks.js'],
     usedFor: { zh: '大调与小调的 ii–V–I 和弦性质（教程）', ja: '長調と短調の ii–V–I のコードの種類（チュートリアル）', en: 'Chord qualities of ii–V–I in major and minor (tutorial)' },
   },
   {
@@ -2105,7 +2105,7 @@ export const REFERENCES = [
     url: 'https://en.wikipedia.org/wiki/Harmonic_series_(music)',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['sideb_units_world.js', 'sideb_toys.js', 'sideb_ext_world.js', 'learn_branches_modern.js', 'learn_branches_world.js', 'learn_units_world.js', 'learn_generators.js'],
+    usedIn: ['sideb_units_world.js', 'sideb_toys.js', 'sideb_ext_world.js', 'learn_branches_modern.js', 'learn_branches_world.js', 'learn_units_world.js', 'learn_generators.js', 'sideb_exam_tasks.js'],
     usedFor: { zh: '泛音列：基频的整数倍、泛音与音色（教程）', ja: '倍音列：基音の整数倍・倍音と音色（チュートリアル）', en: 'The harmonic series: integer multiples, overtones and timbre (tutorial)' },
   },
   {

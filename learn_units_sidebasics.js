@@ -189,7 +189,7 @@ export const UNITS = [
 
   // ======================= 听写 =======================
   {
-    id: 'dictation', parent: 'intervals', section: 'basics', feature: 'ear', toolQuery: '@sub:dictation', icon: '听',
+    id: 'dictation', parent: 'intervals', prerequisites: ['staff', 'rhythm', 'meter', 'major', 'triads', 'roman', 'cadences', 'functions'], section: 'basics', feature: 'ear', toolQuery: '@sub:dictation', icon: '听',
     title: t('听写：把听到的写下来', '聴音：聴いたものを書き取る', 'Dictation: write down what you hear'),
     blurb: t('节奏点格、旋律轮廓、低音线和和弦进行的听写方法', 'リズムのドット・グリッド、旋律の輪郭、バスラインと和声進行の聴き方', 'Dot grids for rhythm, contour for melody, and how to take down bass lines and progressions'),
     cards: [
@@ -534,7 +534,7 @@ export const UNITS = [
 
   // ======================= 五声和声 =======================
   {
-    id: 'pentaharm', parent: 'pentatonic', section: 'basics', feature: 'chinese', icon: '5♪',
+    id: 'pentaharm', parent: 'pentatonic', prerequisites: ['triads', 'roman', 'functions'], section: 'basics', feature: 'chinese', icon: '5♪',
     title: t('五声音阶在和声里', 'ペンタトニックと和声', 'Pentatonic harmony'),
     blurb: t('五声音阶的音当和弦根音、五种旋转、同一音级的两种形态与五度的关系', 'ペンタトニックの音を和音の根音に、5 つの回転、同じ音度の 2 つの形、5 度との関係', 'Pentatonic notes as chord roots, five rotations, cross relations and fifths'),
     cards: [

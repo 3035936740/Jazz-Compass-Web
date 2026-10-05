@@ -133,8 +133,13 @@ export function isLevelUnlocked(units, unitIndex, slot, progress) {
   if (progress.unlockAll) return true;
   const id = units[unitIndex].id;
   if (isDone(progress, levelKey(id, slot))) return true;
-  return isDone(progress, levelKey(id, slot - 1));
+  return isDone(progress, levelKey(id, slot - 1)) && levelPrerequisites(units[unitIndex], slot).every((key) => isDone(progress, key));
 }
+
+/** 跨主题的进阶关等基础主关学完再开放；综合测验继承所有进阶前置。 */
+export const levelPrerequisites = (unit, slot) => slot === MIX_SLOT
+  ? [...new Set((unit.branch || []).flatMap((b) => b.prerequisites || []))]
+  : unit.branch?.[slot - 1]?.prerequisites || [];
 
 /** 一个关卡分支是否全部完成（进阶 1–4 与综合测验） */
 export const branchDone = (progress, unitId) => Array.from({ length: MIX_SLOT }, (_, i) => i + 1).every((slot) => isDone(progress, levelKey(unitId, slot)));
@@ -176,7 +181,11 @@ function buildExamCards({ mainGroups, advancedGroups, total, advancedCount }, rn
   return shuffle([...main, ...advanced, ...rest], rng);
 }
 const mainGroupsOf = (units) => units.map((unit) => splitGenerated(questionCards(unit.cards)));
-const advancedGroupsOf = (units) => units.flatMap((unit) => (unit.branch || []).map((level) => splitGenerated(questionCards(level.cards))));
+const advancedGroupsOf = (units, { taughtOnly = false } = {}) => {
+  const taught = new Set(units.map((u) => u.id));
+  return units.flatMap((unit) => (unit.branch || []).filter((level) => !taughtOnly || (level.prerequisites || []).every((id) => taught.has(id)))
+    .map((level) => splitGenerated(questionCards(level.cards))));
+};
 /** 支线大关卡的主关和进阶关都算"进阶题"的题库 */
 const sideGroupsOf = (sides) => sides.flatMap((side) => [side.cards, ...(side.branch || []).map((level) => level.cards)].map((cards) => splitGenerated(questionCards(cards))));
 
@@ -210,7 +219,7 @@ export function buildChapterCards(units, { ex = false, sides = [] } = {}, rng = 
   const counts = CHAPTER_COUNTS[ex ? 'ex' : 'normal'];
   return buildExamCards({
     mainGroups: mainGroupsOf(units),
-    advancedGroups: [...advancedGroupsOf(units), ...(ex ? sideGroupsOf(sides) : [])],
+    advancedGroups: [...advancedGroupsOf(units, { taughtOnly: !ex }), ...(ex ? sideGroupsOf(sides) : [])],
     total: counts.main + counts.advanced,
     advancedCount: counts.advanced,
   }, rng);
@@ -317,6 +326,8 @@ export function importProgress(json, storage = globalThis.localStorage) {
 export const unitFullyDone = (progress, unitId) => unitLevelKeys(unitId).every((key) => isDone(progress, key));
 export function isSideLevelUnlocked(side, slot, progress) {
   if (progress.unlockAll) return true;
-  if (slot === 0) return unitFullyDone(progress, side.parent) || isDone(progress, levelKey(side.id));
-  return isDone(progress, levelKey(side.id, slot)) || isDone(progress, levelKey(side.id, slot - 1));
+  if (isDone(progress, levelKey(side.id, slot))) return true;
+  const ready = (side.prerequisites || []).every((key) => isDone(progress, key));
+  if (slot === 0) return ready && unitFullyDone(progress, side.parent);
+  return ready && isDone(progress, levelKey(side.id, slot - 1)) && levelPrerequisites(side, slot).every((key) => isDone(progress, key));
 }

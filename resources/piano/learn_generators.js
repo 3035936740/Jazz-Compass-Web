@@ -18,7 +18,7 @@ import { primeForm, intervalVector, transpose, invert, mod12, formatSet } from '
 import { THAATS, thaatSemitones } from './world_modes.js';
 import { writtenToConcert } from './instruments.js';
 import { midiAt } from './fretboard.js';
-import { shuffle } from './learn_engine.js?v=20261003-s3';
+import { shuffle } from './learn_engine.js?v=20261005-curriculum1';
 
 const t = (zh, ja, en) => ({ zh, ja, en });
 const fmt = (template, values) => Object.fromEntries(Object.entries(template).map(([lang, text]) => [lang, text.replace(/\{(\w+)\}/g, (_, key) => {
