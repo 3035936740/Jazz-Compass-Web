@@ -42,7 +42,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/01%3A_Fundamentals/1.12%3A_Major_Scales_Scale_Degrees_and_Key_Signatures',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['pitch_spelling.js', 'staff_reading.js', 'staff_reading_ui.js', 'composition.js', 'staff_edit.js', 'prog_quiz.js', 'circle_panel.js', 'sideb_units_basics.js', 'sideb_toys.js', 'sideb_units_harmony2.js', 'sideb_ext_basics.js', 'learn_branches_basics.js', 'learn_branches_jazz.js', 'learn_units_basics.js', 'learn_units_sidebasics.js', 'learn_generators.js'],
+    usedIn: ['pitch_spelling.js', 'staff_reading.js', 'staff_reading_ui.js', 'composition.js', 'staff_edit.js', 'prog_quiz.js', 'circle_panel.js', 'sideb_units_basics.js', 'sideb_toys.js', 'sideb_units_harmony2.js', 'sideb_ext_basics.js', 'learn_branches_basics.js', 'learn_branches_jazz.js', 'learn_units_basics.js', 'learn_units_sidebasics.js', 'learn_generators.js', 'sideb_exam_tasks.js'],
     usedFor: { zh: '音阶级数 1–7 的编号（第 n 级与主音相距 n 度），用于七声音阶按音级拼写', ja: '音階の度数 1–7（第 n 音は主音から n 度）——七音音階の綴りに使用', en: 'Scale degrees 1–7 (degree n lies a generic nth above the tonic) — used to spell heptatonic scales by letter' },
   },
   {
@@ -458,7 +458,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/04%3A_Diatonic_Harmony_Tonicization_and_Modulation/4.01%3A_Introduction_to_Harmony_Cadences_and_Phrase_Endings',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-01',
-    usedIn: ['harmonize.js', 'harmonize_ui.js', 'motif_phrase.js', 'reharm.js', 'composition.js', 'dictation.js', 'dictation_ui.js', 'sideb_units_harmony2.js', 'sideb_ext_harmony.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_side.js', 'learn_units_sidebasics.js', 'learn_units_sideharmony.js', 'learn_units_sidejazz.js'],
+    usedIn: ['harmonize.js', 'harmonize_ui.js', 'motif_phrase.js', 'reharm.js', 'composition.js', 'dictation.js', 'dictation_ui.js', 'sideb_units_harmony2.js', 'sideb_ext_harmony.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_side.js', 'learn_units_sidebasics.js', 'learn_units_sideharmony.js', 'learn_units_sidejazz.js', 'sideb_exam_tasks.js'],
     usedFor: { zh: '主、属功能的和弦，PAC、IAC、HC 的判定条件', ja: '主・属機能の和音と PAC・IAC・HC の条件', en: 'Tonic and dominant chords; conditions for PAC, IAC and HC' },
   },
   {
@@ -1029,7 +1029,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/06%3A_Jazz/6.06%3A_Substitutions',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['jazz_theory.js', 'jazz_more_ui.js', 'sideb_units_jazz.js', 'sideb_labs.js', 'sideb_ext_jazz.js', 'learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_generators.js'],
+    usedIn: ['jazz_theory.js', 'jazz_more_ui.js', 'sideb_units_jazz.js', 'sideb_labs.js', 'sideb_ext_jazz.js', 'learn_branches_jazz.js', 'learn_units_jazz.js', 'learn_generators.js', 'sideb_exam_tasks.js'],
     usedFor: { zh: '三全音替代、副属替代与调式交替', ja: '裏コード・セカンダリー・ドミナント・モーダル・インターチェンジ', en: 'Tritone substitution, applied-chord substitution and mode mixture' },
   },
   {
@@ -1654,7 +1654,7 @@ export const REFERENCES = [
     url: 'https://en.wikipedia.org/wiki/Cent_(music)',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['staff_reading.js', 'staff_reading_ui.js'],
+    usedIn: ['staff_reading.js', 'staff_reading_ui.js', 'sideb_exam_tasks.js'],
     usedFor: { zh: '音分的定义：八度 1200 音分、f2 = f1 × 2^(c/1200)（五线谱工具的音分偏移）', ja: 'セントの定義：1 オクターヴ 1200 セント、f2 = f1 × 2^(c/1200)（五線譜ツール）', en: 'Definition of the cent: 1200 per octave, f2 = f1 × 2^(c/1200) (staff tool cent offsets)' },
   },
   {
@@ -1687,7 +1687,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/01%3A_Fundamentals/1.08%3A_Notating_Rhythm',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['staff_diagram.js', 'staff_reading.js', 'staff_reading_ui.js', 'dictation.js', 'dictation_ui.js', 'lab_checks.js', 'sideb_labs.js', 'sideb_ext_basics.js', 'learn_branches_basics.js', 'learn_units_basics.js', 'learn_units_sidebasics.js', 'learn_generators.js'],
+    usedIn: ['staff_diagram.js', 'staff_reading.js', 'staff_reading_ui.js', 'dictation.js', 'dictation_ui.js', 'lab_checks.js', 'sideb_labs.js', 'sideb_ext_basics.js', 'learn_branches_basics.js', 'learn_units_basics.js', 'learn_units_sidebasics.js', 'learn_generators.js', 'sideb_exam_tasks.js'],
     usedFor: { zh: '音符时值、附点与连音线（教程）；连音线只连同音高的音、不用在休止符上（Side-B 节奏实操的"非法时值"）', ja: '音価・付点・タイ（チュートリアル）。タイは同じ高さの音どうし、休符には付けない（Side-B リズム実習の「不正な音価」）', en: 'Note values, dots and ties (tutorial); ties join notes of the same pitch and are never used with rests (the “illegal duration” check in Side-B rhythm labs)' },
   },
   {
@@ -1753,7 +1753,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/01%3A_Fundamentals/1.17%3A_Seventh_Chords',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['prog_library.js', 'sideb_units_harmony2.js', 'sideb_toys.js', 'sideb_ext_harmony.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_sideharmony.js', 'learn_generators.js'],
+    usedIn: ['prog_library.js', 'sideb_units_harmony2.js', 'sideb_toys.js', 'sideb_ext_harmony.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_sideharmony.js', 'learn_generators.js', 'sideb_exam_tasks.js'],
     usedFor: { zh: '五种常见七和弦及其别名（教程）', ja: '5 種類の七の和音とその別名（チュートリアル）', en: 'The five common seventh chords and their other names (tutorial)' },
   },
   {
@@ -1995,7 +1995,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/08%3A_20th-_and_21st-Century_Techniques/8.02%3A_Pitch_and_Pitch_Class',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['sideb_units_modern.js', 'sideb_toys.js', 'sideb_ext_modern.js', 'learn_branches_modern.js', 'learn_units_modern.js', 'learn_generators.js'],
+    usedIn: ['sideb_units_modern.js', 'sideb_toys.js', 'sideb_ext_modern.js', 'learn_branches_modern.js', 'learn_units_modern.js', 'learn_generators.js', 'sideb_exam_tasks.js'],
     usedFor: { zh: '音级与整数记法 C = 0（教程）', ja: 'ピッチクラスと整数表記 C = 0（チュートリアル）', en: 'Pitch class and integer notation C = 0 (tutorial)' },
   },
   {

@@ -1,14 +1,14 @@
 // 乐理闯关界面：关卡地图（主关 + 进阶分支 + 综合测验 + 结业挑战）、关卡播放器（引导卡 / 选择 / 填空 / 连线）、
 // 图示、提示与解析、去工具里看看（带学习记录，回来时还是同一题）、结算
 // 题目与依据见 learn_content.js / learn_units_*.js / learn_branches_*.js；生成题见 learn_generators.js；规则见 learn_engine.js
-import { UNITS, SECTIONS, SIDES } from './learn_content.js?v=20261005-curriculum1';
+import { UNITS, SECTIONS, SIDES } from './learn_content.js?v=20261005-boss2';
 import {
   createSession, currentItem, answer, advance, isFinished, progressRatio, loadProgress, saveProgress, completeUnit, isUnlocked, nextUnitIndex, shuffle,
   levelKey, parseLevelKey, isLevelUnlocked, levelPrerequisites, isDone, MIX_SLOT, buildMixedCards, buildFinalCards, FINAL_KEY, FINAL_EX_KEY, finalUnlocked, finalExUnlocked,
-  buildChapterCards, chapterKey, parseChapterKey, chapterUnlocked, chapterExUnlocked,
+  buildChapterCards, chapterKey, parseChapterKey, chapterUnlocked, chapterExUnlocked, chapterRevisitPrerequisites,
   saveResume, loadResume, clearResume, unitLevelKeys, setLevelStars, emptyProgress,
   loadReview, saveReview, recordMistake, recordReviewAnswer, dueReview, exportProgress, importProgress, starsFor, isSideLevelUnlocked, unitFullyDone,
-} from './learn_engine.js?v=20261005-curriculum1';
+} from './learn_engine.js?v=20261005-boss2';
 import { expandCards } from './learn_generators.js?v=20261005-q1';
 import { worksheetHTML, openWorksheet, printable } from './worksheet.js?v=20261004-y1';
 import { renderVisual } from './learn_visuals.js?v=20261004-m5';
@@ -362,7 +362,8 @@ export function mountLearn(target, { playChord }) {
       // EX 章节测试是章节测试的分支：挂在章节测试旁边（像支线一样），不在主路上；主路从章节测试接到下一章的第一关
       const chapterNode = examNode({ key: chapterKey(section.id), kind: 'chapter', title: t.chapterTest, blurb: t.chapterBlurb(tx(section.title)), lockText: t.chapterLocked, open: chapterUnlocked(ids, unlockView()), index: units.length });
       chapterNode.classList.add('has-side');
-      chapterNode.appendChild(examNode({ key: chapterKey(section.id, true), kind: 'chapter-ex', title: t.chapterTestEx, blurb: t.chapterExBlurb(tx(section.title)), lockText: t.chapterExLocked, open: chapterExUnlocked(section.id, ids, unlockView(), sides), index: units.length, branch: true }));
+      const revisit = chapterRevisitText(section.id);
+      chapterNode.appendChild(examNode({ key: chapterKey(section.id, true), kind: 'chapter-ex', title: t.chapterTestEx, blurb: [t.chapterExBlurb(tx(section.title)), revisit].filter(Boolean).join(' '), lockText: t.chapterExLocked, open: chapterExUnlocked(section.id, ids, unlockView(), sides), index: units.length, branch: true }));
       path.appendChild(chapterNode);
       block.appendChild(path);
       root.appendChild(block);
@@ -642,6 +643,16 @@ export function mountLearn(target, { playChord }) {
     if (!missing.length) return '';
     const titles = missing.map((id) => tx(UNITS.find((u) => u.id === id)?.title || id)).join(' / ');
     return ({ zh: `先完成基础主关：${titles}；再按顺序完成本分支。`, ja: `基礎メインを先にクリア：${titles}。その後この分岐を順番に進めます。`, en: `First clear these main lessons: ${titles}; then follow this branch in order.` })[lang];
+  }
+
+  function chapterRevisitText(sectionId) {
+    const missing = chapterRevisitPrerequisites(chapterUnits(sectionId), chapterSides(sectionId), progress);
+    if (!missing.length) return '';
+    const titles = UNITS.filter((unit) => missing.includes(unit.id)).map((unit) => {
+      const section = SECTIONS.find((s) => s.id === unit?.section);
+      return `${tx(section?.short)} · ${tx(unit.title)}`;
+    }).join(' / ');
+    return ({ zh: `这是回访 EX：后续学完 ${titles} 后回来，完成本章剩余进阶与支线再挑战。`, ja: `これは再訪 EX です。後続の ${titles} を学んでから戻り、この章の残りの発展・支線をクリアして挑戦しましょう。`, en: `This is a revisit EX: learn ${titles} later, then return to finish this chapter's remaining advanced levels and side quests before attempting it.` })[lang];
   }
 
   function sideNode(side, parent, k) {
@@ -1217,6 +1228,10 @@ export function mountLearn(target, { playChord }) {
     if (level.chapter && !level.chapter.ex && chapterExUnlocked(level.chapter.sectionId, chapterUnits(level.chapter.sectionId), unlockView(), chapterSides(level.chapter.sectionId))) {
       row.appendChild(button('learn-btn primary', t.chapterTestEx, () => startLevel(chapterKey(level.chapter.sectionId, true))));
     }
+    if (level.chapter && !level.chapter.ex) {
+      const revisit = chapterRevisitText(level.chapter.sectionId);
+      if (revisit) shell.appendChild(el('p', 'learn-muted', revisit));
+    }
     if (level.unit) {
       const index = unitIndex(level.unit.id);
       const { slot, unit } = level;
@@ -1287,7 +1302,7 @@ export function mountLearn(target, { playChord }) {
   function showSideB(then, { animate = true } = {}) {
     if (!sideBOpen()) { renderMap(); return; }
     stop(); closeSheets();
-    const mount = () => import('./sideb_ui.js?v=20261005-curriculum1').then(({ mountSideB }) => {
+    const mount = () => import('./sideb_ui.js?v=20261005-boss2').then(({ mountSideB }) => {
       writeSide('b');
       root.classList.add('is-side-b');
       sideB = mountSideB(root, {

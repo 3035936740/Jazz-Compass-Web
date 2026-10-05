@@ -8,7 +8,7 @@ import { LEVEL_B3_1, LEVEL_B3_2, LEVEL_B3_3, LEVEL_B3_4, LEVEL_B3_5 } from './si
 import { LEVEL_B4_1, LEVEL_B4_2, LEVEL_B4_3, LEVEL_B4_4, LEVEL_B4_5, LEVEL_B4_6, LEVEL_B4_7, LEVEL_B4_8, LEVEL_B4_9 } from './sideb_units_jazz.js?v=20261004-w6';
 import { LEVEL_B5_1, LEVEL_B5_2, LEVEL_B5_3, LEVEL_B5_4 } from './sideb_units_world.js?v=20261004-x1';
 import { LEVEL_B6_1, LEVEL_B6_2, LEVEL_B6_3, LEVEL_B6_4, LEVEL_B6_5 } from './sideb_units_modern.js?v=20261004-x1';
-import { UNITS, SIDES } from './learn_content.js?v=20261005-curriculum1';
+import { UNITS, SIDES } from './learn_content.js?v=20261005-boss2';
 import { EXT_BASICS } from './sideb_ext_basics.js?v=20261004-y3';
 import { EXT_HARMONY } from './sideb_ext_harmony.js?v=20261004-m4';
 import { EXT_MELODY } from './sideb_ext_melody.js?v=20261004-m4';
@@ -16,7 +16,7 @@ import { EXT_JAZZ } from './sideb_ext_jazz.js?v=20261005-p2';
 import { EXT_WORLD } from './sideb_ext_world.js?v=20261005-p2';
 import { EXT_MODERN } from './sideb_ext_modern.js?v=20261005-p2';
 import { LEVEL_B1_1, LEVEL_B1_2, LEVEL_B1_3, LEVEL_B1_4, LEVEL_B1_5, LEVEL_B1_6, LEVEL_B1_7 } from './sideb_units_basics.js?v=20261004-w6';
-import { EXAM_TASKS } from './sideb_exam_tasks.js?v=20261005-curriculum1';
+import { EXAM_TASKS } from './sideb_exam_tasks.js?v=20261005-boss2';
 
 const t = (zh, ja, en) => ({ zh, ja, en });
 
@@ -101,9 +101,8 @@ export const isPlayable = (level) => Boolean(level?.sections);
 // ---------------- 章节测试 / EX 章节测试 / Final / EX Final ----------------
 // 考试也是一个"关卡"（只有挑战段和实操段），用同一个播放器；id：T-<章>、TX-<章>、FIN、FINX。
 // 每次开考（attempt）用新的种子重新抽题（level.draw，见 sideb_engine.levelForAttempt），题目打乱混在一起，实操放在最后：
-//   普通章节测试：16 普通 + 2 扩展（冲评级）+ 6 A 面；EX：6 普通 + 16 扩展 + 2 A 面
-//   Final：20 普通 + 2 扩展（冲评级）+ 2 A 面；EX Final：2 普通 + 20 扩展 + 2 A 面
-//   每场 24 题，优先综合任务；章节最多 2 个不同实操，Final 3 个不同章节的实操。有实操时挑战 40% / 实操 60%。
+//   普通章节测试 / Final：12 普通 + 2 扩展（冲评级）+ 2 A 面；EX：2 普通 + 12 扩展 + 2 A 面
+//   每场 16 个挑战任务，至少一半为综合任务；章节最多 2 个不同实操，Final 3 个不同章节的实操。有实操时挑战 40% / 实操 60%。
 // 扩展关还没写好的章，扩展关的名额由普通关补上；题不够时生成器题换种子再出。
 const TEACHING = ['page', 'demo', 'guide', 'discover', 'experiment'];
 const assessed = (n) => n && !TEACHING.includes(n.type) && n.type !== 'lab' && !n.practice;
@@ -156,14 +155,14 @@ const EXAM_TITLE = {
 };
 /** 每种考试的题量：B 面普通关、B 面扩展关、A 面、实操 */
 export const EXAM_MIX = {
-  T: { main: 16, ext: 2, a: 6, labs: 2 },
-  TX: { main: 6, ext: 16, a: 2, labs: 2 },
-  FIN: { main: 20, ext: 2, a: 2, labs: 3 },
-  FINX: { main: 2, ext: 20, a: 2, labs: 3 },
+  T: { main: 12, ext: 2, a: 2, labs: 2 },
+  TX: { main: 2, ext: 12, a: 2, labs: 2 },
+  FIN: { main: 12, ext: 2, a: 2, labs: 3 },
+  FINX: { main: 2, ext: 12, a: 2, labs: 3 },
 };
-/** 优先给多步分析、推导、拼写和节奏任务约一半席位；其余题照常随机。 */
+/** B 题源优先用约 2/3 席位抽综合任务，保证整场至少一半；题池不足时用短题补位。 */
 function drawTasks(pool, count, rng, tag) {
-  const tasks = draw(pool.filter((n) => ['derive', 'analyze', 'spell', 'tap'].includes(n.type)), Math.ceil(count / 2), rng, tag);
+  const tasks = draw(pool.filter((n) => ['derive', 'analyze', 'spell', 'tap'].includes(n.type)), Math.ceil(count * 2 / 3), rng, tag);
   const used = new Set(tasks.map((n) => n.id));
   return [...tasks, ...draw(pool.filter((n) => !used.has(n.id)), count - tasks.length, rng, tag, pool)];
 }

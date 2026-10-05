@@ -3,7 +3,7 @@
 //
 // 原则：音乐优先于分数，发现优先于背诵，成就感优先于惩罚感。任何增加难度的设计，都要同时增加反馈、理解感或成就感——
 // 所以 60% 是"掌握门槛"而不是"惩罚门槛"：没过时讲解、实验、实操的进度全部保留，只补弱项（补弱挑战），不用整关重来。
-import { gradeCard, isDone } from './learn_engine.js?v=20261005-curriculum1';
+import { gradeCard, isDone } from './learn_engine.js?v=20261005-boss2';
 import { SKILLS } from './sideb_errors.js?v=20261004-z9';
 import { GENERATORS } from './learn_generators.js?v=20261005-q1';
 

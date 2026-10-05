@@ -236,6 +236,14 @@ export const chapterUnlocked = (units, progress) => progress.unlockAll || units.
 export const chapterExUnlocked = (sectionId, units, progress, sides = []) => progress.unlockAll || (isDone(progress, chapterKey(sectionId))
   && units.every((unit) => isDone(progress, unit.id) && branchDone(progress, unit.id)) && sides.every((side) => unitFullyDone(progress, side.id)));
 
+/** EX 是回访挑战：列出本章进阶与支线尚未学过的跨章节基础。 */
+export function chapterRevisitPrerequisites(units, sides, progress) {
+  const local = new Set(units.map((u) => u.id));
+  return [...new Set([...units, ...sides].flatMap((u) => [
+    ...(u.prerequisites || []), ...(u.branch || []).flatMap((b) => b.prerequisites || []),
+  ]))].filter((id) => !local.has(id) && !isDone(progress, id));
+}
+
 export const FINAL_KEY = 'final';
 export const FINAL_EX_KEY = 'final-ex';
 export const finalUnlocked = (units, progress) => progress.unlockAll || units.every((unit) => isDone(progress, unit.id));

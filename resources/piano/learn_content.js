@@ -1,14 +1,14 @@
 // 乐理闯关的关卡内容：从简到难，每个工具面板里的概念都有对应的关卡
 // 主关题卡按分区写在 learn_units_<分区>.js，进阶关写在 learn_branches_<分区>.js；每个文件顶部列出它引用的全部资料（ref:<id>，见 references.js）
 // 修改题卡后运行 node scripts/annotate-learn.mjs 更新引用汇总与 references.js 的 usedIn
-import { UNITS as BASICS } from './learn_units_basics.js?v=20261005-curriculum1';
-import { UNITS as HARMONY } from './learn_units_harmony.js?v=20261005-curriculum1';
+import { UNITS as BASICS } from './learn_units_basics.js?v=20261005-boss2';
+import { UNITS as HARMONY } from './learn_units_harmony.js?v=20261005-boss2';
 import { UNITS as MELODY } from './learn_units_melody.js?v=20261002-r20';
 import { UNITS as JAZZ } from './learn_units_jazz.js?v=20261002-r20';
 import { UNITS as WORLD } from './learn_units_world.js?v=20261002-r20';
 import { UNITS as MODERN } from './learn_units_modern.js?v=20261002-r20';
 import { UNITS as SIDE_HARMONY_A } from './learn_units_side.js?v=20261003-s2';
-import { UNITS as SIDE_BASICS } from './learn_units_sidebasics.js?v=20261005-curriculum1';
+import { UNITS as SIDE_BASICS } from './learn_units_sidebasics.js?v=20261005-boss2';
 import { UNITS as SIDE_HARMONY } from './learn_units_sideharmony.js?v=20261003-s3';
 import { UNITS as SIDE_MELODY } from './learn_units_sidemelody.js?v=20261003-s4';
 import { UNITS as SIDE_JAZZ } from './learn_units_sidejazz.js?v=20261003-s3';

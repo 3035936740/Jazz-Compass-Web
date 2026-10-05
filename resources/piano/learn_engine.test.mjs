@@ -12,6 +12,13 @@ const unit = {
   ],
 };
 
+test('normal chapter keeps three stars at 90%, including 18/20', () => {
+  const session = { unitId: 'chapter@basics', questions: 20, firstTry: 18 };
+  assert.equal(starsFor(session), 3);
+  assert.equal(starsFor({ ...session, firstTry: 17 }), 2);
+  assert.equal(completeUnit(emptyProgress(), session.unitId, session).earned.stars, 3);
+});
+
 test('grading for each card type', () => {
   assert.equal(gradeCard(unit.cards[1], 1), true);
   assert.equal(gradeCard(unit.cards[1], 0), false);
@@ -19,6 +26,21 @@ test('grading for each card type', () => {
   assert.equal(gradeCard(unit.cards[2], ['H', 'W']), false);
   assert.equal(gradeCard(unit.cards[3], { 0: 0, 1: 1 }), true);
   assert.equal(gradeCard(unit.cards[3], { 0: 1, 1: 0 }), false);
+});
+
+test('revisit EX lists missing cross-chapter prerequisites from advanced and side levels', async () => {
+  const { chapterRevisitPrerequisites } = await import('./learn_engine.js');
+  const { UNITS, SIDES } = await import('./learn_content.js');
+  const chapter = (section) => UNITS.filter((u) => u.section === section);
+  const sides = (section) => SIDES.filter((u) => u.section === section);
+  const p = emptyProgress();
+  const basics = chapterRevisitPrerequisites(chapter('basics'), sides('basics'), p);
+  assert.ok(basics.includes('heptatonic'));
+  assert.ok(basics.includes('functions'), 'pentatonic harmony prerequisite is included');
+  assert.ok(!basics.includes('intervalqual'), 'within-chapter dependencies are not future chapters');
+  assert.ok(chapterRevisitPrerequisites(chapter('harmony'), sides('harmony'), p).includes('substitutions'));
+  basics.forEach((id) => { p.units[id] = { done: true, stars: 1 }; });
+  assert.deepEqual(chapterRevisitPrerequisites(chapter('basics'), sides('basics'), p), []);
 });
 
 test('a wrong answer comes back once at the end; stars count first tries', () => {

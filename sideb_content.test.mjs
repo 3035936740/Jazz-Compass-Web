@@ -123,23 +123,23 @@ test('exams: question mix (B main / B extension / A side), labs last, fresh draw
   const t = examById('T-harmony'); const tx = examById('TX-harmony');
   assert.ok(t && tx && examById('FIN') && examById('FINX'));
   assert.equal(t.passLine, 0.6); assert.equal(tx.passLine, 0.6); assert.equal(examById("FINX").passLine, 0.6);
-  // 每场 24 题；章节最多 2 个不同实操，Final 3 个不同章节的实操。
-  assert.equal(t.sections.challenge.length, 24); assert.equal(tx.sections.challenge.length, 24);
-  assert.equal(examById('FIN').sections.challenge.length, 24); assert.equal(examById('FINX').sections.challenge.length, 24);
+  // 每场 16 个挑战任务；章节最多 2 个不同实操，Final 3 个不同章节的实操。
+  assert.equal(t.sections.challenge.length, 16); assert.equal(tx.sections.challenge.length, 16);
+  assert.equal(examById('FIN').sections.challenge.length, 16); assert.equal(examById('FINX').sections.challenge.length, 16);
   assert.equal(t.sections.lab.length, 2); assert.equal(examById('FIN').sections.lab.length, 3); assert.equal(examById('FINX').sections.lab.length, 3);
   assert.equal(new Set(t.sections.lab.map((n) => n.lab)).size, 2);
   assert.deepEqual(t.weights, { challenge: 0.4, labs: 0.6 });
   assert.ok(t.sections.lab.every((n) => n.mode === 'chapter') && tx.sections.lab.every((n) => n.mode === 'ex'));
-  // 普通章节测试：10 道 A 面题，其余都来自本章 B 面
+  // 普通章节测试：2 道 A 面题，其余都来自本章 B 面
   const aCount = (lv) => lv.sections.challenge.filter((n) => /\.A-/.test(n.id)).length;
-  assert.equal(aCount(t), 6); assert.equal(aCount(tx), 2); assert.equal(aCount(examById('FIN')), 2);
+  assert.equal(aCount(t), 2); assert.equal(aCount(tx), 2); assert.equal(aCount(examById('FIN')), 2);
   const { extLevelById } = await import('./sideb_content.js');
   const harmonyLevels = chapterLevels('harmony');
   const { EXAM_TASKS } = await import('./sideb_exam_tasks.js');
   const extIds = new Set([...harmonyLevels.map((l) => extLevelById(`${l.id}x`)).filter(Boolean).flatMap((l) => [...(l.sections?.challenge || []), ...(l.pool || [])].map((n) => n.id)), ...EXAM_TASKS.harmony.map((n) => `x-${n.id}`)]);
   const ids = new Set([...harmonyLevels.flatMap((l) => [...(l.sections?.challenge || []), ...(l.pool || [])].map((n) => n.id)), ...extIds, ...EXAM_TASKS.harmony.map((n) => n.id)]);
   const rawOf = (n) => n.id.split('.').slice(2).join('.').replace(/~[mxf]\d+$/, '');
-  // 第 2 章已有扩展关：普通章节测试里正好 5 道来自扩展关
+  // 第 2 章已有扩展关：普通章节测试里正好 2 道来自扩展关
   if (extIds.size) assert.equal(t.sections.challenge.filter((n) => extIds.has(rawOf(n))).length, 2);
   assert.ok(t.sections.challenge.filter((n) => !/\.A-/.test(n.id)).every((n) => ids.has(rawOf(n))));
   // 每次开考重新抽题
@@ -196,13 +196,13 @@ test('extension previews point to later lessons and explain the preview in all l
 test('all exam draws are bounded, prioritize multi-step tasks, and use distinct labs', async () => {
   const { examById } = await import('./sideb_content.js');
   for (const id of [...B_CHAPTERS.flatMap((c) => [`T-${c.id}`, `TX-${c.id}`]), 'FIN', 'FINX']) {
-    for (let attempt = 0; attempt < 4; attempt += 1) {
+    for (let attempt = 0; attempt < 20; attempt += 1) {
       const lvl = levelForAttempt(examById(id), attempt);
-      assert.equal(lvl.sections.challenge.length, 24, `${id}: ${attempt}`);
+      assert.equal(lvl.sections.challenge.length, 16, `${id}: ${attempt}`);
       const labs = lvl.sections.lab || [];
       assert.equal(new Set(labs.map((n) => n.lab)).size, labs.length);
       const composite = lvl.sections.challenge.filter((n) => ['derive', 'analyze', 'spell', 'tap'].includes(n.type));
-      assert.ok(composite.length >= 3, `${id}: enough integrated tasks`);
+      assert.ok(composite.length >= 8, `${id}: ${attempt} has at least half integrated tasks`);
       const tasks = lvl.sections.challenge.filter((n) => /task-/.test(n.id));
       const taskKeys = tasks.map((n) => n.taskKey || n.id.split('.').slice(2).join('.'));
       assert.equal(new Set(taskKeys).size, tasks.length, 'same integrated scenario appears once per exam');
@@ -214,7 +214,9 @@ test('all exam draws are bounded, prioritize multi-step tasks, and use distinct 
 test('integrated exam tasks are cited, multilingual, and grade complete and partial work', async () => {
   const { EXAM_TASKS } = await import('./sideb_exam_tasks.js');
   const { SKILLS } = await import('./sideb_errors.js');
-  for (const nodes of Object.values(EXAM_TASKS)) for (const n of nodes) {
+  for (const nodes of Object.values(EXAM_TASKS)) {
+    assert.ok(nodes.length >= 8, 'each chapter supports eight distinct integrated scenarios');
+    for (const n of nodes) {
     [].concat(n.ref).forEach((id) => assert.ok(referenceById(id), `${n.id}: ${id}`));
     texts(n).forEach(([path, v]) => LANGS.forEach((l) => assert.ok(v[l], `${n.id}${path}.${l}`)));
     n.skills.forEach((s) => assert.ok(SKILLS.includes(s), s));
@@ -222,5 +224,6 @@ test('integrated exam tasks are cited, multilingual, and grade complete and part
     assert.equal(gradeNode(n, responses).score, 1);
     responses[0] = '';
     assert.equal(gradeNode(n, responses).score, (n.steps.length - 1) / n.steps.length);
+    }
   }
 });
