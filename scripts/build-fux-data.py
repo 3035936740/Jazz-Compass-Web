@@ -65,5 +65,7 @@ with open(tsv_path, newline='') as handle:
 print('// 由 scripts/build-fux-data.py 自动生成，请勿手改。')
 print('// Fux《Gradus ad Parnassum》第一部分（二声部）全部 46 个练习的 Fux 本人解答。')
 print('// 数据来源：Mark Gotham, MarkGotham/species（MIT License）ref:gotham-species')
+print('// 上游版权：Copyright (c) 2026 Mark Gotham；初始转录：Jay Wilson。')
+print('// 代码 MIT / 渲染乐谱 CC0，许可范围与转换说明：Licenses/README.md')
 print('// 图号对应 Norton/Mann 1965 现代版；cp 中 d 为四分音符单位的时值，p 为 null 表示休止。')
 print('export const FUX_TWO_VOICE = ' + json.dumps(exercises, ensure_ascii=False, separators=(',', ':')) + ';')

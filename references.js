@@ -31,7 +31,7 @@ export const REFERENCES = [
     url: 'https://github.com/Huaishu61/Sposobin',
     license: 'MIT',
     accessed: '2026-09-21',
-    usedIn: ['classical_voicing.js', 'harmonize.js', 'harmonize_ui.js', 'figured_bass.js', 'figured_bass_ui.js', 'prog_library.js'],
+    usedIn: ['sposobin_data.js', 'jazz_compass.js', 'classical_voicing.js', 'harmonize.js', 'harmonize_ui.js', 'figured_bass.js', 'figured_bass_ui.js', 'prog_library.js'],
     usedFor: { zh: '四部和声声部规则与斯波索宾和声数据', ja: '四声体の声部規則とスポソービン和声データ', en: 'Four-part voice-leading rules and Sposobin harmony data' },
   },
   {
@@ -116,6 +116,7 @@ export const REFERENCES = [
     title: 'Blackadder Chord',
     author: 'yuta（SoundQuest）',
     url: 'https://soundquest.jp/quest/chord/chord-mv8/blackadder-chord/',
+    licenseNote: 'SoundQuest 游客条款第 5 条要求复制、翻译或转载取得授权；未登记本项目的单独授权',
     accessed: '2026-10-02',
     usedIn: ['chord_symbols.js', 'chord_symbols_ui.js', 'chord_symbols.test.mjs', 'jazz_compass.js', 'chord_convert_panel.js', 'sideb_ext_jazz.js', 'learn_branches_jazz.js', 'learn_units_jazz.js'],
     usedFor: { zh: 'Blackadder 和弦的定义（aug + 根音全音之上的低音，自低音起 [0,2,6,10]）、各种读法与在进行中的作用；I → I+ → IV 的经过用法', ja: 'ブラックアダー・コードの定義・読み方・機能、I → I+ → IV の経過的用法', en: 'Definition of the Blackadder chord ([0,2,6,10] over the bass), its readings and functions; the passing I → I+ → IV use of aug' },
@@ -401,7 +402,7 @@ export const REFERENCES = [
     title: 'MarkGotham/species — Fux, Gradus ad Parnassum exercises and solutions',
     author: 'Mark Gotham',
     url: 'https://github.com/MarkGotham/species',
-    license: 'MIT',
+    license: 'MIT (code); CC0 (rendered scores)',
     accessed: '2026-10-01',
     usedIn: ['fux_species_data.js', 'scripts/build-fux-data.py', 'counterpoint_ui.js', 'sideb_units_melody.js', 'sideb_labs.js', 'sideb_ext_melody.js'],
     usedFor: { zh: 'Fux《Gradus ad Parnassum》二声部 46 个练习的原书解答（Norton/Mann 1965 版图号）', ja: 'Fux『グラドゥス・アド・パルナッスム』二声部 46 課題の原典解答（Norton/Mann 1965 年版の図番号）', en: 'Fux’s own solutions to the 46 two-voice exercises (figure numbers of the 1965 Norton/Mann edition)' },
@@ -874,6 +875,7 @@ export const REFERENCES = [
     title: 'Open Music Theory — Modulation',
     author: 'Open Music Theory',
     url: 'https://openmusictheory.github.io/Modulation.html',
+    license: 'CC BY-SA 4.0',
     accessed: '2026-09-21',
     usedIn: ['composition_ui.js'],
     usedFor: { zh: '曲式模板中的转调方式', ja: '楽式テンプレートの転調', en: 'Modulation types in the form templates' },
@@ -884,6 +886,7 @@ export const REFERENCES = [
     title: 'musictheory.net — Phrases and Cadences',
     author: 'Ricci Adams',
     url: 'https://www.musictheory.net/lessons/55',
+    license: 'CC BY 4.0',
     accessed: '2026-09-21',
     usedIn: ['composition_ui.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_generators.js'],
     usedFor: { zh: '乐句与终止式', ja: 'フレーズと終止', en: 'Phrases and cadences' },
@@ -894,6 +897,7 @@ export const REFERENCES = [
     title: 'Open Music Theory — Thematic function in rondo',
     author: 'Open Music Theory',
     url: 'https://openmusictheory.github.io/thematicFunctionInRondo.html',
+    license: 'CC BY-SA 4.0',
     accessed: '2026-09-21',
     usedIn: ['composition.js', 'sideb_ext_harmony.js', 'learn_branches_harmony.js', 'learn_units_harmony.js'],
     usedFor: { zh: '五部与七部回旋曲式', ja: '五部・七部ロンド形式', en: 'Five- and seven-part rondo forms' },
@@ -1436,9 +1440,9 @@ export const REFERENCES = [
     id: 'ibmt-transposition',
     topic: 'instruments',
     title: 'Inquiry-Based Music Theory — 12a Instrumental Transpositions and Ranges',
-    author: 'Inquiry-Based Music Theory (S. M. Butterfield et al.)',
+    author: 'Sean Butterfield and Evan Williamson',
     url: 'https://smbutterfield.github.io/ibmt17-18/12-reading-scores/a2-ex-insttransandrange.html',
-    license: 'CC BY-SA',
+    license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
     usedIn: ['instruments.js', 'instruments_ui.js', 'instruments.test.mjs', 'sideb_units_melody.js', 'sideb_toys.js', 'sideb_ext_melody.js', 'learn_branches_melody.js', 'learn_units_melody.js'],
     usedFor: { zh: '不移调乐器清单、各移调乐器的音程与方向、实音与书写音的反向换算及例题', ja: '非移調楽器の一覧、各移調楽器の音程と方向、実音と記譜音の逆方向の換算と例題', en: 'Non-transposing instruments, each transposition’s interval and direction, converting in the opposite direction, worked examples' },
@@ -1552,8 +1556,9 @@ export const REFERENCES = [
     id: 'tonejs-salamander',
     topic: 'assets',
     title: 'Tone.js — hosted Salamander MP3 set',
-    author: 'Tone.js',
+    author: 'Alexander Holm (samples); Tone.js (hosting)',
     url: 'https://tonejs.github.io/audio/salamander/',
+    license: 'CC BY 3.0',
     accessed: '2026-10-01',
     usedIn: ['resources/piano/README.md'],
     usedFor: { zh: '采样 MP3 文件的下载来源', ja: 'MP3 ファイルの取得元', en: 'Where the MP3 files were downloaded from' },
@@ -2192,6 +2197,7 @@ export const REFERENCES = [
     author: 'Vaibhav Mohanty',
     url: 'https://arxiv.org/abs/1805.11087',
     license: '',
+    licenseNote: '原文链接 arXiv 非独占分发许可；未登记本项目的再发布许可',
     accessed: '2026-10-02',
     usedIn: ['neo_views.js'],
     usedFor: { zh: 'Boretz 蜘蛛（减七 + 4 个属七 + 4 个半减七）与连接相邻蜘蛛的八声区域；Power Towers 与之相似（八音塔视图）', ja: 'ボレッツ・スパイダー（減七 + 属七 4 + 半減七 4）と隣のスパイダーを結ぶ八音領域、Power Towers も類似（八音塔ビュー）', en: 'Boretz spiders (a diminished seventh with four dominant and four half-diminished sevenths) and the octatonic regions joining them; Power Towers is similar (octatonic tower view)' },
@@ -2203,6 +2209,7 @@ export const REFERENCES = [
     author: 'Michael McClimon',
     url: 'https://mtosmt.org/issues/mto.17.23.1/mto.17.23.1.mcclimon.html',
     license: 'MTO (copyright the author)',
+    licenseNote: '原文版权声明区分研究交流与再发表；再发表需作者书面许可及通知编辑，未登记本项目单独授权',
     accessed: '2026-10-02',
     usedIn: ['neo_views.js', 'sideb_ext_harmony.js', 'learn_branches_harmony.js', 'learn_generators.js'],
     usedFor: { zh: 'Douthett 与 Steinbach 的 Power Towers：小七、属七、半减七、减七之间的节约声部进行（教程）', ja: 'Douthett と Steinbach の Power Towers：短七・属七・半減七・減七の間の最小限の声部進行（チュートリアル）', en: 'Douthett & Steinbach’s Power Towers: parsimonious links among minor, dominant, half-diminished and diminished sevenths (tutorial)' },
@@ -2217,6 +2224,73 @@ export const REFERENCES = [
     accessed: '2026-10-02',
     usedIn: ['sideb_ext_harmony.js', 'learn_branches_harmony.js'],
     usedFor: { zh: '意大利、法国、德国增六和弦的组成（iv6 升高第 4 级；法国加 2 级，德国加降 3 级）（教程）', ja: 'イタリア・フランス・ドイツの増六の和音の構成（iv6 の ♯4、フランスは 2 度、ドイツは ♭3 を加える）（チュートリアル）', en: 'Spelling of the Italian, French and German sixths (iv6 with ♯4; French adds 2, German adds ♭3) (tutorial)' },
+  },
+  {
+    "id": "lamplight-chalaxata",
+    "topic": "microtonal",
+    "title": "lamplight — chalaxata",
+    "author": "lamplight",
+    "url": "https://lamplight0.sakura.ne.jp/en/a/music/chalaxata.php?mode=%E5%B9%B3%E5%9D%87%E5%BE%8B",
+    "accessed": "2026-10-01",
+    "usedIn": [
+      "resources/piano/microtonal_ui.js",
+      "resources/piano/learn_branches_modern.js",
+      "resources/piano/learn_units_modern.js",
+      "resources/piano/learn_generators.js"
+    ],
+    "usedFor": {
+      "zh": "整数频率比和声构型与命名",
+      "ja": "整数比和声の構成と命名",
+      "en": "Integer-ratio harmony configurations and names"
+    }
+  },
+  {
+    "id": "shasavistic-editor",
+    "topic": "microtonal",
+    "title": "MrZ626/shasavistic-chord-diagram-editor",
+    "author": "MrZ626",
+    "url": "https://github.com/MrZ626/shasavistic-chord-diagram-editor",
+    "accessed": "2026-10-01",
+    "usedIn": [
+      "resources/piano/microtonal_ui.js"
+    ],
+    "usedFor": {
+      "zh": "和声构型图编辑器",
+      "ja": "和声構成図エディタ",
+      "en": "Chord diagram editor"
+    }
+  },
+  {
+    "id": "nafchanaphata",
+    "topic": "microtonal",
+    "title": "Rtt398/nafchanaphata",
+    "author": "Rtt398",
+    "url": "https://github.com/Rtt398/nafchanaphata",
+    "accessed": "2026-10-01",
+    "usedIn": [
+      "resources/piano/microtonal_ui.js"
+    ],
+    "usedFor": {
+      "zh": "微分音音序器",
+      "ja": "微分音シーケンサー",
+      "en": "Microtonal sequencer"
+    }
+  },
+  {
+    "id": "haleyhalcyon-notes",
+    "topic": "microtonal",
+    "title": "HaleyHalcyon — notes (gist)",
+    "author": "HaleyHalcyon",
+    "url": "https://gist.github.com/HaleyHalcyon/9507005979ce6bbd4e93bdd298cb5d5e",
+    "accessed": "2026-10-01",
+    "usedIn": [
+      "resources/piano/microtonal_ui.js"
+    ],
+    "usedFor": {
+      "zh": "音名记法笔记",
+      "ja": "音名表記ノート",
+      "en": "Note naming notes"
+    }
   },
 ];
 

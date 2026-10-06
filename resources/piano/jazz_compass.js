@@ -1,3 +1,5 @@
+// Sposobin data / theory source: Huaishu61/Sposobin (MIT declared in upstream README). ref:sposobin
+// Attribution and license: ../../Licenses/Sposobin-MIT.txt
 /**
  * Jazz Compass Core Logic - ES Modules Version
  * 1:1 Translation from Python to JavaScript

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { REFERENCES, REFERENCE_TOPICS } from './references.js';
-import { renderReferencesMarkdown, START, END } from './scripts/sync-references.mjs';
+import { renderReferencesMarkdown, renderLicenseInventory, referenceLicense, START, END } from './scripts/sync-references.mjs';
 
 const sourceFiles = () => {
   const out = [];
@@ -56,4 +56,19 @@ test('README acknowledgements are in sync with references.js', () => {
   const readme = readFileSync('README.md', 'utf8');
   const block = readme.slice(readme.indexOf(START), readme.indexOf(END) + END.length);
   assert.equal(block, renderReferencesMarkdown(), 'run: node scripts/sync-references.mjs');
+});
+
+test('license inventory preserves source coverage and resolves local license texts', () => {
+  assert.equal(readFileSync('Licenses/REFERENCES.md', 'utf8'), renderLicenseInventory());
+  for (const r of REFERENCES) {
+    const info = referenceLicense(r);
+    if (info.file) assert.ok(readFileSync(join('Licenses', info.file), 'utf8').length > 500, r.id);
+    else assert.match(info.label, /待核实/, `${r.id} must expose unresolved permission`);
+  }
+  // 引用事实和作者版权说明都不能被当成 MIT / CC 授权。
+  for (const license of [undefined, 'Cited for facts only', 'MTO (copyright the author)', 'CC BY-SA']) {
+    assert.equal(referenceLicense({ id: 'unverified', license }).file, undefined);
+  }
+  assert.match(readFileSync('Licenses/Project-MIT.txt', 'utf8'), /Copyright \(c\) 2026 Bing\(3035936740\)/);
+  assert.match(readFileSync('Licenses/MarkGotham-species-MIT.txt', 'utf8'), /Copyright \(c\) 2026 Mark Gotham/);
 });
