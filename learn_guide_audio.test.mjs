@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { UNITS, SIDES, SECTIONS } from './learn_content.js';
 import { B_CHAPTERS } from './sideb_content.js';
 import { STEP_DEMOS, SHARED_DEMO_CARDS, guideDemoForStep, withStepDemos } from './learn_guide_demos.js';
-import { guideDemoEvents, createGuidePlayback } from './learn_guide_audio.js';
+import { guideDemoEvents, guideDemoPreviewNotes, createGuidePlayback } from './learn_guide_audio.js';
 
 const guide = (id, branch = 0) => {
   const unit = [...UNITS, ...SIDES].find((u) => u.id === id);
@@ -112,6 +112,52 @@ test('old card snapshots use updated audio without losing the shown step', () =>
   const saved = JSON.parse(JSON.stringify({ ...card, stepDemos: undefined }));
   const restored = withStepDemos(saved, 'texture#0');
   assert.deepEqual(guideDemoForStep(restored, 2), guideDemoForStep(card, 2));
+});
+
+test('triad keyboard follows C major, the silent gap and C minor, then keeps the last chord for comparison', () => {
+  const clock = fakeClock(), frames = [], sounding = [];
+  const player = createGuidePlayback({ ...clock, stopAudio() {},
+    onNotesChange: (notes, state) => frames.push({ notes, ...state }),
+    playChord: (frequencies) => sounding.push(frequencies.map((f) => Math.round(69 + 12 * Math.log2(f / 440)))),
+  });
+  player.setDemo(guideDemoForStep(guide('triads'), 1));
+  player.play(); clock.tick(0);
+  assert.deepEqual(frames.at(-1), { notes: [60, 64, 67], playing: true });
+  clock.tick(760);
+  assert.deepEqual(frames.at(-1), { notes: [], playing: true }, 'no stale E during silence');
+  clock.tick(60);
+  assert.deepEqual(frames.at(-1), { notes: [60, 63, 67], playing: true }, 'E is replaced by E-flat');
+  assert.deepEqual(sounding, [[60, 64, 67], [60, 63, 67]], 'the display matches the actual sound');
+  clock.tick(760);
+  assert.deepEqual(frames.at(-1), { notes: [60, 63, 67], playing: false });
+  player.stop(); clock.tick(5000);
+  assert.deepEqual(frames.at(-1), { notes: [], playing: false });
+});
+
+test('idle keyboard preview reflects the current step instead of the original fixed keys', () => {
+  const card = guide('triads');
+  assert.deepEqual(guideDemoPreviewNotes(guideDemoForStep(card, 0)), [60, 64, 67]);
+  assert.deepEqual(guideDemoPreviewNotes(guideDemoForStep(card, 1)), [60, 63, 67], 'the comparison step previews the minor chord before playing');
+  assert.deepEqual(guideDemoPreviewNotes({ play: [[60], [], [63], [67], [60]], keys: [60, 64, 67] }), [60, 63, 67], 'rests are excluded and a melodic example shows its actual notes');
+  assert.deepEqual(guideDemoPreviewNotes(null), []);
+});
+
+test('overlapping voices keep shared notes lit until both end and step changes cancel all old highlights', () => {
+  const clock = fakeClock(), frames = [];
+  const player = createGuidePlayback({ ...clock, playChord() {}, stopAudio() {}, onNotesChange: (notes) => frames.push(notes) });
+  player.setDemo({ bpm: 60, events: [
+    { at: 0, notes: [60], beats: 2 },
+    { at: 0.5, notes: [60, 63], beats: 0.5 },
+    { at: 3, notes: [67], beats: 1 },
+  ] });
+  player.play(); clock.tick(500);
+  assert.deepEqual(frames.at(-1), [60, 63]);
+  clock.tick(470);
+  assert.deepEqual(frames.at(-1), [60], 'short voice ends while the shared C continues');
+  player.setDemo({ play: [[72]] }); clock.tick(0);
+  assert.deepEqual(frames.at(-1), [72]);
+  clock.tick(5000);
+  assert.deepEqual(frames.at(-1), [72], 'old voice releases and queued G cannot change the new preview');
 });
 
 test('chapter three is named Melody & voices on both sides', () => {

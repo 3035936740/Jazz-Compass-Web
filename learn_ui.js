@@ -1,9 +1,9 @@
 // 乐理闯关界面：关卡地图（主关 + 进阶分支 + 综合测验 + 结业挑战）、关卡播放器（引导卡 / 选择 / 填空 / 连线）、
 // 图示、提示与解析、去工具里看看（带学习记录，回来时还是同一题）、结算
 // 题目与依据见 learn_content.js / learn_units_*.js / learn_branches_*.js；生成题见 learn_generators.js；规则见 learn_engine.js
-import { UNITS, SECTIONS, SIDES } from './learn_content.js?v=20261006-guide-audio1';
-import { createGuidePlayback } from './learn_guide_audio.js?v=20261006-guide-audio1';
-import { guideDemoForStep, withStepDemos, STEP_DEMOS, SHARED_DEMO_CARDS } from './learn_guide_demos.js?v=20261006-guide-audio1';
+import { UNITS, SECTIONS, SIDES } from './learn_content.js?v=20261007-piano-sync1';
+import { createGuidePlayback, guideDemoEvents, guideDemoPreviewNotes } from './learn_guide_audio.js?v=20261007-piano-sync1';
+import { guideDemoForStep, withStepDemos, STEP_DEMOS, SHARED_DEMO_CARDS } from './learn_guide_demos.js?v=20261007-piano-sync1';
 import {
   createSession, currentItem, cardStateFor, answer, advance, isFinished, progressRatio, loadProgress, saveProgress, completeUnit, isUnlocked, nextUnitIndex, shuffle,
   levelKey, parseLevelKey, isLevelUnlocked, levelPrerequisites, isDone, MIX_SLOT, buildMixedCards, buildFinalCards, FINAL_KEY, FINAL_EX_KEY, finalUnlocked, finalExUnlocked,
@@ -13,7 +13,7 @@ import {
 } from './learn_engine.js?v=20261006-circle1';
 import { expandCards } from './learn_generators.js?v=20261006-clarity1';
 import { worksheetHTML, openWorksheet, printable } from './worksheet.js?v=20261004-y1';
-import { renderVisual } from './learn_visuals.js?v=20261004-m5';
+import { renderVisual } from './learn_visuals.js?v=20261007-piano-sync1';
 import { el, button, language, midiToFrequency, cite } from './module_kit.js';
 import { icon, withIcon } from './ui_icons.js?v=20261003-i2';
 import { relatedLearnTools } from './learn_feature_unit.js?v=20261006-circle1';
@@ -124,7 +124,8 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
   let review = loadReview();
   const REVIEW_KEY_LEVEL = 'review';
   let timers = [];
-  const guidePlayback = createGuidePlayback({ playChord, stopAudio });
+  let guideKeyboards = [];
+  const guidePlayback = createGuidePlayback({ playChord, stopAudio, onNotesChange: (notes) => guideKeyboards.forEach((keyboard) => keyboard.setNotes(notes)) });
   const stop = () => { timers.forEach(clearTimeout); timers = []; guidePlayback.stop(); };
   // 离开学习页（切到别的面板）：停止声音，并关掉挂在 body 上的选关卡片（否则"开始"按钮会留在别的页面上）
   target.addEventListener('toolbox-stop', () => { stop(); sideB?.stop?.(); closeSheets(); });
@@ -163,28 +164,35 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
   }
 
   /** 小键盘：覆盖 highlight 所在的八度，点击发声 */
-  function miniKeyboard(highlight = []) {
-    const low = Math.min(...highlight, 60);
+  function miniKeyboard(highlight = [], range = highlight) {
+    const low = Math.min(...range, 60);
     const start = low - (low % 12);
-    const octaves = Math.max(...highlight, 71) - start >= 12 ? 2 : 1;
+    const octaves = Math.floor((Math.max(...range, 71) - start) / 12) + 1;
     const wrap = el('div', 'learn-keys');
+    const keys = new Map();
     for (let o = 0; o < octaves; o += 1) {
       WHITE.forEach((pc) => {
         const midi = start + o * 12 + pc;
         const key = el('button', `learn-key white${highlight.includes(midi) ? ' is-lit' : ''}`);
         key.type = 'button';
         key.setAttribute('aria-label', String(midi));
+        keys.set(midi, key);
         key.addEventListener('click', () => playChord([midiToFrequency(midi)], 0.8));
         if ([0, 2, 5, 7, 9].includes(pc)) {
           const black = el('button', `learn-key black${highlight.includes(midi + 1) ? ' is-lit' : ''}`);
           black.type = 'button';
           black.setAttribute('aria-label', String(midi + 1));
+          keys.set(midi + 1, black);
           black.addEventListener('click', (e) => { e.stopPropagation(); playChord([midiToFrequency(midi + 1)], 0.8); });
           key.appendChild(black);
         }
         wrap.appendChild(key);
       });
     }
+    wrap.setNotes = (notes) => {
+      const lit = new Set(notes);
+      keys.forEach((key, midi) => key.classList.toggle('is-lit', lit.has(midi)));
+    };
     return wrap;
   }
   /** 题卡上的图：keys 用小键盘，其他交给 learn_visuals.js */
@@ -822,11 +830,17 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
     const list = el('div', 'learn-steps');
     // 有 tour 的引导卡：图放在讲解上面，每讲一步就把那一步说的东西圈出来、贴上名字
     const tour = card.tour ? localize(card.tour) : null;
-    const pic = visualFor(card, { annotate: Boolean(tour) });
+    // 使用整张卡的听例范围，避免低音、高音或后续步骤的黑键落到键盘之外。
+    const demoNotes = (card.stepDemos || [card.demo]).flatMap((demo) => guideDemoEvents(demo).flatMap((event) => event.notes));
+    let visual = card.visual;
+    if (visual?.kind === 'piano' && demoNotes.length) visual = { ...visual, from: Math.min(visual.from ?? 60, ...demoNotes), to: Math.max(visual.to ?? 72, ...demoNotes) };
+    const pic = visualFor({ ...card, visual }, { annotate: Boolean(tour) });
     if (tour && pic) { pic.classList.add('is-tour'); body.appendChild(pic); }
     body.appendChild(list);
     if (pic && !tour) body.appendChild(pic);
-    if (card.demo?.keys) body.appendChild(miniKeyboard(card.demo.keys));
+    const keyboard = card.demo?.keys ? miniKeyboard(card.demo.keys, [...card.demo.keys, ...demoNotes]) : null;
+    if (keyboard) body.appendChild(keyboard);
+    guideKeyboards = [pic, keyboard].filter((view) => view?.setNotes);
     const listen = card.demo?.play ? withIcon(button('learn-btn ghost', '', () => guidePlayback.play()), 'play', t.play) : null;
     const caption = listen ? el('p', 'learn-muted learn-demo-caption') : null;
     if (listen) body.append(listen, caption);
@@ -856,6 +870,8 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
       if (listen) {
         const demo = guideDemoForStep(card, shown);
         guidePlayback.setDemo(demo, { resume: !restoring });
+        const preview = demo ? guideDemoPreviewNotes(demo) : null;
+        guideKeyboards.forEach((view) => view.setNotes(preview ?? (view === keyboard ? card.demo.keys : visual?.lit ?? visual?.keys ?? [])));
         listen.hidden = !demo;
         caption.textContent = tx(demo?.caption);
         caption.hidden = !demo?.caption;

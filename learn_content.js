@@ -40,7 +40,7 @@ import { BRANCHES as B_WORLD } from './learn_branches_world.js?v=20261006-clarit
 import { BRANCHES as B_MODERN } from './learn_branches_modern.js?v=20261004-m1';
 import { TOURS } from './learn_tours.js?v=20261002-r19';
 import { MORE_TOURS } from './learn_tours_more.js?v=20261005-j2';
-import { withStepDemos } from './learn_guide_demos.js?v=20261006-guide-audio1';
+import { withStepDemos } from './learn_guide_demos.js?v=20261007-piano-sync1';
 import { withDecoys } from './learn_decoys.js?v=20261006-clarity1';
 import { clarifyQuestion } from './learn_question_clarity.js?v=20261006-clarity1';
 

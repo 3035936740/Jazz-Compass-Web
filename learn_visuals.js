@@ -224,15 +224,22 @@ function piano({ from = 60, to = 72, lit = [], names = 'c', labels = {} } = {}, 
   const blackLabels = Object.keys(labels).some((m) => !WHITE_PCS.includes(((Number(m) % 12) + 12) % 12));
   const c = canvas(whites.length * ww + 2, wh + (hasLabels ? 22 : 2) + (blackLabels ? 14 : 0), 'keyboard');
   const litSet = new Set(lit);
+  const keys = new Map();
+  const keyNames = new Map();
   const whiteLayer = add(c.root, 'g', {});
   const blackLayer = add(c.root, 'g', {});
   const nameOf = (m) => `${PC_NAMES[m % 12].replace('E♭', 'D♯').replace('A♭', 'G♯').replace('B♭', 'A♯')}`;
   whites.forEach((m, i) => {
     const x = 1 + i * ww;
     const g = add(whiteLayer, 'g', { class: `lv-key white${litSet.has(m) ? ' is-lit' : ''}` });
+    keys.set(m, g);
     add(g, 'rect', { x, y: 1, width: ww - 1, height: wh, rx: 4 });
     const show = names === 'white' || (names === 'lit' && litSet.has(m)) || (names === 'c' && (m % 12 === 0 || litSet.has(m)));
-    if (show) add(g, 'text', { x: x + ww / 2 - 0.5, y: wh - 8, 'text-anchor': 'middle' }, m % 12 === 0 ? `C${m / 12 - 1}` : nameOf(m));
+    if (names) {
+      const label = add(g, 'text', { x: x + ww / 2 - 0.5, y: wh - 8, 'text-anchor': 'middle' }, m % 12 === 0 ? `C${m / 12 - 1}` : nameOf(m));
+      label.style.display = show ? '' : 'none';
+      keyNames.set(m, { label, always: names === 'white' || (names === 'c' && m % 12 === 0) });
+    }
     clickable(g, play, [m]);
     c.reg(`k${m}`, { x, y: 1, w: ww - 1, h: wh }, g);
     if (labels[m]) keyLabel(c.root, x + ww / 2, wh + 16, labels[m], ww - 2);
@@ -240,14 +247,24 @@ function piano({ from = 60, to = 72, lit = [], names = 'c', labels = {} } = {}, 
     if ([0, 2, 5, 7, 9].includes(m % 12) && black <= high) {
       const bx = x + ww - bw / 2 - 0.5;
       const b = add(blackLayer, 'g', { class: `lv-key black${litSet.has(black) ? ' is-lit' : ''}` });
+      keys.set(black, b);
       add(b, 'rect', { x: bx, y: 1, width: bw, height: bh, rx: 3 });
-      if (names === 'lit' && litSet.has(black)) add(b, 'text', { x: bx + bw / 2, y: bh - 6, 'text-anchor': 'middle' }, nameOf(black).replace('♯', '#'));
+      if (names === 'lit') {
+        const label = add(b, 'text', { x: bx + bw / 2, y: bh - 6, 'text-anchor': 'middle' }, nameOf(black).replace('♯', '#'));
+        label.style.display = litSet.has(black) ? '' : 'none';
+        keyNames.set(black, { label, always: false });
+      }
       clickable(b, play, [black]);
       c.reg(`k${black}`, { x: bx, y: 1, w: bw, h: bh }, b);
       // 黑键的标注放在第二排，免得和旁边白键的标注挤在一起
       if (labels[black]) keyLabel(c.root, bx + bw / 2, wh + 30, labels[black], ww + 8);
     }
   });
+  c.setNotes = (notes) => {
+    const active = new Set(notes);
+    keys.forEach((key, midi) => key.classList.toggle('is-lit', active.has(midi)));
+    keyNames.forEach(({ label, always }, midi) => { label.style.display = always || active.has(midi) ? '' : 'none'; });
+  };
   return c;
 }
 
@@ -619,6 +636,7 @@ export function renderVisual(visual, options = {}) {
       const layer = svgNode(c.root, 'g', { class: 'lv-marks' });
       wrap.appendChild(c.root);
       wrap.parts = c.parts;
+      if (c.setNotes) wrap.setNotes = c.setNotes;
       wrap.setMarks = (marks) => drawMarks(layer, c.parts, marks, view);
     }
   } catch (error) {
