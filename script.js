@@ -1,7 +1,7 @@
 import { midiName } from './classical_voicing.js?v=20261004-w7';
-import { initAppShell } from "./app_shell.js?v=20261004-r26";
+import { initAppShell } from "./app_shell.js?v=20261006-guide-audio1";
 import { noteToFrequency, noteToSemitoneValue, semitoneToFreq, semitoneToMidi, resolveRootOctave, chordNotesToFrequencies } from "./note_frequency.js?v=20261002-split";
-import { getAudioContext, interruptPlayback, interruptIfActive, connectOutput, suppressQueued, playChord, createHeldPianoVoice, createPianoTone, createSimpleTone } from "./audio_engine.js?v=20261003-a3";
+import { getAudioContext, interruptPlayback, interruptIfActive, connectOutput, suppressQueued, playChord, createHeldPianoVoice, createPianoTone, createSimpleTone } from "./audio_engine.js?v=20261006-guide-audio1";
 import { parsePitch } from "./pitch_spelling.js";
 import { mountSubPages } from "./sub_pages.js?v=20261003-u2";
 import { FEATURE_UNIT } from "./learn_feature_unit.js?v=20261003-f1";
@@ -11,7 +11,7 @@ import { loadResume, clearResume } from "./learn_engine.js?v=20261006-circle1";
 import { EnhancedChordConverter, JazzBrain, ClassicalHarmonyConnector } from "./jazz_compass.js?v=20261004-w7";
 import * as lang from "./lang.js?v=20261006-multi-fix1";
 import { drawClassicalStaff } from "./classical_staff.js?v=20261004-m5";
-import { renderChordConversion } from "./chord_convert_panel.js?v=20261004-w6";
+import { renderChordConversion } from "./chord_convert_panel.js?v=20261006-guide-audio1";
 
 /**
  * 按需载入：各个工具面板的代码第一次用到时才下载（手机上首屏只下载必要的代码，打开快很多）。
@@ -89,7 +89,7 @@ const load_chord_symbols_ui = () => import("./chord_symbols_ui.js?v=20261003-r32
 const mountChordSymbols = lazy(load_chord_symbols_ui, 'mountChordSymbols');
 const load_staff_reading_ui = () => import("./staff_reading_ui.js?v=20261005-q1");
 const mountStaffReading = lazy(load_staff_reading_ui, 'mountStaffReading');
-const load_learn_ui = () => import("./learn_ui.js?v=20261006-circle1");
+const load_learn_ui = () => import("./learn_ui.js?v=20261006-guide-audio1");
 const mountLearn = lazy(load_learn_ui, 'mountLearn');
 const load_lcc_ui = () => import("./lcc_ui.js?v=20261002-i18n");
 const mountLccExplorer = lazy(load_lcc_ui, 'mountLccExplorer');
@@ -101,7 +101,7 @@ const load_about_page = () => import("./about_page.js?v=20261004-x1");
 const showAbout = lazy(load_about_page, 'showAbout', { hostOf: () => document.getElementById('panel-about-body') });
 const load_neo_panel = () => import("./neo_panel.js?v=20261004-m5");
 const initNeoPanel = lazy(load_neo_panel, 'initNeoPanel');
-const load_circle_panel = () => import("./circle_panel.js?v=20261006-multi-fix1");
+const load_circle_panel = () => import("./circle_panel.js?v=20261006-guide-audio1");
 const createCirclePanel = lazy(load_circle_panel, 'createCirclePanel');
 
 // Canvas colours come from the CSS theme tokens so drawings follow light/dark.
@@ -475,7 +475,7 @@ document.addEventListener("DOMContentLoaded", () => {
       id, name: window.__(`nav_${id}`) || id, intro: window.__(`intro_${id}`) || '',
       allNames: Object.values(window.__all?.(`nav_${id}`) || {}).join(' '),
     })),
-    units: () => import("./learn_content.js?v=20261006-clarity1").then((m) => [...m.UNITS, ...m.SIDES]), lang: window.__lang, anchor: document.getElementById('share-link'),
+    units: () => import("./learn_content.js?v=20261006-guide-audio1").then((m) => [...m.UNITS, ...m.SIDES]), lang: window.__lang, anchor: document.getElementById('share-link'),
   });
 
   const conv = new EnhancedChordConverter();
@@ -701,7 +701,7 @@ document.addEventListener("DOMContentLoaded", () => {
       mountOnce(el, () => mountStaffReading(el, { playChord }));
       dispatchInitialQuery('staff', 'panel-staff-body');
     }
-    if (feature === 'learn') { const el = document.getElementById('panel-learn-body'); mountOnce(el, () => mountLearn(el, { playChord })); }
+    if (feature === 'learn') { const el = document.getElementById('panel-learn-body'); mountOnce(el, () => mountLearn(el, { playChord, stopAudio: interruptIfActive })); }
     // 每个工具顶部的"看不懂？玩教程"：跳到对应的闯关关卡
     const tutorialButton = document.getElementById('tutorial-link');
     if (tutorialButton) {

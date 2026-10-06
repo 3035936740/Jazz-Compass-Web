@@ -26,7 +26,7 @@ const t = (zh, ja, en) => ({ zh, ja, en });
 export const SECTIONS = [
   { id: 'basics', color: 'mint', short: t('入门', '入門', 'Basics'), title: t('入门：音、节奏、音阶与调式', '入門：音・リズム・音階・旋法', 'Basics: notes, rhythm, scales & modes') },
   { id: 'harmony', color: 'sky', short: t('和声', '和声', 'Harmony'), title: t('和弦与和声', 'コードと和声', 'Chords & harmony') },
-  { id: 'melody', color: 'peach', short: t('旋律', '旋律', 'Melody'), title: t('旋律、对位与乐器', '旋律・対位法・楽器', 'Melody, counterpoint & instruments') },
+  { id: 'melody', color: 'peach', short: t('旋律与声部', '旋律と声部', 'Melody & voices'), title: t('旋律与声部', '旋律と声部', 'Melody & voices') },
   { id: 'jazz', color: 'lilac', short: t('爵士', 'ジャズ', 'Jazz'), title: t('节奏、布鲁斯与爵士', 'リズム・ブルース・ジャズ', 'Rhythm, blues & jazz') },
   { id: 'world', color: 'sand', short: t('世界', '世界', 'World'), title: t('世界音乐与律学', '世界の音楽と音律', 'World music & tuning') },
   { id: 'modern', color: 'rose', short: t('现代', '現代', 'Modern'), title: t('二十世纪与微分音', '20 世紀と微分音', '20th century & microtones') },
@@ -40,6 +40,7 @@ import { BRANCHES as B_WORLD } from './learn_branches_world.js?v=20261006-clarit
 import { BRANCHES as B_MODERN } from './learn_branches_modern.js?v=20261004-m1';
 import { TOURS } from './learn_tours.js?v=20261002-r19';
 import { MORE_TOURS } from './learn_tours_more.js?v=20261005-j2';
+import { withStepDemos } from './learn_guide_demos.js?v=20261006-guide-audio1';
 import { withDecoys } from './learn_decoys.js?v=20261006-clarity1';
 import { clarifyQuestion } from './learn_question_clarity.js?v=20261006-clarity1';
 
@@ -84,9 +85,9 @@ function applyMore(levelKey, cards) {
     const extra = MORE_TOURS[`${levelKey}#${i}`];
     // 三个选项的选择题补成四个、不到四对的连线题补成四对（learn_decoys.js）
     if (card.type !== 'guide') return clarifyQuestion(withDecoys(card), levelKey.split(':')[0]);
-    if (!extra) return card;
+    if (!extra) return withStepDemos(card, `${levelKey}#${i}`);
     const demo = card.demo && extra.dropKeys ? (({ keys, ...rest }) => rest)(card.demo) : card.demo;
-    return { ...card, visual: extra.visual || card.visual, tour: extra.tour, ...(demo ? { demo } : {}) };
+    return withStepDemos({ ...card, visual: extra.visual || card.visual, tour: extra.tour, ...(demo ? { demo } : {}) }, `${levelKey}#${i}`);
   });
 }
 

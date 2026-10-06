@@ -25,7 +25,7 @@ const t = (zh, ja, en) => ({ zh, ja, en });
 export const B_CHAPTERS = [
   { id: 'basics', code: 'B1', short: t('入门', '入門', 'Basics'), title: t('入门：精确地听、写、数', '入門：正確に聴く・書く・数える', 'Basics: hear, write and count precisely') },
   { id: 'harmony', code: 'B2', short: t('和声', '和声', 'Harmony'), title: t('和声：从分析到写作', '和声：分析から作曲へ', 'Harmony: from analysis to writing') },
-  { id: 'melody', code: 'B3', short: t('旋律', '旋律', 'Melody'), title: t('旋律、对位与乐器：线条的逻辑', '旋律・対位法・楽器：線の論理', 'Melody, counterpoint & instruments: the logic of lines') },
+  { id: 'melody', code: 'B3', short: t('旋律与声部', '旋律と声部', 'Melody & voices'), title: t('旋律与声部：线条的逻辑', '旋律と声部：線の論理', 'Melody & voices: the logic of lines') },
   { id: 'jazz', code: 'B4', short: t('节奏与爵士', 'リズムとジャズ', 'Rhythm & jazz'), title: t('节奏与爵士：能听、能打、能弹', 'リズムとジャズ：聴ける・叩ける・弾ける', 'Rhythm & jazz: hear it, tap it, play it') },
   { id: 'world', code: 'B5', short: t('世界', '世界', 'World'), title: t('世界音乐与律学：体系的比较与计算', '世界の音楽と音律：体系の比較と計算', 'World music & tuning: compare and calculate') },
   { id: 'modern', code: 'B6', short: t('现代', '現代', 'Modern'), title: t('二十世纪与微分音：从计算到分析', '20 世紀と微分音：計算から分析へ', '20th century & microtones: from calculation to analysis') },

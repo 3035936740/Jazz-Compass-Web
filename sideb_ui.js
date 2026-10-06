@@ -1,7 +1,7 @@
 // Side-B（翻面课程）界面：翻面地图、关卡卡片、关卡播放器（发现 / 解释 / 实验 / 挑战 / 实操）、结算页、补弱挑战。
 // 规则在 sideb_engine.js，评分在 lab_checks.js，内容在 sideb_content.js / sideb_units_*.js；设计见 SIDE_B_DESIGN.md。
 // 原则：音乐优先于分数，发现优先于背诵，成就感优先于惩罚感——失败只补弱项，每关有一个"发现"（insight）和胜利瞬间。
-import { B_CHAPTERS, B_LEVELS, levelById, lookupLevel, chapterLevels, isPlayable, extLevelById, hasExtLevel } from './sideb_content.js?v=20261006-clarity1';
+import { B_CHAPTERS, B_LEVELS, levelById, lookupLevel, chapterLevels, isPlayable, extLevelById, hasExtLevel } from './sideb_content.js?v=20261006-guide-audio1';
 import { relatedLearnTools } from './learn_feature_unit.js?v=20261006-circle1';
 import {
   bKey, levelSections, levelForAttempt, createBSession, completeSection, recordAnswer, gradeNode, summarizeB, retrySession,
@@ -15,9 +15,9 @@ import { LABS, labHref, labResultKey } from './sideb_labs.js?v=20261004-x1';
 import { loadProgress, saveProgress, isDone } from './learn_engine.js?v=20261006-circle1';
 import { renderVisual } from './learn_visuals.js?v=20261004-m5';
 import { satbStaff, rhythmGrid, playAudio, satbToy, polyToy, tapPad, spellToy, meterToy, intervalToy, scaleToy, textureToy, chordToy, keyChordsToy, progressionToy, plrToy, keyRelToy, transposeToy, fretToy, nctToy, speciesToy, canonToy, swingToy, bluesToy, chordScaleToy, guideToy, negativeToy, xuangongToy, worldToy, harmonicsToy, temperToy, pcToy, collectionToy, setToy, matrixToy, jiToy } from './sideb_toys.js?v=20261005-p4';
-import { celebrate } from './sideb_fx.js?v=20261004-f1';
+import { celebrate } from './sideb_fx.js?v=20261006-guide-audio1';
 import { sidebWorksheet, openWorksheet } from './sideb_print.js?v=20261006-clarity1';
-import { certificate, awardCert, loadCerts, graduationShow } from './sideb_cert.js?v=20261004-y1';
+import { certificate, awardCert, loadCerts, graduationShow } from './sideb_cert.js?v=20261006-guide-audio1';
 import { referenceById } from './references.js';
 
 const TEXT = {
@@ -124,10 +124,10 @@ const hashOf = (text) => [...String(text)].reduce((h, c) => ((h * 33) ^ c.charCo
  * @param {HTMLElement} root 学习页的内容区（和 A 面共用）
  * @param {{ playChord, onFlipBack: () => void, openA: (unitId) => void, aTitle: (unitId) => string, progressView: () => object, toolsFor?: (unitIds) => Array<{ feature, q }>, toolName?: (feature) => string, openTool?: (feature, query) => void }} options
  */
-export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) => id, progressView = () => loadProgress(), toolsFor = () => [], toolName = (f) => f, openTool }) {
+export function mountSideB(root, { playChord, stopAudio = () => {}, onFlipBack, openA, aTitle = (id) => id, progressView = () => loadProgress(), toolsFor = () => [], toolName = (f) => f, openTool }) {
   const t = TEXT[lang()];
   let stops = [];
-  const stopAll = () => { stops.forEach((f) => { try { f(); } catch (_) { /* ignore */ } }); stops = []; };
+  const stopAll = () => { stops.forEach((f) => { try { f(); } catch (_) { /* ignore */ } }); stops = []; stopAudio(); };
   const sound = (audio) => { stopAll(); stops.push(playAudio(audio, playChord)); };
   let level = null; // 当前关卡的原始内容
   let lvl = null; // 这一次挑战的具体内容（levelForAttempt）
@@ -736,6 +736,7 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
     const state = session.nodeState;
     let i = state.step || 0;
     const show = () => {
+      stopAll();
       state.step = i;
       persist();
       stage.replaceChildren();

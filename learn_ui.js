@@ -1,7 +1,9 @@
 // 乐理闯关界面：关卡地图（主关 + 进阶分支 + 综合测验 + 结业挑战）、关卡播放器（引导卡 / 选择 / 填空 / 连线）、
 // 图示、提示与解析、去工具里看看（带学习记录，回来时还是同一题）、结算
 // 题目与依据见 learn_content.js / learn_units_*.js / learn_branches_*.js；生成题见 learn_generators.js；规则见 learn_engine.js
-import { UNITS, SECTIONS, SIDES } from './learn_content.js?v=20261006-clarity1';
+import { UNITS, SECTIONS, SIDES } from './learn_content.js?v=20261006-guide-audio1';
+import { createGuidePlayback } from './learn_guide_audio.js?v=20261006-guide-audio1';
+import { guideDemoForStep, withStepDemos, STEP_DEMOS, SHARED_DEMO_CARDS } from './learn_guide_demos.js?v=20261006-guide-audio1';
 import {
   createSession, currentItem, cardStateFor, answer, advance, isFinished, progressRatio, loadProgress, saveProgress, completeUnit, isUnlocked, nextUnitIndex, shuffle,
   levelKey, parseLevelKey, isLevelUnlocked, levelPrerequisites, isDone, MIX_SLOT, buildMixedCards, buildFinalCards, FINAL_KEY, FINAL_EX_KEY, finalUnlocked, finalExUnlocked,
@@ -15,7 +17,7 @@ import { renderVisual } from './learn_visuals.js?v=20261004-m5';
 import { el, button, language, midiToFrequency, cite } from './module_kit.js';
 import { icon, withIcon } from './ui_icons.js?v=20261003-i2';
 import { relatedLearnTools } from './learn_feature_unit.js?v=20261006-circle1';
-import { playFeedbackSound, sfxEnabled, setSfxEnabled } from './learn_sfx.js?v=20261003-x3';
+import { playFeedbackSound, sfxEnabled, setSfxEnabled } from './learn_sfx.js?v=20261006-guide-audio1';
 
 // ---------- 调试模式：在浏览器控制台输入 class_debug(true) 打开，class_debug(false) 关闭（记在 localStorage） ----------
 const DEBUG_KEY = 'jc-learn-debug';
@@ -114,7 +116,7 @@ const WHITE = [0, 2, 4, 5, 7, 9, 11];
 const MELODY_STEP = 300;
 const CHORD_STEP = 820;
 
-export function mountLearn(target, { playChord }) {
+export function mountLearn(target, { playChord, stopAudio = () => {} }) {
   const lang = language();
   const t = TEXT[lang];
   const tx = (v) => (typeof v === 'string' ? v : v?.[lang] ?? v?.en ?? '');
@@ -122,7 +124,8 @@ export function mountLearn(target, { playChord }) {
   let review = loadReview();
   const REVIEW_KEY_LEVEL = 'review';
   let timers = [];
-  const stop = () => { timers.forEach(clearTimeout); timers = []; };
+  const guidePlayback = createGuidePlayback({ playChord, stopAudio });
+  const stop = () => { timers.forEach(clearTimeout); timers = []; guidePlayback.stop(); };
   // 离开学习页（切到别的面板）：停止声音，并关掉挂在 body 上的选关卡片（否则"开始"按钮会留在别的页面上）
   target.addEventListener('toolbox-stop', () => { stop(); sideB?.stop?.(); closeSheets(); });
   const toolName = (feature) => globalThis.window?.__?.(`nav_${feature}`) || feature;
@@ -152,12 +155,6 @@ export function mountLearn(target, { playChord }) {
     steps.forEach((notes, i) => timers.push(setTimeout(() => playChord(freqs(notes), isChords ? 1.1 : 0.42, { interrupt: i === 0 }), i * gap)));
     if (audio.chord) timers.push(setTimeout(() => playChord(freqs(audio.chord), 1.8, { interrupt: false }), steps.length * gap + 120));
   }
-  /** 引导卡示范：全是单音时按旋律速度播放 */
-  const playDemo = (demo) => {
-    const single = demo.play.every((step) => step.length === 1);
-    playAudio(single ? { mode: 'melody', notes: demo.play.map((s) => s[0]), chord: demo.chord } : { mode: 'chords', notes: demo.play, chord: demo.chord });
-  };
-
   /** 打乱顺序；若结果仍"太像答案"（如与答案顺序相同）就重洗几次 */
   function shuffleAway(items, tooEasy) {
     let out = shuffle(items);
@@ -783,6 +780,9 @@ export function mountLearn(target, { playChord }) {
     const state = cardStateFor(session);
     persist();
     const item = currentItem(session);
+    // 旧存档保存了题卡快照：回来时应用最新听例，不丢弃已展开步骤或答题记录。
+    const guideKey = `${level.key}#${item.index}`;
+    if (item.card.type === 'guide' && (STEP_DEMOS[guideKey] || SHARED_DEMO_CARDS.has(guideKey))) item.card = withStepDemos(item.card, guideKey);
     const card = item.card;
     const shell = el('div', `learn-player tone-${level.tone}`);
     const top = el('div', 'learn-top');
@@ -827,7 +827,9 @@ export function mountLearn(target, { playChord }) {
     body.appendChild(list);
     if (pic && !tour) body.appendChild(pic);
     if (card.demo?.keys) body.appendChild(miniKeyboard(card.demo.keys));
-    if (card.demo?.play) body.appendChild(withIcon(button('learn-btn ghost', '', () => playDemo(card.demo)), 'play', t.play));
+    const listen = card.demo?.play ? withIcon(button('learn-btn ghost', '', () => guidePlayback.play()), 'play', t.play) : null;
+    const caption = listen ? el('p', 'learn-muted learn-demo-caption') : null;
+    if (listen) body.append(listen, caption);
     // 每张引导卡都能一键去相关的工具看看（题卡没写就用本关对应的工具）
     const tools = cardTools(card, level);
     if (tools.length) {
@@ -841,6 +843,7 @@ export function mountLearn(target, { playChord }) {
     let shown = 0;
     const state = cardStateFor(session);
     const previousShown = Math.max(1, Math.min(state.shown || 1, card.steps.length));
+    let restoring = true;
     const action = button('learn-btn primary wide', t.more, () => {
       if (shown < card.steps.length) { reveal(); return; }
       answer(session, null);
@@ -850,12 +853,21 @@ export function mountLearn(target, { playChord }) {
     function reveal() {
       list.appendChild(el('p', 'learn-step', tx(card.steps[shown])));
       if (tour && pic?.setMarks) pic.setMarks(tour[shown]);
+      if (listen) {
+        const demo = guideDemoForStep(card, shown);
+        guidePlayback.setDemo(demo, { resume: !restoring });
+        listen.hidden = !demo;
+        caption.textContent = tx(demo?.caption);
+        caption.hidden = !demo?.caption;
+        listen.setAttribute('aria-label', demo?.caption ? `${t.play}：${tx(demo.caption)}` : t.play);
+      }
       shown += 1;
       state.shown = shown;
       action.textContent = shown >= card.steps.length ? t.gotIt : t.more;
       persist();
     }
     for (let i = 0; i < previousShown; i += 1) reveal();
+    restoring = false;
     footer.appendChild(action);
   }
 
@@ -1324,11 +1336,12 @@ export function mountLearn(target, { playChord }) {
     if (!sideBOpen()) { renderMap(); return; }
     stop(); closeSheets();
     if (sideB) { then?.(sideB); return; }
-    const mount = () => import('./sideb_ui.js?v=20261006-circle1').then(({ mountSideB }) => {
+    const mount = () => import('./sideb_ui.js?v=20261006-guide-audio1').then(({ mountSideB }) => {
       writeSide('b');
       root.classList.add('is-side-b');
       sideB = mountSideB(root, {
         playChord,
+        stopAudio,
         onFlipBack: () => flipTo(() => flipBack()),
         openA: (id) => { flipBack(false); target.openUnit(id); },
         aTitle: (id) => tx((UNITS.find((u) => u.id === id) || SIDES.find((side) => side.id === id))?.title) || id,

@@ -1,7 +1,7 @@
 // 和弦转换面板的结果（从 script.js 拆出）：和弦符号 → 音名、音级、按调号拼写的五线谱、频率与试听
 // 和弦符号的解析见 chord_symbols.js；拼写见 chord_spelling.js；谱面见 staff_svg.js
 import { chordNotesToFrequencies, semitoneToFreq } from "./note_frequency.js?v=20261002-split";
-import { playChord } from "./audio_engine.js?v=20261003-a3";
+import { playChord } from "./audio_engine.js?v=20261006-guide-audio1";
 import { spellChord, voiceSpelledChord } from "./chord_spelling.js?v=20261002-sp";
 import { parseChordSymbol, describeTones } from "./chord_symbols.js?v=20261002-alt3";
 import { renderStaff, chooseClef } from "./staff_svg.js?v=20261002-fix";

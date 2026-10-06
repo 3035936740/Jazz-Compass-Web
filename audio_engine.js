@@ -351,7 +351,9 @@ function playChord(frequencies, duration = 1.2, options = {}) {
     // 88-key/MIDI chord input may contain more than eight held notes.
     const uniqueFreqs = [...new Set(frequencies)].slice(0, 16);
     // 音越多每个音越轻，避免厚和弦过响
-    const velocity = uniqueFreqs.length > 4 ? 0.62 : 0.72;
+    const velocity = Number.isFinite(options.velocity)
+      ? Math.max(0.08, Math.min(1, options.velocity))
+      : uniqueFreqs.length > 4 ? 0.62 : 0.72;
 
     uniqueFreqs.forEach((freq, index) => {
       const noteTime = now + index * 0.012;
