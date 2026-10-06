@@ -1,23 +1,26 @@
 // 五度圈面板（从 script.js 拆出）：五度圈与关系调、调内和弦表、轴心系统配色、多调式五度圈与功能环
 // 由 script.js 在初始化时调用 createCirclePanel(ctx)；ctx 传入画布、表格容器、音名换算与五度圈数据，live 里是会变的值（升降号记法、音名表、异步载入的 JSON）
 import { EnhancedChordConverter } from "./jazz_compass.js?v=20261004-w7";
-import { chordNotesToFrequencies } from "./note_frequency.js?v=20261002-split";
 import { playChord } from "./audio_engine.js?v=20261003-a3";
 import { iconSvg } from "./ui_icons.js?v=20261003-i2";
 import { parsePitch, spellHeptatonic } from "./pitch_spelling.js";
+import { melodicCircleScale } from "./circle_scales.js?v=20261006-circle1";
+import { circleDegreeChord, resizeCircleVoicing } from './circle_chords.js?v=20261006-register1';
 
 export function createCirclePanel(ctx) {
   const {
     canvas, tableContainer, resetBtn, conv, resizeCanvas, canvasPalette, noteToSemitone, semitoneToNote, noteToIdx, circleData,
     majorScaleIntervals, minorScaleIntervals, harmonicMajorIntervals, harmonicMinorIntervals,
-    majorChordTypes, minorChordTypes, harmonicMajorChordTypes, harmonicMinorChordTypes,
     majorDegreeNums, minorDegreeNums, harmonicMajorDegreeNums, harmonicMinorDegreeNums,
     live,
   } = ctx;
   let circleCurrentKey = null; // 当前选中的调性
 
-  let majorMode = "natural"; // "natural" | "harmonic"
-  let minorMode = "natural"; // "natural" | "harmonic"
+  let majorMode = "natural"; // "natural" | "harmonic" | "melodic"
+  let minorMode = "natural";
+  let majorDirection = "descending";
+  let minorDirection = "ascending";
+  const degreeTableStates = new Map();
 
   // 获取音阶音符（使用半音索引，避免等音名匹配失败）
   function getScaleNotes(root, intervals) {
@@ -1426,7 +1429,7 @@ const seqFlowHtml = funcSteps.length
           <div class="func-seq-node${step.isReplace ? " is-func-replace" : ""}${isOutClass}" data-multi-play="func-node" data-func-index="${i}" role="button" tabindex="0" title="${window.__("circle_multi_play_func_seq") || "播放序列"} ${escapeMultiModeHtml(step.chordLabel !== "—" ? step.chordLabel : step.funcName)}">
             <div class="func-seq-func">${escapeMultiModeHtml(step.funcName)}</div>
             <div class="func-seq-degree">${escapeMultiModeHtml(step.degreeLabel)}</div>
-            <div class="func-seq-chord">${step.chordLabel !== "—" ? escapeMultiModeHtml(step.chordLabel) : '<span class="out-of-scale">(调外)</span>'} ${step.chordLabel !== "—" ? '<span class="multi-mode-play-hint" aria-hidden="true">${iconSvg("speaker")}</span>' : ''}</div>
+            <div class="func-seq-chord">${step.chordLabel !== "—" ? escapeMultiModeHtml(step.chordLabel) : '<span class="out-of-scale">(调外)</span>'} ${step.chordLabel !== "—" ? `<span class="multi-mode-play-hint" aria-hidden="true">${iconSvg("speaker")}</span>` : ''}</div>
             <div class="func-seq-notes">${escapeMultiModeHtml(step.notes)}</div>
           </div>`;
               const arrow =
@@ -1676,37 +1679,7 @@ const seqFlowHtml = funcSteps.length
       modeSearch.placeholder = window.__("circle_multi_search_placeholder") || "搜索调式";
     }
 
-    // 过滤器 label 本地化（只更新文本部分，保留checkbox）
-    if (filterNormal) {
-      const lbl = filterNormal.closest('label');
-      if (lbl) {
-        let textNode = Array.from(lbl.childNodes).find(n => n.nodeType === 3 && n.textContent.trim());
-        if (!textNode) {
-          textNode = document.createTextNode('');
-          lbl.appendChild(textNode);
-        }
-        textNode.textContent = ' ' + (window.__("circle_multi_filter_normal") || "仅常规调式");
-      }
-    }
-    if (filterNatural) {
-      const lbl = filterNatural.closest('label');
-      if (lbl) {
-        let textNode = Array.from(lbl.childNodes).find(n => n.nodeType === 3 && n.textContent.trim());
-        if (!textNode) {
-          textNode = document.createTextNode('');
-          lbl.appendChild(textNode);
-        }
-        textNode.textContent = ' ' + (window.__("circle_multi_filter_natural") || "仅自然音阶");
-      }
-    }
-
-    // 排序类型 label 本地化
-    if (sortType) {
-      for (const opt of sortType.options) {
-        if (opt.value === "tension") opt.textContent = window.__("circle_multi_sort_tension") || "空间张力等级";
-        if (opt.value === "temp") opt.textContent = window.__("circle_multi_sort_temp") || "空间温度等级";
-      }
-    }
+    // 筛选文字和排序选项由 markup 的 data-i18n 统一本地化。
 
     // 排序顺序 label 本地化
     if (sortOrder) {
@@ -1806,6 +1779,25 @@ const seqFlowHtml = funcSteps.length
   }
 
   // 生成调性对照表
+  function appendMelodicDirections(section, quality, majorKey, minorKey) {
+    const row = document.createElement('div');
+    row.className = 'key-mode-row';
+    for (const direction of ['ascending', 'descending']) {
+      const active = quality === 'major' ? majorDirection : minorDirection;
+      const btn = createModeButton(window.__(`circle_${direction}`), active === direction, () => {
+        if (quality === 'major') majorDirection = direction; else minorDirection = direction;
+        renderKeyTable(majorKey, minorKey, circleCurrentKey?.primary || 'major');
+      });
+      btn.dataset.scaleQuality = quality;
+      btn.dataset.scaleDirection = direction;
+      row.appendChild(btn);
+    }
+    const note = document.createElement('p');
+    note.className = 'learn-muted';
+    note.textContent = window.__(`circle_melodic_${quality}_note`);
+    section.append(row, note);
+  }
+
   function renderKeyTable(majorKey, minorKey, primarySection = "major") {
     tableContainer.innerHTML = "";
 
@@ -1836,22 +1828,26 @@ const seqFlowHtml = funcSteps.length
     );
     majorToggleRow.appendChild(btnMajorNatural);
     majorToggleRow.appendChild(btnMajorHarmonic);
+    majorToggleRow.appendChild(createModeButton(`${window.__("circle_major_melodic")} (${majorKey})`, majorMode === 'melodic', () => {
+      majorMode = 'melodic';
+      renderKeyTable(majorKey, minorKey, circleCurrentKey?.primary || 'major');
+    }));
 
     // --- 大调表 ---
     const majorSec = document.createElement("div");
     majorSec.className = "key-table-section";
 
-    const intervals =
+    const melodicMajor = melodicCircleScale('major', majorDirection);
+    const intervals = majorMode === 'melodic' ? melodicMajor.intervals :
       majorMode === "harmonic" ? harmonicMajorIntervals : majorScaleIntervals;
-    const chordTypes =
-      majorMode === "harmonic" ? harmonicMajorChordTypes : majorChordTypes;
-    const degreeNums =
+    const degreeNums = majorMode === 'melodic' ? melodicMajor.degreeNums :
       majorMode === "harmonic" ? harmonicMajorDegreeNums : majorDegreeNums;
     const funcs =
       majorMode === "harmonic"
         ? buildHarmonicMajorFuncs()
         : buildMajorFuncs();
-    const modeLabel =
+    if (majorMode === 'melodic' && majorDirection === 'descending') funcs[6] = getFuncNames().subtonic;
+    const modeLabel = majorMode === 'melodic' ? window.__("circle_major_melodic") :
       majorMode === "harmonic"
         ? window.__("circle_major_harmonic") || "Harmonic Major"
         : window.__("circle_major_natural") || "Natural Major";
@@ -1862,8 +1858,9 @@ const seqFlowHtml = funcSteps.length
     majorTitle.className = "key-table-title";
     majorTitle.textContent = `${majorKey} ${modeLabel}`;
     majorSec.appendChild(majorTitle);
+    if (majorMode === 'melodic') appendMelodicDirections(majorSec, 'major', majorKey, minorKey);
     majorSec.appendChild(
-      buildDegreeTable(majorNotes, degreeNums, funcs, chordTypes, majorKey),
+      buildDegreeTable(majorNotes, degreeNums, funcs, majorKey),
     );
 
     // --- 分隔线 ---
@@ -1896,22 +1893,26 @@ const seqFlowHtml = funcSteps.length
     );
     minorToggleRow.appendChild(btnMinorNatural);
     minorToggleRow.appendChild(btnMinorHarmonic);
+    minorToggleRow.appendChild(createModeButton(`${window.__("circle_minor_melodic")} (${minorKey})`, minorMode === 'melodic', () => {
+      minorMode = 'melodic';
+      renderKeyTable(majorKey, minorKey, circleCurrentKey?.primary || 'major');
+    }));
 
     // --- 小调表 ---
     const minorSec = document.createElement("div");
     minorSec.className = "key-table-section";
 
-    const mIntervals =
+    const melodicMinor = melodicCircleScale('minor', minorDirection);
+    const mIntervals = minorMode === 'melodic' ? melodicMinor.intervals :
       minorMode === "harmonic" ? harmonicMinorIntervals : minorScaleIntervals;
-    const mChordTypes =
-      minorMode === "harmonic" ? harmonicMinorChordTypes : minorChordTypes;
-    const mDegreeNums =
+    const mDegreeNums = minorMode === 'melodic' ? melodicMinor.degreeNums :
       minorMode === "harmonic" ? harmonicMinorDegreeNums : minorDegreeNums;
     const mFuncs =
       minorMode === "harmonic"
         ? buildHarmonicMinorFuncs()
         : buildMinorFuncs();
-    const mModeLabel =
+    if (minorMode === 'melodic' && minorDirection === 'ascending') mFuncs[6] = getFuncNames().leading;
+    const mModeLabel = minorMode === 'melodic' ? window.__("circle_minor_melodic") :
       minorMode === "harmonic"
         ? window.__("circle_minor_harmonic") || "Harmonic Minor"
         : window.__("circle_minor_natural") || "Natural Minor";
@@ -1922,12 +1923,12 @@ const seqFlowHtml = funcSteps.length
     minorTitle.className = "key-table-title";
     minorTitle.textContent = `${minorKey} ${mModeLabel}`;
     minorSec.appendChild(minorTitle);
+    if (minorMode === 'melodic') appendMelodicDirections(minorSec, 'minor', majorKey, minorKey);
     minorSec.appendChild(
       buildDegreeTable(
         minorNotes,
         mDegreeNums,
         mFuncs,
-        mChordTypes,
         minorKey,
       ),
     );
@@ -1947,7 +1948,25 @@ const seqFlowHtml = funcSteps.length
     }
   }
 
-  function buildDegreeTable(notes, degreeNums, funcs, chordTypes, keyRoot) {
+  function buildDegreeTable(notes, degreeNums, funcs, keyRoot) {
+    const stateKey = `${keyRoot}|${notes.join(',')}`;
+    if (!degreeTableStates.has(stateKey)) degreeTableStates.set(stateKey, { seventh: false, steps: Array(8).fill(0) });
+    const state = degreeTableStates.get(stateKey);
+    const panel = document.createElement('div');
+    panel.className = 'circle-degree-panel';
+    const tools = document.createElement('div');
+    tools.className = 'circle-chord-tools';
+    const label = document.createElement('label');
+    label.className = 'circle-seventh-option';
+    const seventh = document.createElement('input');
+    seventh.type = 'checkbox';
+    seventh.checked = state.seventh;
+    label.append(seventh, document.createTextNode(window.__('circle_add_seventh')));
+    const reset = document.createElement('button');
+    reset.type = 'button';
+    reset.className = 'panel-action';
+    reset.textContent = window.__('circle_restore_triads');
+    tools.append(label, reset);
     const wrap = document.createElement("div");
     wrap.className = "degree-table-wrap";
     const table = document.createElement("table");
@@ -1972,117 +1991,130 @@ const seqFlowHtml = funcSteps.length
     // 表体：主 / 下属 / 属 / 导音级用功能色标出
     const tbody = document.createElement("tbody");
     const degreeClasses = ["deg-tonic", "", "", "deg-sub", "deg-dom", "", "deg-lead"];
-    let lastChordRootMidi = null;
-    // 和弦音沿用音阶的拼写（E 大调的 iii 是 G# B D#，不是 Ab B Eb）
-    const scaleSpelling = new Map(notes.map((name) => [noteToSemitone(name), name]));
-
-    notes.forEach((note, i) => {
+    const updateRows = [];
+    // VII 之后再列高八度 I，各行转位独立保存。
+    for (let i = 0; i < 8; i += 1) {
       const row = document.createElement("tr");
-      const degStr = degreeNums[i] || "";
+      row.dataset.degree = i;
+      const degStr = degreeNums[i % 7] || "";
       const isAug = degStr.includes("+");
-      const rowClass = isAug ? "deg-aug" : degreeClasses[i];
+      const rowClass = isAug ? "deg-aug" : degreeClasses[i % 7];
       if (rowClass) row.className = rowClass;
       row.tabIndex = 0;
 
       const degCell = document.createElement("td");
       degCell.className = "deg-cell";
-      degCell.textContent = degStr;
+      const degreeLine = document.createElement('div');
+      degreeLine.className = 'circle-degree-line';
+      const roman = document.createElement('span');
+      roman.className = 'circle-roman';
+      const controls = document.createElement('span');
+      controls.className = 'circle-invert-controls';
+      const down = document.createElement('button');
+      const up = document.createElement('button');
+      const context = degStr + (i === 7 ? ` (${window.__('circle_upper_tonic')})` : '');
+      [[down, '−', 'down'], [up, '+', 'up']].forEach(([b, text, direction]) => {
+        b.type = 'button';
+        b.className = `circle-invert-${direction}`;
+        b.textContent = text;
+        b.setAttribute('aria-label', `${context} · ${window.__(`circle_invert_${direction}`)}`);
+        b.title = window.__(`circle_invert_${direction}`);
+        b.addEventListener('click', (event) => {
+          event.stopPropagation();
+          state.steps[i] += direction === 'up' ? 1 : -1;
+          update();
+        });
+        b.addEventListener('keydown', event => event.stopPropagation());
+      });
+      controls.append(down, up);
+      degreeLine.append(roman, controls);
+      degCell.appendChild(degreeLine);
+      const register = document.createElement('small');
+      register.className = 'circle-register-label';
+      degCell.appendChild(register);
+      if (i === 7) {
+        const octave = document.createElement('small');
+        octave.className = 'circle-octave-label';
+        octave.textContent = window.__('circle_upper_tonic');
+        degCell.appendChild(octave);
+      }
       row.appendChild(degCell);
 
       const chordCell = document.createElement("td");
       chordCell.className = "chord-cell";
-      const chordNameFull = formatChordNameFull(note, degStr);
-      chordCell.textContent = chordNameFull;
       row.appendChild(chordCell);
 
       const funcCell = document.createElement("td");
       funcCell.className = "fn-cell";
-      funcCell.textContent = funcs[i] || "";
+      funcCell.textContent = funcs[i % 7] || "";
       row.appendChild(funcCell);
 
       const notesCell = document.createElement("td");
       notesCell.className = "notes-cell";
 
-      const chordType = chordTypes[i] || "maj";
-      const chordIntervals = getIntervalsByType(chordType);
-      const chordNoteNames = []; // 收集和弦音符
-      chordIntervals.forEach((interval) => {
-        const noteSemitone = noteToSemitone(note);
-        if (noteSemitone === undefined) return;
-        const idx = (noteSemitone + interval) % 12;
-        const chordNote = scaleSpelling.get(idx) ?? semitoneToNote(idx);
-        chordNoteNames.push(chordNote);
-        const span = document.createElement("span");
-        span.className = "mini-note";
-        span.textContent = chordNote;
-        notesCell.appendChild(span);
-      });
       row.appendChild(notesCell);
-
-      // ============ 点击播放声音（i 级定基准，逐级抬高根音） ============
-      const { freqs: chordFreqs, rootMidi } = chordNotesToFrequencies(
-        chordNoteNames,
-        4,
-        false,
-        lastChordRootMidi,
-      );
-      if (rootMidi != null) {
-        lastChordRootMidi = rootMidi;
-      }
 
       const audioIndicator = document.createElement("span");
       audioIndicator.className = "audio-hint";
       audioIndicator.setAttribute("aria-hidden", "true");
       audioIndicator.innerHTML = iconSvg("speaker");
-      chordCell.appendChild(audioIndicator);
-
-      row.addEventListener("click", () => playChord(chordFreqs));
+      let chord;
+      const chordAt = steps => circleDegreeChord(notes, i, degStr, { seventh: state.seventh, steps });
+      const inRange = value => value.tones[0].midi >= 36 && value.tones.at(-1).midi <= 108;
+      function update() {
+        chord = chordAt(state.steps[i]);
+        register.textContent = chord.octaves === 0 ? window.__('circle_default_octave') :
+          `${chord.octaves > 0 ? '↑' : '↓'} ${Math.abs(chord.octaves)} ${window.__('circle_octave_unit')}`;
+        roman.replaceChildren(document.createTextNode(chord.numeral));
+        roman.setAttribute('aria-label', chord.roman);
+        if (chord.figure) {
+          const figure = document.createElement('span');
+          figure.className = `circle-figure${chord.figure.includes('/') ? '' : ' is-single'}`;
+          chord.figure.split('/').forEach(number => {
+            const digit = document.createElement('span');
+            digit.textContent = number;
+            figure.appendChild(digit);
+          });
+          roman.appendChild(figure);
+        }
+        chordCell.replaceChildren(document.createTextNode(chord.name), audioIndicator);
+        notesCell.replaceChildren();
+        chord.tones.forEach(tone => {
+          const span = document.createElement('span');
+          span.className = 'mini-note';
+          span.textContent = tone.pitch;
+          notesCell.appendChild(span);
+        });
+        down.disabled = !inRange(chordAt(state.steps[i] - 1));
+        up.disabled = !inRange(chordAt(state.steps[i] + 1));
+      }
+      updateRows.push(update);
+      update();
+      row.addEventListener("click", () => playChord(chord.frequencies));
       row.addEventListener("keydown", (event) => {
         if (event.key !== "Enter" && event.key !== " ") return;
         event.preventDefault();
-        playChord(chordFreqs);
+        playChord(chord.frequencies);
       });
 
       tbody.appendChild(row);
-    });
+    }
     table.appendChild(tbody);
     wrap.appendChild(table);
 
-    return wrap;
-  }
-
-  function formatChordNameFull(root, degreeStr) {
-    // 根音已经按音级拼好时直接沿用（F#m 不再被改写成 Gbm）
-    const cleanRoot = parsePitch(`${root}4`) ? root : semitoneToNote(noteToSemitone(root) || 0);
-    if (degreeStr.includes("°")) return cleanRoot + "°";
-    if (degreeStr.includes("+")) return cleanRoot + "+";
-    if (degreeStr === degreeStr.toLowerCase() && degreeStr.includes("m"))
-      return cleanRoot + "m";
-    // I, IV, V 等大写 = 大三和弦
-    if (
-      degreeStr === degreeStr.toUpperCase() &&
-      !degreeStr.includes("°") &&
-      !degreeStr.includes("+")
-    )
-      return cleanRoot;
-    // ii, iii, vi 等小写 = 小和弦
-    if (degreeStr === degreeStr.toLowerCase()) return cleanRoot + "m";
-    return cleanRoot;
-  }
-
-  function getIntervalsByType(type) {
-    switch (type) {
-      case "maj":
-        return [0, 4, 7];
-      case "m":
-        return [0, 3, 7];
-      case "dim":
-        return [0, 3, 6];
-      case "aug":
-        return [0, 4, 8];
-      default:
-        return [0, 4, 7];
-    }
+    seventh.addEventListener('change', () => {
+      state.steps = state.steps.map(step => resizeCircleVoicing(step, state.seventh, seventh.checked));
+      state.seventh = seventh.checked;
+      updateRows.forEach(update => update());
+    });
+    reset.addEventListener('click', () => {
+      state.seventh = false;
+      state.steps.fill(0);
+      seventh.checked = false;
+      updateRows.forEach(update => update());
+    });
+    panel.append(tools, wrap);
+    return panel;
   }
 
   // Canvas 点击事件

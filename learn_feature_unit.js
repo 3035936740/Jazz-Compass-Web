@@ -8,3 +8,10 @@ export const FEATURE_UNIT = {
   chinese: 'heptatonic', micro: 'micro', temperaments: 'temperaments', world: 'world',
   posttonal: 'posttonal', chordsymbols: 'symbols', ref: 'modes', other: 'keycenter',
 };
+
+/** 古典和声的工具入口同时提供五度圈，保留原参数并避免重复入口。 */
+export function relatedLearnTools(tools) {
+  const list = tools.filter((tool) => tool?.feature);
+  if (list.some((tool) => tool.feature === 'classical') && !list.some((tool) => tool.feature === 'circle')) list.push({ feature: 'circle', q: null });
+  return list.filter((tool, i) => list.findIndex((other) => other.feature === tool.feature && (other.q || null) === (tool.q || null)) === i);
+}

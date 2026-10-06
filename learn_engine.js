@@ -50,11 +50,22 @@ export const currentItem = (session) => session.queue[session.position] ?? null;
 export const isFinished = (session) => session.position >= session.queue.length;
 export const progressRatio = (session) => (session.queue.length ? session.position / session.queue.length : 1);
 
+/** 当前题的草稿与提交状态随整局一起保存；换题后创建新的状态。 */
+export function cardStateFor(session) {
+  if (session.cardState?.position !== session.position) session.cardState = { position: session.position };
+  return session.cardState;
+}
+
 /** 记录作答并前进；返回 { correct } */
 export function answer(session, response) {
   const item = currentItem(session);
   if (!item) return { correct: false };
+  const state = cardStateFor(session);
+  if (state.submitted) return { correct: state.correct };
   const correct = gradeCard(item.card, response);
+  state.response = response && typeof response === 'object' ? JSON.parse(JSON.stringify(response)) : response;
+  state.submitted = true;
+  state.correct = correct;
   if (item.card.type !== 'guide') {
     session.answered += 1;
     if (correct && !item.retry) session.firstTry += 1;
@@ -68,6 +79,7 @@ export function answer(session, response) {
 
 export function advance(session) {
   session.position += 1;
+  delete session.cardState;
 }
 
 /** 星级：一次答对的比例 ≥ 90% 三星，≥ 60% 两星，其余一星（完成即至少一星） */

@@ -2,6 +2,7 @@
 // 规则在 sideb_engine.js，评分在 lab_checks.js，内容在 sideb_content.js / sideb_units_*.js；设计见 SIDE_B_DESIGN.md。
 // 原则：音乐优先于分数，发现优先于背诵，成就感优先于惩罚感——失败只补弱项，每关有一个"发现"（insight）和胜利瞬间。
 import { B_CHAPTERS, B_LEVELS, levelById, lookupLevel, chapterLevels, isPlayable, extLevelById, hasExtLevel } from './sideb_content.js?v=20261006-clarity1';
+import { relatedLearnTools } from './learn_feature_unit.js?v=20261006-circle1';
 import {
   bKey, levelSections, levelForAttempt, createBSession, completeSection, recordAnswer, gradeNode, summarizeB, retrySession,
   buildRecovery, startRecovery, recordRecovery, recoveryResult, completeBLevel, chapterAverage, overallAverage, sidebUnlocked,
@@ -11,7 +12,7 @@ import {
 } from './sideb_engine.js?v=20261006-clarity1';
 import { SKILLS, SKILL_NAMES, recommend } from './sideb_errors.js?v=20261004-z9';
 import { LABS, labHref, labResultKey } from './sideb_labs.js?v=20261004-x1';
-import { loadProgress, saveProgress, isDone } from './learn_engine.js?v=20261006-clarity1';
+import { loadProgress, saveProgress, isDone } from './learn_engine.js?v=20261006-circle1';
 import { renderVisual } from './learn_visuals.js?v=20261004-m5';
 import { satbStaff, rhythmGrid, playAudio, satbToy, polyToy, tapPad, spellToy, meterToy, intervalToy, scaleToy, textureToy, chordToy, keyChordsToy, progressionToy, plrToy, keyRelToy, transposeToy, fretToy, nctToy, speciesToy, canonToy, swingToy, bluesToy, chordScaleToy, guideToy, negativeToy, xuangongToy, worldToy, harmonicsToy, temperToy, pcToy, collectionToy, setToy, matrixToy, jiToy } from './sideb_toys.js?v=20261005-p4';
 import { celebrate } from './sideb_fx.js?v=20261004-f1';
@@ -527,11 +528,12 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
   /** 这一关相关的工具：关卡自己写的 tools + 对应 A 面关卡的工具（learn_ui 给出，含五度圈这类 extraTools） */
   function levelTools(lv) {
     const list = [...(lv?.tools || []), ...toolsFor(lv?.a || [])];
-    return list.filter((x, i) => list.findIndex((y) => y.feature === x.feature && (y.q || '') === (x.q || '')) === i);
+    return relatedLearnTools(list);
   }
   /** 去工具：关卡进行中先记下进度（顶栏会出现"回到 Side-B"），再跳过去 */
   function goTool(tool) {
     if (!tool?.feature || !openTool) return;
+    captureNodeDraft?.();
     if (level && session && !session.result) persist();
     openTool(tool.feature, tool.q || null);
   }
@@ -613,6 +615,7 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
     return { sections, name, nodes, node: nodes?.[session.node] };
   };
   function advance() {
+    delete session.nodeState;
     const { nodes } = current();
     if (session.node + 1 < nodes.length) session = { ...session, node: session.node + 1 };
     else session = completeSection(session, lvl);
@@ -622,22 +625,30 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
   }
 
   // ---------------- 节点 ----------------
+  // 保存草稿与提交结果；工具返回时重建控件，但不再记录一次作答。
+  let captureNodeDraft = null;
   function renderNode() {
     redraw = renderNode;
+    captureNodeDraft = null;
     const { name, nodes, node } = current();
     if (!node) { finishLevel(); return; }
+    if (session.nodeState?.section !== session.section || session.nodeState?.node !== session.node) session.nodeState = { section: session.section, node: session.node };
+    const state = session.nodeState;
     const { shell, body, footer } = frame({ sectionName: name, index: session.node, total: nodes.length });
     const nextBtn = btn('learn-btn primary', t.next, () => advance());
     const done = () => { footer.replaceChildren(nextBtn); nextBtn.focus?.(); };
-    let answered = false;
+    let answered = Boolean(state.result);
     let answerNow = null;
     renderBody(node, body, footer, shell, {
       done,
-      record: (result) => { answered = true; session = recordAnswer(session, node, result); persist(); },
+      state,
+      record: (result) => { if (answered) return; answered = true; state.result = result; session = recordAnswer(session, node, result); persist(); },
+      retry: () => { delete session.nodeState; renderNode(); },
       registerDebug: (fn) => { answerNow = fn; },
     });
     toolHelp(node, body);
     if (debugOn()) body.before(debugBar(node, { skip: () => advance(), answerNow: answerNow && ((ok) => { if (!answered) answerNow(ok); }) }));
+    persist();
   }
   /** 题目和讲解下方的"去工具"：题目自己写的 tool 优先，再加本关的相关工具（最多 3 个）；跳过去之前记下进度，回来接着这一题。
    *  发现、讲解页、演示也有（实验另有"接着玩"，实操有自己的工具）；讲解页已经单独放了 node.tool 的链接，这里就不再重复它 */
@@ -646,8 +657,9 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
     if (!isAssessed(node) && !['discover', 'page', 'demo'].includes(node.type)) return;
     const own = node.tool && node.type !== 'page' ? [node.tool] : [];
     const shown = node.type === 'page' && node.tool ? node.tool : null;
-    const list = [...own, ...levelTools(level)].filter((x) => !shown || x.feature !== shown.feature || (x.q || '') !== (shown.q || ''));
-    const tools = list.filter((x, i) => list.findIndex((y) => y.feature === x.feature && (y.q || '') === (x.q || '')) === i).slice(0, 3);
+    const list = relatedLearnTools([...own, ...levelTools(level), ...(shown ? [shown] : [])]).filter((x) => !shown || x.feature !== shown.feature || (x.q || '') !== (shown.q || ''));
+    const tools = relatedLearnTools(list).slice(0, 3);
+    if (tools.some((tool) => tool.feature === 'classical') && !tools.some((tool) => tool.feature === 'circle')) tools.push({ feature: 'circle' });
     if (!tools.length) return;
     const row = el('div', 'sideb-help');
     tools.forEach((tool) => row.appendChild(toolChip(tool, t.toolLook(toolName(tool.feature)), 'learn-link sideb-tool-link')));
@@ -690,7 +702,8 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
     body.appendChild(line);
   }
 
-  function renderBody(node, body, footer, shell, { done, record, registerDebug = () => {} }) {
+  function renderBody(node, body, footer, shell, ctx) {
+    const { done } = ctx;
     if (node.practice) body.appendChild(el('span', 'sideb-badge', t.practice));
     if (node.ratingOnly) body.appendChild(el('span', 'sideb-badge', t.extensionQuestion));
     switch (node.type) {
@@ -706,13 +719,13 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
         return;
       }
       case 'demo': return renderDemo(node, body, footer, done);
-      case 'discover': return renderDiscover(node, body, footer, shell, { done, record, registerDebug });
+      case 'discover': return renderDiscover(node, body, footer, shell, ctx);
       case 'experiment': return renderExperiment(node, body, shell, done);
       case 'lab': return renderLab(node, body, footer);
-      case 'tap': return renderTap(node, body, footer, shell, { done, record, registerDebug });
-      case 'derive': return renderDerive(node, body, footer, shell, { done, record, registerDebug });
-      case 'fill': return renderFill(node, body, footer, shell, { done, record, registerDebug });
-      default: return renderChoice(node, body, footer, shell, { done, record, registerDebug });
+      case 'tap': return renderTap(node, body, footer, shell, ctx);
+      case 'derive': return renderDerive(node, body, footer, shell, ctx);
+      case 'fill': return renderFill(node, body, footer, shell, ctx);
+      default: return renderChoice(node, body, footer, shell, ctx);
     }
   }
   function renderDemo(node, body, footer, done) {
@@ -720,8 +733,11 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
     const stage = el('div', 'sideb-demo');
     body.appendChild(stage);
     refLine(body, node.ref);
-    let i = 0;
+    const state = session.nodeState;
+    let i = state.step || 0;
     const show = () => {
+      state.step = i;
+      persist();
       stage.replaceChildren();
       const step = node.steps[i];
       stage.appendChild(el('span', 'sideb-step-count', t.stepOf(i + 1, node.steps.length)));
@@ -766,7 +782,7 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
   }
   /** 调试：点正确（或一个错误）选项 */
   const pickOption = (body, node, ok) => body.querySelector(`.sideb-option[data-k="${ok ? node.answer : (node.answer + 1) % node.options.length}"]`)?.dispatchEvent(new globalThis.window.Event('click', { bubbles: true }));
-  function renderDiscover(node, body, footer, shell, { done, record, registerDebug }) {
+  function renderDiscover(node, body, footer, shell, { done, record, registerDebug, state }) {
     paragraphs(body, node.prompt);
     const v = visualOf(node.visual); if (v) body.appendChild(v);
     if (node.audio) playRow(body, [{ label: t.play, audio: node.audio }]);
@@ -775,12 +791,14 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
     if (!node.options) { revealInsight(body, node.insight, node.id); done(); return; }
     registerDebug((ok) => pickOption(body, node, ok));
     const list = optionButtons(node, body, (k) => {
+      state.response = k;
       markOptions(list, k, node.answer);
       record(gradeNode(node, k));
       revealInsight(body, node.insight, node.id);
       refLine(body, node.ref);
       done();
     });
+    if (state.result) list.querySelector(`[data-k="${state.response}"]`)?.click();
   }
   function feedback(node, body, footer, shell, result, { retry, done, answerText }) {
     const box = el('div', `sideb-feedback ${result.ok ? 'is-ok' : 'is-no'}`);
@@ -808,15 +826,18 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
     if (node.type === 'listen' && node.play?.[0]) sound(node.play[0].audio);
     ctx.registerDebug((ok) => pickOption(body, node, ok));
     const list = optionButtons(node, body, (k) => {
+      ctx.state.response = k;
       markOptions(list, k, node.answer);
       const result = grade(node, k);
       ctx.record(result);
-      feedback(node, body, footer, shell, result, { ...ctx, answerText: tx(node.options[node.answer]), retry: () => renderNode() });
+      feedback(node, body, footer, shell, result, { ...ctx, answerText: tx(node.options[node.answer]) });
     });
+    if (ctx.state.result) list.querySelector(`[data-k="${ctx.state.response}"]`)?.click();
   }
   function renderFill(node, body, footer, shell, ctx) {
     paragraphs(body, node.prompt);
-    const picked = [];
+    const picked = [...(ctx.state.response || [])];
+    captureNodeDraft = () => { ctx.state.response = [...picked]; };
     const slots = el('p', 'sideb-fill-slots');
     const bank = el('div', 'sideb-options');
     const paint = () => { slots.textContent = node.answer.map((_, i) => tx(node.bank.find((b) => b.id === picked[i])?.label) || '＿').join('  '); };
@@ -825,19 +846,22 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
     paint();
     ctx.registerDebug((ok) => { picked.length = 0; if (ok) picked.push(...node.answer); paint(); footer.querySelector('.learn-btn.primary')?.dispatchEvent(new globalThis.window.Event('click', { bubbles: true })); });
     footer.replaceChildren(btn('learn-btn ghost', '⌫', () => { picked.pop(); paint(); }), btn('learn-btn primary', t.check, () => {
+      captureNodeDraft();
       const result = grade(node, picked);
       ctx.record(result);
       bank.querySelectorAll('button').forEach((b) => { b.disabled = true; });
-      feedback(node, body, footer, shell, result, { ...ctx, answerText: node.answer.map((id) => tx(node.bank.find((b) => b.id === id)?.label)).join(' '), retry: () => renderNode() });
+      feedback(node, body, footer, shell, result, { ...ctx, answerText: node.answer.map((id) => tx(node.bank.find((b) => b.id === id)?.label)).join(' ') });
     }));
+    if (ctx.state.result) footer.querySelector('.learn-btn.primary')?.click();
   }
   function renderDerive(node, body, footer, shell, ctx) {
     paragraphs(body, node.prompt);
-    const inputs = node.steps.map((step) => {
+    const inputs = node.steps.map((step, index) => {
       const row = el('label', 'sideb-derive-step');
       const input = el('input');
       input.type = step.kind === 'number' ? 'number' : 'text';
       input.step = 'any';
+      input.value = ctx.state.response?.[index] ?? '';
       if (step.inputHint) {
         input.placeholder = tx(step.inputHint);
         input.title = tx(step.inputHint);
@@ -847,21 +871,25 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
       body.appendChild(row);
       return input;
     });
+    captureNodeDraft = () => { ctx.state.response = inputs.map((input) => input.value); };
     ctx.registerDebug((ok) => {
       inputs.forEach((input, i) => { input.value = ok ? String([].concat(node.steps[i].answer)[0]) : ''; });
       footer.querySelector('.learn-btn.primary')?.dispatchEvent(new globalThis.window.Event('click', { bubbles: true }));
     });
     footer.replaceChildren(btn('learn-btn primary', t.check, () => {
+      captureNodeDraft();
       const result = grade(node, inputs.map((i) => i.value));
       inputs.forEach((i) => { i.disabled = true; });
       ctx.record(result);
       const answerText = node.steps.map((s) => `${tx(s.label)} ${[].concat(s.answer).map((a) => (typeof a === 'number' ? Math.round(a * 100) / 100 : a)).join(' / ')}`).join('；');
-      feedback(node, body, footer, shell, result, { ...ctx, answerText, retry: () => renderNode() });
+      feedback(node, body, footer, shell, result, { ...ctx, answerText });
     }));
+    if (ctx.state.result) footer.querySelector('.learn-btn.primary')?.click();
   }
   function renderTap(node, body, footer, shell, ctx) {
     paragraphs(body, node.prompt);
     footer.replaceChildren();
+    if (ctx.state.result) { feedback(node, body, footer, shell, ctx.state.result, { ...ctx, retry: null }); return; }
     const finish = (response) => {
       const result = grade(node, response);
       ctx.record(result);
@@ -1050,24 +1078,29 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
   // ---------------- 补弱挑战 ----------------
   function renderRecovery() {
     redraw = renderRecovery;
+    captureNodeDraft = null;
     const r = session.recovery;
-    const node = r.nodes[r.node];
+    const state = r.uiState ||= { node: r.node };
+    const node = r.nodes[state.node];
     if (!node) { finishRecovery(); return; }
-    const { shell, body, footer } = frame({ sectionName: 'recovery', index: r.node, total: r.nodes.length });
-    body.appendChild(el('p', 'sideb-recovery-head', `${t.recoveryTitle} · ${t.stepOf(r.node + 1, r.nodes.length)}`));
-    const nextBtn = btn('learn-btn primary', t.next, () => renderRecovery());
-    let answered = false;
+    const { shell, body, footer } = frame({ sectionName: 'recovery', index: state.node, total: r.nodes.length });
+    body.appendChild(el('p', 'sideb-recovery-head', `${t.recoveryTitle} · ${t.stepOf(state.node + 1, r.nodes.length)}`));
+    const nextBtn = btn('learn-btn primary', t.next, () => { delete session.recovery.uiState; persist(); renderRecovery(); });
+    let answered = Boolean(state.result);
     let answerNow = null;
     renderBody(node, body, footer, shell, {
+      state,
+      retry: () => { delete state.result; renderRecovery(); },
       done: () => footer.replaceChildren(nextBtn),
-      record: (result) => { answered = true; session = recordRecovery(session, node, result); persist(); },
+      record: (result) => { if (answered) return; answered = true; state.result = result; session = recordRecovery(session, node, result); persist(); },
       registerDebug: (fn) => { answerNow = fn; },
     });
     toolHelp(node, body);
     if (debugOn()) {
-      const skip = () => { session = { ...session, recovery: { ...session.recovery, node: session.recovery.node + 1 } }; persist(); renderRecovery(); };
+      const skip = () => { session = { ...session, recovery: { ...session.recovery, node: state.node + 1, uiState: undefined } }; persist(); renderRecovery(); };
       body.before(debugBar(node, { skip, recovering: true, answerNow: answerNow && ((ok) => { if (!answered) answerNow(ok); }) }));
     }
+    persist();
   }
   function finishRecovery() {
     const res = recoveryResult(session);
@@ -1092,5 +1125,8 @@ export function mountSideB(root, { playChord, onFlipBack, openA, aTitle = (id) =
   }
 
   renderMap();
-  return { renderMap, refresh: () => redraw(), openLevel: (id) => (lookupLevel(id) && levelOpen(lookupLevel(id)) ? startLevel(id) : renderMap()), resume, labReturn, stop: stopAll, get session() { return session; } };
+  return { renderMap, refresh: () => redraw(), openLevel: (id) => {
+    if (loadBResume()?.levelId === id) return resume();
+    return lookupLevel(id) && levelOpen(lookupLevel(id)) ? startLevel(id) : renderMap();
+  }, resume, labReturn, stop: stopAll, get session() { return session; } };
 }

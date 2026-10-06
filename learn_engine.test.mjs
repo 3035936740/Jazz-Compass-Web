@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { questionOrder, gradeCard, createSession, currentItem, answer, advance, isFinished, starsFor, completeUnit, emptyProgress, isUnlocked, nextUnitIndex, shuffle } from './learn_engine.js';
+import { questionOrder, gradeCard, createSession, currentItem, cardStateFor, answer, advance, isFinished, starsFor, completeUnit, emptyProgress, isUnlocked, nextUnitIndex, shuffle } from './learn_engine.js';
 
 const unit = {
   id: 'u1',
@@ -11,6 +11,28 @@ const unit = {
     { type: 'match', pairs: [['a', '1'], ['b', '2']] },
   ],
 };
+
+test('tool return restores drafts, submitted feedback and first-try counts without grading twice', () => {
+  const session = createSession(unit, { shuffleQuestions: false });
+  advance(session);
+  cardStateFor(session).response = 0;
+  cardStateFor(session).order = [1, 0];
+  const draft = JSON.parse(JSON.stringify(session));
+  assert.equal(cardStateFor(draft).response, 0);
+  assert.deepEqual(cardStateFor(draft).order, [1, 0]);
+  answer(draft, 0);
+  const restored = JSON.parse(JSON.stringify(draft));
+  assert.equal(cardStateFor(restored).submitted, true);
+  assert.equal(cardStateFor(restored).correct, false);
+  answer(restored, 1);
+  assert.equal(restored.answered, 1);
+  assert.equal(restored.firstTry, 0);
+  assert.equal(restored.queue.length, unit.cards.length + 1);
+  advance(restored);
+  assert.deepEqual(cardStateFor(restored), { position: 2 });
+  answer(restored, ['H', 'H']);
+  assert.equal(restored.firstTry, 1);
+});
 
 test('normal chapter keeps three stars at 90%, including 18/20', () => {
   const session = { unitId: 'chapter@basics', questions: 20, firstTry: 18 };

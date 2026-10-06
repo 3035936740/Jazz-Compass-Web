@@ -3,17 +3,18 @@
 // 题目与依据见 learn_content.js / learn_units_*.js / learn_branches_*.js；生成题见 learn_generators.js；规则见 learn_engine.js
 import { UNITS, SECTIONS, SIDES } from './learn_content.js?v=20261006-clarity1';
 import {
-  createSession, currentItem, answer, advance, isFinished, progressRatio, loadProgress, saveProgress, completeUnit, isUnlocked, nextUnitIndex, shuffle,
+  createSession, currentItem, cardStateFor, answer, advance, isFinished, progressRatio, loadProgress, saveProgress, completeUnit, isUnlocked, nextUnitIndex, shuffle,
   levelKey, parseLevelKey, isLevelUnlocked, levelPrerequisites, isDone, MIX_SLOT, buildMixedCards, buildFinalCards, FINAL_KEY, FINAL_EX_KEY, finalUnlocked, finalExUnlocked,
   buildChapterCards, chapterKey, parseChapterKey, chapterUnlocked, chapterExUnlocked, chapterRevisitPrerequisites,
   saveResume, loadResume, clearResume, unitLevelKeys, setLevelStars, emptyProgress,
   loadReview, saveReview, recordMistake, recordReviewAnswer, dueReview, exportProgress, importProgress, starsFor, isSideLevelUnlocked, unitFullyDone,
-} from './learn_engine.js?v=20261006-clarity1';
+} from './learn_engine.js?v=20261006-circle1';
 import { expandCards } from './learn_generators.js?v=20261006-clarity1';
 import { worksheetHTML, openWorksheet, printable } from './worksheet.js?v=20261004-y1';
 import { renderVisual } from './learn_visuals.js?v=20261004-m5';
 import { el, button, language, midiToFrequency, cite } from './module_kit.js';
 import { icon, withIcon } from './ui_icons.js?v=20261003-i2';
+import { relatedLearnTools } from './learn_feature_unit.js?v=20261006-circle1';
 import { playFeedbackSound, sfxEnabled, setSfxEnabled } from './learn_sfx.js?v=20261003-x3';
 
 // ---------- 调试模式：在浏览器控制台输入 class_debug(true) 打开，class_debug(false) 关闭（记在 localStorage） ----------
@@ -123,7 +124,7 @@ export function mountLearn(target, { playChord }) {
   let timers = [];
   const stop = () => { timers.forEach(clearTimeout); timers = []; };
   // 离开学习页（切到别的面板）：停止声音，并关掉挂在 body 上的选关卡片（否则"开始"按钮会留在别的页面上）
-  target.addEventListener('toolbox-stop', () => { stop(); closeSheets(); });
+  target.addEventListener('toolbox-stop', () => { stop(); sideB?.stop?.(); closeSheets(); });
   const toolName = (feature) => globalThis.window?.__?.(`nav_${feature}`) || feature;
   const refLinks = (card) => [].concat(card.ref ?? []).map((id) => cite(sourceList(id), id));
   const notifyResume = () => globalThis.window?.dispatchEvent?.(new globalThis.window.CustomEvent('learn-resume-change'));
@@ -729,19 +730,25 @@ export function mountLearn(target, { playChord }) {
   /** 跳到工具：先保存学习记录，之后可从工具页的"回到教程"回到同一题 */
   function goToTool(feature, query) {
     closeSheets();
-    persist(true);
+    if (!sideB) {
+      if (session && currentFrame?.card === currentItem(session)?.card && !cardStateFor(session).submitted) {
+        const response = currentFrame.getResponse();
+        cardStateFor(session).response = response && typeof response === 'object' ? JSON.parse(JSON.stringify(response)) : response;
+      }
+      persist(true);
+    }
     if (globalThis.location) globalThis.location.hash = `#${feature}${query ? `?q=${encodeURIComponent(query)}` : ''}`;
   }
   /** 一个关卡相关的工具：主工具（unit.feature）+ extraTools（例如功能与罗马数字关卡也能用五度圈标出各级和弦），去重 */
   function unitTools(unit) {
     const list = [{ feature: unit.feature, q: unit.toolQuery || null }, ...(unit.extraTools || []).map((x) => ({ feature: x.feature, q: x.q || null }))];
-    return list.filter((x, i) => x.feature && list.findIndex((y) => y.feature === x.feature && y.q === x.q) === i);
+    return relatedLearnTools(list);
   }
   /** 题卡 / 引导卡下方的工具：卡上写的工具优先，再加上本关的工具（含 extraTools，例如罗马数字关卡的五度圈）；考试等没有单一关卡时用本关的主工具 */
   function cardTools(card, level) {
     const toolUnit = level.unit;
     const list = [...(card.tool ? [{ feature: card.tool.feature, q: card.tool.q || null }] : []), ...(toolUnit ? unitTools(toolUnit) : level.feature ? [{ feature: level.feature, q: null }] : [])];
-    return list.filter((x, i) => x.feature && list.findIndex((y) => y.feature === x.feature && (y.q || null) === (x.q || null)) === i);
+    return relatedLearnTools(list);
   }
   function toolButton(feature, query, label, className = 'learn-btn ghost') {
     const b = button(className, label, () => goToTool(feature, query));
@@ -772,6 +779,8 @@ export function mountLearn(target, { playChord }) {
     chapterObserver?.disconnect?.();
     root.replaceChildren();
     if (isFinished(session)) { renderFinish(); return; }
+    currentFrame = null;
+    const state = cardStateFor(session);
     persist();
     const item = currentItem(session);
     const card = item.card;
@@ -803,6 +812,7 @@ export function mountLearn(target, { playChord }) {
     if (debugEnabled()) shell.appendChild(debugBar(card));
     root.appendChild(shell);
     ({ guide: renderGuide, choice: renderChoice, fill: renderFill, match: renderMatch })[card.type](card, body, footer);
+    if (state.submitted && currentFrame) showFeedback(card, footer, state.correct, currentFrame.showSolution, { sound: false });
   }
 
   /** 引导卡：一步一步显示（弱引导），图示、示范音、小键盘、相关工具 */
@@ -829,6 +839,8 @@ export function mountLearn(target, { playChord }) {
     refLinks(card).forEach((a) => src.appendChild(a));
     body.appendChild(src);
     let shown = 0;
+    const state = cardStateFor(session);
+    const previousShown = Math.max(1, Math.min(state.shown || 1, card.steps.length));
     const action = button('learn-btn primary wide', t.more, () => {
       if (shown < card.steps.length) { reveal(); return; }
       answer(session, null);
@@ -839,9 +851,11 @@ export function mountLearn(target, { playChord }) {
       list.appendChild(el('p', 'learn-step', tx(card.steps[shown])));
       if (tour && pic?.setMarks) pic.setMarks(tour[shown]);
       shown += 1;
+      state.shown = shown;
       action.textContent = shown >= card.steps.length ? t.gotIt : t.more;
+      persist();
     }
-    reveal();
+    for (let i = 0; i < previousShown; i += 1) reveal();
     footer.appendChild(action);
   }
 
@@ -855,7 +869,7 @@ export function mountLearn(target, { playChord }) {
     saveReview(review);
   }
   function questionFrame(card, body, footer, { getResponse, showSolution, prompt = true }) {
-    currentFrame = { card, footer, showSolution };
+    currentFrame = { card, footer, showSolution, getResponse };
     if (prompt) body.appendChild(el('h3', 'learn-prompt', tx(card.prompt)));
     const pic = visualFor(card);
     if (pic) body.appendChild(pic);
@@ -886,11 +900,11 @@ export function mountLearn(target, { playChord }) {
     return { setReady: (value) => { check.disabled = !value; } };
   }
 
-  function showFeedback(card, footer, correct, showSolution) {
+  function showFeedback(card, footer, correct, showSolution, { sound = true } = {}) {
     persist();
     footer.replaceChildren();
     footer.classList.add(correct ? 'is-right' : 'is-wrong');
-    playFeedbackSound(correct);
+    if (sound) playFeedbackSound(correct);
     const head = el('div', 'learn-feedback-head', correct ? t.right[Math.floor(Math.random() * t.right.length)] : t.wrong);
     footer.appendChild(head);
     if (!correct) footer.appendChild(el('div', 'learn-solution', showSolution()));
@@ -898,17 +912,16 @@ export function mountLearn(target, { playChord }) {
     refLinks(card).forEach((a) => why.appendChild(a));
     footer.appendChild(why);
     const row = el('div', 'learn-feedback-actions');
-    const feature = card.tool?.feature || level.feature;
-    // 支线可以指定打开面板里的哪个子页面（toolQuery，如 '@sub:canon'）
-    if (feature) row.appendChild(toolButton(feature, card.tool?.q ?? (card.tool ? null : level.unit?.toolQuery), t.tryTool, 'learn-link'));
+    cardTools(card, level).forEach((tool) => row.appendChild(toolButton(tool.feature, tool.q, t.openTool(toolName(tool.feature)), 'learn-link')));
     row.appendChild(button('learn-btn primary', t.next, () => { advance(session); renderCard(); }));
     footer.appendChild(row);
     root.querySelectorAll('.learn-card button').forEach((b) => { if (!b.classList.contains('learn-speaker') && !b.classList.contains('learn-key') && !b.classList.contains('learn-tool-jump')) b.disabled = true; });
   }
 
   function renderChoice(card, body, footer) {
-    let picked = null;
-    const order = shuffle(card.options.map((_, i) => i));
+    const state = cardStateFor(session);
+    let picked = state.response ?? null;
+    const order = state.order ||= shuffle(card.options.map((_, i) => i));
     const grid = el('div', 'learn-options');
     const frame = questionFrame(card, body, footer, {
       getResponse: () => picked,
@@ -920,16 +933,20 @@ export function mountLearn(target, { playChord }) {
         grid.querySelectorAll('.learn-option').forEach((b) => b.classList.toggle('is-picked', b === btn));
         frame.setReady(true);
       });
+      btn.classList.toggle('is-picked', picked === index);
       grid.appendChild(btn);
     });
     body.appendChild(grid);
+    frame.setReady(picked !== null);
   }
 
   function renderFill(card, body, footer) {
-    const blanks = card.answer.map(() => null);
+    const state = cardStateFor(session);
+    const blanks = Array.isArray(state.response) ? [...state.response] : card.answer.map(() => null);
     const sentence = el('h3', 'learn-prompt learn-sentence');
     const bank = el('div', 'learn-bank');
-    const bankItems = shuffleAway(card.bank, (items) => items.every((b, i) => b.id === card.answer[i]));
+    const bankOrder = state.bankOrder ||= shuffleAway(card.bank, (items) => items.every((b, i) => b.id === card.answer[i])).map((item) => item.id);
+    const bankItems = bankOrder.map((id) => card.bank.find((item) => item.id === id));
     body.append(sentence);
     const frame = questionFrame(card, body, footer, {
       prompt: false,
@@ -963,11 +980,12 @@ export function mountLearn(target, { playChord }) {
   }
 
   function renderMatch(card, body, footer) {
-    const pairs = {};       // 左项序号 → 右项序号
-    let selectedLeft = null;
+    const state = cardStateFor(session);
+    const pairs = { ...(state.response || {}) };       // 左项序号 → 右项序号
+    let selectedLeft = state.selectedLeft ?? null;
     // 两列都打乱，并且保证不会正好一一对齐
-    const lefts = shuffle(card.pairs.map((_, i) => i));
-    const rights = shuffleAway(card.pairs.map((_, i) => i), (order) => order.every((j, k) => j === lefts[k]));
+    const lefts = state.lefts ||= shuffle(card.pairs.map((_, i) => i));
+    const rights = state.rights ||= shuffleAway(card.pairs.map((_, i) => i), (order) => order.every((j, k) => j === lefts[k]));
     const board = el('div', 'learn-match');
     const leftCol = el('div', 'learn-col is-left');
     const rightCol = el('div', 'learn-col is-right');
@@ -981,6 +999,7 @@ export function mountLearn(target, { playChord }) {
     body.append(el('p', 'learn-muted', t.tapToPair), board);
     const colorOf = (leftIndex) => PAIR_COLORS[Object.keys(pairs).map(Number).sort((a, b) => a - b).indexOf(leftIndex) % PAIR_COLORS.length];
     function paint() {
+      state.selectedLeft = selectedLeft;
       leftCol.replaceChildren();
       rightCol.replaceChildren();
       lefts.forEach((i) => {
@@ -1262,6 +1281,8 @@ export function mountLearn(target, { playChord }) {
     if (String(id).startsWith('@lab-return:')) { showSideB((b) => b.labReturn(String(id).slice(12))); return; }
     if (/^b:/.test(id)) { showSideB((b) => b.openLevel(id.slice(2))); return; }
     if (sideB) flipBack(false);
+    const record = loadResume();
+    if (record?.key === id && record.session) { target.resume(); return; }
     if (id === FINAL_KEY || id === FINAL_EX_KEY || parseChapterKey(id)) { startLevel(id); return; }
     const { unitId } = parseLevelKey(id);
     if (unitIndex(unitId) < 0 && !SIDES.some((side) => side.id === unitId)) { renderMap(); return; }
@@ -1302,7 +1323,8 @@ export function mountLearn(target, { playChord }) {
   function showSideB(then, { animate = true } = {}) {
     if (!sideBOpen()) { renderMap(); return; }
     stop(); closeSheets();
-    const mount = () => import('./sideb_ui.js?v=20261006-clarity1').then(({ mountSideB }) => {
+    if (sideB) { then?.(sideB); return; }
+    const mount = () => import('./sideb_ui.js?v=20261006-circle1').then(({ mountSideB }) => {
       writeSide('b');
       root.classList.add('is-side-b');
       sideB = mountSideB(root, {

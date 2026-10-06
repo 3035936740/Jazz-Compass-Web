@@ -8,12 +8,12 @@
         try { document.documentElement.dataset.theme = localStorage.getItem('jazz-compass-theme') || 'light'; }
         catch { document.documentElement.dataset.theme = 'light'; }
     </script>
-    <script type="module" src="./script.js?v=20261006-clarity1"></script>
+    <script type="module" src="./script.js?v=20261006-multi-fix1"></script>
     <title>Music Theory Toolbox</title>
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="icon" href="./icon.svg" type="image/svg+xml">
     <meta name="theme-color" content="#10162e">
-    <link rel="stylesheet" href="./app.css?v=20261004-r42">
+    <link rel="stylesheet" href="./app.css?v=20261006-multi-fix1">
     <link rel="stylesheet" href="./microtonal.css?v=20261001-ui">
     <link rel="stylesheet" href="./lcc.css?v=20261001-ui">
     <link rel="stylesheet" href="./blues.css?v=20261001-ui">
@@ -386,8 +386,8 @@
                                     <div class="circle-sort-row">
                                         <span data-i18n="circle_sort">排序</span>
                                         <select id="circle-sort-type" class="circle-select">
-                                            <option value="tension" data-i18n="circle_sort_tension_opt">空间张力等级(1-10 越大越暗)</option>
-                                            <option value="temp" data-i18n="circle_sort_temp_opt">空间温度等级 -8 到 8 负值冷色 正值暖色</option>
+                                            <option value="tension" data-i18n="circle_sort_tension_short" data-i18n-attr="title:circle_sort_tension_opt">张力</option>
+                                            <option value="temp" data-i18n="circle_sort_temp_short" data-i18n-attr="title:circle_sort_temp_opt">温度</option>
                                         </select>
                                         <select id="circle-sort-order" class="circle-select">
                                             <option value="asc">升序</option>

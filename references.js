@@ -53,7 +53,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/01%3A_Fundamentals/1.18%3A_Inversion_and_Figured_Bass',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['figured_bass.js', 'figured_bass_ui.js', 'prog_library.js', 'lab_checks.js', 'sideb_units_harmony2.js', 'sideb_toys.js', 'sideb_ext_harmony.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_sideharmony.js', 'learn_generators.js'],
+    usedIn: ['circle_chords.js', 'figured_bass.js', 'figured_bass_ui.js', 'prog_library.js', 'lab_checks.js', 'sideb_units_harmony2.js', 'sideb_toys.js', 'sideb_ext_harmony.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_sideharmony.js', 'learn_generators.js'],
     usedFor: { zh: '数字低音：低音之上的音程、三和弦与七和弦各位置的数字与简写、变音记号', ja: '数字付き低音：低音からの音程、三和音・七の和音の数字と省略形、変化記号', en: 'Figured bass: intervals above the bass, full and abbreviated figures, accidentals' },
   },
   {
@@ -1714,8 +1714,19 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/01%3A_Fundamentals/1.13%3A_Minor_Scales_Scale_Degrees_and_Key_Signatures',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['staff_reading.js', 'staff_reading_ui.js', 'sideb_units_basics.js', 'sideb_toys.js', 'sideb_ext_basics.js', 'learn_branches_basics.js', 'learn_branches_harmony.js', 'learn_units_basics.js', 'learn_generators.js'],
+    usedIn: ['circle_scales.js', 'staff_reading.js', 'staff_reading_ui.js', 'sideb_units_basics.js', 'sideb_toys.js', 'sideb_ext_basics.js', 'learn_branches_basics.js', 'learn_branches_harmony.js', 'learn_units_basics.js', 'learn_generators.js'],
     usedFor: { zh: '三种小调音阶、关系调与同主音调（教程）', ja: '3 種類の短音階・平行調と同主調（チュートリアル）', en: 'The three minor scales; relative and parallel keys (tutorial)' },
+  },
+  {
+    id: 'wiki-major-scale',
+    topic: 'circle',
+    title: 'Major scale — Melodic major scale',
+    author: 'Wikipedia contributors',
+    url: 'https://en.wikipedia.org/wiki/Major_scale#Melodic_major_scale',
+    license: 'CC BY-SA 4.0',
+    accessed: '2026-10-06',
+    usedIn: ['circle_scales.js'],
+    usedFor: { zh: '旋律大调上行同自然大调，下行降低第六、七级（五度圈）', ja: '旋律的長音階の上行は自然長音階、下行は第 6・7 音を下げる（五度圏）', en: 'Melodic major ascends as natural major and descends with lowered degrees 6 and 7 (circle of fifths)' },
   },
   {
     id: 'omt2e-modes',
@@ -1747,7 +1758,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/01%3A_Fundamentals/1.16%3A_Triads',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['sideb_units_harmony2.js', 'sideb_toys.js', 'sideb_ext_harmony.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_generators.js'],
+    usedIn: ['circle_chords.js', 'sideb_units_harmony2.js', 'sideb_toys.js', 'sideb_ext_harmony.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_generators.js'],
     usedFor: { zh: '三和弦的根音、三音、五音与四种性质（教程）', ja: '三和音の根音・第 3 音・第 5 音と 4 つの種類（チュートリアル）', en: 'Root, third and fifth; the four triad qualities (tutorial)' },
   },
   {
@@ -1758,7 +1769,7 @@ export const REFERENCES = [
     url: 'https://human.libretexts.org/Bookshelves/Music/Music_Theory/Open_Music_Theory_2e_(Gotham_et_al.)/01%3A_Fundamentals/1.17%3A_Seventh_Chords',
     license: 'CC BY-SA 4.0',
     accessed: '2026-10-02',
-    usedIn: ['prog_library.js', 'sideb_units_harmony2.js', 'sideb_toys.js', 'sideb_ext_harmony.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_sideharmony.js', 'learn_generators.js', 'sideb_exam_tasks.js'],
+    usedIn: ['circle_chords.js', 'prog_library.js', 'sideb_units_harmony2.js', 'sideb_toys.js', 'sideb_ext_harmony.js', 'learn_branches_harmony.js', 'learn_units_harmony.js', 'learn_units_sideharmony.js', 'learn_generators.js', 'sideb_exam_tasks.js'],
     usedFor: { zh: '五种常见七和弦及其别名（教程）', ja: '5 種類の七の和音とその別名（チュートリアル）', en: 'The five common seventh chords and their other names (tutorial)' },
   },
   {
