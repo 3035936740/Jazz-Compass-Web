@@ -345,7 +345,7 @@ line.lv-ruler { stroke: var(--theme-line-strong); stroke-width: 2; }
 .learn-confirm-actions button { min-height: 42px; border-radius: 12px; font-weight: 700; cursor: pointer; border: 2px solid var(--theme-line-strong); background: var(--theme-panel); color: var(--theme-text); }
 .learn-confirm-actions .learn-confirm-back { border: 0; background: #22b07d; color: #fff; box-shadow: 0 3px 0 #178a60; }
 .learn-confirm-actions .learn-confirm-new { color: #c0392b; }
-.learn-btn.resume { background: #e08a1e; color: #fff; box-shadow: 0 4px 0 #a8610b; flex-basis: 100%; }
+.learn-btn.resume { background: #e08a1e; color: #fff; box-shadow: 0 4px 0 #a8610b; flex-basis: 100%; box-sizing: border-box; padding: 12px 16px; line-height: 1.45; overflow-wrap: anywhere; }
 
 /* 章节导航：吸顶，一键跳到各分区 */
 .learn-chapters { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 8px; padding: 10px 4px; margin: -6px -4px 0; background: var(--theme-panel); border-bottom: 1px solid var(--theme-line); }

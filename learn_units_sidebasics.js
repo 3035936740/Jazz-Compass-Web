@@ -189,7 +189,7 @@ export const UNITS = [
 
   // ======================= 听写 =======================
   {
-    id: 'dictation', parent: 'intervals', prerequisites: ['staff', 'rhythm', 'meter', 'major', 'triads', 'roman', 'cadences', 'functions'], section: 'basics', feature: 'ear', toolQuery: '@sub:dictation', icon: '听',
+    id: 'dictation', parent: 'intervals', prerequisites: ['staff', 'rhythm', 'meter', 'major', 'triads', 'roman', 'cadences', 'functions'], section: 'basics', feature: 'ear', toolQuery: '@sub:dictation', icon: '', iconName: 'headphones',
     title: t('听写：把听到的写下来', '聴音：聴いたものを書き取る', 'Dictation: write down what you hear'),
     blurb: t('节奏点格、旋律轮廓、低音线和和弦进行的听写方法', 'リズムのドット・グリッド、旋律の輪郭、バスラインと和声進行の聴き方', 'Dot grids for rhythm, contour for melody, and how to take down bass lines and progressions'),
     cards: [

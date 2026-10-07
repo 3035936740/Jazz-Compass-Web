@@ -89,7 +89,7 @@ const load_chord_symbols_ui = () => import("./chord_symbols_ui.js?v=20261003-r32
 const mountChordSymbols = lazy(load_chord_symbols_ui, 'mountChordSymbols');
 const load_staff_reading_ui = () => import("./staff_reading_ui.js?v=20261005-q1");
 const mountStaffReading = lazy(load_staff_reading_ui, 'mountStaffReading');
-const load_learn_ui = () => import("./learn_ui.js?v=20261007-piano-sync1");
+const load_learn_ui = () => import("./learn_ui.js?v=20261007-listen-icon4");
 const mountLearn = lazy(load_learn_ui, 'mountLearn');
 const load_lcc_ui = () => import("./lcc_ui.js?v=20261002-i18n");
 const mountLccExplorer = lazy(load_lcc_ui, 'mountLccExplorer');
@@ -475,7 +475,7 @@ document.addEventListener("DOMContentLoaded", () => {
       id, name: window.__(`nav_${id}`) || id, intro: window.__(`intro_${id}`) || '',
       allNames: Object.values(window.__all?.(`nav_${id}`) || {}).join(' '),
     })),
-    units: () => import("./learn_content.js?v=20261007-piano-sync1").then((m) => [...m.UNITS, ...m.SIDES]), lang: window.__lang, anchor: document.getElementById('share-link'),
+    units: () => import("./learn_content.js?v=20261007-listen-icon4").then((m) => [...m.UNITS, ...m.SIDES]), lang: window.__lang, anchor: document.getElementById('share-link'),
   });
 
   const conv = new EnhancedChordConverter();
@@ -720,7 +720,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!button) return;
     const record = anyResume();
     button.hidden = !record || currentLearnFeature === 'learn';
-    if (record) button.title = window.__f('return_tutorial_title', { title: record.title, n: (record.position ?? 0) + 1, m: record.total ?? '?' });
+    if (record) {
+      const lang = window.__lang;
+      load_learn_ui().then(({ learnLevelTitle }) => {
+        if (window.__lang !== lang || anyResume()?.key !== record.key) return;
+        button.title = window.__f('return_tutorial_title', { title: learnLevelTitle(record.key, lang, record.title), n: (record.position ?? 0) + 1, m: record.total ?? '?' });
+      });
+    }
     // Side-B 有没做完的关卡（包括去工具里做实操的时候）：显示"回到 Side-B"
     const sideb = document.getElementById('return-sideb');
     if (sideb) {
@@ -759,6 +765,11 @@ document.addEventListener("DOMContentLoaded", () => {
     title.textContent = window.__('learn_confirm_title');
     const body = document.createElement('p');
     body.textContent = window.__f('learn_confirm_body', { title: record.title, n: (record.position ?? 0) + 1, m: record.total ?? '?' });
+    const lang = window.__lang;
+    load_learn_ui().then(({ learnLevelTitle }) => {
+      if (!layer.isConnected || window.__lang !== lang) return;
+      body.textContent = window.__f('learn_confirm_body', { title: learnLevelTitle(record.key, lang, record.title), n: (record.position ?? 0) + 1, m: record.total ?? '?' });
+    });
     const row = document.createElement('div');
     row.className = 'learn-confirm-actions';
     const make = (key, cls, action) => {

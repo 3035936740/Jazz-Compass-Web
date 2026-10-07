@@ -2,6 +2,7 @@
 const stroke = 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
 
 const PATHS = {
+  headphones: `<path d="M4 13v-2a8 8 0 0 1 16 0v2" ${stroke}/><rect x="3" y="12" width="4" height="8" rx="2" ${stroke}/><rect x="17" y="12" width="4" height="8" rx="2" ${stroke}/>`,
   speaker: `<path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" fill="currentColor"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" ${stroke}/>`,
   'speaker-off': `<path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" fill="currentColor"/><path d="M15.5 9.5l5 5M20.5 9.5l-5 5" ${stroke}/>`,
   play: '<path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/>',

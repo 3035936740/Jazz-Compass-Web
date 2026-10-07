@@ -1,7 +1,7 @@
 // 乐理闯关界面：关卡地图（主关 + 进阶分支 + 综合测验 + 结业挑战）、关卡播放器（引导卡 / 选择 / 填空 / 连线）、
 // 图示、提示与解析、去工具里看看（带学习记录，回来时还是同一题）、结算
 // 题目与依据见 learn_content.js / learn_units_*.js / learn_branches_*.js；生成题见 learn_generators.js；规则见 learn_engine.js
-import { UNITS, SECTIONS, SIDES } from './learn_content.js?v=20261007-piano-sync1';
+import { UNITS, SECTIONS, SIDES } from './learn_content.js?v=20261007-listen-icon4';
 import { createGuidePlayback, guideDemoEvents, guideDemoPreviewNotes } from './learn_guide_audio.js?v=20261007-piano-sync1';
 import { guideDemoForStep, withStepDemos, STEP_DEMOS, SHARED_DEMO_CARDS } from './learn_guide_demos.js?v=20261007-piano-sync1';
 import {
@@ -15,7 +15,7 @@ import { expandCards } from './learn_generators.js?v=20261006-clarity1';
 import { worksheetHTML, openWorksheet, printable } from './worksheet.js?v=20261004-y1';
 import { renderVisual } from './learn_visuals.js?v=20261007-piano-sync1';
 import { el, button, language, midiToFrequency, cite } from './module_kit.js';
-import { icon, withIcon } from './ui_icons.js?v=20261003-i2';
+import { icon, withIcon } from './ui_icons.js?v=20261007-listen-icon4';
 import { relatedLearnTools } from './learn_feature_unit.js?v=20261006-circle1';
 import { playFeedbackSound, sfxEnabled, setSfxEnabled } from './learn_sfx.js?v=20261006-guide-audio1';
 
@@ -106,6 +106,27 @@ const TEXT = {
     question: (a, b) => `Question ${a} / ${b}`, chapters: 'Chapters', resumeLabel: (title, a, b) => `Resume: ${title} (question ${a} / ${b})`, toolNote: 'After looking at the tool, press “Back to tutorial” at the top of the page to return to this question.',
   },
 };
+
+/** 从关卡 ID 生成当前语言的标题，旧存档里的标题可能属于另一个语言。 */
+export function learnLevelTitle(key, lang = 'zh', fallback = '') {
+  const text = TEXT[lang] || TEXT.en;
+  const pick = (value) => typeof value === 'string' ? value : value?.[lang] ?? value?.en ?? '';
+  if (key === 'review') return text.reviewTitle;
+  if (key === FINAL_KEY) return text.final;
+  if (key === FINAL_EX_KEY) return text.finalEx;
+  const chapter = parseChapterKey(key);
+  if (chapter) {
+    const section = SECTIONS.find((s) => s.id === chapter.sectionId);
+    return section ? `${pick(section.title)} · ${chapter.ex ? text.chapterTestEx : text.chapterTest}` : pick(fallback);
+  }
+  const { unitId, slot } = parseLevelKey(key);
+  const unit = [...UNITS, ...SIDES].find((u) => u.id === unitId);
+  if (!unit) return pick(fallback);
+  if (slot === 0) return pick(unit.title);
+  if (slot === MIX_SLOT) return `${pick(unit.title)} · ${text.mix}`;
+  const branch = unit.branch?.[slot - 1];
+  return branch ? `${pick(unit.title)} · ${text.adv(slot)}${lang === 'en' ? ': ' : '：'}${pick(branch.title)}` : pick(fallback);
+}
 
 /** 本模块引用的全部资料（用于脚注编号；生成题的资料在第一次出现时追加） */
 const SOURCES = [...new Set(UNITS.flatMap((u) => [u.cards, ...(u.branch || []).map((l) => l.cards)].flat().flatMap((c) => [].concat(c.ref ?? []))))];
@@ -240,8 +261,7 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
     if (chapter) { const section = SECTIONS.find((s) => s.id === chapter.sectionId); return { key, chapter, title: `${tx(section?.title)} · ${chapter.ex ? t.chapterTestEx : t.chapterTest}`, tone: section?.color || 'mint', feature: null }; }
     const { unitId, slot } = parseLevelKey(key);
     const unit = UNITS.find((u) => u.id === unitId) || SIDES.find((u) => u.id === unitId) || UNITS[0];
-    const branchLevel = slot > 0 && slot < MIX_SLOT ? unit.branch?.[slot - 1] : null;
-    const title = slot === 0 ? tx(unit.title) : `${tx(unit.title)} · ${slot === MIX_SLOT ? t.mix : `${t.adv(slot)}：${tx(branchLevel?.title)}`}`;
+    const title = learnLevelTitle(key, lang, tx(unit.title));
     return { key, unit, slot, title, tone: sectionOf(unit)?.color || 'mint', feature: unit.feature };
   }
   function cardsFor(key) {
@@ -292,7 +312,7 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
     if (sideBOpen()) actions.appendChild(withIcon(button('learn-btn sideb-entry', '', () => showSideB()), 'sparkle', t.sideB));
     const record = loadResume();
     if (record?.session) {
-      const resume = withIcon(button('learn-btn resume wide', '', () => target.resume()), 'replay', t.resumeLabel(record.title, (record.position ?? 0) + 1, record.total ?? '?'));
+      const resume = withIcon(button('learn-btn resume wide', '', () => target.resume()), 'replay', t.resumeLabel(learnLevelTitle(record.key, lang, record.title), (record.position ?? 0) + 1, record.total ?? '?'));
       actions.prepend(resume);
     }
     if (review.length) {
@@ -349,6 +369,7 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
         const node = el('div', `learn-node offset-${k % 4}${unlocked ? '' : ' is-locked'}${state?.done ? ' is-done' : ''}${i === next ? ' is-next' : ''}`);
         node.style.setProperty('--i', String(k));
         const bubble = button('learn-bubble', unlocked ? u.icon : '', () => toggleSheet(node, () => unitSheet(u, i, unlocked)));
+        if (unlocked && u.iconName) bubble.appendChild(icon(u.iconName));
         if (!unlocked) bubble.appendChild(icon('lock'));
         // 图标文字较长（如 Dm13、(037)）时缩小字号，避免撑出圆形按钮
         const iconLength = [...u.icon].length;
@@ -568,6 +589,7 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
     const sheet = el('div', 'learn-sheet learn-level-card');
     const head = el('div', 'learn-card-head');
     head.append(el('span', 'learn-card-icon', unit.icon), el('div', 'learn-card-heading'));
+    if (unit.iconName) head.firstChild.appendChild(icon(unit.iconName));
     head.lastChild.append(el('strong', '', tx(unit.title)), el('p', '', tx(unit.blurb)));
     sheet.appendChild(head);
     if (!unlocked) { sheet.appendChild(el('p', 'learn-muted', lockedText)); return sheet; }
@@ -675,6 +697,7 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
       });
     });
     if (!open) bubble.appendChild(icon('lock'));
+    else if (side.iconName) bubble.appendChild(icon(side.iconName));
     bubble.setAttribute('aria-label', `${t.side} · ${tx(side.title)}${open ? '' : ` · ${lockedText}`}`);
     bubble.title = open ? tx(side.title) : lockedText;
     const pips = el('div', 'learn-pips');
