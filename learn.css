@@ -557,7 +557,7 @@ line.lv-ruler { stroke: var(--theme-line-strong); stroke-width: 2; }
 .sideb-hero::after { content: "B"; position: absolute; right: 18px; top: -10px; font: 900 120px/1 var(--font-display, inherit); color: var(--brass-b); opacity: .1; pointer-events: none; }
 .sideb-hero-text h3 { margin: 4px 0 2px; font: 800 30px/1.1 var(--font-display, inherit); }
 .sideb-hero-text p { margin: 0; color: var(--ink-soft); }
-.sideb-stats { display: flex; flex-wrap: wrap; gap: 8px; }
+.sideb-stats { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .sideb-stat { padding: 4px 12px; border-radius: 999px; background: rgba(156, 101, 13, .12); color: var(--brass-b); font-weight: 700; font-size: 13px; }
 .sideb-hero-actions, .sideb-sheet-actions, .sideb-results-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .sideb-mastery { display: grid; gap: 6px; }
@@ -743,7 +743,7 @@ line.lv-ruler { stroke: var(--theme-line-strong); stroke-width: 2; }
   background-size: 100% 104px;
 }
 .sideb-book { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 0; margin-top: 10px; }
-.sideb-stage { position: relative; z-index: 2; display: grid; perspective: 1800px; perspective-origin: 50% 0; }
+.sideb-stage { position: relative; z-index: 2; display: grid; align-items: start; perspective: 1800px; perspective-origin: 50% 0; }
 .sideb-stage > .sideb-page { grid-area: 1 / 1; }
 .sideb-binding { position: absolute; z-index: 4; top: -9px; left: 7%; right: 7%; display: flex; justify-content: space-between; pointer-events: none; }
 .sideb-ring { width: 12px; height: 22px; border: 3px solid #a3a9b8; border-radius: 7px; background: linear-gradient(90deg, rgba(255, 255, 255, .5), transparent 60%); box-shadow: 0 1px 2px rgba(20, 24, 40, .25); }
@@ -780,7 +780,7 @@ line.lv-ruler { stroke: var(--theme-line-strong); stroke-width: 2; }
 .sideb-tab-name { font-size: 11px; font-weight: 700; opacity: .9; white-space: nowrap; }
 
 /* 封面与目录 */
-.sideb-cover { display: grid; gap: 14px; }
+.sideb-cover { display: grid; align-content: start; gap: 14px; }
 .sideb-cover-title { text-align: center; padding: 6px 0 4px; border-bottom: 3px double var(--ink); }
 .sideb-cover-title h3 { margin: 6px 0 4px; font: 700 40px/1.1 var(--serif); letter-spacing: .12em; }
 .sideb-cover-title p { margin: 0 0 10px; color: var(--ink-soft); font-family: var(--serif); font-style: italic; }

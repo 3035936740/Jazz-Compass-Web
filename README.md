@@ -79,9 +79,39 @@ When opened over **https** or **http://localhost**, the toolbox registers a serv
 
 Theory Quest also has 17 side quests (支线大关卡) beside their parent units (cadences 2, meter 2, dictation, modes 2, pentatonic harmony, voice-leading rules, schemas 1–2, Rule of the Octave, chord symbols vs Roman numerals, motif development, phrase structure 2, sequences and distant modulation, canon, blues 2, reharmonization, turnarounds). A side quest opens after its parent unit is completely cleared (main level, advanced 1–4 and the mixed test); it does not count toward the main route or the normal final (44 main + 6 advanced questions), but the EX final (45 advanced incl. side quests + 5 main) requires all of them. Each of the six chapters ends with a chapter test (20 random questions: 18 main + 2 advanced, no side quests; opens after the chapter's main levels) and an EX chapter test (30: 25 advanced incl. the chapter's side quests + 5 main; opens after every level of the chapter, its side quests and the chapter test). On the map the chapter test ends each chapter's path and the trail continues from it to the next chapter's first level (the last chapter leads to the final); the EX chapter test hangs beside it as a branch, like a side quest. The four exams look different: chapter test = rounded square in the chapter colour with a dashed ring and a flag; EX chapter test = the same square in a deeper shade with a white inner ring, a solid outer ring, a slowly turning medal-like toothed edge and a summit icon; final = large gold circle with a trophy; EX final = the largest, deeper gold with the same rings and toothed edge and a crown.
 
-Side-B (in progress; see `SIDE_B_DESIGN.md`) opens after the EX final: the Theory Quest hero gets a “Flip to Side-B” button that turns the whole map over to a 6-chapter, 43-level Deep Mode (two pilot levels so far: B2-4 four-part writing and B4-10 polyrhythm / metric modulation). Each level runs discover → explain → experiment → challenge → lab, has an “aha” moment and a breakthrough moment, and a score under 60% leads to a short recovery challenge on the weak skill instead of a restart. Its practical labs score a tool’s content against a 100-point rubric instead of an exact answer: small mistakes cost named points (for example “−20 Parallel fifth: Soprano/Bass, V7 → I”), and only a fatal error such as a wrong chord function blocks the pass. Open a lab directly with `#staff?q=@lab:vl-ii6-V7-I`, `#staff?q=@lab:jazz-ii-V-I-rootless`, `#staff?q=@lab:rhythm-sync-2bars` or `#rhythm?q=@lab:poly-32-mm`; append `@chapter` or `@ex` for the chapter-test and B-EX modes.
+### Side-B (Deep Mode)
 
-Theory Quest has a debug mode for testing: open the browser console and run `class_debug(true)` (and `class_debug(false)` to leave). It unlocks every level including the EX final, adds skip / answer-correctly / answer-wrongly buttons to each card, and puts a panel on the map to set a whole section to 1–3 stars, clear everything with 3 stars, or erase all records. The setting is stored in `localStorage` (`jc-learn-debug`). The same switch reveals Side-B (otherwise hidden until the EX final is cleared) and gives it its own debug panel (per-chapter 1–3★, all 3★, erase Side-B records or breakthroughs) and a per-step bar (skip, answer right / wrong — including tapping — set the lab to 100 / 40 / fatal, jump to results). While a Side-B level is unfinished, every tool page shows a gold “Back to Side-B” button next to “Back to tutorial”.
+Side-B is complete: **6 chapters, 43 playable regular levels and 42 extension levels**, with Chinese, Japanese and English content. It opens after clearing Theory Quest's Side-A EX final: choose **Flip to Side-B** on the map. Deep Mode develops the reasoning and practical use behind familiar concepts through listening, calculation, analysis and writing. The score-book interface has a contents page, chapter bookmarks and animated page turns; it remembers the last page and lets you return to Side-A.
+
+| Chapter | Focus | Regular levels |
+|---|---|---:|
+| B1 · Basics | Hear, write and count precisely | 7 |
+| B2 · Harmony | From analysis to writing | 12 |
+| B3 · Melody & voices | The logic of musical lines | 5 |
+| B4 · Rhythm & jazz | Hear it, tap it, play it | 10 |
+| B5 · World music & tuning | Compare systems and calculate temperaments | 4 |
+| B6 · 20th century & microtones | From pitch-class calculation to analysis | 5 |
+
+**Level flow and progress.** Regular levels follow discover → explain → experiment → challenge, with a practical lab on selected levels. Interactive experiments, worked examples and short unscored exercises lead into spelling, multi-step derivation, analysis, listening and tapping challenges. Clear a regular level to open the next regular level and its extension, where available. Extensions revisit the corresponding Side-A advanced material in depth; lessons that preview later topics identify where those topics are formally developed. Progress, checkpoints, lab score sheets, skill mastery and breakthrough moments are saved locally. Opening a tool keeps the unfinished lesson available through **Back to Side-B**.
+
+**Scoring and recovery.** A total score of at least 60% earns Clear. Side-B uses letter grades: A+ ≥ 95%, A ≥ 85%, B ≥ 75%, C ≥ 60%; an unsuccessful attempt receives D or E. For regular levels with labs, challenges count for 60% and labs for 40%; without labs, challenges count for the whole score. Every required lab must also meet its own threshold and have no fatal errors. Labs use 100-point rubrics with partial credit and deductions tied to specific mistakes. If the challenge needs work, a short recovery challenge targets weak skills while preserving the lesson checkpoints; if a lab falls short, return to the tool to revise it. Retakes draw new question variants.
+
+**Exams.** Chapter and final exams each draw **16 challenges**, prioritising multi-step tasks where the pool permits. Required labs count for 60% of an exam's total and challenges for 40%; exams without labs are scored entirely on challenges. Every exam has a 60% pass line. Chapter exams are optional for continuing the regular route.
+
+| Exam | Unlock condition | Challenge mix (B regular / B extension / Side-A) | Labs |
+|---|---|---|---|
+| Chapter test | Clear every regular level in the chapter | 12 / 2 / 2 | Up to 2 from that chapter |
+| EX chapter test | Clear every regular and available extension level in the chapter, with chapter average ≥ 60% | 2 / 12 / 2 | Up to 2 from that chapter |
+| Final | Pass all six chapter tests | 12 / 2 / 2 | 3 from different chapters |
+| EX Final | Pass all six chapter tests and all six EX chapter tests | 2 / 12 / 2 | 3 from different chapters |
+
+Chapter averages use each regular and available extension level's best score; unplayed levels count as zero. The EX chapter test does not require passing the ordinary chapter test first. In ordinary chapter tests and the Final, the two extension questions target higher grades: core mastery retains a passing challenge score even if those extension answers are wrong, while the required labs must still pass. Chapters with fewer labs use what is available (B1 has one; B5 has none).
+
+**Lab modes.** Regular-level labs require ≥ 50% and allow repeated checks with advice. Ordinary chapter/final labs require ≥ 60%, allow up to three checks and identify deductions without suggesting fixes. EX chapter/final labs require ≥ 70%, provide no pre-submission checks and allow one submission per attempt; the full score sheet appears afterwards. Example direct links: `#staff?q=@lab:vl-ii6-V7-I`, `#staff?q=@lab:jazz-ii-V-I-rootless`, `#staff?q=@lab:rhythm-sync-2bars` and `#rhythm?q=@lab:poly-32-mm`; append `@chapter` or `@ex` for the corresponding exam lab mode.
+
+**Worksheets and certificates.** Regular levels, extensions and exams can print worksheets with separate answers, explanations and sources; audio-only, tapping and tool-lab tasks are marked as activities to complete on screen. Passing the Final or EX Final awards the corresponding printable certificate, with an optional name stored only on the device. See [`SIDE_B_DESIGN.md`](SIDE_B_DESIGN.md) for the course design; the rules and counts above describe the current implementation.
+
+Theory Quest has a debug mode for testing: open the browser console and run `class_debug(true)` (and `class_debug(false)` to leave). It unlocks every level including the EX final, adds skip / answer-correctly / answer-wrongly buttons to each card, and puts a panel on the map to set a whole section to 1–3 stars, clear everything with 3 stars, or erase all records. The setting is stored in `localStorage` (`jc-learn-debug`). The same switch reveals Side-B (otherwise hidden until the EX final is cleared) and gives it its own debug panel (per-chapter C / B / A+ grades, all A+, erase Side-B records or breakthroughs) and a per-step bar (skip, answer right / wrong — including tapping — set the lab to 100 / 40 / fatal, jump to results). While a Side-B level is unfinished, every tool page shows a gold “Back to Side-B” button next to “Back to tutorial”.
 
 ## Technical Architecture
 
@@ -138,7 +168,10 @@ Theory Quest has a debug mode for testing: open the browser console and run `cla
 ├── lab_checks.js         # Practical-lab scoring: 100-point rubrics with partial credit and a few fatal conditions (four-part, jazz voicing, rhythm, polyrhythm grid, metric modulation, set class)
 ├── sideb_labs.js, lab_banner.js # Lab registry and the in-tool lab bar (score sheet, practice / chapter / B-EX modes, breakthrough moment)
 ├── sideb_content.js, sideb_units_*.js # Side-B map (6 chapters, 43 levels) and level content
-├── sideb_ui.js, sideb_toys.js, sideb_fx.js # Side-B flip map, level player, results, recovery; experiments (four-part voice-leading board, polyrhythm grid, two-hand tap pad); breakthrough pop-up
+├── sideb_ext_*.js        # 42 Side-B extension levels, with previews linking to later lessons
+├── sideb_exam_tasks.js   # Multi-step chapter tasks drawn into the 16-challenge chapter and final exams
+├── sideb_ui.js, sideb_toys.js, sideb_fx.js # Score-book map, chapter bookmarks and page turns; level player, results, recovery and interactive experiments
+├── sideb_print.js, sideb_cert.js # Side-B worksheets with answers and sources; printable Final / EX Final certificates
 ├── learn_sfx.js          # Tutorial answer sounds (synthesized right/wrong chimes, mute toggle stored in localStorage)
 ├── ui_icons.js           # Inline SVG icons used instead of emoji
 ├── scripts/annotate-learn.mjs # Regenerates the tutorial’s ref lists and references.js usedIn
