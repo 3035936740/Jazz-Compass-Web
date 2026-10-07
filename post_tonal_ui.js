@@ -145,7 +145,7 @@ export function mountPostTonal(target, { playChord }) {
     convention.append(option('fixed', t.fixed), option('moveable', t.moveable));
     const names = el('input');
     names.type = 'checkbox';
-    const namesLabel = el('label', 'jazz-check');
+    const namesLabel = el('label', 'posttonal-names-toggle');
     namesLabel.append(names, el('span', '', t.names));
     const controls = el('div', 'mk-controls');
     controls.append(field(t.row, input, 'mk-grow'), field(t.convention, convention), namesLabel);

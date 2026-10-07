@@ -9,7 +9,7 @@ import { mountSiteSearch } from "./site_search.js?v=20261003-s4";
 import { satbToVoices, sendToStaff } from "./staff_handoff.js?v=20261003-h1";
 import { loadResume, clearResume } from "./learn_engine.js?v=20261006-circle1";
 import { EnhancedChordConverter, JazzBrain, ClassicalHarmonyConnector } from "./jazz_compass.js?v=20261004-w7";
-import * as lang from "./lang.js?v=20261006-multi-fix1";
+import * as lang from "./lang.js?v=20261007-language-select3";
 import { drawClassicalStaff } from "./classical_staff.js?v=20261004-m5";
 import { renderChordConversion } from "./chord_convert_panel.js?v=20261006-guide-audio1";
 
@@ -59,7 +59,7 @@ const load_figured_bass_ui = () => import("./figured_bass_ui.js?v=20261004-w8");
 const mountFiguredBass = lazy(load_figured_bass_ui, 'mountFiguredBass');
 const load_jazz_more_ui = () => import("./jazz_more_ui.js?v=20261002-quest");
 const mountJazzMore = lazy(load_jazz_more_ui, 'mountJazzMore');
-const load_post_tonal_ui = () => import("./post_tonal_ui.js?v=20261002-quest");
+const load_post_tonal_ui = () => import("./post_tonal_ui.js?v=20261007-row-toggle1");
 const mountPostTonal = lazy(load_post_tonal_ui, 'mountPostTonal');
 const load_temperaments_ui = () => import("./temperaments_ui.js?v=20261002-quest");
 const mountTemperaments = lazy(load_temperaments_ui, 'mountTemperaments');

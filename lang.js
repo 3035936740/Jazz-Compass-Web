@@ -670,25 +670,57 @@ function applyTranslations() {
     });
 }
 
-// 侧栏的语言切换（和"界面""音名记法"一样的分段按钮）：点了就存起来并重新载入（各个工具都是挂载时按语言生成文字的，重新载入最稳妥）
+// 桌面与移动端共用语言下拉框；保存选择并重新载入，让每个工具按新语言重新挂载。
 function bindLanguageSelect() {
-    const buttons = [...document.querySelectorAll('.lang-btn')];
-    buttons.forEach((button) => {
-        const active = button.getAttribute('data-lang-value') === langPref;
-        button.classList.toggle('active', active);
-        button.setAttribute('aria-pressed', String(active));
-        if (button.getAttribute('data-bound')) return;
-        button.setAttribute('data-bound', '1');
-        button.addEventListener('click', () => {
-            const chosen = button.getAttribute('data-lang-value');
-            if (chosen === langPref) return;
-            try {
-                if (chosen === 'auto') localStorage.removeItem(LANG_KEY);
-                else localStorage.setItem(LANG_KEY, chosen);
-            } catch (_) { /* ignore */ }
-            location.reload();
-        });
+    const trigger = document.getElementById('language-select');
+    const menu = document.getElementById('language-options');
+    if (!trigger || !menu) return;
+    const options = [...menu.querySelectorAll('[data-lang-value]')];
+    options.forEach((option) => {
+        option.setAttribute('aria-selected', String(option.dataset.langValue === langPref));
+        option.setAttribute('aria-label', option.textContent);
     });
+    document.getElementById('language-current').textContent = options.find((option) => option.dataset.langValue === langPref)?.textContent || window.__('lang_auto');
+    if (trigger.getAttribute('data-bound')) return;
+    trigger.setAttribute('data-bound', '1');
+    const close = (focus = false) => {
+        menu.hidden = true;
+        trigger.setAttribute('aria-expanded', 'false');
+        if (focus) trigger.focus();
+    };
+    const open = () => {
+        menu.hidden = false;
+        trigger.setAttribute('aria-expanded', 'true');
+        options.find((option) => option.dataset.langValue === langPref)?.focus();
+    };
+    trigger.addEventListener('click', () => menu.hidden ? open() : close());
+    trigger.addEventListener('keydown', (event) => {
+        if (!['ArrowDown', 'ArrowUp'].includes(event.key)) return;
+        event.preventDefault();
+        open();
+    });
+    options.forEach((option) => option.addEventListener('click', () => {
+        const chosen = option.dataset.langValue;
+        close(true);
+        if (chosen === langPref) return;
+        try {
+            if (chosen === 'auto') localStorage.removeItem(LANG_KEY);
+            else localStorage.setItem(LANG_KEY, chosen);
+        } catch (_) { /* ignore */ }
+        location.reload();
+    }));
+    menu.addEventListener('keydown', (event) => {
+        const index = options.indexOf(document.activeElement);
+        if (event.key === 'Escape') { event.preventDefault(); close(true); }
+        else if (event.key === 'Tab') close();
+        else if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+            event.preventDefault();
+            const next = event.key === 'Home' ? 0 : event.key === 'End' ? options.length - 1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + options.length) % options.length;
+            options[next].focus();
+        }
+    });
+    document.addEventListener('pointerdown', (event) => { if (!trigger.parentElement.contains(event.target)) close(); });
+    document.addEventListener('focusin', (event) => { if (!trigger.parentElement.contains(event.target)) close(); });
 }
 
 // if DOM already loaded, apply immediately, otherwise wait

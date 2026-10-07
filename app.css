@@ -400,7 +400,7 @@ input[type="range"] { min-height: 0; padding: 0; border: 0; background: transpar
     border-radius: var(--r-sm);
     background: rgba(255, 255, 255, .06);
 }
-.theme-btn, .notation-btn, .lang-btn {
+.theme-btn, .notation-btn {
     min-height: 28px;
     padding: 0 10px;
     border: 0;
@@ -411,11 +411,63 @@ input[type="range"] { min-height: 0; padding: 0; border: 0; background: transpar
     white-space: nowrap;
     transition: background-color .15s ease, color .15s ease;
 }
-.theme-btn:hover, .notation-btn:hover, .lang-btn:hover { color: var(--rail-strong); }
-.theme-btn.active, .notation-btn.active, .lang-btn.active { background: rgba(255, 255, 255, .16); color: var(--rail-strong); font-weight: 600; }
-.theme-btn:focus-visible, .notation-btn:focus-visible, .lang-btn:focus-visible { outline-color: var(--rail-brass); }
-/* 语言有四个选项：按钮窄一点，免得英文界面里 "Language" 加四个按钮超出侧栏宽度 */
-.lang-btn { padding: 0 8px; min-width: 28px; }
+.theme-btn:hover, .notation-btn:hover { color: var(--rail-strong); }
+.theme-btn.active, .notation-btn.active { background: rgba(255, 255, 255, .16); color: var(--rail-strong); font-weight: 600; }
+.theme-btn:focus-visible, .notation-btn:focus-visible { outline-color: var(--rail-brass); }
+.language-picker { position: relative; z-index: 40; flex: none; width: 112px; }
+.language-select {
+    width: 100%;
+    min-width: 0;
+    min-height: 32px;
+    box-sizing: border-box;
+    padding: 0 26px 0 10px;
+    border: 1px solid var(--rail-line);
+    border-radius: var(--r-sm);
+    background: rgba(255, 255, 255, .06) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23bfc6d8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 8px center;
+    color: var(--rail-strong);
+    font: 500 12px var(--font-ui);
+    appearance: none;
+    cursor: pointer;
+    text-align: left;
+}
+.language-select:hover { border-color: var(--rail-brass); }
+.language-select:focus-visible { outline: 2px solid var(--rail-brass); outline-offset: 2px; }
+.language-options {
+    position: absolute;
+    z-index: 100;
+    top: calc(100% + 6px);
+    right: 0;
+    display: grid;
+    gap: 2px;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 4px;
+    border: 1px solid var(--rail-line);
+    border-radius: var(--r-sm);
+    background: var(--rail-bg);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
+}
+.language-options[hidden] { display: none; }
+.language-options button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+    min-height: 34px;
+    padding: 6px 8px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--rail-text);
+    font: 500 12px var(--font-ui);
+    text-align: left;
+    cursor: pointer;
+}
+.language-options button:hover, .language-options button:focus-visible { background: var(--rail-hover); color: var(--rail-strong); outline: none; }
+.language-options button[aria-selected="true"] { background: var(--rail-active); color: var(--rail-strong); }
+.language-options button[aria-selected="true"]::after { content: "✓"; color: var(--rail-brass); }
+@media (min-width: 901px) { .language-options { top: auto; bottom: calc(100% + 6px); } }
 
 /* Global audio controls in the rail */
 .audio-controls { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; }
@@ -1501,6 +1553,63 @@ tr.deg-aug { --deg-color: var(--brass); }
 .mk-controls label { display: grid; gap: 6px; min-width: min(100%, 150px); color: var(--theme-muted); font-size: 12.5px; font-weight: 500; }
 .mk-controls label.mk-grow { flex: 1 1 260px; }
 .mk-controls :is(select, input:not([type="checkbox"]):not([type="radio"]):not([type="range"])) { width: 100%; }
+/* 工具中的复选选项共用开关样式，覆盖普通字段的纵向布局。
+   五度圈的加七音控件已有独立开关样式，保留其布局。 */
+.workspace label:has(> input[type="checkbox"]):not(.circle-seventh-option) {
+    display: inline-flex;
+    flex: 0 1 auto;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 38px;
+    box-sizing: border-box;
+    padding: 0 10px;
+    border: 1px solid var(--theme-line-strong);
+    border-radius: var(--r-sm);
+    background: var(--theme-panel);
+    color: var(--theme-text);
+    font-size: 12.5px;
+    font-weight: 500;
+    line-height: 1.35;
+    cursor: pointer;
+    white-space: normal;
+}
+.workspace label:not(.circle-seventh-option) > input[type="checkbox"] {
+    position: relative;
+    flex: 0 0 30px;
+    width: 30px;
+    min-width: 30px;
+    height: 18px;
+    min-height: 0;
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    border-radius: 999px;
+    appearance: none;
+    -webkit-appearance: none;
+    background: var(--theme-line-strong);
+    cursor: pointer;
+    transition: background-color .15s ease;
+}
+.workspace label:not(.circle-seventh-option) > input[type="checkbox"]::before {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .15);
+    transition: transform .15s ease;
+}
+.workspace label:not(.circle-seventh-option) > input[type="checkbox"]:checked { background: var(--theme-accent); }
+.workspace label:not(.circle-seventh-option) > input[type="checkbox"]:checked::before { transform: translateX(12px); }
+.workspace label:not(.circle-seventh-option) > input[type="checkbox"]:focus-visible { outline: 2px solid var(--theme-accent); outline-offset: 3px; }
+.workspace label:has(> input[type="checkbox"]:disabled):not(.circle-seventh-option) { opacity: .55; cursor: not-allowed; }
+.workspace label > input[type="checkbox"]:disabled { cursor: not-allowed; }
 .mk-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .mk-summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; }
 .mk-summary strong { font: 700 26px/1.2 var(--font-display); }
@@ -1704,10 +1813,13 @@ button.mk-note:hover { border-color: var(--theme-accent); }
         grid-template-rows: auto auto auto minmax(0, 1fr);
         grid-template-areas: "brand" "settings" "nav" "main";
     }
-    .rail-settings { padding: 0 12px 12px; gap: 8px; }
+    .rail-settings { padding: 0 12px 12px; gap: 6px; }
     .rail-settings > * { flex: 0 0 auto; }
-    .theme-btn, .notation-btn { padding: 0 8px; font-size: 11.5px; }
-    .lang-btn { padding: 0 6px; font-size: 11.5px; }
+    .theme-btn, .notation-btn { padding: 0 6px; font-size: 11.5px; }
+    .rail-settings .audio-stop-btn { padding: 0 6px; }
+    .language-picker { width: 82px; }
+    .language-select { padding-left: 8px; padding-right: 20px; background-position: right 6px center; font-size: 11.5px; }
+    .language-options button { font-size: 11.5px; }
     .workspace { padding: 20px 12px 24px; }
     .panel { border-radius: var(--r-md); }
     .panel-header { padding: 14px; gap: 10px; }
@@ -2161,7 +2273,7 @@ button.mk-note:hover { border-color: var(--theme-accent); }
 .mp-unit.is-expanded { border-color: var(--brass); background: var(--brass-wash); }
 .mp-phrase-out { display: grid; gap: 10px; overflow-x: auto; }
 .pm-board { display: grid; gap: 6px; overflow-x: auto; }
-.pm-row { display: grid; grid-template-columns: 110px 70px minmax(0, 1fr); align-items: center; gap: 8px; }
+.pm-row { display: grid; grid-template-columns: 110px max-content minmax(0, 1fr); align-items: center; gap: 8px; }
 .pm-label { color: var(--theme-muted); font-size: 12.5px; }
 .pm-cells { display: grid; grid-template-columns: repeat(var(--n), minmax(22px, 1fr)); gap: 3px; }
 .pm-cell { display: grid; place-items: center; min-height: 30px; border-radius: 6px; background: var(--theme-panel); border: 1px dashed var(--theme-line); color: var(--theme-muted); font-size: 11px; }

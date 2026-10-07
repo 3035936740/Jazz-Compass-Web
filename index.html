@@ -8,12 +8,12 @@
         try { document.documentElement.dataset.theme = localStorage.getItem('jazz-compass-theme') || 'light'; }
         catch { document.documentElement.dataset.theme = 'light'; }
     </script>
-    <script type="module" src="./script.js?v=20261007-listen-icon4"></script>
+    <script type="module" src="./script.js?v=20261007-row-toggle1"></script>
     <title>Music Theory Toolbox</title>
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="icon" href="./icon.svg" type="image/svg+xml">
     <meta name="theme-color" content="#10162e">
-    <link rel="stylesheet" href="./app.css?v=20261007-mobile-resume1">
+    <link rel="stylesheet" href="./app.css?v=20261007-option-toggles1">
     <link rel="stylesheet" href="./microtonal.css?v=20261001-ui">
     <link rel="stylesheet" href="./lcc.css?v=20261001-ui">
     <link rel="stylesheet" href="./blues.css?v=20261001-ui">
@@ -132,13 +132,16 @@
                         <button class="notation-btn" type="button" data-notation="sharps" aria-pressed="false"><span id="notation_sharps">♯ 升号</span></button>
                     </div>
                 </div>
-                <div class="lang-switch segmented" role="group" aria-label="界面语言" data-i18n-attr="aria-label:ui_language">
+                <div class="lang-switch segmented">
                     <span class="control-label" id="label_language">语言</span>
-                    <div class="segmented-track">
-                        <button class="lang-btn" type="button" data-lang-value="auto" aria-pressed="false" title="跟随浏览器语言" data-i18n-attr="title:ui_lang_auto_title"><span id="lang_auto">自动</span></button>
-                        <button class="lang-btn" type="button" data-lang-value="zh" aria-pressed="false" title="中文" lang="zh-CN">中</button>
-                        <button class="lang-btn" type="button" data-lang-value="ja" aria-pressed="false" title="日本語" lang="ja">日</button>
-                        <button class="lang-btn" type="button" data-lang-value="en" aria-pressed="false" title="English" lang="en">EN</button>
+                    <div class="language-picker">
+                        <button id="language-select" class="language-select" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="language-options" aria-label="界面语言" data-i18n-attr="aria-label:ui_language"><span id="language-current">自动</span></button>
+                        <div id="language-options" class="language-options" role="listbox" aria-label="界面语言" data-i18n-attr="aria-label:ui_language" hidden>
+                            <button type="button" role="option" data-lang-value="auto" aria-selected="false" tabindex="-1"><span id="lang_auto">自动</span></button>
+                            <button type="button" role="option" data-lang-value="zh" aria-selected="false" tabindex="-1" lang="zh-CN">中文</button>
+                            <button type="button" role="option" data-lang-value="ja" aria-selected="false" tabindex="-1" lang="ja">日本語</button>
+                            <button type="button" role="option" data-lang-value="en" aria-selected="false" tabindex="-1" lang="en">English</button>
+                        </div>
                     </div>
                 </div>
             </div>
