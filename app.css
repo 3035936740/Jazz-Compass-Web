@@ -1815,6 +1815,7 @@ button.mk-note:hover { border-color: var(--theme-accent); }
     }
     .rail-settings { padding: 0 12px 12px; gap: 6px; }
     .rail-settings > * { flex: 0 0 auto; }
+    .rail-settings .lang-switch { margin-left: auto; }
     .theme-btn, .notation-btn { padding: 0 6px; font-size: 11.5px; }
     .rail-settings .audio-stop-btn { padding: 0 6px; }
     .language-picker { width: 82px; }
