@@ -6,6 +6,11 @@ export const FEATURE_UNIT = {
   counterpoint: 'counterpoint', nonchord: 'nonchord', harmonize: 'functions',
   form: 'form', rhythm: 'rhythm', progression: 'cadences', ear: 'intervals', instruments: 'instruments', fretboard: 'fretboard',
   chinese: 'heptatonic', micro: 'micro', temperaments: 'temperaments', world: 'world',
+  nonfunctional: 'nonfunctional',
+  polytonality: 'polytonality',
+  atonality: 'atonality',
+  spectralharmony: 'spectralharmony',
+  microtonalharmony: 'microtonalharmony',
   posttonal: 'posttonal', chordsymbols: 'symbols', ref: 'modes', other: 'keycenter',
 };
 

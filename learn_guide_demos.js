@@ -1,6 +1,6 @@
 // 逐步听例与同一张卡的讲解对应；事实依据沿用题卡的 ref。
 // 不从高亮部件猜音频：圈住特征音并不等于只播放那个音。
-import { guideDemoEvents } from './learn_guide_audio.js?v=20261007-piano-sync1';
+import { guideDemoEvents } from './learn_guide_audio.js?v=20261008-beginner2';
 
 const ORIGINAL = 'original';
 const melody = (notes, chord) => ({ play: notes.map((n) => [n]), ...(chord ? { chord } : {}) });

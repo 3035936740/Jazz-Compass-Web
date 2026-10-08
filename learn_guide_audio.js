@@ -3,8 +3,8 @@
 export function guideDemoEvents(demo) {
   if (!demo) return [];
   const beat = 60000 / (demo.bpm || 100);
-  if (demo.events) return demo.events.map(({ at, notes, beats, velocity }) => ({
-    at: at * beat, notes, duration: beats * beat / 1000 * 0.94, ...(velocity ? { velocity } : {}),
+  if (demo.events) return demo.events.map(({ at, notes, beats, velocity, targets, caption }) => ({
+    at: at * beat, notes, duration: beats * beat / 1000 * 0.94, ...(velocity ? { velocity } : {}), ...(targets ? { targets, caption } : {}),
   })).sort((a, b) => a.at - b.at);
   const single = demo.play.every((notes) => notes.length <= 1);
   const gap = single ? 300 : 820;
@@ -30,19 +30,26 @@ export function guideDemoPreviewNotes(demo) {
 }
 
 /** 更换讲解步骤：正在播放时立即改播新示例，否则只更新下次播放内容。 */
-export function createGuidePlayback({ playChord, stopAudio, onNotesChange = () => {}, setTimer = setTimeout, clearTimer = clearTimeout }) {
+export function createGuidePlayback({ playChord, stopAudio, onNotesChange = () => {}, onTargetsChange = () => {}, setTimer = setTimeout, clearTimer = clearTimeout }) {
   let demo = null;
   let running = false;
   let generation = 0;
   let timers = [];
   const activeNotes = new Map();
-  const showActive = () => onNotesChange([...activeNotes.keys()].sort((a, b) => a - b), { playing: true });
+  const activeEvents = new Map();
+  const showActive = () => {
+    onNotesChange([...activeNotes.keys()].sort((a, b) => a - b), { playing: true });
+    const active = [...activeEvents.values()];
+    onTargetsChange([...new Set(active.flatMap(e => e.targets || []))], { playing: true, caption: active.at(-1)?.caption || demo?.caption });
+  };
   function stop() {
     generation += 1;
     timers.forEach(clearTimer);
     timers = [];
     running = false;
     activeNotes.clear();
+    activeEvents.clear();
+    onTargetsChange([], { playing: false });
     onNotesChange([], { playing: false });
     stopAudio();
   }
@@ -56,11 +63,13 @@ export function createGuidePlayback({ playChord, stopAudio, onNotesChange = () =
       timers.push(setTimer(() => {
         if (token !== generation) return;
         playChord(event.notes.map((n) => 440 * 2 ** ((n - 69) / 12)), event.duration, { interrupt: i === 0, ...(event.velocity ? { velocity: event.velocity } : {}) });
+        activeEvents.set(i, event);
         event.notes.forEach((note) => activeNotes.set(note, (activeNotes.get(note) || 0) + 1));
         showActive();
       }, event.at));
       timers.push(setTimer(() => {
         if (token !== generation) return;
+        activeEvents.delete(i);
         event.notes.forEach((note) => {
           const count = activeNotes.get(note) - 1;
           if (count > 0) activeNotes.set(note, count);
@@ -75,6 +84,8 @@ export function createGuidePlayback({ playChord, stopAudio, onNotesChange = () =
     timers.push(setTimer(() => {
       if (token !== generation) return;
       running = false;
+      activeEvents.clear();
+      onTargetsChange([], { playing: false, finished: true });
       onNotesChange([...new Set(finalNotes)], { playing: false });
     }, end));
   }

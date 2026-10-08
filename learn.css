@@ -1066,3 +1066,43 @@ line.lv-ruler { stroke: var(--theme-line-strong); stroke-width: 2; }
 .sideb-grad.is-still *, .sideb-grad.is-still { animation: none !important; }
 @media (prefers-reduced-motion: reduce) { .sideb-grad, .sideb-grad * { animation: none !important; } }
 .sideb-print { justify-self: start; font-size: 13px; }
+
+/* Modern harmony experiments: allow long translated labels and frequency reports on narrow screens. */
+.sideb-modern-toy { min-width: 0; }
+.sideb-modern-controls { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 12px; align-items: end; }
+.sideb-modern-controls label { display: grid; min-width: 0; gap: 6px; font-size: 13px; color: var(--theme-muted); }
+.sideb-modern-controls :is(select, input) { width: 100%; min-width: 0; box-sizing: border-box; padding: 9px 10px; border: 1px solid var(--theme-line-strong); border-radius: 10px; background: var(--theme-panel); color: var(--theme-text); font: inherit; }
+.sideb-modern-toy .sideb-text { overflow-wrap: anywhere; }
+@media (max-width: 520px) { .sideb-modern-controls { grid-template-columns: minmax(0, 1fr); } }
+
+/* Guide scenes show the notes being discussed and keep controls usable on a phone. */
+.lv-modern-frame { fill: var(--theme-wash, #f4f6fa); stroke: var(--theme-line, #b8c2d8); }
+.lv-modern-label { fill: var(--theme-text, #18233d); font-weight: 700; }
+.lv-modern-pitch { fill: var(--theme-text, #18233d); }
+.lv-modern-dot { fill: #ec527e; }
+.lv-modern-low { fill: #2787eb; }
+.learn-guide-count { margin: 14px 0 8px; font-weight: 600; }
+.learn-steps .learn-step[hidden] { display: none; }
+.lv-modern-notes[role="button"] { cursor: pointer; }
+.lv-modern-notes:focus-visible { outline: 2px solid var(--theme-accent); }
+
+/* Side-B analysis labels: the open menu uses the same paper and chapter palette. */
+.sideb-analysis-row { display: grid; grid-template-columns: minmax(2.5em, 5em) minmax(0, 1fr); align-items: center; gap: 12px; max-width: 32rem; margin: 12px 0; font-size: 15px; }
+.sideb-analysis-label { color: var(--ink-soft); overflow-wrap: anywhere; }
+.sideb-label-picker { position: relative; min-width: 0; }
+.sideb-label-picker.is-open { z-index: 20; }
+.sideb-label-trigger { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 44px; box-sizing: border-box; padding: 10px 14px; border: 1px solid var(--theme-line-strong); border-radius: 12px; background: var(--paper); color: var(--ink-soft); font: inherit; text-align: left; cursor: pointer; }
+.sideb-label-picker.has-value .sideb-label-trigger { color: var(--ink); }
+.sideb-label-trigger:hover:not(:disabled), .sideb-label-picker.is-open .sideb-label-trigger { border-color: var(--tone); }
+.sideb-label-trigger:focus-visible { outline: 2px solid var(--tone); outline-offset: 3px; }
+.sideb-label-trigger:disabled { opacity: .7; cursor: default; }
+.sideb-label-value { min-width: 0; overflow-wrap: anywhere; }
+.sideb-label-arrow { flex: 0 0 7px; width: 7px; height: 7px; margin: 0 2px 4px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); }
+.sideb-label-picker.is-open .sideb-label-arrow { transform: rotate(225deg); margin-bottom: 0; }
+.sideb-label-menu { position: absolute; z-index: 30; top: calc(100% + 6px); left: 0; right: 0; display: grid; gap: 3px; box-sizing: border-box; padding: 5px; border: 1px solid var(--theme-line-strong); border-radius: 12px; background: var(--paper); box-shadow: 0 8px 24px rgba(20, 25, 40, .16); overflow-y: auto; overscroll-behavior: contain; }
+.sideb-label-menu[hidden] { display: none; }
+.sideb-label-picker.opens-up .sideb-label-menu { top: auto; bottom: calc(100% + 6px); }
+.sideb-label-option { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 9px 10px; border: 0; border-radius: 8px; background: transparent; color: var(--ink); font: inherit; text-align: left; white-space: normal; overflow-wrap: anywhere; cursor: pointer; }
+.sideb-label-option:hover, .sideb-label-option:focus-visible, .sideb-label-option[aria-selected="true"] { background: var(--tone-wash); }
+.sideb-label-option:focus-visible { outline: 2px solid var(--tone); outline-offset: -2px; }
+.sideb-label-option[aria-selected="true"]::after { content: '✓'; flex: none; color: var(--tone-deep); font-weight: 700; }

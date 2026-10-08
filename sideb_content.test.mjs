@@ -22,10 +22,10 @@ function texts(value, path = '', out = []) {
 }
 const allNodes = (level) => [...Object.values(level.sections).flat(), ...(level.pool || [])];
 
-test('the Side-B map: 6 chapters, 43 levels, every A-side link exists', () => {
+test('the Side-B map: 6 chapters, 48 levels, every A-side link exists', () => {
   assert.equal(B_CHAPTERS.length, 6);
-  assert.equal(B_LEVELS.length, 43);
-  assert.equal(new Set(B_LEVELS.map((l) => l.id)).size, 43);
+  assert.equal(B_LEVELS.length, 48);
+  assert.equal(new Set(B_LEVELS.map((l) => l.id)).size, 48);
   const ids = new Set([...UNITS.map((u) => u.id), ...SIDES.map((s) => s.id)]);
   B_LEVELS.forEach((l) => {
     assert.ok(B_CHAPTERS.some((c) => c.id === l.chapter), l.id);
@@ -189,7 +189,7 @@ test('extension previews point to later lessons and explain the preview in all l
     assert.deepEqual(validateLevel(ext), [], ext.id);
     ext.previewOf.forEach((id) => assert.ok(B_LEVELS.findIndex((l) => l.id === id) > B_LEVELS.indexOf(base)));
     const page = ext.sections.explain.find((n) => n.type === 'page');
-    LANGS.forEach((lang) => ext.previewOf.forEach((id) => assert.ok(page.text[0][lang].includes(id), `${ext.id}: ${lang} mentions ${id}`)));
+    LANGS.forEach((lang) => ext.previewOf.forEach((id) => assert.ok(page.text[0][lang].includes(levelById(id).code || id), `${ext.id}: ${lang} mentions ${id}`)));
   }
 });
 

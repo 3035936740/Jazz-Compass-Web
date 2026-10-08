@@ -432,6 +432,51 @@ function values({ rows = ['w', 'h', 'q', 'e'], labels = [] } = {}) {
  * 方块序列：rows = [{ label, cells: [{ text, sub, lit, play }] | 'text', arrows }]
  * 用来画和弦进行、曲式段落、终止式、序列等。部件：c0-1（第 0 行第 1 格）、row0
  */
+/** Real sounding pitches and components for the beginner scenes. */
+function modern({ rows = [] } = {}, { play } = {}) {
+  const width = 380, heights = rows.map(row => row.events.some(e=>e.layer) ? 112 : row.events.length ? 98 : 42);
+  const c = canvas(width, heights.reduce((a,b)=>a+b+12,0), 'modern');
+  let y = 0;
+  const groups = [];
+  rows.forEach((row,r) => {
+    const h = heights[r], g = add(c.root,'g',{class:'lv-modern-scene'});
+    add(g,'rect',{x:1,y,width:width-2,height:h,rx:10,class:'lv-modern-frame'});
+    const labelSize = Math.min(13, (width-20) / Math.max(1,textWidth(row.label,1)));
+    add(g,'text',{x:12,y:y+20,class:'lv-modern-label',style:'font-size:'+labelSize+'px'},row.label);
+    const end = Math.max(1,...row.events.map(e=>e.at+e.beats));
+    const count = row.events.length;
+    row.events.forEach((event,i) => {
+      const x = 30 + (count === 1 ? .5 : event.at/end) * (width-60);
+      const notes = [...event.notes].sort((a,b)=>b-a);
+      const item = add(g,'g',{class:'lv-modern-notes'});
+      notes.forEach((n,j) => {
+        const value = row.frequencies ? (440*2**((n-69)/12)).toFixed(2).replace(/\.00$/,'') : (/[♭]/.test(row.label) ? ['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'] : ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'])[((Math.round(n)%12)+12)%12];
+        const ny = y+(event.layer==='low'?86:event.layer==='high'?52:42)+j*Math.min(14,44/Math.max(1,notes.length-1));
+        add(item,'circle',{cx:x-14,cy:ny-4,r:3.5,class:event.layer==='high'?'lv-modern-dot':event.layer==='low'||j===notes.length-1?'lv-modern-low':'lv-modern-dot'});
+        add(item,'text',{x:x-7,y:ny,class:'lv-modern-pitch',style:'font-size:11px'},value);
+      });
+      if(play) clickable(item,play,event.notes);
+    });
+    c.reg('c'+r+'-0',{x:1,y,w:width-2,h},g);
+    groups.push({g,y,h});
+    y+=h+12;
+  });
+  c.setScenes = targets => {
+    let top = 0;
+    groups.forEach((scene,i) => {
+      const visible = targets.includes('c'+i+'-0');
+      scene.g.style.display = visible ? '' : 'none';
+      if (visible) {
+        scene.g.setAttribute('transform','translate(0 '+(top-scene.y)+')');
+        c.parts.get('c'+i+'-0').box.y = top;
+        top += scene.h+12;
+      }
+    });
+    return Math.max(42,top);
+  };
+  return c;
+}
+
 function blocks({ rows = [], cellMin = 40 } = {}, { play } = {}) {
   const gap = 6; const arrowGap = 16;
   const normalized = rows.map((row) => ({ ...row, cells: row.cells.map((cell) => (typeof cell === 'string' ? { text: cell } : cell)) }));
@@ -560,7 +605,7 @@ function staff({ notes = [], clef, chord = false } = {}) {
   return el;
 }
 
-const BUILDERS = { circle: circleOfFifths, clock: pcClock, ring, beats, piano, notation, values, blocks, ruler, strings, tower };
+const BUILDERS = { modern, circle: circleOfFifths, clock: pcClock, ring, beats, piano, notation, values, blocks, ruler, strings, tower };
 export const VISUAL_KINDS = [...Object.keys(BUILDERS), 'staff', 'keys'];
 
 /** 每种图上可以圈出的部件名（用于内容校验）；返回登记表 */
@@ -638,6 +683,11 @@ export function renderVisual(visual, options = {}) {
       wrap.parts = c.parts;
       if (c.setNotes) wrap.setNotes = c.setNotes;
       wrap.setMarks = (marks) => drawMarks(layer, c.parts, marks, view);
+      if (c.setScenes) wrap.setScenes = targets => {
+        const height = c.setScenes(targets);
+        view.h = height + (annotate ? MARGIN.top + MARGIN.bottom : 4);
+        c.root.setAttribute('viewBox', [view.x,view.y,view.w,view.h].join(' '));
+      };
     }
   } catch (error) {
     return null;

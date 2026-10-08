@@ -15,7 +15,7 @@ import { recordToolMistake, tri } from './tool_review.js';
 import {
   GAP, svgNode, positionY, drawLines, drawClef, drawBrace, drawChordEvent, drawRest, drawBeams, drawTie, drawKeySignature, drawTimeSignature,
 } from './staff_diagram.js?v=20261002-r19';
-import { renderVisual } from './learn_visuals.js?v=20261004-m5';
+import { renderVisual } from './learn_visuals.js?v=20261008-beginner2';
 import { playFeedbackSound } from './learn_sfx.js?v=20261003-x3';
 import { el, button, language, midiToFrequency, sourcesFooter, cite, relatedLinks, midiExportButton } from './module_kit.js';
 import { scoreToMusicXML } from './staff_musicxml.js?v=20261003-x1';

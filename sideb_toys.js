@@ -10,7 +10,7 @@ import { buildChineseMode, rotateGong, luName, MODES as CN_MODES, SCALE_TYPES as
 import { THAATS, thaatSemitones, thaatAltered, buildMaqam, maqamSteps, stepLabel, noteLabel } from './world_modes.js';
 import { TEMPERAMENTS, buildTemperament, majorThirds, frequencyOf } from './temperaments.js';
 import { normalOrder, primeForm, intervalVector, setClassInfo, twelveToneMatrix, rowForm, COLLECTIONS, collectionPcs, distinctTranspositions } from './post_tonal.js';
-import { gradeTaps } from './sideb_engine.js?v=20261006-clarity1';
+import { gradeTaps } from './sideb_engine.js?v=20261008-modern2';
 
 const lang = () => { const l = globalThis.window?.__lang || 'zh'; return ['zh', 'ja', 'en'].includes(l) ? l : 'en'; };
 const tx = (v) => (v == null ? '' : typeof v === 'string' ? v : v[lang()] ?? v.en ?? '');
@@ -89,7 +89,10 @@ export function playAudio(audio, playChord) {
   const at = (ms, fn) => timers.push(setTimeout(fn, ms));
   const stop = () => timers.forEach(clearTimeout);
   if (!audio || !playChord) return stop;
-  if (audio.chords) {
+  if (audio.events) {
+    const beatMs = 60000 / (audio.bpm || 90);
+    [...audio.events].sort((a,b)=>a.at-b.at).forEach((event,i) => at(event.at * beatMs, () => playChord(event.notes.map(hz), event.beats * beatMs / 1000, { interrupt: i === 0, ...(event.velocity !== undefined ? { velocity: event.velocity } : {}) })));
+  } else if (audio.chords) {
     const gap = audio.gap ?? 900;
     audio.chords.forEach((c, i) => at(i * gap, () => playChord(c.map(hz), (gap / 1000) * 0.95, { interrupt: i === 0 })));
   } else if (audio.rhythm) {

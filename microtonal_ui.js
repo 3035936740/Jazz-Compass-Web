@@ -76,7 +76,7 @@ function classForRatio(label) {
   return "micro-d1";
 }
 
-export function mountMicrotonal(playChord, createHeldPianoVoice) {
+export function mountMicrotonal(playChord, createHeldPianoVoice, { stopAudio = () => {} } = {}) {
   const panel = document.getElementById("panel-micro");
   if (!panel) return;
   const preset = panel.querySelector("#micro-preset");
@@ -95,6 +95,7 @@ export function mountMicrotonal(playChord, createHeldPianoVoice) {
   const activeMidiNotes = new Set();
   const latchedRollNotes = new Set();
   const rollVoices = new Map();
+  const singleVoices = new Map();
   let rollChordLatch = true;
   let rollNoteOn = () => {};
   let rollNoteOff = () => {};
@@ -119,6 +120,7 @@ export function mountMicrotonal(playChord, createHeldPianoVoice) {
   }
 
   function handleMidiMessage(event) {
+    if (!panel.classList.contains('active') || document.getElementById('micro-view-main')?.hidden) return;
     const message = decodeMidiMessage(event.data);
     if (!message) return;
     if (message.type === "noteOn") rollNoteOn(message.note, message.velocity);
@@ -394,10 +396,12 @@ export function mountMicrotonal(playChord, createHeldPianoVoice) {
         const voice = createHeldPianoVoice(frequency);
         element.classList.add("is-active");
         rollReadout.textContent = `${positionLabel(position)} · ${frequency.toFixed(2)} Hz · ${signed(cents)}¢`;
-        window.setTimeout(() => {
+        const timer = window.setTimeout(() => {
           voice.stop();
+          singleVoices.delete(timer);
           element.classList.remove("is-active");
         }, 650);
+        singleVoices.set(timer, voice);
       }
 
       rollNoteOn = (midi, velocity = 100, reveal = true) => {
@@ -536,6 +540,19 @@ export function mountMicrotonal(playChord, createHeldPianoVoice) {
     body.classList.remove("micro-input-error");
   }
 
+  function stopMicroPlayback() {
+    for (const voice of rollVoices.values()) voice.stop();
+    rollVoices.clear();
+    for (const [timer, voice] of singleVoices) { window.clearTimeout(timer); voice.stop(); }
+    singleVoices.clear();
+    activeMidiNotes.clear(); latchedRollNotes.clear();
+    body.querySelectorAll('.micro-roll-key.is-active, .micro-roll-seam.is-active').forEach(key => key.classList.remove('is-active'));
+    const readout = body.querySelector('.micro-roll-readout');
+    if (readout) readout.textContent = 'A0–C8 · 88 keys';
+    stopAudio();
+  }
+  body.addEventListener('toolbox-stop', stopMicroPlayback);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stopMicroPlayback(); });
   preset.addEventListener("change", () => {
     if (MICRO_PRESETS[preset.value]) ratiosInput.value = MICRO_PRESETS[preset.value].ratios.join(" ");
     render();

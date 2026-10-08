@@ -2,8 +2,8 @@
 // 依据汇总（由 scripts/annotate-learn.mjs 生成）：
 //   ref:omt-triads ref:omt2e-triads ref:omt2e-sevenths ref:omt2e-figured-bass ref:wiki-chord-notation
 //   ref:omt2e-chord-symbols ref:wiki-suspended-chord ref:wiki-added-tone ref:wiki-power-chord ref:wiki-sixth-chord
-//   ref:wiki-voicing ref:omt2e-roman-numerals ref:omt2e-jazz-voicings ref:omt2e-phrase-model ref:omt2e-cadences
-//   ref:omt2e-predominants ref:wiki-dominant-seventh ref:musictheory-net-cadences ref:omt2e-la-bass ref:omt2e-cad64
+//   ref:omt2e-roman-numerals ref:wiki-voicing ref:omt2e-jazz-voicings ref:omt2e-cadences ref:musictheory-net-cadences
+//   ref:omt2e-la-bass ref:omt2e-phrase-model ref:omt2e-predominants ref:wiki-dominant-seventh ref:omt2e-cad64
 //   ref:omt2e-64-chords ref:omt-rondo ref:omt2e-form-concepts ref:omt2e-phrase ref:omt2e-binary ref:omt2e-ternary
 //   ref:omt2e-sonata ref:omt2e-tonicization ref:omt2e-modulation ref:omt2e-mixture ref:omt2e-neapolitan
 //   ref:omt2e-aug6 ref:omt2e-common-tone ref:wiki-circle-of-fifths ref:omt2e-neo-riemannian

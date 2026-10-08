@@ -1,8 +1,8 @@
 // 乐理闯关界面：关卡地图（主关 + 进阶分支 + 综合测验 + 结业挑战）、关卡播放器（引导卡 / 选择 / 填空 / 连线）、
 // 图示、提示与解析、去工具里看看（带学习记录，回来时还是同一题）、结算
 // 题目与依据见 learn_content.js / learn_units_*.js / learn_branches_*.js；生成题见 learn_generators.js；规则见 learn_engine.js
-import { UNITS, SECTIONS, SIDES } from './learn_content.js?v=20261007-listen-icon4';
-import { createGuidePlayback, guideDemoEvents, guideDemoPreviewNotes } from './learn_guide_audio.js?v=20261007-piano-sync1';
+import { UNITS, SECTIONS, SIDES } from './learn_content.js?v=20261008-spectrum-side1';
+import { createGuidePlayback, guideDemoEvents, guideDemoPreviewNotes } from './learn_guide_audio.js?v=20261008-beginner2';
 import { guideDemoForStep, withStepDemos, STEP_DEMOS, SHARED_DEMO_CARDS } from './learn_guide_demos.js?v=20261007-piano-sync1';
 import {
   createSession, currentItem, cardStateFor, answer, advance, isFinished, progressRatio, loadProgress, saveProgress, completeUnit, isUnlocked, nextUnitIndex, shuffle,
@@ -11,9 +11,9 @@ import {
   saveResume, loadResume, clearResume, unitLevelKeys, setLevelStars, emptyProgress,
   loadReview, saveReview, recordMistake, recordReviewAnswer, dueReview, exportProgress, importProgress, starsFor, isSideLevelUnlocked, unitFullyDone,
 } from './learn_engine.js?v=20261006-circle1';
-import { expandCards } from './learn_generators.js?v=20261006-clarity1';
+import { expandCards } from './learn_generators.js?v=20261008-beginner2';
 import { worksheetHTML, openWorksheet, printable } from './worksheet.js?v=20261004-y1';
-import { renderVisual } from './learn_visuals.js?v=20261007-piano-sync1';
+import { renderVisual } from './learn_visuals.js?v=20261008-beginner2';
 import { el, button, language, midiToFrequency, cite } from './module_kit.js';
 import { icon, withIcon } from './ui_icons.js?v=20261007-listen-icon4';
 import { relatedLearnTools } from './learn_feature_unit.js?v=20261006-circle1';
@@ -146,7 +146,8 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
   const REVIEW_KEY_LEVEL = 'review';
   let timers = [];
   let guideKeyboards = [];
-  const guidePlayback = createGuidePlayback({ playChord, stopAudio, onNotesChange: (notes) => guideKeyboards.forEach((keyboard) => keyboard.setNotes(notes)) });
+  let guidePlaybackMarks = null;
+  const guidePlayback = createGuidePlayback({ playChord, stopAudio, onTargetsChange: (targets, info) => guidePlaybackMarks?.(targets, info), onNotesChange: (notes) => guideKeyboards.forEach((keyboard) => keyboard.setNotes(notes)) });
   const stop = () => { timers.forEach(clearTimeout); timers = []; guidePlayback.stop(); };
   // 离开学习页（切到别的面板）：停止声音，并关掉挂在 body 上的选关卡片（否则"开始"按钮会留在别的页面上）
   target.addEventListener('toolbox-stop', () => { stop(); sideB?.stop?.(); closeSheets(); });
@@ -804,6 +805,7 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
 
   function renderCard() {
     stop();
+    guidePlaybackMarks = null;
     chapterObserver?.disconnect?.();
     root.replaceChildren();
     if (isFinished(session)) { renderFinish(); return; }
@@ -814,6 +816,11 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
     // 旧存档保存了题卡快照：回来时应用最新听例，不丢弃已展开步骤或答题记录。
     const guideKey = `${level.key}#${item.index}`;
     if (item.card.type === 'guide' && (STEP_DEMOS[guideKey] || SHARED_DEMO_CARDS.has(guideKey))) item.card = withStepDemos(item.card, guideKey);
+    const modernKey = guideKey.match(/^(nonfunctional|polytonality|atonality|spectralharmony|microtonalharmony)(?::([1-4]))?#0$/);
+    if (item.card.type === 'guide' && modernKey) {
+      const unit = [...UNITS, ...SIDES].find(u => u.id === modernKey[1]);
+      item.card = (modernKey[2] ? unit.branch[Number(modernKey[2])-1] : unit).cards.find(c => c.type === 'guide');
+    }
     const card = item.card;
     const shell = el('div', `learn-player tone-${level.tone}`);
     const top = el('div', 'learn-top');
@@ -864,9 +871,19 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
     const keyboard = card.demo?.keys ? miniKeyboard(card.demo.keys, [...card.demo.keys, ...demoNotes]) : null;
     if (keyboard) body.appendChild(keyboard);
     guideKeyboards = [pic, keyboard].filter((view) => view?.setNotes);
-    const listen = card.demo?.play ? withIcon(button('learn-btn ghost', '', () => guidePlayback.play()), 'play', t.play) : null;
+    const listen = demoNotes.length ? withIcon(button('learn-btn ghost', '', () => guidePlayback.play()), 'play', t.play) : null;
     const caption = listen ? el('p', 'learn-muted learn-demo-caption') : null;
-    if (listen) body.append(listen, caption);
+    if (listen) { caption.setAttribute('aria-live', 'polite'); body.append(listen, caption); }
+    let activeStep = 0, currentDemo = null;
+    const playingText = tx({zh:'正在播放',ja:'再生中',en:'Playing'});
+    guidePlaybackMarks = (targets, info) => {
+      if (!currentDemo?.events?.some(e => e.targets)) return;
+      if (pic?.setMarks) pic.setMarks(info.playing ? targets.map(at => ({ at: [at], label: playingText })) : tour?.[activeStep]);
+      if (caption) {
+        caption.textContent = info.playing && targets.length ? playingText + ' · ' + tx(info.caption) : tx(currentDemo.caption);
+        caption.hidden = !caption.textContent;
+      }
+    };
     // 每张引导卡都能一键去相关的工具看看（题卡没写就用本关对应的工具）
     const tools = cardTools(card, level);
     if (tools.length) {
@@ -880,33 +897,53 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
     let shown = 0;
     const state = cardStateFor(session);
     const previousShown = Math.max(1, Math.min(state.shown || 1, card.steps.length));
+    const savedGuideStep = state.activeGuideStep;
     let restoring = true;
+    const previous = card.beginner ? button('learn-btn ghost', tx({zh:'上一步',ja:'前のステップ',en:'Previous step'}), () => { if (activeStep > 0) selectStep(activeStep - 1, true); }) : null;
+    const stepCount = card.beginner ? el('p', 'learn-muted learn-guide-count') : null;
+    if (stepCount) { stepCount.setAttribute('aria-live', 'polite'); list.before(stepCount); }
     const action = button('learn-btn primary wide', t.more, () => {
+      if (card.beginner && activeStep < shown - 1) { selectStep(activeStep + 1, true); return; }
       if (shown < card.steps.length) { reveal(); return; }
       answer(session, null);
       advance(session);
       renderCard();
     });
+    function selectStep(index, resume) {
+      activeStep = index;
+      if (card.beginner) {
+        [...list.children].forEach((node, i) => { node.hidden = i !== index; });
+        const n = index + 1;
+        stepCount.textContent = tx({zh:'第 '+n+' / '+card.steps.length+' 步',ja:'ステップ '+n+' / '+card.steps.length,en:'Step '+n+' / '+card.steps.length});
+        previous.disabled = index === 0;
+        state.activeGuideStep = index;
+      }
+      currentDemo = guideDemoForStep(card, index);
+      pic?.setScenes?.([...new Set(currentDemo?.events?.flatMap(e => e.targets || []) || [])]);
+      if (tour && pic?.setMarks) pic.setMarks(tour[index]);
+      if (listen) {
+        currentDemo = guideDemoForStep(card, index);
+        guidePlayback.setDemo(currentDemo, { resume });
+        const preview = currentDemo ? guideDemoPreviewNotes(currentDemo) : null;
+        guideKeyboards.forEach(view => view.setNotes(preview ?? (view === keyboard ? card.demo.keys : visual?.lit ?? visual?.keys ?? [])));
+        listen.hidden = !currentDemo;
+        caption.textContent = tx(currentDemo?.caption);
+        caption.hidden = !currentDemo?.caption;
+        listen.setAttribute('aria-label', currentDemo?.caption ? t.play + '：' + tx(currentDemo.caption) : t.play);
+      }
+      action.textContent = index === card.steps.length - 1 ? t.gotIt : t.more;
+      persist();
+    }
     function reveal() {
       list.appendChild(el('p', 'learn-step', tx(card.steps[shown])));
-      if (tour && pic?.setMarks) pic.setMarks(tour[shown]);
-      if (listen) {
-        const demo = guideDemoForStep(card, shown);
-        guidePlayback.setDemo(demo, { resume: !restoring });
-        const preview = demo ? guideDemoPreviewNotes(demo) : null;
-        guideKeyboards.forEach((view) => view.setNotes(preview ?? (view === keyboard ? card.demo.keys : visual?.lit ?? visual?.keys ?? [])));
-        listen.hidden = !demo;
-        caption.textContent = tx(demo?.caption);
-        caption.hidden = !demo?.caption;
-        listen.setAttribute('aria-label', demo?.caption ? `${t.play}：${tx(demo.caption)}` : t.play);
-      }
+      selectStep(shown, !restoring);
       shown += 1;
       state.shown = shown;
-      action.textContent = shown >= card.steps.length ? t.gotIt : t.more;
       persist();
     }
     for (let i = 0; i < previousShown; i += 1) reveal();
     restoring = false;
+    if (card.beginner) { selectStep(Math.min(savedGuideStep ?? shown - 1, shown - 1), false); footer.appendChild(previous); }
     footer.appendChild(action);
   }
 
@@ -1375,7 +1412,7 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
     if (!sideBOpen()) { renderMap(); return; }
     stop(); closeSheets();
     if (sideB) { then?.(sideB); return; }
-    const mount = () => import('./sideb_ui.js?v=20261006-guide-audio1').then(({ mountSideB }) => {
+    const mount = () => import('./sideb_ui.js?v=20261008-b-labels1').then(({ mountSideB }) => {
       writeSide('b');
       root.classList.add('is-side-b');
       sideB = mountSideB(root, {

@@ -1,0 +1,111 @@
+/* Five composition labs: scoped fields, compact controls and contained wide results. */
+.mh-tool { min-width: 0; }
+.mh-tool .mh-toolbar { display: flex; align-items: end; flex-wrap: wrap; gap: 10px; margin: 20px 0 16px; }
+.mh-tool .mh-preset-field, .mh-tool .mh-field { display: flex; flex-direction: column; gap: 7px; min-width: 0; margin: 0; font-size: .875rem; }
+.mh-tool .mh-preset-field { flex: 1 1 220px; max-width: 330px; }
+.mh-tool .mh-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 22px 0; }
+.mh-tool .mh-wide { grid-column: 1 / -1; }
+.mh-tool .mh-field[hidden] { display: none; }
+.mh-tool input, .mh-tool select { box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; min-height: 40px; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--border, #b8c2d8); background: var(--surface, #fff); color: inherit; font: inherit; }
+.mh-tool input:focus-visible, .mh-tool select:focus-visible { outline: 2px solid var(--accent, #2d45da); outline-offset: 2px; }
+.mh-tool .mh-playback { display: flex; flex-direction: column; gap: 10px; padding: 16px 0; border-block: 1px solid var(--border, #dbe0ec); margin-bottom: 20px; }
+.mh-tool .mh-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.mh-tool .mh-actions button { max-width: 100%; white-space: normal; height: auto; min-height: 36px; }
+.mh-tool .mh-status { font-size: .8rem; color: var(--muted, #566580); }
+.mh-tool.is-playing .mh-status { color: var(--accent, #2d45da); }
+.mh-tool .mh-hint { line-height: 1.85; overflow-wrap: anywhere; }
+.mh-tool .mh-output { min-width: 0; }
+.mh-tool .mh-table-wrap { width: 100%; overflow-x: auto; margin: 16px 0 24px; border: 1px solid var(--border, #dbe0ec); border-radius: 12px; }
+.mh-tool .mh-table { border-collapse: collapse; width: 100%; font-size: .85rem; font-variant-numeric: tabular-nums; }
+.mh-tool .mh-table th { background: var(--surface-soft, #f4f6fa); font-size: .8rem; text-align: left; font-weight: 600; min-width: 90px; }
+.mh-tool .mh-table td, .mh-tool .mh-table th { padding: 11px 13px; border-bottom: 1px solid var(--border, #dbe0ec); line-height: 1.5; }
+.mh-tool .mh-table td { white-space: nowrap; }
+.mh-tool .mh-table tr:last-child td { border-bottom: 0; }
+.mh-tool .mh-chords, .mh-tool .mh-notes { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0 22px; }
+.mh-tool .mh-chord { flex: 1 1 140px; display: flex; flex-direction: column; gap: 8px; padding: 15px; border: 1px solid var(--border, #dbe0ec); border-radius: 14px; background: var(--surface-soft, #f4f6fa); }
+.mh-tool .mh-chord strong { overflow-wrap: anywhere; }
+.mh-tool .mh-chord-name { font-size: 1.25rem; line-height: 1.4; }
+.mh-tool .mh-chord-pitches { font-size: .875rem; font-weight: 600; overflow-wrap: anywhere; }
+.mh-tool .mh-chord-alternatives { line-height: 1.6; overflow-wrap: anywhere; }
+.mh-tool .mh-chord small { color: var(--muted, #566580); }
+.mh-tool .mh-note { padding: 9px 14px; border: 1px solid var(--border, #dbe0ec); border-radius: 10px; background: var(--surface-soft, #f4f6fa); font-weight: 600; }
+.mh-tool .mh-summary { font-size: .9rem; line-height: 1.7; overflow-wrap: anywhere; }
+.mh-tool .mh-result-title { margin-top: 22px; }
+.mh-tool .mh-timeline { max-width: 100%; overflow-x: auto; border: 1px solid var(--border, #dbe0ec); border-radius: 14px; padding: 14px; box-sizing: border-box; }
+.mh-tool .mh-track + .mh-track { margin-top: 18px; }
+.mh-tool .mh-track strong { display: block; margin: 0 0 10px; font-size: .875rem; }
+.mh-tool .mh-track-notes { display: flex; min-height: 50px; }
+.mh-tool .mh-track-note { flex-shrink: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border, #b8c2d8); border-radius: 6px; overflow: hidden; font-size: .8rem; font-weight: 600; background: var(--surface-soft, #f4f6fa); }
+.mh-tool .mh-track-note.is-rest { background: transparent; font-weight: 400; border-style: dashed; }
+.mh-tool .mh-layer-B .mh-track-note { border-color: #d8b978; }
+.mh-tool .is-active { background: var(--accent-soft, #e2e9ff); box-shadow: inset 0 0 0 2px var(--accent, #2d45da); }
+.mh-tool .mh-spectrum { border: 1px solid var(--border, #dbe0ec); border-radius: 14px; padding: 12px; }
+.mh-tool .mh-spectrum svg { display: block; width: 100%; height: auto; }
+.mh-tool .mh-spectrum text { fill: currentColor; font-size: 12px; }
+.mh-tool .mh-gridline { stroke: var(--border, #dbe0ec); stroke-width: 1; }
+.mh-tool .mh-stem { stroke: var(--accent, #2d45da); stroke-width: 4; }
+.mh-tool .mh-stem.is-active { stroke: #e9a52b; stroke-width: 7; }
+.mh-tool .mh-dot { fill: var(--accent, #2d45da); }
+.mh-tool .mh-chart-caption { font-size: .8rem; line-height: 1.7; margin: 8px 0 0; color: var(--muted, #566580); }
+[data-theme="dark"] .mh-tool { --surface: #192139; --surface-soft: #202a43; --border: #3b4866; --muted: #b6c2dc; --accent-soft: #283d66; --accent: #89a6ff; }
+@media (max-width: 540px) {
+  .mh-tool .mh-controls { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .mh-tool .mh-toolbar { align-items: stretch; }
+  .mh-tool .mh-preset-field { max-width: none; flex-basis: 100%; }
+  .mh-tool .mh-toolbar button { flex: 1; height: auto; min-height: 36px; white-space: normal; }
+  .mh-tool .mh-chord { flex-basis: 100%; }
+  .mh-tool .mh-table td, .mh-tool .mh-table th { padding: 10px; }
+}
+
+/* Parent microtonal toolbox: keep tab controls separate from the global navigation. */
+.micro-tool-tabs { display: flex; flex-wrap: wrap; gap: 6px; padding: 16px 20px; border-bottom: 1px solid var(--theme-line); }
+.micro-tool-tabs button { min-height: 38px; padding: 9px 14px; border: 1px solid transparent; border-radius: 10px; font: inherit; font-size: .875rem; font-weight: 600; background: transparent; color: var(--theme-muted); }
+.micro-tool-tabs button:hover { background: var(--theme-wash); color: var(--theme-text); }
+.micro-tool-tabs button.active { background: var(--theme-wash-strong); color: var(--theme-accent); border-color: var(--theme-line-strong); }
+.micro-tool-tabs button:focus-visible { outline: 2px solid var(--theme-accent); outline-offset: 2px; }
+.micro-tool-view { min-width: 0; }
+.micro-tool-view[hidden] { display: none !important; }
+@media (max-width: 540px) { .micro-tool-tabs { padding: 12px; gap: 4px; } .micro-tool-tabs button { flex: 1 1 auto; padding-inline: 10px; } }
+
+.mh-tool .mh-partial-hit { cursor: pointer; }
+.mh-tool .mh-partial-hit:hover, .mh-tool .mh-partial-hit:focus-visible { fill: var(--accent-soft, #e2e9ff); fill-opacity: .35; outline: none; stroke: var(--accent, #2d45da); }
+.mh-tool .mh-dot.is-active { fill: #e9a52b; }
+
+.mh-tool .mh-editor { border: 1px solid var(--border, #dbe0ec); border-radius: 14px; padding: 16px; margin: 18px 0; min-width: 0; }
+.mh-tool .mh-editor h4 { margin: 0 0 8px; }
+.mh-tool .mh-edit-note { font-size: .85rem; line-height: 1.7; color: var(--muted, #566580); }
+.mh-tool .mh-editor-row { display: grid; grid-template-columns: 24px minmax(100px, 1fr); gap: 8px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border, #dbe0ec); }
+.mh-tool .mh-editor-index { font-weight: 700; color: var(--muted, #566580); }
+.mh-tool .mh-edit-actions { grid-column: 2; display: flex; flex-wrap: wrap; gap: 5px; }
+.mh-tool .mh-edit-actions button { white-space: normal; min-height: 32px; }
+.mh-tool .mh-editor input { width: 100%; min-width: 0; box-sizing: border-box; }
+.mh-tool .mh-symbol-input { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; margin-top: 16px; }
+.mh-tool .mh-symbol-input .mh-field { flex: 1 1 220px; min-width: 0; }
+.mh-tool .mh-editor-lane { margin: 20px 0 5px; font-size: .95rem; }
+.sideb-modern-toy { min-width: 0; }
+.sideb-modern-toy .mh-tool { padding: 0; }
+@media (max-width: 540px) { .mh-tool .mh-editor { padding: 12px; } .mh-tool .mh-symbol-input button { flex: 1 1 100%; } }
+
+.mh-tool .mh-spectrum-add-area { cursor: crosshair; }
+.mh-tool .mh-spectrum-editor { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-top: 16px; }
+.mh-tool .mh-spectrum-editor .mh-field { flex: 1 1 160px; min-width: 0; }
+.mh-tool .mh-spectrum-editor input { width: 100%; min-width: 0; box-sizing: border-box; }
+.mh-tool .mh-spectrum-editor button { white-space: normal; height: auto; min-height: 38px; }
+.mh-tool .mh-spectrum-feedback.is-error { color: var(--danger, #be3349); }
+@media (max-width: 540px) { .mh-tool .mh-spectrum-editor .mh-field, .mh-tool .mh-spectrum-editor button { flex-basis: 100%; } }
+
+.mh-tool button.mh-chord { appearance: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.mh-tool button.mh-chord:hover { border-color: var(--accent, #2d45da); background: var(--accent-soft, #e2e9ff); }
+.mh-tool button.mh-chord:focus-visible { outline: 2px solid var(--accent, #2d45da); outline-offset: 3px; }
+
+.mh-tool .mh-partial-hit { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: pan-y; }
+.mh-tool .mh-partial-hit.is-holding { fill: #e95b76; fill-opacity: .25; stroke: #e95b76; }
+
+.mh-mission-board { border: 1px solid var(--theme-line, #d8caaa); border-radius: 14px; padding: 16px; margin-bottom: 22px; }
+.mh-mission-board h4 { margin: 0 0 14px; }
+.mh-mission-goal { display: flex; gap: 12px; padding: 12px; border-radius: 10px; line-height: 1.7; }
+.mh-mission-goal strong { flex: 0 0 30px; }
+.mh-mission-goal.is-current { background: var(--theme-wash-strong, #eee2c8); box-shadow: inset 3px 0 var(--theme-accent, #99703b); }
+.mh-mission-goal.is-complete { opacity: .7; }
+.mh-mission-status { font-size: .85rem; line-height: 1.7; }
+.mh-mission-board button { white-space: normal; height: auto; min-height: 38px; }

@@ -123,7 +123,7 @@ test('every unit has 4 advanced levels with a guide and at least 3 questions', (
 });
 
 test('every tool panel links to a tutorial unit', () => {
-  const unitIds = new Set(UNITS.map((u) => u.id));
+  const unitIds = new Set([...UNITS, ...SIDES].map((u) => u.id));
   Object.entries(FEATURE_UNIT).forEach(([feature, unit]) => {
     assert.ok(features.has(feature), `unknown feature ${feature}`);
     assert.ok(unitIds.has(unit), `unknown unit ${unit}`);

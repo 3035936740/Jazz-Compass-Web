@@ -1,15 +1,17 @@
 // 乐理闯关 · 二十世纪与微分音：每张题卡标出依据（ref），只使用 references.js 中已登记、已核实的资料；解析用尽量通俗的话转述这些资料。
 // 依据汇总（由 scripts/annotate-learn.mjs 生成）：
-//   ref:omt2e-row-naming ref:omt2e-normal-order ref:omt2e-pitch-class ref:omt2e-integer-intervals
-//   ref:omt2e-collections ref:wiki-messiaen-modes ref:omt2e-prime-form ref:omt2e-ic-vector ref:omt2e-twelve-tone
-//   ref:wiki-pythagorean ref:wiki-turkish-makam ref:wiki-arabic-maqam ref:wiki-neutral-third ref:wiki-limit
-//   ref:hf-intervals ref:gann-ji
+//   ref:rubin-nonfunctional ref:arndt-tonality ref:koozin-planing ref:omt2e-row-naming ref:omt2e-normal-order
+//   ref:omt2e-pitch-class ref:omt2e-integer-intervals ref:omt2e-collections ref:wiki-messiaen-modes
+//   ref:omt2e-prime-form ref:omt2e-ic-vector ref:omt2e-twelve-tone ref:wiki-pythagorean ref:wiki-turkish-makam
+//   ref:wiki-arabic-maqam ref:wiki-neutral-third ref:wiki-limit ref:hf-intervals ref:gann-ji ref:ircam-spectral
+//   ref:ircam-spectrum ref:gann-ji-reasons
 // @refs-end
 
 const t = (zh, ja, en) => ({ zh, ja, en });
 const opt = (id, label) => ({ id, label });
 
-const ALL = [
+import { MODERN_UNITS, A_MODERN_ORDER } from './modern_harmony_course.js?v=20261008-spectrum-side1';
+const ALL = [...MODERN_UNITS,
   {
     id: 'posttonal', section: 'modern', feature: 'posttonal', icon: '0',
     title: t('把音变成数字', '音を数字にする', 'Turning notes into numbers'),
@@ -260,7 +262,7 @@ const ALL = [
 ];
 
 // 关卡顺序（从简到难）
-const ORDER = ['posttonal', 'pitchclass', 'collections', 'setclass', 'twelvetone', 'micro', 'microharmony'];
+const ORDER = A_MODERN_ORDER;
 export const UNITS = ORDER.map((id) => {
   const unit = ALL.find((u) => u.id === id);
   if (!unit) throw new Error(`unknown unit ${id}`);

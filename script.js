@@ -4,12 +4,13 @@ import { noteToFrequency, noteToSemitoneValue, semitoneToFreq, semitoneToMidi, r
 import { getAudioContext, interruptPlayback, interruptIfActive, connectOutput, suppressQueued, playChord, createHeldPianoVoice, createPianoTone, createSimpleTone } from "./audio_engine.js?v=20261006-guide-audio1";
 import { parsePitch } from "./pitch_spelling.js";
 import { mountSubPages } from "./sub_pages.js?v=20261003-u2";
-import { FEATURE_UNIT } from "./learn_feature_unit.js?v=20261003-f1";
+import { NESTED_TOOL_ROUTES, toolboxNavigationFeature } from './micro_tool_routes.js?v=20261008-beginner2';
+import { FEATURE_UNIT } from "./learn_feature_unit.js?v=20261008-modern-tools1";
 import { mountSiteSearch } from "./site_search.js?v=20261003-s4";
 import { satbToVoices, sendToStaff } from "./staff_handoff.js?v=20261003-h1";
 import { loadResume, clearResume } from "./learn_engine.js?v=20261006-circle1";
 import { EnhancedChordConverter, JazzBrain, ClassicalHarmonyConnector } from "./jazz_compass.js?v=20261004-w7";
-import * as lang from "./lang.js?v=20261007-language-select3";
+import * as lang from "./lang.js?v=20261008-beginner2";
 import { drawClassicalStaff } from "./classical_staff.js?v=20261004-m5";
 import { renderChordConversion } from "./chord_convert_panel.js?v=20261006-guide-audio1";
 
@@ -45,7 +46,7 @@ function loadingNote() {
 const load_composition_ui = () => import("./composition_ui.js?v=20261003-c4");
 const mountComposition = lazy(load_composition_ui, 'mountComposition');
 const mountRhythm = lazy(load_composition_ui, 'mountRhythm');
-const load_microtonal_ui = () => import("./microtonal_ui.js?v=20261004-m1");
+const load_microtonal_ui = () => import("./microtonal_ui.js?v=20261008-micro-views1");
 const mountMicrotonal = lazy(load_microtonal_ui, 'mountMicrotonal');
 const load_chinese_modes_ui = () => import("./chinese_modes_ui.js?v=20261002-tour");
 const mountChineseModes = lazy(load_chinese_modes_ui, 'mountChineseModes');
@@ -61,6 +62,9 @@ const load_jazz_more_ui = () => import("./jazz_more_ui.js?v=20261002-quest");
 const mountJazzMore = lazy(load_jazz_more_ui, 'mountJazzMore');
 const load_post_tonal_ui = () => import("./post_tonal_ui.js?v=20261007-row-toggle1");
 const mountPostTonal = lazy(load_post_tonal_ui, 'mountPostTonal');
+const MODERN_HARMONY_FEATURES = ['nonfunctional', 'polytonality', 'atonality', 'spectralharmony', 'microtonalharmony'];
+const load_modern_harmony_ui = () => import('./modern_harmony_tools_ui.js?v=20261008-b-workshop1');
+const mountModernHarmony = lazy(load_modern_harmony_ui, 'mountModernHarmony');
 const load_temperaments_ui = () => import("./temperaments_ui.js?v=20261002-quest");
 const mountTemperaments = lazy(load_temperaments_ui, 'mountTemperaments');
 const load_world_modes_ui = () => import("./world_modes_ui.js?v=20261002-quest");
@@ -89,7 +93,7 @@ const load_chord_symbols_ui = () => import("./chord_symbols_ui.js?v=20261003-r32
 const mountChordSymbols = lazy(load_chord_symbols_ui, 'mountChordSymbols');
 const load_staff_reading_ui = () => import("./staff_reading_ui.js?v=20261005-q1");
 const mountStaffReading = lazy(load_staff_reading_ui, 'mountStaffReading');
-const load_learn_ui = () => import("./learn_ui.js?v=20261007-listen-icon4");
+const load_learn_ui = () => import("./learn_ui.js?v=20261008-b-labels1");
 const mountLearn = lazy(load_learn_ui, 'mountLearn');
 const load_lcc_ui = () => import("./lcc_ui.js?v=20261002-i18n");
 const mountLccExplorer = lazy(load_lcc_ui, 'mountLccExplorer');
@@ -471,11 +475,11 @@ document.addEventListener("DOMContentLoaded", () => {
   initAppShell({ stopAllPlayback, navButtons, noteName: (pc) => idxToNote[pc], reverseFormulas: () => conv.reverseFormulas });
   // 全站搜索（Ctrl+K）：工具与乐理闯关的关卡
   mountSiteSearch({
-    tools: () => navButtons.map((b) => b.dataset.feature).filter((id) => id !== 'about').map((id) => ({
+    tools: () => [...navButtons.map((b) => b.dataset.feature), ...NESTED_TOOL_ROUTES].filter((id) => id !== 'about').map((id) => ({
       id, name: window.__(`nav_${id}`) || id, intro: window.__(`intro_${id}`) || '',
       allNames: Object.values(window.__all?.(`nav_${id}`) || {}).join(' '),
     })),
-    units: () => import("./learn_content.js?v=20261007-listen-icon4").then((m) => [...m.UNITS, ...m.SIDES]), lang: window.__lang, anchor: document.getElementById('share-link'),
+    units: () => import("./learn_content.js?v=20261008-spectrum-side1").then((m) => [...m.UNITS, ...m.SIDES]), lang: window.__lang, anchor: document.getElementById('share-link'),
   });
 
   const conv = new EnhancedChordConverter();
@@ -585,27 +589,28 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function showOnlyFeature(feature) {
+    const navigationFeature = toolboxNavigationFeature(feature);
     hashAtShow = initialHashForShow || parseLocationHash();
     initialHashForShow = null;
     if (feature !== 'blues') document.getElementById('panel-blues-body')?.stopBluesPlayback?.();
     if (feature !== 'classical') stopClassicalSequencePlayback();
     document.querySelectorAll('#panel-form, #panel-rhythm').forEach(panel => { if (panel.dataset.feature !== feature) panel.dispatchEvent(new Event('toolbox-stop')); });
-    ['chinese', 'counterpoint', 'nonchord', 'harmonize', 'figured', 'jazzmore', 'posttonal', 'temperaments', 'world', 'instruments', 'fretboard', 'progression', 'ear', 'chordsymbols', 'staff', 'learn'].forEach((id) => { if (feature !== id) document.getElementById(`panel-${id}-body`)?.dispatchEvent(new Event('toolbox-stop')); });
+    ['chinese', 'counterpoint', 'nonchord', 'harmonize', 'figured', 'jazzmore', 'posttonal', ...MODERN_HARMONY_FEATURES, 'micro', 'temperaments', 'world', 'instruments', 'fretboard', 'progression', 'ear', 'chordsymbols', 'staff', 'learn'].forEach((id) => { if (feature !== id) document.getElementById(`panel-${id}-body`)?.dispatchEvent(new Event('toolbox-stop')); });
     if (isFeature(feature)) rememberFeature(feature);
-    const featureButton = navButtons.find(button => button.dataset.feature === feature);
+    const featureButton = navButtons.find(button => button.dataset.feature === navigationFeature);
     const groupLabel = featureButton?.closest('.nav-group')?.querySelector('.nav-group-label');
     document.getElementById('workspace-index').textContent = groupLabel?.textContent.trim() || '';
-    document.getElementById('workspace-title').textContent = window.__(`nav_${feature}`);
-    document.getElementById('workspace-description').textContent = window.__(`intro_${feature}`);
+    document.getElementById('workspace-title').textContent = window.__(`nav_${navigationFeature}`);
+    document.getElementById('workspace-description').textContent = window.__(`intro_${navigationFeature}`);
     navButtons.forEach((b) => {
-      const active = b.dataset.feature === feature;
+      const active = b.dataset.feature === navigationFeature;
       b.classList.toggle("active", active);
       b.setAttribute("aria-selected", String(active));
       b.setAttribute("tabindex", active ? "0" : "-1");
     });
     panels.forEach((p) => {
       const f = p.dataset.feature;
-      if (f === feature) {
+      if (f === navigationFeature) {
         p.classList.add("active");
         p.style.display = "block";
         p.setAttribute("aria-hidden", "false");
@@ -615,8 +620,21 @@ document.addEventListener("DOMContentLoaded", () => {
         p.setAttribute("aria-hidden", "true");
       }
     });
+    if (['micro','posttonal'].includes(navigationFeature)) {
+      const attr = navigationFeature === 'micro' ? 'microView' : 'posttonalView';
+      const selector = navigationFeature === 'micro' ? '[data-micro-view]' : '[data-posttonal-view]';
+      document.querySelectorAll(selector).forEach((tab) => {
+        const selected = tab.dataset[attr] === feature;
+        tab.classList.toggle('active', selected);
+        tab.setAttribute('aria-selected', String(selected));
+        tab.tabIndex = selected ? 0 : -1;
+        const view = document.getElementById(tab.getAttribute('aria-controls'));
+        view.hidden = !selected;
+        view.setAttribute('aria-hidden', String(!selected));
+      });
+    }
     // 只在导航条自己里面横向滚动，把选中的按钮移到中间；不用 scrollIntoView，以免整页被横向带偏
-    const activeNavButton = document.querySelector(`.feature-btn[data-feature="${feature}"]`);
+    const activeNavButton = document.querySelector(`.feature-btn[data-feature="${navigationFeature}"]`);
     const featureNav = activeNavButton?.closest(".feature-nav");
     if (activeNavButton && featureNav && featureNav.scrollWidth > featureNav.clientWidth + 1) {
       const navBox = featureNav.getBoundingClientRect();
@@ -641,7 +659,7 @@ document.addEventListener("DOMContentLoaded", () => {
       neoReady = initNeoPanel({ brain }).then(() => { if (!document.getElementById('panel-neo-body')?.children.length) document.getElementById('neo-run')?.click(); });
     }
     if (feature === 'circle' && !circleReady) circleReady = createCirclePanelNow();
-    if (feature === 'micro' && !microReady) microReady = mountMicrotonal(playChord, createHeldPianoVoice);
+    if (feature === 'micro' && !microReady) microReady = mountMicrotonal(playChord, createHeldPianoVoice, { stopAudio: interruptIfActive });
     // 和弦音阶、LCC、布鲁斯：第一次打开时才计算（它们的代码也是这时才下载）
     if (['cst', 'lcc', 'blues'].includes(feature) && !ranOnShow.has(feature)) { ranOnShow.add(feature); document.getElementById(`${feature}-run`)?.click(); }
     if (feature === 'form' && isFirstMount(document.getElementById('panel-form'))) {
@@ -678,6 +696,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (feature === 'figured') { const el = document.getElementById('panel-figured-body'); mountOnce(el, () => mountFiguredBass(el, { playChord })); }
     if (feature === 'jazzmore') { const el = document.getElementById('panel-jazzmore-body'); mountOnce(el, () => mountJazzMore(el, { playChord })); }
     if (feature === 'posttonal') { const el = document.getElementById('panel-posttonal-body'); mountOnce(el, () => mountPostTonal(el, { playChord })); }
+    if (MODERN_HARMONY_FEATURES.includes(feature)) {
+      const el = document.getElementById(`panel-${feature}-body`);
+      mountOnce(el, () => mountModernHarmony(el, { topic: feature, playChord, stopAudio: interruptIfActive }));
+      dispatchInitialQuery(feature, `panel-${feature}-body`);
+    }
     if (feature === 'temperaments') { const el = document.getElementById('panel-temperaments-body'); mountOnce(el, () => mountTemperaments(el, { playChord })); }
     if (feature === 'world') { const el = document.getElementById('panel-world-body'); mountOnce(el, () => mountWorldModes(el, { playChord })); }
     if (feature === 'instruments') { const el = document.getElementById('panel-instruments-body'); mountOnce(el, () => mountInstruments(el, { playChord })); }
@@ -1283,6 +1306,20 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Navigation binding: show only selected feature
+  for (const [selector, attr] of [['[data-micro-view]','microView'],['[data-posttonal-view]','posttonalView']]) {
+  const microTabs = Array.from(document.querySelectorAll(selector));
+  microTabs.forEach((tab, index) => {
+    tab.addEventListener('click', () => showOnlyFeature(tab.dataset[attr]));
+    tab.addEventListener('keydown', event => {
+      let next;
+      if (event.key === 'ArrowRight') next = (index + 1) % microTabs.length;
+      if (event.key === 'ArrowLeft') next = (index - 1 + microTabs.length) % microTabs.length;
+      if (event.key === 'Home') next = 0;
+      if (event.key === 'End') next = microTabs.length - 1;
+      if (next !== undefined) { event.preventDefault(); microTabs[next].click(); microTabs[next].focus(); }
+    });
+  });
+  }
   navButtons.forEach((b) =>
     b.addEventListener("click", () => showOnlyFeature(b.dataset.feature)),
   );
@@ -2720,7 +2757,7 @@ document.addEventListener("DOMContentLoaded", () => {
   var INPUT_STORAGE_KEY = "jc-inputs";
   var PRIMARY_INPUTS = { chord: "chord-input", blues: "blues-input", lcc: "lcc-input", cst: "cst-input" };
   // 用函数声明：showOnlyFeature 可能早于这里被调用
-  function isFeature(id) { return navButtons.some((button) => button.dataset.feature === id); }
+  function isFeature(id) { return NESTED_TOOL_ROUTES.includes(id) || navButtons.some((button) => button.dataset.feature === id); }
   function readStored(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch (_) { return fallback; } }
   function writeStored(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (_) { } }
   function parseLocationHash() {
@@ -2764,9 +2801,15 @@ document.addEventListener("DOMContentLoaded", () => {
     area.remove();
     return ok;
   }
+  function currentToolFeature() {
+    const feature = document.querySelector('.feature-btn.active')?.dataset.feature;
+    if (feature === 'micro') return document.querySelector('[data-micro-view][aria-selected="true"]')?.dataset.microView || feature;
+    if (feature === 'posttonal') return document.querySelector('[data-posttonal-view][aria-selected="true"]')?.dataset.posttonalView || feature;
+    return feature;
+  }
   const shareButton = document.getElementById("share-link");
   shareButton?.addEventListener("click", async () => {
-    const feature = document.querySelector(".feature-btn.active")?.dataset.feature;
+    const feature = currentToolFeature();
     if (feature) rememberFeature(feature);
     const label = document.getElementById("share_link");
     const copied = await copyText(location.href);

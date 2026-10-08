@@ -24,7 +24,7 @@ export function referenceLicense(reference) {
   };
   if (reference.license === 'CC BY 4.0') return {
     label: reference.license, file: 'CC-BY-4.0.txt',
-    note: '仅课程文字与静态图片；上游播放器、源码、数据文件与音频另有规定',
+    note: reference.id === 'rubin-nonfunctional' ? 'Justin Rubin ©2024；参照概念自行编写教学文字、图示与频率例子，未复制原谱例或音频' : '仅课程文字与静态图片；上游播放器、源码、数据文件与音频另有规定',
   };
   if (reference.id === 'w3c-musicxml') return {
     label: reference.license, file: 'W3C-Community-FSA.txt',

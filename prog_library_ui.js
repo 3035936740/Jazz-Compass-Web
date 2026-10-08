@@ -7,7 +7,7 @@ import {
 } from './prog_library.js?v=20261004-w8';
 import { ENTRIES, FEEL_TAGS, CATEGORIES, KINDS, SOURCES, FAMILIES } from './prog_library_data.js?v=20261003-p2';
 import { el, button, option, field, language, midiToFrequency, cite, sourcesFooter } from './module_kit.js';
-import { renderVisual } from './learn_visuals.js?v=20261004-m5';
+import { renderVisual } from './learn_visuals.js?v=20261008-beginner2';
 import { sendToStaff, satbToVoices } from './staff_handoff.js?v=20261003-h1';
 import { bassLine } from './prog_quiz.js';
 import { worksheetHTML, openWorksheet } from './worksheet.js?v=20261004-y1';

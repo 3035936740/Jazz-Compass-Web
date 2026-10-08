@@ -5,7 +5,7 @@ import { rhythmQuestion, melodyQuestion, bassQuestion, progressionQuestion, comp
 import { keyInfo, spellNote, stepOf } from './motif_phrase.js';
 import { parseRoman, realize } from './prog_library.js?v=20261004-w8';
 import { melodyStaff } from './tool_staff.js';
-import { renderVisual } from './learn_visuals.js?v=20261004-m5';
+import { renderVisual } from './learn_visuals.js?v=20261008-beginner2';
 import { recordToolMistake, tri } from './tool_review.js';
 import { el, button, option, field, language, cite } from './module_kit.js';
 

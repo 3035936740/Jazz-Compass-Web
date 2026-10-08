@@ -8,7 +8,7 @@
         try { document.documentElement.dataset.theme = localStorage.getItem('jazz-compass-theme') || 'light'; }
         catch { document.documentElement.dataset.theme = 'light'; }
     </script>
-    <script type="module" src="./script.js?v=20261007-row-toggle1"></script>
+    <script type="module" src="./script.js?v=20261008-b-labels1"></script>
     <title>Music Theory Toolbox</title>
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="icon" href="./icon.svg" type="image/svg+xml">
@@ -20,7 +20,8 @@
     <link rel="stylesheet" href="./jazz_toolbox.css?v=20261001-ui">
     <link rel="stylesheet" href="./harmony_connections.css?v=20261001-ui">
     <link rel="stylesheet" href="./composition.css?v=20261004-c1">
-    <link rel="stylesheet" href="./learn.css?v=20261008-sideb-page1">
+    <link rel="stylesheet" href="./learn.css?v=20261008-b-labels1">
+    <link rel="stylesheet" href="./modern_harmony_tools.css?v=20261008-b-workshop1">
 </head>
 
 <body>
@@ -170,7 +171,12 @@
                 <div id="panel-harmonize" class="panel" data-feature="harmonize" role="tabpanel"><div class="panel-body" id="panel-harmonize-body"></div></div>
                 <div id="panel-figured" class="panel" data-feature="figured" role="tabpanel"><div class="panel-body" id="panel-figured-body"></div></div>
                 <div id="panel-jazzmore" class="panel" data-feature="jazzmore" role="tabpanel"><div class="panel-body" id="panel-jazzmore-body"></div></div>
-                <div id="panel-posttonal" class="panel" data-feature="posttonal" role="tabpanel"><div class="panel-body" id="panel-posttonal-body"></div></div>
+                <div id="panel-posttonal" class="panel" data-feature="posttonal" role="tabpanel"><div class="micro-tool-tabs" role="tablist" aria-label="二十世纪技法工具页面" data-i18n-attr="aria-label:posttonal_views_label"><button type="button" id="posttonal-tab-posttonal" role="tab" data-posttonal-view="posttonal" aria-selected="true" aria-controls="posttonal-view-main" tabindex="0" class="active"><span id="posttonal_view_main">基础技法</span></button>
+<button type="button" id="posttonal-tab-nonfunctional" role="tab" data-posttonal-view="nonfunctional" aria-selected="false" aria-controls="panel-nonfunctional" tabindex="-1"><span id="nav_nonfunctional">非功能和声</span></button>
+<button type="button" id="posttonal-tab-polytonality" role="tab" data-posttonal-view="polytonality" aria-selected="false" aria-controls="panel-polytonality" tabindex="-1"><span id="nav_polytonality">多调性</span></button>
+<button type="button" id="posttonal-tab-atonality" role="tab" data-posttonal-view="atonality" aria-selected="false" aria-controls="panel-atonality" tabindex="-1"><span id="nav_atonality">无调性</span></button></div><div id="posttonal-view-main" class="micro-tool-view" role="tabpanel" aria-labelledby="posttonal-tab-posttonal"><div class="panel-body" id="panel-posttonal-body"></div></div><div id="panel-nonfunctional" class="micro-tool-view" data-feature="nonfunctional" role="tabpanel" aria-labelledby="posttonal-tab-nonfunctional" hidden><div class="panel-body" id="panel-nonfunctional-body"></div></div>
+<div id="panel-polytonality" class="micro-tool-view" data-feature="polytonality" role="tabpanel" aria-labelledby="posttonal-tab-polytonality" hidden><div class="panel-body" id="panel-polytonality-body"></div></div>
+<div id="panel-atonality" class="micro-tool-view" data-feature="atonality" role="tabpanel" aria-labelledby="posttonal-tab-atonality" hidden><div class="panel-body" id="panel-atonality-body"></div></div></div>
                 <div id="panel-temperaments" class="panel" data-feature="temperaments" role="tabpanel"><div class="panel-body" id="panel-temperaments-body"></div></div>
                 <div id="panel-world" class="panel" data-feature="world" role="tabpanel"><div class="panel-body" id="panel-world-body"></div></div>
                 <div id="panel-instruments" class="panel" data-feature="instruments" role="tabpanel"><div class="panel-body" id="panel-instruments-body"></div></div>
@@ -411,6 +417,12 @@
                 </div>
 
                 <div id="panel-micro" class="panel" data-feature="micro" role="tabpanel">
+                    <div class="micro-tool-tabs" role="tablist" aria-label="微分音工具页面" data-i18n-attr="aria-label:micro_views_label">
+                        <button type="button" id="micro-tab-main" data-micro-view="micro" role="tab" aria-controls="micro-view-main" aria-selected="true" tabindex="0" class="active"><span id="micro_view_main">音律与键盘</span></button>
+                        <button type="button" id="micro-tab-spectral" data-micro-view="spectralharmony" role="tab" aria-controls="panel-spectralharmony" aria-selected="false" tabindex="-1"><span id="nav_spectralharmony">频谱和声</span></button>
+                        <button type="button" id="micro-tab-harmony" data-micro-view="microtonalharmony" role="tab" aria-controls="panel-microtonalharmony" aria-selected="false" tabindex="-1"><span id="nav_microtonalharmony">微分音和声</span></button>
+                    </div>
+                    <div id="micro-view-main" class="micro-tool-view" role="tabpanel" aria-labelledby="micro-tab-main">
                     <div class="panel-header micro-controls">
                         <label><span id="micro-preset-label">和声构型</span>
                             <select id="micro-preset">
@@ -437,6 +449,9 @@
                         <div class="micro-edo-presets" role="group" aria-label="EDO presets"><span id="micro-edo-quick-label">快捷选择</span><button type="button" data-edo="12">12</button><button type="button" data-edo="24">24</button><button type="button" data-edo="31">31</button><button type="button" data-edo="41">41</button><button type="button" data-edo="53">53</button></div>
                     </div>
                     <div class="panel-body" id="panel-micro-body" aria-live="polite"></div>
+                    </div>
+                    <div id="panel-spectralharmony" class="micro-tool-view" data-feature="spectralharmony" role="tabpanel" aria-labelledby="micro-tab-spectral" hidden><div class="panel-body" id="panel-spectralharmony-body"></div></div>
+                    <div id="panel-microtonalharmony" class="micro-tool-view" data-feature="microtonalharmony" role="tabpanel" aria-labelledby="micro-tab-harmony" hidden><div class="panel-body" id="panel-microtonalharmony-body"></div></div>
                 </div>
 
                 <div id="panel-about" class="panel" data-feature="about" role="tabpanel">

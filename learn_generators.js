@@ -1,3 +1,5 @@
+// ref:koozin-planing
+// ref:rubin-nonfunctional ref:arndt-tonality ref:ircam-spectral ref:ircam-spectrum ref:gann-ji-reasons
 // 乐理闯关：题目生成器。进阶关与综合测验里的 { type: 'gen', gen: '<名称>', count, params } 会在开局时展开成具体题卡，
 // 每次游玩都不同。所有题目都由已登记资料里的定义计算出来（音阶、音程、和弦、调号、PLR、轴心体系、负和声……），
 // 每个生成器标出它依据的资料：
@@ -175,7 +177,8 @@ const JI_INTERVALS = [
 ];
 
 // ---------- 生成器 ----------
-export const GENERATORS = {
+import { MODERN_GENERATORS } from './modern_harmony_generators.js?v=20261008-modern-tools1';
+export const GENERATORS = { ...MODERN_GENERATORS,
   // 入门：键盘、谱号、节奏 -------------------------------------------------
   keyName: { ref: 'omt2e-keyboard', make(rng) {
     const pc = pick(rng, [0, 2, 4, 5, 7, 9, 11]);

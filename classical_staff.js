@@ -1,7 +1,7 @@
 // 古典和声面板的"连续和声连接"大谱表：四部声部、每个和弦下的五行标注、|Key=…|、点列试听、点标注退回、四部和声检查标记
 // 从 script.js 拆出来；面板状态通过 ctx 传进来：{ classical, segments, settings, modeLabel, localize, text, lang }
 // 返回 { drawn, satb }：drawn 表示谱表画出来了（上面那排和弦卡片就不用再显示），satb 是拼写好的四部和声（"送到五线谱"用）
-import { renderVisual as renderStaffVisual } from "./learn_visuals.js?v=20261004-m5";
+import { renderVisual as renderStaffVisual } from "./learn_visuals.js?v=20261008-beginner2";
 import { keyFifths } from "./staff_musicxml.js?v=20261003-x1";
 import { checkSATB } from "./satb_check.js?v=20261004-r32";
 import { issueList, drawIssueMarks } from "./satb_marks.js?v=20261003-r31";

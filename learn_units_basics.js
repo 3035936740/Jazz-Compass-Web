@@ -1,9 +1,8 @@
 // 乐理闯关 · 入门：每张题卡标出依据（ref），只使用 references.js 中已登记、已核实的资料；解析用尽量通俗的话转述这些资料。
 // 依据汇总（由 scripts/annotate-learn.mjs 生成）：
 //   ref:omt2e-half-whole ref:omt2e-notation ref:omt2e-clefs ref:omt2e-keyboard ref:omt2e-aspn ref:omt2e-rhythm
-//   ref:omt2e-simple-meter ref:omt2e-compound-meter ref:omt-intervals ref:sccm-ethnic-modes ref:helvting-scales
-//   ref:omt2e-major-scales ref:omt2e-minor ref:omt2e-intervals ref:omt2e-modes ref:zhwiki-heptatonic
-//   ref:omt2e-texture
+//   ref:omt2e-simple-meter ref:omt2e-compound-meter ref:omt-intervals ref:omt2e-intervals ref:omt2e-major-scales
+//   ref:omt2e-minor ref:omt2e-modes ref:zhwiki-heptatonic ref:sccm-ethnic-modes ref:helvting-scales ref:omt2e-texture
 // @refs-end
 
 const t = (zh, ja, en) => ({ zh, ja, en });

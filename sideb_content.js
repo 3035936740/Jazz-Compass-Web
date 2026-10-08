@@ -1,5 +1,5 @@
-// Side-B（翻面课程）的地图：6 章 43 关的元数据（编号、标题、对应 A 面关卡、有没有实操、是否核心关）。
-// 关卡内容（五段节点）在 sideb_units_<章>.js，按 id 挂进 LEVELS[...].content（43 关全部有内容）；考试（章节测试 / EX / Final）由 examById 现场组卷。
+// Side-B（翻面课程）的地图：6 章 48 关的元数据（编号、标题、对应 A 面关卡、有没有实操、是否核心关）。
+// 关卡内容（五段节点）在 sideb_units_<章>.js，按 id 挂进 LEVELS[...].content（48 关全部有内容）；考试（章节测试 / EX / Final）由 examById 现场组卷。
 // 设计见 SIDE_B_DESIGN.md。
 import { LEVEL_B2_4 } from './sideb_units_harmony.js?v=20261004-u2';
 import { LEVEL_B4_10 } from './sideb_units_rhythm.js?v=20261004-u2';
@@ -7,8 +7,10 @@ import { LEVEL_B2_1, LEVEL_B2_2, LEVEL_B2_3, LEVEL_B2_5, LEVEL_B2_6, LEVEL_B2_7,
 import { LEVEL_B3_1, LEVEL_B3_2, LEVEL_B3_3, LEVEL_B3_4, LEVEL_B3_5 } from './sideb_units_melody.js?v=20261004-w1';
 import { LEVEL_B4_1, LEVEL_B4_2, LEVEL_B4_3, LEVEL_B4_4, LEVEL_B4_5, LEVEL_B4_6, LEVEL_B4_7, LEVEL_B4_8, LEVEL_B4_9 } from './sideb_units_jazz.js?v=20261004-w6';
 import { LEVEL_B5_1, LEVEL_B5_2, LEVEL_B5_3, LEVEL_B5_4 } from './sideb_units_world.js?v=20261006-clarity1';
+import { TOPICS, B_MODERN_ORDER } from './modern_harmony_course.js?v=20261008-spectrum-side1';
+import { MODERN_B_LEVELS, MODERN_B_EXTENSIONS } from './sideb_units_modernharmony.js?v=20261008-b-workshop1';
 import { LEVEL_B6_1, LEVEL_B6_2, LEVEL_B6_3, LEVEL_B6_4, LEVEL_B6_5 } from './sideb_units_modern.js?v=20261004-x1';
-import { UNITS, SIDES } from './learn_content.js?v=20261006-clarity1';
+import { UNITS, SIDES } from './learn_content.js?v=20261008-spectrum-side1';
 import { EXT_BASICS } from './sideb_ext_basics.js?v=20261004-y3';
 import { EXT_HARMONY } from './sideb_ext_harmony.js?v=20261006-clarity1';
 import { EXT_MELODY } from './sideb_ext_melody.js?v=20261004-m4';
@@ -32,7 +34,7 @@ export const B_CHAPTERS = [
 ];
 
 /**
- * 43 关。a：对应的 A 面关卡（主关或支线的 id）；lab：关卡里有工具实操（🔬，只放在真正适合的关）；core：核心重点关（最多约 20 分钟）
+ * 48 关。a：对应的 A 面关卡（主关或支线的 id）；lab：关卡里有工具实操（🔬，只放在真正适合的关）；core：核心重点关（最多约 20 分钟）
  */
 const L = (id, chapter, title, a, { lab = false, core = false } = {}) => ({ id, chapter, title, a, lab, core });
 export const B_LEVELS = [
@@ -74,6 +76,7 @@ export const B_LEVELS = [
   L('B5-2', 'world', t('thaat 与木卡姆：两种音阶体系的比较', 'ターートとマカーム：2 つの音階体系の比較', 'Thaat and maqam: comparing two scale systems'), ['thaat', 'world']),
   L('B5-3', 'world', t('泛音列与音色', '倍音列と音色', 'The harmonic series and timbre'), ['harmonics']),
   L('B5-4', 'world', t('律制的计算', '音律の計算', 'Calculating temperaments'), ['temperaments', 'welltemper']),
+  ...TOPICS.map(topic => L(topic.b, 'modern', topic.title, [topic.id])),
   L('B6-1', 'modern', t('音级与整数音程', 'ピッチクラスと整数音程', 'Pitch classes and integer intervals'), ['posttonal', 'pitchclass']),
   L('B6-2', 'modern', t('音集与对称', '音の集合と対称性', 'Collections and symmetry'), ['collections']),
   L('B6-3', 'modern', t('集合级分析', 'セット・クラス分析', 'Set-class analysis'), ['setclass'], { lab: true, core: true }),
@@ -81,8 +84,13 @@ export const B_LEVELS = [
   L('B6-5', 'modern', t('微分音与扩展纯律', '微分音と拡張純正律', 'Microtones and extended just intonation'), ['micro', 'microharmony']),
 ];
 
+// Persisted IDs stay unchanged. Visible B6 codes follow the new teaching order.
+const modernStart = B_LEVELS.findIndex(l => l.chapter === 'modern');
+const modernLevels = B_LEVELS.splice(modernStart);
+B_LEVELS.push(...B_MODERN_ORDER.map((id,i) => ({ ...modernLevels.find(l => l.id === id), code: `B6-${i+1}` })));
+
 /** 已经做好的关卡内容（其余显示"制作中"） */
-const CONTENT = {
+const CONTENT = { ...MODERN_B_LEVELS,
   'B1-1': LEVEL_B1_1, 'B1-2': LEVEL_B1_2, 'B1-3': LEVEL_B1_3, 'B1-4': LEVEL_B1_4, 'B1-5': LEVEL_B1_5, 'B1-6': LEVEL_B1_6, 'B1-7': LEVEL_B1_7,
   'B2-1': LEVEL_B2_1, 'B2-2': LEVEL_B2_2, 'B2-3': LEVEL_B2_3, 'B2-4': LEVEL_B2_4, 'B2-5': LEVEL_B2_5, 'B2-6': LEVEL_B2_6,
   'B2-7': LEVEL_B2_7, 'B2-8': LEVEL_B2_8, 'B2-9': LEVEL_B2_9, 'B2-10': LEVEL_B2_10, 'B2-11': LEVEL_B2_11, 'B2-12': LEVEL_B2_12,
@@ -213,7 +221,7 @@ export function examById(id) {
 // ---------------- 扩展关 ----------------
 // 每个普通关通过后解锁一个扩展关（id：<关卡>x，进度存 bx:<关卡>）：节奏和普通关一样（发现 → 讲解 → 实验 → 挑战），
 // 把对应 A 面关卡的 4 个进阶关 + 综合测验的内容重新、更细地讲一遍，所以讲解更长。内容在 sideb_ext_<章>.js。
-const EXT_CONTENT = { ...EXT_BASICS, ...EXT_HARMONY, ...EXT_MELODY, ...EXT_JAZZ, ...EXT_WORLD, ...EXT_MODERN };
+const EXT_CONTENT = { ...EXT_BASICS, ...EXT_HARMONY, ...EXT_MELODY, ...EXT_JAZZ, ...EXT_WORLD, ...EXT_MODERN, ...MODERN_B_EXTENSIONS };
 const extCache = new Map();
 // 先观察跨章节的联系，后续主关再展开；提示放在播放器讲解页里。
 const EXT_PREVIEWS = {
@@ -230,7 +238,7 @@ export function extLevelById(id) {
   if (!extCache.has(id)) {
     const content = EXT_CONTENT[base.id];
     const previewOf = EXT_PREVIEWS[base.id] || [];
-    const destinations = (lang) => previewOf.map((target) => `${target} ${levelById(target).title[lang]}`).join(' / ');
+    const destinations = (lang) => previewOf.map((target) => `${levelById(target).code || target} ${levelById(target).title[lang]}`).join(' / ');
     const preview = { id: `${id}-preview`, type: 'page',
       title: t('先看联系，后面再展开', 'まず関連を見て、後で深める', 'See the connection now; develop it later'),
       text: [t(`本扩展关会先展示与后续知识的联系；涉及的新术语和实验在 ${destinations('zh')} 正式展开。现在先跟着示例观察和比较，后续课程会系统讲解。`,
@@ -238,7 +246,7 @@ export function extLevelById(id) {
         `This extension previews connections to later topics. New terms and experiments are developed in ${destinations('en')}. For now, follow the examples and compare; later lessons explain them systematically.`)] };
     const firstPage = content.sections.explain.findIndex((n) => n.type === 'page');
     const sections = previewOf.length ? { ...content.sections, explain: content.sections.explain.map((n, i) => i === firstPage ? { ...n, text: [...preview.text, ...[].concat(n.text || [])] } : n) } : content.sections;
-    extCache.set(id, clarifyLevel({ ...content, sections, previewOf, id, base: base.id, ext: true, chapter: base.chapter, a: base.a, lab: Boolean(content.sections?.lab?.length),
+    extCache.set(id, clarifyLevel({ ...content, sections, previewOf, id, base: base.id, code: base.code || base.id, ext: true, chapter: base.chapter, a: base.a, lab: Boolean(content.sections?.lab?.length),
       title: t(`${base.title.zh} · 扩展关`, `${base.title.ja}・拡張ステージ`, `${base.title.en} · extension`) }));
   }
   return extCache.get(id);

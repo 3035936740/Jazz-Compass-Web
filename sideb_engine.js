@@ -5,7 +5,7 @@
 // 所以 60% 是"掌握门槛"而不是"惩罚门槛"：没过时讲解、实验、实操的进度全部保留，只补弱项（补弱挑战），不用整关重来。
 import { gradeCard, isDone } from './learn_engine.js?v=20261006-clarity1';
 import { SKILLS } from './sideb_errors.js?v=20261004-z9';
-import { GENERATORS } from './learn_generators.js?v=20261006-clarity1';
+import { GENERATORS } from './learn_generators.js?v=20261008-beginner2';
 
 /** 一关的五段：发现 → 解释 → 实验 → 挑战 → 实操（只有关键技能关才有实操） */
 export const SECTION_ORDER = ['discover', 'explain', 'experiment', 'challenge', 'lab'];
@@ -62,7 +62,7 @@ const notePitch = (note) => {
   return { pc, midi: m[3] === undefined ? null : (Number(m[3]) + 1) * 12 + LETTER_PC[m[1]] + alter };
 };
 /** 拼写一个音：严格比较字母与升降；音高对但拼法不对记"同音异名"，音名对但八度不对记"八度" */
-export function gradeSpelling(expected, given) {
+export function gradeSpelling(expected, given, {acceptEnharmonic=false}={}) {
   const want = normalizeNote(expected); const got = normalizeNote(given);
   if (want === got) return { ok: true, error: null };
   const a = notePitch(want); const b = notePitch(got);
@@ -70,7 +70,7 @@ export function gradeSpelling(expected, given) {
   const sameLetters = want.replace(/-?\d+$/, '') === got.replace(/-?\d+$/, '');
   if (sameLetters) return { ok: false, error: 'octave' };
   const samePitch = a.midi !== null && b.midi !== null ? a.midi === b.midi : a.pc === b.pc;
-  return { ok: false, error: samePitch ? 'enharmonic' : 'wrong-note' };
+  return samePitch && acceptEnharmonic && (a.midi === null || b.midi !== null) ? {ok:true,error:null} : { ok: false, error: samePitch ? 'enharmonic' : 'wrong-note' };
 }
 
 /** 罗马数字比较：大小写有意义（ii ≠ II）；°/o、ø/Ø 视为同一个；空格忽略 */
@@ -132,7 +132,7 @@ export function gradeNode(node, response) {
     }
     case 'spell': {
       const answers = node.answer;
-      const results = answers.map((want, i) => gradeSpelling(want, response?.[i]));
+      const results = answers.map((want, i) => gradeSpelling(want, response?.[i],node));
       const right = results.filter((r) => r.ok).length;
       return { ok: right === answers.length && (response?.length ?? 0) === answers.length, score: right / answers.length, errors: [...new Set(results.filter((r) => !r.ok).map((r) => r.error))] };
     }
@@ -140,7 +140,7 @@ export function gradeNode(node, response) {
       const results = node.steps.map((step, i) => {
         const given = response?.[i];
         const ok = acceptedList(step.answer).some((want) => {
-          if (step.kind === 'number') return Math.abs(Number(given) - Number(want)) <= (step.tol ?? 1e-9);
+          if (step.kind === 'number') return given !== null && given !== undefined && String(given).trim() !== '' && Number.isFinite(Number(given)) && Math.abs(Number(given) - Number(want)) <= (step.tol ?? 1e-9);
           if (step.kind === 'note') return gradeSpelling(want, given).ok;
           if (step.kind === 'roman') return normalizeRoman(given) === normalizeRoman(want);
           return String(given ?? '').trim().toLowerCase() === String(want).trim().toLowerCase();

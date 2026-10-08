@@ -5,7 +5,7 @@
 //    上一层的 X 属七与下一层同根音的 X 半减七相连（八声区域），三层首尾相接：ref:arxiv-mohanty ref:mto-mcclimon
 //    Douthett 与 Steinbach 的 Power Towers 在"桥"里还放了小七和弦；这里按 Cohn 的画法，不画小七和弦。
 //  · 五线谱：把当前和弦和它的邻居（或一条路径）写在谱表上
-import { renderVisual } from './learn_visuals.js?v=20261004-m5';
+import { renderVisual } from './learn_visuals.js?v=20261008-beginner2';
 import { parseChordSymbol } from './chord_symbols.js?v=20261002-alt3';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';

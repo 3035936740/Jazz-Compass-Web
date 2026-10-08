@@ -1,7 +1,7 @@
 // Side-B（翻面课程）界面：翻面地图、关卡卡片、关卡播放器（发现 / 解释 / 实验 / 挑战 / 实操）、结算页、补弱挑战。
 // 规则在 sideb_engine.js，评分在 lab_checks.js，内容在 sideb_content.js / sideb_units_*.js；设计见 SIDE_B_DESIGN.md。
 // 原则：音乐优先于分数，发现优先于背诵，成就感优先于惩罚感——失败只补弱项，每关有一个"发现"（insight）和胜利瞬间。
-import { B_CHAPTERS, B_LEVELS, levelById, lookupLevel, chapterLevels, isPlayable, extLevelById, hasExtLevel } from './sideb_content.js?v=20261006-guide-audio1';
+import { B_CHAPTERS, B_LEVELS, levelById, lookupLevel, chapterLevels, isPlayable, extLevelById, hasExtLevel } from './sideb_content.js?v=20261008-b-workshop1';
 import { relatedLearnTools } from './learn_feature_unit.js?v=20261006-circle1';
 import {
   bKey, levelSections, levelForAttempt, createBSession, completeSection, recordAnswer, gradeNode, summarizeB, retrySession,
@@ -9,14 +9,16 @@ import {
   mergeMastery, overallMastery, loadMastery, saveMastery, loadBResume, saveBResume, clearBResume, bestLabResults, saveLabResult, LAB_LINES,
   breakthroughFor, loadBreakthroughs, saveBreakthrough, estimateMinutes, PASS_LINE, isAssessed,
   extKey, gradeOf, chapterAverageWithExt, chapterTestOpen, chapterExOpen, finalOpen, finalExOpen, CHAPTER_EX_OPEN,
-} from './sideb_engine.js?v=20261006-clarity1';
+} from './sideb_engine.js?v=20261008-modern-tools1';
 import { SKILLS, SKILL_NAMES, recommend } from './sideb_errors.js?v=20261004-z9';
 import { LABS, labHref, labResultKey } from './sideb_labs.js?v=20261004-x1';
 import { loadProgress, saveProgress, isDone } from './learn_engine.js?v=20261006-circle1';
-import { renderVisual } from './learn_visuals.js?v=20261004-m5';
-import { satbStaff, rhythmGrid, playAudio, satbToy, polyToy, tapPad, spellToy, meterToy, intervalToy, scaleToy, textureToy, chordToy, keyChordsToy, progressionToy, plrToy, keyRelToy, transposeToy, fretToy, nctToy, speciesToy, canonToy, swingToy, bluesToy, chordScaleToy, guideToy, negativeToy, xuangongToy, worldToy, harmonicsToy, temperToy, pcToy, collectionToy, setToy, matrixToy, jiToy } from './sideb_toys.js?v=20261005-p4';
+import { createGuidePlayback } from './learn_guide_audio.js?v=20261008-beginner2';
+import { renderVisual } from './learn_visuals.js?v=20261008-beginner2';
+import { satbStaff, rhythmGrid, playAudio, satbToy, polyToy, tapPad, spellToy, meterToy, intervalToy, scaleToy, textureToy, chordToy, keyChordsToy, progressionToy, plrToy, keyRelToy, transposeToy, fretToy, nctToy, speciesToy, canonToy, swingToy, bluesToy, chordScaleToy, guideToy, negativeToy, xuangongToy, worldToy, harmonicsToy, temperToy, pcToy, collectionToy, setToy, matrixToy, jiToy } from './sideb_toys.js?v=20261008-b-workshop1';
+import { modernHarmonyToy } from './sideb_modern_harmony_toys.js?v=20261008-b-workshop1';
 import { celebrate } from './sideb_fx.js?v=20261006-guide-audio1';
-import { sidebWorksheet, openWorksheet } from './sideb_print.js?v=20261006-clarity1';
+import { sidebWorksheet, openWorksheet } from './sideb_print.js?v=20261008-modern-tools1';
 import { certificate, awardCert, loadCerts, graduationShow } from './sideb_cert.js?v=20261006-guide-audio1';
 import { referenceById } from './references.js';
 
@@ -100,11 +102,11 @@ const TEXT_ALL = {
 /** 调试模式（和 A 面同一个开关：控制台 class_debug(true)，存在 localStorage jc-learn-debug） */
 const debugOn = () => { try { return globalThis.localStorage?.getItem('jc-learn-debug') === '1'; } catch (_) { return false; } };
 const DEBUG_TEXT = {
-  zh: { title: 'Side-B 调试', note: '控制台输入 class_debug(false) 关闭', chapter: (c, g) => `${c} 全部评级 ${g}`, all3: 'Side-B 全部 A+', clear: '清空 Side-B 记录', clearBreaks: '清空突破记录（可以重新触发）', off: '关闭调试', confirmClear: '确定清空 Side-B 的关卡、实操、技能和突破记录？', cleared: '已清空',
+  zh: { title: 'Side-B 调试', note: '控制台输入 class_debug(false) 关闭', chapter: (c, g) => `${c} 全部评级 ${g}`, all3: 'Side-B 全部 A+', clear: '清空 Side-B 记录', clearBreaks: '清空突破记录（可以重新触发）', off: '关闭调试', confirmClear: '确定清空 Side-B 的普通关、扩展关、考试、实操、技能和突破记录？', cleared: '已清空',
     skip: '跳过', right: '直接做对', wrong: '直接做错', lab100: '实操记 100 分', lab40: '实操记 40 分（不到门槛）', labFatal: '实操记硬性失败', finish: '直接结算', label: '调试' },
-  ja: { title: 'Side-B デバッグ', note: 'コンソールで class_debug(false) で終了', chapter: (c, g) => `${c} をすべて評価 ${g}`, all3: 'Side-B をすべて A+', clear: 'Side-B の記録を消去', clearBreaks: 'ブレイクスルーの記録を消去（再発生できる）', off: 'デバッグ終了', confirmClear: 'Side-B のステージ・実習・スキル・ブレイクスルーの記録を消去しますか？', cleared: '消去しました',
+  ja: { title: 'Side-B デバッグ', note: 'コンソールで class_debug(false) で終了', chapter: (c, g) => `${c} をすべて評価 ${g}`, all3: 'Side-B をすべて A+', clear: 'Side-B の記録を消去', clearBreaks: 'ブレイクスルーの記録を消去（再発生できる）', off: 'デバッグ終了', confirmClear: 'Side-B の通常・拡張ステージ、テスト・実習・スキル・ブレイクスルーの記録を消去しますか？', cleared: '消去しました',
     skip: 'スキップ', right: '正解にする', wrong: '不正解にする', lab100: '実習を 100 点に', lab40: '実習を 40 点に（合格ライン未満）', labFatal: '実習を致命的な誤りに', finish: 'すぐ結果へ', label: 'デバッグ' },
-  en: { title: 'Side-B debug', note: 'Run class_debug(false) in the console to leave', chapter: (c, g) => `${c}: all grade ${g}`, all3: 'All Side-B levels A+', clear: 'Erase Side-B records', clearBreaks: 'Erase breakthroughs (so they fire again)', off: 'Leave debug', confirmClear: 'Erase Side-B level, lab, skill and breakthrough records?', cleared: 'Erased',
+  en: { title: 'Side-B debug', note: 'Run class_debug(false) in the console to leave', chapter: (c, g) => `${c}: all grade ${g}`, all3: 'All Side-B levels A+', clear: 'Erase Side-B records', clearBreaks: 'Erase breakthroughs (so they fire again)', off: 'Leave debug', confirmClear: 'Erase Side-B regular level, extension, exam, lab, skill and breakthrough records?', cleared: 'Erased',
     skip: 'Skip', right: 'Answer correctly', wrong: 'Answer wrongly', lab100: 'Lab = 100', lab40: 'Lab = 40 (below the line)', labFatal: 'Lab = fatal error', finish: 'Go to results', label: 'Debug' },
 };
 const lang = () => { const l = globalThis.window?.__lang || 'zh'; return ['zh', 'ja', 'en'].includes(l) ? l : 'en'; };
@@ -152,7 +154,7 @@ export function mountSideB(root, { playChord, stopAudio = () => {}, onFlipBack, 
   /** 评级：存下来的评级；旧存档（只有星级）按最好成绩换算 */
   const gradeFor = (state) => state?.grade || (state?.done ? gradeOf(state.best ?? 0.6) : null);
   /** 地图 / 播放器上显示的编号：扩展关显示所属关卡的编号 */
-  const codeOf = (lv) => lv?.base || lv?.id;
+  const codeOf = (lv) => lv?.code || levelById(lv?.base)?.code || lv?.base || lv?.id;
   const examOpenFor = (lv) => {
     const view = progressView();
     if (lv.exam === 'chapter') return chapterTestOpen(chapterLevels(lv.chapter).filter(isPlayable), view);
@@ -366,7 +368,7 @@ export function mountSideB(root, { playChord, stopAudio = () => {}, onFlipBack, 
     const main = btn('sideb-track-main', '', () => toggleSheet(item, lv));
     main.setAttribute('aria-expanded', 'false');
     const disc = el('span', 'sideb-disc');
-    disc.append(el('span', 'sideb-disc-code', lv.id));
+    disc.append(el('span', 'sideb-disc-code', codeOf(lv)));
     if (state?.best) disc.style.setProperty('--fill', `${pct(state.best)}%`);
     const text = el('span', 'sideb-track-text');
     text.append(el('span', 'sideb-track-title', tx(lv.title)));
@@ -456,7 +458,7 @@ export function mountSideB(root, { playChord, stopAudio = () => {}, onFlipBack, 
       btn('learn-debug-btn danger', dt.clear, () => {
         if (typeof globalThis.confirm === 'function' && !globalThis.confirm(dt.confirmClear)) return;
         const p = loadProgress();
-        Object.keys(p.units).filter((k) => k.startsWith('b:')).forEach((k) => delete p.units[k]);
+        Object.keys(p.units).filter((k) => k.startsWith('b:') || k.startsWith('bx:')).forEach((k) => delete p.units[k]);
         saveProgress(p);
         ['jc-sideb-labs', 'jc-sideb-skills', 'jc-sideb-breakthroughs'].forEach((k) => { try { globalThis.localStorage?.removeItem(k); } catch (_) { /* ignore */ } });
         forget();
@@ -545,7 +547,7 @@ export function mountSideB(root, { playChord, stopAudio = () => {}, onFlipBack, 
     if (!level || !session) return;
     const sections = lvl ? levelSections(lvl) : [];
     const part = session.result ? TEXT_ALL.result : session.recovery ? TEXT_ALL.recovery : TEXT_ALL.sections[sections[session.section]] || TEXT_ALL.sections.challenge;
-    saveBResume({ levelId: level.id, title: level.title, part, session });
+    saveBResume({ levelId: level.id, code: codeOf(level), title: level.title, part, session });
     notify();
   }
   const forget = () => { clearBResume(); notify(); };
@@ -670,12 +672,12 @@ export function mountSideB(root, { playChord, stopAudio = () => {}, onFlipBack, 
   /** 图里的文字（标签、格子）可以写成三语对象：画之前换成当前语言 */
   const isText = (v) => v && typeof v === 'object' && !Array.isArray(v) && 'zh' in v && 'en' in v && Object.keys(v).every((k) => ['zh', 'ja', 'en'].includes(k));
   const localize = (v) => (isText(v) ? tx(v) : Array.isArray(v) ? v.map(localize) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, localize(x)])) : v);
-  function visualOf(raw) {
+  function visualOf(raw, options = {}) {
     if (!raw) return null;
     const visual = localize(raw);
     if (visual.kind === 'satb') return satbStaff(visual);
     if (visual.kind === 'grid') return rhythmGrid(visual);
-    return renderVisual(visual);
+    return renderVisual(visual, options);
   }
   function playRow(body, list) {
     if (!list?.length) return;
@@ -718,11 +720,13 @@ export function mountSideB(root, { playChord, stopAudio = () => {}, onFlipBack, 
         done();
         return;
       }
-      case 'demo': return renderDemo(node, body, footer, done);
+      case 'guide': case 'demo': return renderDemo(node, body, footer, done);
       case 'discover': return renderDiscover(node, body, footer, shell, ctx);
       case 'experiment': return renderExperiment(node, body, shell, done);
       case 'lab': return renderLab(node, body, footer);
       case 'tap': return renderTap(node, body, footer, shell, ctx);
+      case 'spell': return renderDerive({...node,steps:node.answer.map((answer,i)=>({kind:'note',label:node.labels?.[i]||tx({zh:'第'+(i+1)+'个音（含八度）',ja:(i+1)+'番目の音（オクターヴ付き）',en:'Pitch '+(i+1)+' (with octave)'}),answer}))},body,footer,shell,ctx);
+      case 'analyze': return renderAnalysis(node,body,footer,shell,ctx);
       case 'derive': return renderDerive(node, body, footer, shell, ctx);
       case 'fill': return renderFill(node, body, footer, shell, ctx);
       default: return renderChoice(node, body, footer, shell, ctx);
@@ -734,7 +738,7 @@ export function mountSideB(root, { playChord, stopAudio = () => {}, onFlipBack, 
     body.appendChild(stage);
     refLine(body, node.ref);
     const state = session.nodeState;
-    let i = state.step || 0;
+    let i = Math.min(state.step || 0, node.steps.length - 1);
     const show = () => {
       stopAll();
       state.step = i;
@@ -743,8 +747,24 @@ export function mountSideB(root, { playChord, stopAudio = () => {}, onFlipBack, 
       const step = node.steps[i];
       stage.appendChild(el('span', 'sideb-step-count', t.stepOf(i + 1, node.steps.length)));
       stage.appendChild(el('p', 'sideb-text', tx(step.text)));
-      const v = visualOf(step.visual); if (v) stage.appendChild(v);
-      if (step.audio) { playRow(stage, [{ label: t.play, audio: step.audio }]); sound(step.audio); }
+      const annotated = step.audio?.events?.some(e => e.targets);
+      const v = visualOf(step.visual, { annotate: annotated, play: notes => sound({play:[notes]}) }); if (v) stage.appendChild(v);
+      if (annotated) {
+        const caption = el('p', 'learn-muted learn-demo-caption', tx(step.audio.caption));
+        caption.setAttribute('aria-live', 'polite');
+        const label = tx({zh:'正在播放',ja:'再生中',en:'Playing'});
+        const targets = [...new Set(step.audio.events.flatMap(e=>e.targets))];
+        v?.setScenes?.(targets);
+        const marks = [{at:targets,label:tx(step.audio.caption)}];
+        v?.setMarks?.(marks);
+        const player = createGuidePlayback({playChord,stopAudio,onTargetsChange:(targets,info)=>{
+          v?.setMarks?.(info.playing ? targets.map(at=>({at:[at],label})) : marks);
+          caption.textContent = info.playing && targets.length ? label+' · '+tx(info.caption) : tx(step.audio.caption);
+        }});
+        const play = () => {stopAll();player.setDemo(step.audio);stops.push(()=>player.stop());player.play();};
+        stage.append(btn('learn-btn ghost sideb-play',t.play,play),caption);
+        play();
+      } else if (step.audio) { playRow(stage, [{ label: t.play, audio: step.audio }]); sound(step.audio); }
       footer.replaceChildren();
       if (i > 0) footer.appendChild(btn('learn-btn ghost', t.prev, () => { i -= 1; show(); }));
       if (i + 1 < node.steps.length) footer.appendChild(btn('learn-btn primary', t.nextStep, () => { i += 1; show(); }));
@@ -855,8 +875,84 @@ export function mountSideB(root, { playChord, stopAudio = () => {}, onFlipBack, 
     }));
     if (ctx.state.result) footer.querySelector('.learn-btn.primary')?.click();
   }
+  let analysisPickerId = 0;
+  function renderAnalysis(node, body, footer, shell, ctx) {
+    paragraphs(body, node.prompt); playRow(body, node.play);
+    const choices = node.choices || [], pickers = [];
+    node.slots.forEach((slot, i) => {
+      const id = 'sideb-label-' + (++analysisPickerId);
+      const row = el('div', 'sideb-analysis-row'), label = el('span', 'sideb-analysis-label', tx(slot.label));
+      label.id = id;
+      const picker = el('div', 'sideb-label-picker'), trigger = el('button', 'sideb-label-trigger');
+      trigger.type = 'button';
+      const valueText = el('span', 'sideb-label-value'); valueText.id = id + '-value';
+      const arrow = el('span', 'sideb-label-arrow'); arrow.setAttribute('aria-hidden', 'true');
+      trigger.append(valueText, arrow);
+      trigger.setAttribute('aria-labelledby', label.id + ' ' + valueText.id);
+      trigger.setAttribute('aria-haspopup', 'listbox'); trigger.setAttribute('aria-expanded', 'false');
+      const menu = el('div', 'sideb-label-menu'); menu.id = id + '-menu'; menu.hidden = true;
+      menu.setAttribute('role', 'listbox'); menu.setAttribute('aria-labelledby', label.id);
+      trigger.setAttribute('aria-controls', menu.id);
+      let value = ctx.state.response?.[i] || '';
+      const options = choices.map(choice => {
+        const option = el('button', 'sideb-label-option', tx(choice.label)); option.type = 'button'; option.tabIndex = -1;
+        option.setAttribute('role', 'option'); option.dataset.value = choice.id;
+        option.addEventListener('click', () => { setValue(choice.id); close(true); captureNodeDraft?.(); persist(); });
+        menu.append(option); return option;
+      });
+      function setValue(next) {
+        value = next;
+        valueText.textContent = tx(choices.find(choice => choice.id === value)?.label || {zh:'选择标签',ja:'ラベルを選択',en:'Choose a label'});
+        options.forEach(option => option.setAttribute('aria-selected', String(option.dataset.value === value)));
+        picker.classList.toggle('has-value', Boolean(value));
+      }
+      const outsidePointer = event => { if (!picker.contains(event.target)) close(); };
+      const outsideFocus = event => { if (!picker.contains(event.target)) close(); };
+      function close(focus = false) {
+        menu.hidden = true; trigger.setAttribute('aria-expanded', 'false'); picker.classList.remove('is-open');
+        document.removeEventListener('pointerdown', outsidePointer); document.removeEventListener('focusin', outsideFocus);
+        if (focus && !trigger.disabled) trigger.focus({preventScroll:true});
+      }
+      function open(last = false) {
+        if (trigger.disabled || !options.length) return;
+        pickers.forEach(control => control.close());
+        menu.hidden = false; picker.classList.add('is-open'); trigger.setAttribute('aria-expanded', 'true');
+        const rect = trigger.getBoundingClientRect(), below = innerHeight - rect.bottom - 12, above = rect.top - 80;
+        const up = menu.scrollHeight > below && above > below;
+        picker.classList.toggle('opens-up', up); menu.style.maxHeight = Math.max(44, Math.min(260, up ? above : below)) + 'px';
+        document.addEventListener('pointerdown', outsidePointer); document.addEventListener('focusin', outsideFocus);
+        (options.find(option => option.dataset.value === value) || options[last ? options.length - 1 : 0]).focus({preventScroll:true});
+      }
+      trigger.addEventListener('click', () => menu.hidden ? open() : close());
+      trigger.addEventListener('keydown', event => {
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); open(event.key === 'ArrowUp'); }
+      });
+      menu.addEventListener('keydown', event => {
+        if (event.key === 'Escape') { event.preventDefault(); close(true); }
+        else if (event.key === 'Tab') close(true);
+        else if (['ArrowDown','ArrowUp','Home','End'].includes(event.key)) {
+          event.preventDefault(); const current = options.indexOf(document.activeElement);
+          const next = event.key === 'Home' ? 0 : event.key === 'End' ? options.length - 1 : (current + (event.key === 'ArrowDown' ? 1 : -1) + options.length) % options.length;
+          options[next].focus({preventScroll:true});
+        }
+      });
+      setValue(value); picker.append(trigger, menu); row.append(label, picker); body.append(row);
+      pickers.push({get value(){return value;},setValue,close,disable(){close();trigger.disabled=true;}});
+      stops.push(() => close());
+    });
+    captureNodeDraft = () => { ctx.state.response = pickers.map(control => control.value); };
+    ctx.registerDebug(ok => {
+      pickers.forEach((control, i) => control.setValue(ok ? [].concat(node.slots[i].answer)[0] : ''));
+      footer.querySelector('.learn-btn.primary')?.click();
+    });
+    footer.replaceChildren(btn('learn-btn primary', t.check, () => {
+      captureNodeDraft(); const result = grade(node, ctx.state.response); pickers.forEach(control => control.disable()); ctx.record(result);
+      feedback(node, body, footer, shell, result, {...ctx, answerText:node.slots.map(slot => tx(choices.find(choice => [].concat(slot.answer).includes(choice.id))?.label)).join(' · ')});
+    }));
+    if (ctx.state.result) footer.querySelector('.learn-btn.primary')?.click();
+  }
   function renderDerive(node, body, footer, shell, ctx) {
-    paragraphs(body, node.prompt);
+    paragraphs(body, node.prompt); playRow(body,node.play);
     const inputs = node.steps.map((step, index) => {
       const row = el('label', 'sideb-derive-step');
       const input = el('input');
@@ -909,9 +1005,9 @@ export function mountSideB(root, { playChord, stopAudio = () => {}, onFlipBack, 
       if (b) { saveBreakthrough(b.id); session.breakthroughs = [...new Set([...(session.breakthroughs || []), b.id])]; persist(); celebrate(shell, b.text); }
     };
     let toy = null;
-    const TOYS = { spell: spellToy, meter: meterToy, interval: intervalToy, scale: scaleToy, texture: textureToy, poly: polyToy, chord: chordToy, keyChords: keyChordsToy, progression: progressionToy, plr: plrToy, keyRel: keyRelToy, transpose: transposeToy, fret: fretToy, nct: nctToy, species: speciesToy, canon: canonToy, swing: swingToy, blues: bluesToy, chordScale: chordScaleToy, guide: guideToy, negative: negativeToy, xuangong: xuangongToy, world: worldToy, harmonics: harmonicsToy, temper: temperToy, pc: pcToy, collection: collectionToy, set: setToy, matrix: matrixToy, ji: jiToy };
+    const TOYS = { modernHarmony: modernHarmonyToy, spell: spellToy, meter: meterToy, interval: intervalToy, scale: scaleToy, texture: textureToy, poly: polyToy, chord: chordToy, keyChords: keyChordsToy, progression: progressionToy, plr: plrToy, keyRel: keyRelToy, transpose: transposeToy, fret: fretToy, nct: nctToy, species: speciesToy, canon: canonToy, swing: swingToy, blues: bluesToy, chordScale: chordScaleToy, guide: guideToy, negative: negativeToy, xuangong: xuangongToy, world: worldToy, harmonics: harmonicsToy, temper: temperToy, pc: pcToy, collection: collectionToy, set: setToy, matrix: matrixToy, ji: jiToy };
     if (node.toy === 'satb') toy = satbToy(body, node.params, { playChord, onSolved: solved });
-    else if (TOYS[node.toy]) toy = TOYS[node.toy](body, node.params, { playChord, renderVisual, onSolved: solved });
+    else if (TOYS[node.toy]) toy = TOYS[node.toy](body, node.params, { playChord, stopAudio, renderVisual, onSolved: solved });
     if (toy?.destroy) stops.push(toy.destroy);
     const tool = node.tool || levelTools(level)[0];
     if (tool && openTool) body.appendChild(toolChip(tool, t.toolPlay(toolName(tool.feature)), 'learn-link sideb-tool-link'));
@@ -1051,9 +1147,9 @@ export function mountSideB(root, { playChord, stopAudio = () => {}, onFlipBack, 
       const list = playable();
       const next = list[list.findIndex((x) => x.id === (level.base || level.id)) + 1];
       // 普通关通过后：扩展关已开放就给入口；扩展关通过后：可以回到所属的关卡
-      if (next) actions.appendChild(btn('learn-btn primary', t.nextLevel(`${next.id} ${tx(next.title)}`), () => startLevel(next.id)));
+      if (next) actions.appendChild(btn('learn-btn primary', t.nextLevel(`${codeOf(next)} ${tx(next.title)}`), () => startLevel(next.id)));
       const x = !level.ext && extLevelById(`${level.id}x`);
-      if (x) actions.appendChild(btn('learn-btn ghost', `${t.ext} · ${level.id}`, () => startLevel(x.id)));
+      if (x) actions.appendChild(btn('learn-btn ghost', `${t.ext} · ${codeOf(level)}`, () => startLevel(x.id)));
       actions.appendChild(btn('learn-btn ghost', t.retryStars, () => { const prev = session; level = lookupLevel(level.id); lvl = levelForAttempt(level, (prev.attempt || 0) + 1); session = retrySession(lvl, prev); session.breakthroughs = []; persist(); renderNode(); }));
     } else if (summary.next === 'revise-lab') {
       shell.appendChild(el('p', 'sideb-weak', t.labLineFail(pct(LAB_LINES.level))));

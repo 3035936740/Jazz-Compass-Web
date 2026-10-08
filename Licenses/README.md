@@ -1,10 +1,15 @@
 # 许可证与第三方声明
 
-核对日期：2026-10-06。许可证原文统一放在本目录；完整作者、来源、使用范围和关联文件见自动生成的 [REFERENCES.md](REFERENCES.md)，根目录 [README](../README.md) 同步显示许可状态。分发相关材料时应一并保留这些声明、来源署名和适用的许可原文。
+核对日期：2026-10-08。许可证原文统一放在本目录；完整作者、来源、使用范围和关联文件见自动生成的 [REFERENCES.md](REFERENCES.md)，根目录 [README](../README.md) 同步显示许可状态。分发相关材料时应一并保留这些声明、来源署名和适用的许可原文。
 
 ## 项目原创代码
 
 [Project-MIT.txt](Project-MIT.txt) 是原根目录 `LICENSE` 的原文，保留 `Copyright (c) 2026 Bing(3035936740)`。原 `resources/piano/LICENSE` 与此文件内容相同，统一合并到此处。该 MIT 授权适用于本项目自行编写的程序代码；第三方材料和依其许可发布的教学改编内容按下列范围适用各自许可。
+
+## 现代和声课程的本次引用
+
+- [Justin Rubin — Nonfunctional Tonality](https://open.lib.umn.edu/musiccomposition/chapter/nonfunctional-tonality/) 页脚明确标注 ©2024 Justin Rubin、[CC BY 4.0](CC-BY-4.0.txt)。参照平行移动与共同音概念，独立编写中日英教学、图示与频率示例；未复制原谱例、图片或音频。
+- University of Iowa 的 Tonality 页面明确标注 All Rights Reserved；University of Houston、IRCAM 与 Kyle Gann 的引用页面未确认开放再利用许可。这里只引用概念 / 技术事实，文字、题目、图示与合成示例自行编写，没有替这些来源添加开放许可证。逐项状态见 [REFERENCES.md](REFERENCES.md)。
 
 ## 第三方代码与数据
 

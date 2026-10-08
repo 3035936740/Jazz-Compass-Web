@@ -41,6 +41,7 @@ test('88-key harmony, seams, and latch work in a browser', { skip: !playwrightPa
     });
     await page.goto(`http://127.0.0.1:${server.address().port}/`);
     await page.locator('#tab-micro').click();
+    await page.locator('[data-roll-midi]').first().waitFor({state:'visible'});
     assert.equal(await page.locator('[data-roll-midi]').count(), 88);
     assert.equal(await page.locator('[data-roll-position]').count(), 87);
     for (const note of [60, 64, 67]) await page.locator(`[data-roll-midi="${note}"]`).click();
