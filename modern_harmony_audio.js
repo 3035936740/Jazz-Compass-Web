@@ -1,4 +1,4 @@
-import { getAudioContext, connectOutput, interruptIfActive } from './audio_engine.js?v=20261006-guide-audio1';
+import { getAudioContext, connectOutput, interruptIfActive } from './audio_engine.js?v=20261009-audio1';
 
 /** Sine partials preserve Hz and amplitude; the shared master bus still controls volume and Esc. */
 export function playSinePartials(event, seconds, interrupt) {

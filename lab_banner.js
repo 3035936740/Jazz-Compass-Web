@@ -7,9 +7,9 @@
 // 结果写进 localStorage（sideb_engine.saveLabResult），再回到课程 #learn?q=@lab-return:<id>。
 import { LABS, parseLabRef, labResultKey } from './sideb_labs.js?v=20261004-x1';
 import { evaluateLab } from './lab_checks.js?v=20261004-x1';
-import { saveLabResult, loadLabResults, LAB_MODES, LAB_LINES, breakthroughFor, loadBreakthroughs, saveBreakthrough } from './sideb_engine.js?v=20261008-modern2';
+import { saveLabResult, loadLabResults, LAB_MODES, LAB_LINES, breakthroughFor, loadBreakthroughs, saveBreakthrough } from './sideb_engine.js?v=20261009-audio1';
 import { ERRORS } from './sideb_errors.js?v=20261004-z9';
-import { celebrate as flashBreakthrough } from './sideb_fx.js?v=20261004-f1';
+import { celebrate as flashBreakthrough } from './sideb_fx.js?v=20261009-audio1';
 
 const TEXT = {
   zh: {

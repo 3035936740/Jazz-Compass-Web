@@ -1,3 +1,4 @@
+import { createLessonPlayback } from './lesson_audio.js?v=20261009-audio1';
 // Side-B 的"实验"与互动小部件（像玩具，不是作业）：四部和声调音台、复节奏网格、两只手打拍板，以及关卡里用到的两种图
 // （大谱表四部和弦、节奏格子）。评分沿用 lab_checks.js / sideb_engine.js；乐理出处见那两个文件与关卡内容文件。
 import { renderStaff } from './staff_svg.js';
@@ -10,7 +11,7 @@ import { buildChineseMode, rotateGong, luName, MODES as CN_MODES, SCALE_TYPES as
 import { THAATS, thaatSemitones, thaatAltered, buildMaqam, maqamSteps, stepLabel, noteLabel } from './world_modes.js';
 import { TEMPERAMENTS, buildTemperament, majorThirds, frequencyOf } from './temperaments.js';
 import { normalOrder, primeForm, intervalVector, setClassInfo, twelveToneMatrix, rowForm, COLLECTIONS, collectionPcs, distinctTranspositions } from './post_tonal.js';
-import { gradeTaps } from './sideb_engine.js?v=20261008-modern2';
+import { gradeTaps } from './sideb_engine.js?v=20261009-audio1';
 
 const lang = () => { const l = globalThis.window?.__lang || 'zh'; return ['zh', 'ja', 'en'].includes(l) ? l : 'en'; };
 const tx = (v) => (v == null ? '' : typeof v === 'string' ? v : v[lang()] ?? v.en ?? '');
@@ -85,29 +86,9 @@ export function rhythmGrid({ rows = [], labels = [] }, { active = -1 } = {}) {
  * 返回停止函数
  */
 export function playAudio(audio, playChord) {
-  const timers = [];
-  const at = (ms, fn) => timers.push(setTimeout(fn, ms));
-  const stop = () => timers.forEach(clearTimeout);
-  if (!audio || !playChord) return stop;
-  if (audio.events) {
-    const beatMs = 60000 / (audio.bpm || 90);
-    [...audio.events].sort((a,b)=>a.at-b.at).forEach((event,i) => at(event.at * beatMs, () => playChord(event.notes.map(hz), event.beats * beatMs / 1000, { interrupt: i === 0, ...(event.velocity !== undefined ? { velocity: event.velocity } : {}) })));
-  } else if (audio.chords) {
-    const gap = audio.gap ?? 900;
-    audio.chords.forEach((c, i) => at(i * gap, () => playChord(c.map(hz), (gap / 1000) * 0.95, { interrupt: i === 0 })));
-  } else if (audio.rhythm) {
-    const { bpm = 90, cycle = 4, repeats = 1, tracks = [] } = audio.rhythm;
-    const beatMs = 60000 / bpm;
-    const events = [];
-    for (let r = 0; r < repeats; r += 1) tracks.forEach((track) => track.beats.forEach((b, k) => events.push([(r * cycle + b) * beatMs, track.midis ? track.midis[k] : track.midi])));
-    events.sort((a, b) => a[0] - b[0]).forEach(([ms, midi], i) => at(ms, () => playChord([hz(midi)], 0.22, { interrupt: i === 0 })));
-  } else if (audio.notes) {
-    const mode = audio.mode || 'melody';
-    if (mode === 'harmonic' || mode === 'chord') playChord(audio.notes.map(hz), 1.6);
-    else if (mode === 'chords') audio.notes.forEach((c, i) => at(i * 900, () => playChord([].concat(c).map(hz), 0.85, { interrupt: i === 0 })));
-    else audio.notes.forEach((m, i) => at(i * 330, () => playChord([hz(m)], 0.4, { interrupt: i === 0 })));
-  }
-  return stop;
+  if(!playChord)return ()=>{};
+  const player=createLessonPlayback({playChord,melodyGap:330,chordGap:900,melodyDuration:.4,chordDuration:.85});
+  player.play(audio);return player.stop;
 }
 
 // ---------------- 实验：四部和声调音台 ----------------

@@ -1,7 +1,7 @@
 ﻿// Original listening puzzles checked against the registered sources; no borrowed scores or recordings.
 // ref:rubin-nonfunctional ref:koozin-planing ref:arndt-tonality ref:ircam-spectrum ref:ircam-spectral ref:gann-ji ref:gann-ji-reasons
 import { t, chord, chain, frequencies, layers } from './modern_harmony_course.js?v=20261008-spectrum-side1';
-import { pitch } from './modern_harmony_generators.js?v=20261008-modern-tools1';
+import { pitch } from './modern_harmony_generators.js?v=20261009-audio1';
 export const MODERN_MISSIONS = {
  nonfunctional:t('和弦连接工坊','和音連結の工房','Chord connection workshop'),
  polytonality:t('双声部侦探','二つの声部の探偵','Two-layer detective'),

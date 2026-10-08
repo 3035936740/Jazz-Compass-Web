@@ -1,7 +1,7 @@
 // Side-B（翻面课程）界面：翻面地图、关卡卡片、关卡播放器（发现 / 解释 / 实验 / 挑战 / 实操）、结算页、补弱挑战。
 // 规则在 sideb_engine.js，评分在 lab_checks.js，内容在 sideb_content.js / sideb_units_*.js；设计见 SIDE_B_DESIGN.md。
 // 原则：音乐优先于分数，发现优先于背诵，成就感优先于惩罚感——失败只补弱项，每关有一个"发现"（insight）和胜利瞬间。
-import { B_CHAPTERS, B_LEVELS, levelById, lookupLevel, chapterLevels, isPlayable, extLevelById, hasExtLevel } from './sideb_content.js?v=20261008-b-workshop1';
+import { B_CHAPTERS, B_LEVELS, levelById, lookupLevel, chapterLevels, isPlayable, extLevelById, hasExtLevel } from './sideb_content.js?v=20261009-audio1';
 import { relatedLearnTools } from './learn_feature_unit.js?v=20261006-circle1';
 import {
   bKey, levelSections, levelForAttempt, createBSession, completeSection, recordAnswer, gradeNode, summarizeB, retrySession,
@@ -9,17 +9,17 @@ import {
   mergeMastery, overallMastery, loadMastery, saveMastery, loadBResume, saveBResume, clearBResume, bestLabResults, saveLabResult, LAB_LINES,
   breakthroughFor, loadBreakthroughs, saveBreakthrough, estimateMinutes, PASS_LINE, isAssessed,
   extKey, gradeOf, chapterAverageWithExt, chapterTestOpen, chapterExOpen, finalOpen, finalExOpen, CHAPTER_EX_OPEN,
-} from './sideb_engine.js?v=20261008-modern-tools1';
+} from './sideb_engine.js?v=20261009-audio1';
 import { SKILLS, SKILL_NAMES, recommend } from './sideb_errors.js?v=20261004-z9';
 import { LABS, labHref, labResultKey } from './sideb_labs.js?v=20261004-x1';
 import { loadProgress, saveProgress, isDone } from './learn_engine.js?v=20261006-circle1';
 import { createGuidePlayback } from './learn_guide_audio.js?v=20261008-beginner2';
 import { renderVisual } from './learn_visuals.js?v=20261008-beginner2';
-import { satbStaff, rhythmGrid, playAudio, satbToy, polyToy, tapPad, spellToy, meterToy, intervalToy, scaleToy, textureToy, chordToy, keyChordsToy, progressionToy, plrToy, keyRelToy, transposeToy, fretToy, nctToy, speciesToy, canonToy, swingToy, bluesToy, chordScaleToy, guideToy, negativeToy, xuangongToy, worldToy, harmonicsToy, temperToy, pcToy, collectionToy, setToy, matrixToy, jiToy } from './sideb_toys.js?v=20261008-b-workshop1';
-import { modernHarmonyToy } from './sideb_modern_harmony_toys.js?v=20261008-b-workshop1';
-import { celebrate } from './sideb_fx.js?v=20261006-guide-audio1';
-import { sidebWorksheet, openWorksheet } from './sideb_print.js?v=20261008-modern-tools1';
-import { certificate, awardCert, loadCerts, graduationShow } from './sideb_cert.js?v=20261006-guide-audio1';
+import { satbStaff, rhythmGrid, playAudio, satbToy, polyToy, tapPad, spellToy, meterToy, intervalToy, scaleToy, textureToy, chordToy, keyChordsToy, progressionToy, plrToy, keyRelToy, transposeToy, fretToy, nctToy, speciesToy, canonToy, swingToy, bluesToy, chordScaleToy, guideToy, negativeToy, xuangongToy, worldToy, harmonicsToy, temperToy, pcToy, collectionToy, setToy, matrixToy, jiToy } from './sideb_toys.js?v=20261009-audio1';
+import { modernHarmonyToy } from './sideb_modern_harmony_toys.js?v=20261009-audio1';
+import { celebrate } from './sideb_fx.js?v=20261009-audio1';
+import { sidebWorksheet, openWorksheet } from './sideb_print.js?v=20261009-audio1';
+import { certificate, awardCert, loadCerts, graduationShow } from './sideb_cert.js?v=20261009-audio1';
 import { referenceById } from './references.js';
 
 const TEXT = {

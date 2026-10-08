@@ -177,7 +177,7 @@ const JI_INTERVALS = [
 ];
 
 // ---------- 生成器 ----------
-import { MODERN_GENERATORS } from './modern_harmony_generators.js?v=20261008-modern-tools1';
+import { MODERN_GENERATORS } from './modern_harmony_generators.js?v=20261009-audio1';
 export const GENERATORS = { ...MODERN_GENERATORS,
   // 入门：键盘、谱号、节奏 -------------------------------------------------
   keyName: { ref: 'omt2e-keyboard', make(rng) {

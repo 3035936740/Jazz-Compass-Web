@@ -8,7 +8,7 @@ import { LEVEL_B3_1, LEVEL_B3_2, LEVEL_B3_3, LEVEL_B3_4, LEVEL_B3_5 } from './si
 import { LEVEL_B4_1, LEVEL_B4_2, LEVEL_B4_3, LEVEL_B4_4, LEVEL_B4_5, LEVEL_B4_6, LEVEL_B4_7, LEVEL_B4_8, LEVEL_B4_9 } from './sideb_units_jazz.js?v=20261004-w6';
 import { LEVEL_B5_1, LEVEL_B5_2, LEVEL_B5_3, LEVEL_B5_4 } from './sideb_units_world.js?v=20261006-clarity1';
 import { TOPICS, B_MODERN_ORDER } from './modern_harmony_course.js?v=20261008-spectrum-side1';
-import { MODERN_B_LEVELS, MODERN_B_EXTENSIONS } from './sideb_units_modernharmony.js?v=20261008-b-workshop1';
+import { MODERN_B_LEVELS, MODERN_B_EXTENSIONS } from './sideb_units_modernharmony.js?v=20261009-audio1';
 import { LEVEL_B6_1, LEVEL_B6_2, LEVEL_B6_3, LEVEL_B6_4, LEVEL_B6_5 } from './sideb_units_modern.js?v=20261004-x1';
 import { UNITS, SIDES } from './learn_content.js?v=20261008-spectrum-side1';
 import { EXT_BASICS } from './sideb_ext_basics.js?v=20261004-y3';

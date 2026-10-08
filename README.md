@@ -162,7 +162,8 @@ Theory Quest has a debug mode for testing: open the browser console and run `cla
 ├── staff_musicxml.js, staff_handoff.js # MusicXML export and "send to staff" from other panels
 ├── staff_edit.js         # Staff editor whole-score operations: MusicXML / .mxl import, transposition, bar copy / paste / delete
 ├── site_search.js        # Ctrl+K site search (tools, levels, chord symbols, progression numbers)
-├── audio_engine.js       # Web Audio buses, sampled piano with synth fallback, volume and stop
+├── audio_engine.js       # Web Audio buses, immediate synth fallback for cold piano samples, volume and stop
+├── lesson_audio.js       # Shared A/B question playback: complete chords, sequences, timed rests, overlapping layers and trailing chords
 ├── app_shell.js          # Global stop/volume, MIDI input, PWA registration, score export, shortcuts
 ├── note_frequency.js     # Note-name ↔ frequency helpers
 ├── jazz_compass.js       # Chord parsing, LCC, chord-scale and Sposobin harmony logic

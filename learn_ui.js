@@ -1,3 +1,4 @@
+import { createLessonPlayback } from './lesson_audio.js?v=20261009-audio1';
 // 乐理闯关界面：关卡地图（主关 + 进阶分支 + 综合测验 + 结业挑战）、关卡播放器（引导卡 / 选择 / 填空 / 连线）、
 // 图示、提示与解析、去工具里看看（带学习记录，回来时还是同一题）、结算
 // 题目与依据见 learn_content.js / learn_units_*.js / learn_branches_*.js；生成题见 learn_generators.js；规则见 learn_engine.js
@@ -11,13 +12,13 @@ import {
   saveResume, loadResume, clearResume, unitLevelKeys, setLevelStars, emptyProgress,
   loadReview, saveReview, recordMistake, recordReviewAnswer, dueReview, exportProgress, importProgress, starsFor, isSideLevelUnlocked, unitFullyDone,
 } from './learn_engine.js?v=20261006-circle1';
-import { expandCards } from './learn_generators.js?v=20261008-beginner2';
+import { expandCards } from './learn_generators.js?v=20261009-audio1';
 import { worksheetHTML, openWorksheet, printable } from './worksheet.js?v=20261004-y1';
 import { renderVisual } from './learn_visuals.js?v=20261008-beginner2';
 import { el, button, language, midiToFrequency, cite } from './module_kit.js';
 import { icon, withIcon } from './ui_icons.js?v=20261007-listen-icon4';
 import { relatedLearnTools } from './learn_feature_unit.js?v=20261006-circle1';
-import { playFeedbackSound, sfxEnabled, setSfxEnabled } from './learn_sfx.js?v=20261006-guide-audio1';
+import { playFeedbackSound, sfxEnabled, setSfxEnabled } from './learn_sfx.js?v=20261009-audio1';
 
 // ---------- 调试模式：在浏览器控制台输入 class_debug(true) 打开，class_debug(false) 关闭（记在 localStorage） ----------
 const DEBUG_KEY = 'jc-learn-debug';
@@ -134,8 +135,6 @@ const sourceList = (id) => { if (!SOURCES.includes(id)) SOURCES.push(id); return
 
 const PAIR_COLORS = ['#3b82f6', '#f59e0b', '#10b981', '#ec4899', '#8b5cf6', '#ef4444'];
 const WHITE = [0, 2, 4, 5, 7, 9, 11];
-const MELODY_STEP = 300;
-const CHORD_STEP = 820;
 
 export function mountLearn(target, { playChord, stopAudio = () => {} }) {
   const lang = language();
@@ -148,36 +147,16 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
   let guideKeyboards = [];
   let guidePlaybackMarks = null;
   const guidePlayback = createGuidePlayback({ playChord, stopAudio, onTargetsChange: (targets, info) => guidePlaybackMarks?.(targets, info), onNotesChange: (notes) => guideKeyboards.forEach((keyboard) => keyboard.setNotes(notes)) });
-  const stop = () => { timers.forEach(clearTimeout); timers = []; guidePlayback.stop(); };
+  const questionPlayback = createLessonPlayback({playChord});
+  const stop = () => { timers.forEach(clearTimeout); timers = []; questionPlayback.stop(); guidePlayback.stop(); };
   // 离开学习页（切到别的面板）：停止声音，并关掉挂在 body 上的选关卡片（否则"开始"按钮会留在别的页面上）
   target.addEventListener('toolbox-stop', () => { stop(); sideB?.stop?.(); closeSheets(); });
   const toolName = (feature) => globalThis.window?.__?.(`nav_${feature}`) || feature;
   const refLinks = (card) => [].concat(card.ref ?? []).map((id) => cite(sourceList(id), id));
   const notifyResume = () => globalThis.window?.dispatchEvent?.(new globalThis.window.CustomEvent('learn-resume-change'));
 
-  /** 播放：melody 依次（较快）、harmonic/chord 同时、chords 依次播放和弦；chord 字段在旋律之后补一个和弦 */
-  function playAudio(audio) {
-    stop();
-    if (!audio) return;
-    const freqs = (list) => list.map(midiToFrequency);
-    if (audio.mode === 'harmonic' || audio.mode === 'chord') { playChord(freqs(audio.notes), 1.6); return; }
-    const isChords = audio.mode === 'chords';
-    const steps = isChords ? audio.notes : audio.notes.map((n) => [n]);
-    const gap = isChords ? CHORD_STEP : MELODY_STEP;
-    // 带节奏的旋律（工具送来的听写错题）：beats 是每个音的拍数，null 的音是休止
-    if (Array.isArray(audio.beats)) {
-      const beat = 60000 / (audio.bpm || 90);
-      let at = 0;
-      steps.forEach((notes, i) => {
-        const length = audio.beats[i] ?? 1;
-        if (notes.length && notes[0] !== null) timers.push(setTimeout(() => playChord(freqs(notes), Math.max(0.15, (length * beat * 0.9) / 1000), { interrupt: i === 0 }), at));
-        at += length * beat;
-      });
-      return;
-    }
-    steps.forEach((notes, i) => timers.push(setTimeout(() => playChord(freqs(notes), isChords ? 1.1 : 0.42, { interrupt: i === 0 }), i * gap)));
-    if (audio.chord) timers.push(setTimeout(() => playChord(freqs(audio.chord), 1.8, { interrupt: false }), steps.length * gap + 120));
-  }
+  /** 题目音频与 B 面共用时间线，包含完整和弦、节奏、尾奏及同时活动的声部。 */
+  function playAudio(audio) { stop(); questionPlayback.play(audio); }
   /** 打乱顺序；若结果仍"太像答案"（如与答案顺序相同）就重洗几次 */
   function shuffleAway(items, tooEasy) {
     let out = shuffle(items);
@@ -965,8 +944,8 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
       const audioRow = el('div', 'learn-audio');
       const big = button('learn-speaker', '', () => playAudio(card.audio));
       big.appendChild(icon('speaker'));
-      big.setAttribute('aria-label', t.play);
-      audioRow.append(big, el('span', 'learn-muted', t.play));
+      big.setAttribute('aria-label', tx(card.audio.label) || t.play);
+      audioRow.append(big, el('span', 'learn-muted', tx(card.audio.label) || t.play));
       body.appendChild(audioRow);
       timers.push(setTimeout(() => playAudio(card.audio), 250));
     }
@@ -1412,7 +1391,7 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
     if (!sideBOpen()) { renderMap(); return; }
     stop(); closeSheets();
     if (sideB) { then?.(sideB); return; }
-    const mount = () => import('./sideb_ui.js?v=20261008-b-labels1').then(({ mountSideB }) => {
+    const mount = () => import('./sideb_ui.js?v=20261009-audio1').then(({ mountSideB }) => {
       writeSide('b');
       root.classList.add('is-side-b');
       sideB = mountSideB(root, {

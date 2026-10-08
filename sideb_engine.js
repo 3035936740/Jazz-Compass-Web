@@ -5,7 +5,7 @@
 // 所以 60% 是"掌握门槛"而不是"惩罚门槛"：没过时讲解、实验、实操的进度全部保留，只补弱项（补弱挑战），不用整关重来。
 import { gradeCard, isDone } from './learn_engine.js?v=20261006-clarity1';
 import { SKILLS } from './sideb_errors.js?v=20261004-z9';
-import { GENERATORS } from './learn_generators.js?v=20261008-beginner2';
+import { GENERATORS } from './learn_generators.js?v=20261009-audio1';
 
 /** 一关的五段：发现 → 解释 → 实验 → 挑战 → 实操（只有关键技能关才有实操） */
 export const SECTION_ORDER = ['discover', 'explain', 'experiment', 'challenge', 'lab'];

@@ -2,8 +2,8 @@
 // Side-B additions: each extension revisits all four A-side branches before deeper tasks.
 // ref:rubin-nonfunctional ref:arndt-tonality ref:ircam-spectral ref:ircam-spectrum ref:gann-ji ref:gann-ji-reasons
 import { TOPICS, t, cents, stageVisual, generatorOf } from './modern_harmony_course.js?v=20261008-spectrum-side1';
-import { MODERN_GENERATORS, pitch } from './modern_harmony_generators.js?v=20261008-modern-tools1';
-import {MODERN_MISSIONS,modernSceneTask,modernSceneDiscovery} from './sideb_modern_harmony_scenes.js?v=20261008-b-workshop1';
+import { MODERN_GENERATORS, pitch } from './modern_harmony_generators.js?v=20261009-audio1';
+import {MODERN_MISSIONS,modernSceneTask,modernSceneDiscovery} from './sideb_modern_harmony_scenes.js?v=20261009-audio1';
 const step = (label, answer, tol = 1e-9) => ({ kind: 'number', label, answer, tol });
 const numericalHint = t('数值题，按给定单位计算；小数保留两位，容差 ±0.02。', '指定単位の数値を計算。小数 2 桁、許容誤差 ±0.02。', 'Calculate in the stated units. Round decimals to two places; tolerance ±0.02.');
 export function integratedTask(topic, stage, variant = 0) {

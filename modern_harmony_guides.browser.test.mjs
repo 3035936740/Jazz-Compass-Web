@@ -117,6 +117,8 @@ test('free editors add, edit, reorder and audition sounds; spectral bars auditio
   await tool.locator('.mh-edit-pitch').first().fill('F4');await tool.locator('.mh-edit-pitch').first().press('Enter');assert.match(await tool.locator('[name=motif]').inputValue(),/^F4/);
   await tool.getByRole('button',{name:'Add',exact:true}).click();assert.equal(await tool.locator('.mh-editor-row').count(),5);await tool.locator('.mh-editor-row').first().getByRole('button',{name:'Audition',exact:true}).click();
   await page.goto(base+'#spectralharmony');tool=page.locator('#panel-spectralharmony .mh-tool');await tool.locator('[name=partials]').waitFor();
+  // Measure this spectral audition independently of earlier piano auditions.
+  await page.evaluate(()=>window.__heard=[]);
   await tool.locator('[name=fundamental]').fill('100');await tool.locator('[name=partials]').fill('4:1:0 5:0.8:0 7:0.5:0');
   await tool.locator('.mh-partial-hit').nth(1).click();assert.deepEqual(await page.evaluate(()=>window.__heard),[500]);assert.match(await tool.locator('.mh-status').innerText(),/500/);
   await tool.locator('.mh-partial-hit').nth(2).focus();await page.keyboard.press('Enter');assert.deepEqual(await page.evaluate(()=>window.__heard),[500,700]);

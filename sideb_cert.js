@@ -115,7 +115,7 @@ const SHOW = {
 };
 const hz = (m) => 440 * 2 ** ((m - 69) / 12);
 function fanfare(kind) {
-  import('./audio_engine.js?v=20261006-guide-audio1').then(({ playChord }) => {
+  import('./audio_engine.js?v=20261009-audio1').then(({ playChord }) => {
     const at = (ms, notes, dur, first = false) => setTimeout(() => playChord(notes.map(hz), dur, { interrupt: first }), ms);
     if (kind === 'final-ex') {
       at(0, [60, 64, 67], 0.5, true); at(480, [65, 69, 72], 0.5); at(960, [67, 71, 74], 0.6);

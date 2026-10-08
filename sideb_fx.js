@@ -6,7 +6,7 @@ const TITLE = { zh: '突破！', ja: 'ブレイクスルー！', en: 'Breakthrou
 
 /** 上行琶音 C5–E5–G5–C6 */
 export function chime() {
-  import('./audio_engine.js?v=20261006-guide-audio1').then(({ playChord }) => {
+  import('./audio_engine.js?v=20261009-audio1').then(({ playChord }) => {
     const hz = (m) => 440 * 2 ** ((m - 69) / 12);
     [72, 76, 79, 84].forEach((m, i) => setTimeout(() => playChord([hz(m)], 0.5, { interrupt: i === 0 }), i * 110));
   }).catch(() => {});

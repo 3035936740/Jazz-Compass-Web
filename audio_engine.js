@@ -67,7 +67,6 @@ function trackSource(node) {
 /** 立即打断上一轮：旧总线 6ms 淡出后断开（避免咔哒声），并重建干/湿输入 */
 function interruptPlayback(ctx) {
   const t = ctx.currentTime;
-  pianoGeneration += 1;
   activeSources.forEach((src) => {
     try {
       src.stop(t + 0.05);
@@ -101,11 +100,9 @@ const PIANO_SAMPLE_DIR = "./resources/piano/";
 const PIANO_LOWEST = 21;   // A0
 const PIANO_HIGHEST = 108; // C8
 const PIANO_SAMPLE_GAIN = 0.85;
-const PIANO_LATE_LIMIT = 1; // 采样晚于计划时间超过 1 秒就放弃这个音
 const pianoBytes = new Map();   // 采样 MIDI -> Promise<ArrayBuffer>
 const pianoLoads = new Map();   // 采样 MIDI -> Promise<AudioBuffer|null>
 const pianoBuffers = new Map(); // 采样 MIDI -> 裁剪后的 AudioBuffer
-let pianoGeneration = 0;
 
 const midiToHz = (midi) => 440 * 2 ** ((midi - 69) / 12);
 const hzToMidi = (hz) => 69 + 12 * Math.log2(hz / 440);
@@ -283,7 +280,7 @@ function createSynthPianoVoice(ctx, output, freq, time, velocity, interruptible 
 
 /**
  * 单个钢琴音。返回的 GainNode 立即可连接到总线；
- * 采样尚未解码时稍后再起音（被打断则不再发声），加载失败用合成音。
+ * 采样尚未解码时立即用合成音，后台缓存采样供下次播放，避免漏音和迟到补响。
  */
 function createPianoTone(ctx, freq, time, duration, velocity = 0.72) {
   const output = ctx.createGain();
@@ -293,18 +290,10 @@ function createPianoTone(ctx, freq, time, duration, velocity = 0.72) {
     startSampledNote(ctx, output, buffer, sampleMidi, freq, time, duration, velocity);
     return output;
   }
-  const generation = pianoGeneration;
-  loadPianoSample(ctx, sampleMidi).then((loaded) => {
-    const late = ctx.currentTime - time;
-    if (generation !== pianoGeneration || late > PIANO_LATE_LIMIT) return;
-    const start = Math.max(time, ctx.currentTime + 0.005);
-    const remaining = Math.max(0.06, duration - Math.max(0, late));
-    if (loaded) {
-      startSampledNote(ctx, output, loaded, sampleMidi, freq, start, remaining, velocity);
-    } else {
-      createSynthPianoVoice(ctx, output, freq, start, velocity).release(start + remaining);
-    }
-  });
+  // A cold/slow sample must never remove a voice from a chord or delay its onset.
+  // Cache it for the next audition; this voice uses the existing synth immediately.
+  loadPianoSample(ctx, sampleMidi);
+  createSynthPianoVoice(ctx, output, freq, time, velocity).release(time + Math.max(0.06, duration));
   return output;
 }
 
@@ -410,7 +399,7 @@ function createHeldPianoVoice(frequency, velocity = 100) {
 
   const cached = pianoBuffers.get(sampleMidi);
   if (cached) begin(cached);
-  else loadPianoSample(ctx, sampleMidi).then(begin);
+  else { loadPianoSample(ctx, sampleMidi); begin(null); }
 
   return {
     setFrequency(nextFrequency) {

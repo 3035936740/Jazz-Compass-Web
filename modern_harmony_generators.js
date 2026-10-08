@@ -24,7 +24,7 @@ export const MODERN_GENERATORS = {
       t(`按实际键位把 ${show(ns)} 各升 ${shift} 个半音，严格保持内部距离。结果是？`, `${show(ns)} の各音を半音 ${shift} つ上げ内部距離を厳密に保つ。結果は？`, `Raise every pitch of ${show(ns)} by ${shift} semitones, preserving exact internal gaps. Result?`),
       show(ns.map((n)=>n+shift)), [show([r+shift,r+shift+3,r+shift+7]),show([r+shift,r+shift+4,r+shift+8]),show(ns)],
       t('三个声部移动量相同，内部距离保持 4、3 个半音。音名仅表示这里的键位。', '3 声部を同量移動し内部距離は半音 4、3 のまま。ここでの音名は鍵の位置を表す。', 'All three voices move equally, preserving internal gaps of 4 and 3 semitones. Note labels here identify keyboard positions.'), contextHint,
-      { notes: ns.map((n)=>n+shift), mode:'harmonic' });
+      { notes: ns, mode:'melody', chord: ns, label:t('听原和弦：先逐音，再一起','元の和音：各音の後に同時に聴く','Hear the original: individual notes, then together') });
     if (stage === 2) {
       const cases = [[t('C 大调','C 長調','C major'),'C4 E4 G4','D4 F4 A4',t('小三和弦', '短三和音', 'Minor triad')],[t('G 大调','G 長調','G major'),'G3 B3 D4','A3 C4 E4',t('小三和弦','短三和音','Minor triad')],[t('C 大调','C 長調','C major'),'D4 F4 A4','E4 G4 B4',t('小三和弦','短三和音','Minor triad')],[t('C 大调','C 長調','C major'),'E4 G4 B4','F4 A4 C5',t('大三和弦','長三和音','Major triad')]];
       const [key, start, end, answer] = pick(rng,cases);

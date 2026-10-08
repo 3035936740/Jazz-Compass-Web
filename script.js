@@ -1,7 +1,7 @@
 import { midiName } from './classical_voicing.js?v=20261004-w7';
-import { initAppShell } from "./app_shell.js?v=20261006-guide-audio1";
+import { initAppShell } from "./app_shell.js?v=20261009-audio1";
 import { noteToFrequency, noteToSemitoneValue, semitoneToFreq, semitoneToMidi, resolveRootOctave, chordNotesToFrequencies } from "./note_frequency.js?v=20261002-split";
-import { getAudioContext, interruptPlayback, interruptIfActive, connectOutput, suppressQueued, playChord, createHeldPianoVoice, createPianoTone, createSimpleTone } from "./audio_engine.js?v=20261006-guide-audio1";
+import { getAudioContext, interruptPlayback, interruptIfActive, connectOutput, suppressQueued, playChord, createHeldPianoVoice, createPianoTone, createSimpleTone } from "./audio_engine.js?v=20261009-audio1";
 import { parsePitch } from "./pitch_spelling.js";
 import { mountSubPages } from "./sub_pages.js?v=20261003-u2";
 import { NESTED_TOOL_ROUTES, toolboxNavigationFeature } from './micro_tool_routes.js?v=20261008-beginner2';
@@ -12,7 +12,7 @@ import { loadResume, clearResume } from "./learn_engine.js?v=20261006-circle1";
 import { EnhancedChordConverter, JazzBrain, ClassicalHarmonyConnector } from "./jazz_compass.js?v=20261004-w7";
 import * as lang from "./lang.js?v=20261008-beginner2";
 import { drawClassicalStaff } from "./classical_staff.js?v=20261004-m5";
-import { renderChordConversion } from "./chord_convert_panel.js?v=20261006-guide-audio1";
+import { renderChordConversion } from "./chord_convert_panel.js?v=20261009-audio1";
 
 /**
  * 按需载入：各个工具面板的代码第一次用到时才下载（手机上首屏只下载必要的代码，打开快很多）。
@@ -77,7 +77,7 @@ const load_progression_ui = () => import("./progression_ui.js?v=20261004-m5");
 const mountProgression = lazy(load_progression_ui, 'mountProgression');
 const load_motif_phrase_ui = () => import("./motif_phrase_ui.js?v=20261004-w9");
 const mountMotifPhrase = lazy(load_motif_phrase_ui, 'mountMotifPhrase');
-const load_poly_meter_ui = () => import("./poly_meter_ui.js?v=20261005-q1");
+const load_poly_meter_ui = () => import("./poly_meter_ui.js?v=20261009-audio1");
 const mountPolyMeter = lazy(load_poly_meter_ui, 'mountPolyMeter');
 const load_canon_ui = () => import("./canon_ui.js?v=20261003-t3");
 const mountCanon = lazy(load_canon_ui, 'mountCanon');
@@ -91,9 +91,9 @@ const load_ear_training_ui = () => import("./ear_training_ui.js?v=20261002-quest
 const mountEarTraining = lazy(load_ear_training_ui, 'mountEarTraining');
 const load_chord_symbols_ui = () => import("./chord_symbols_ui.js?v=20261003-r32");
 const mountChordSymbols = lazy(load_chord_symbols_ui, 'mountChordSymbols');
-const load_staff_reading_ui = () => import("./staff_reading_ui.js?v=20261005-q1");
+const load_staff_reading_ui = () => import("./staff_reading_ui.js?v=20261009-audio1");
 const mountStaffReading = lazy(load_staff_reading_ui, 'mountStaffReading');
-const load_learn_ui = () => import("./learn_ui.js?v=20261008-b-labels1");
+const load_learn_ui = () => import("./learn_ui.js?v=20261009-audio1");
 const mountLearn = lazy(load_learn_ui, 'mountLearn');
 const load_lcc_ui = () => import("./lcc_ui.js?v=20261002-i18n");
 const mountLccExplorer = lazy(load_lcc_ui, 'mountLccExplorer');
@@ -105,7 +105,7 @@ const load_about_page = () => import("./about_page.js?v=20261004-x1");
 const showAbout = lazy(load_about_page, 'showAbout', { hostOf: () => document.getElementById('panel-about-body') });
 const load_neo_panel = () => import("./neo_panel.js?v=20261004-m5");
 const initNeoPanel = lazy(load_neo_panel, 'initNeoPanel');
-const load_circle_panel = () => import("./circle_panel.js?v=20261006-guide-audio1");
+const load_circle_panel = () => import("./circle_panel.js?v=20261009-audio1");
 const createCirclePanel = lazy(load_circle_panel, 'createCirclePanel');
 
 // Canvas colours come from the CSS theme tokens so drawings follow light/dark.

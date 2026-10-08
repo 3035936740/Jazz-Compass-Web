@@ -1,6 +1,6 @@
 // 乐理闯关的答题音效：答对是上行的两声"叮"，答错是下行的两声闷音（Web Audio 合成，不用音频文件）
 // 走全局音频总线（跟随音量滑块；不打断正在播放的题目声音）；开关存在 localStorage
-import { getAudioContext, connectOutput } from './audio_engine.js?v=20261006-guide-audio1';
+import { getAudioContext, connectOutput } from './audio_engine.js?v=20261009-audio1';
 
 const STORAGE_KEY = 'jc-learn-sfx';
 
