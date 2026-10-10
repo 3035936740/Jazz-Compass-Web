@@ -3,7 +3,7 @@
 import { mountModernHarmony } from './modern_harmony_tools_ui.js?v=20261010-mh2';
 import { TOPICS, t, cents, midiForHz, chord, chain, frequencies, layers } from './modern_harmony_course.js?v=20261010-talk1';
 import { pitch } from './modern_harmony_generators.js?v=20261010-talk1';
-import { playAudio } from './sideb_toys.js?v=20261010-talk1';
+import { playAudio } from './sideb_toys.js?v=20261011-dual1';
 const tx = (value) => typeof value === 'string' ? value : value[globalThis.window?.__lang || 'zh'] || value.en;
 const el = (tag, cls, text) => {const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=tx(text);return n;};
 export function toyModel(topic, mode, value) {

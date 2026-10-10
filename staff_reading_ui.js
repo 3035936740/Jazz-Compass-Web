@@ -1199,7 +1199,7 @@ export function mountStaffReading(target, { playChord }) {
     // 挂上任务条（检查 / 提交时把当前的谱交给评分器）
     if (String(q).startsWith('@lab:')) {
       const ref = String(q).slice(5);
-      import('./lab_banner.js?v=20261010-talk1').then(({ mountLabBanner, isFirstVisit }) => import('./sideb_labs.js?v=20261004-x1').then(({ LABS, parseLabRef }) => {
+      import('./lab_banner.js?v=20261011-dual1').then(({ mountLabBanner, isFirstVisit }) => import('./sideb_labs.js?v=20261004-x1').then(({ LABS, parseLabRef }) => {
         const setup = LABS[parseLabRef(ref).id]?.setup;
         if (setup) {
           snapshot();

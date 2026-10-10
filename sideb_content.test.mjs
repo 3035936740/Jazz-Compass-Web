@@ -166,6 +166,7 @@ test('exams: question mix (B main / B extension / A side), labs last, fresh draw
   assert.equal(E.chapterExOpen(levels, highMain, hasExt), false, 'high regular scores cannot offset one unplayed extension');
   // Final 要全部章节测试；EX Final 还要全部 EX 章节测试
   assert.equal(E.finalOpen(['basics'], p), false);
+  p.units.final = { done: true };
   p.units[E.bKey('T-basics')] = { done: true, best: 0.7 };
   assert.equal(E.finalOpen(['basics'], p), true);
   assert.equal(E.finalExOpen(['basics'], p), false);

@@ -46,7 +46,8 @@ const TEXT = {
   zh: {
     title: '乐理闯关', subtitle: '一关只要几分钟。每个关卡下面还有 4 个进阶关和 1 个综合测验；看不懂工具时，来这里玩一关就明白了。',
     streak: (n) => `连续 ${n} 天`, stars: (n) => `${n} 颗星`, xp: (n) => `${n} 经验`, done: (a, b) => `主关已完成 ${a} / ${b}`, branchDone: (a, b) => `进阶 ${a} / ${b}`,
-    sideB: '翻面 · Side-B',
+    sideB: '翻面 · Side-B', sideBCount: (n) => `${n} 关可玩`, sideBNews: (n) => `B 面新开放 ${n} 关`, sideBExt: '扩展关', sideBNewsNote: '刚学过的内容，B 面会扒开来看为什么成立、怎么用。点一关，翻到它那一页。',
+    revealTitle: '这张唱片还有 B 面', revealLines: ['A 面帮你画出整张乐理地图；B 面把学过的东西扒开，看看为什么成立、怎么用、在真实音乐里怎么出现。', 'A 面学到哪里，B 面就开放到哪里——第一章的 B 面现在可以翻开了，后面的会随着你在 A 面的进度一关一关打开。', 'A 面的结业挑战和 EX 结业挑战，是 B 面终点那两场 Final 的钥匙。'], revealGo: '翻面看看', revealLater: '先留在 A 面',
     continue: '继续闯关', start: '开始', replay: '再玩一次', locked: '先完成前一关就能解锁', unlockAll: '我有基础，全部解锁', relock: '恢复按顺序解锁',
     tool: (name) => `去工具：${name}`, openTool: (name) => `打开「${name}」看看`, close: '退出', sfxOn: '答题音效：开（点一下关闭）', sfxOff: '答题音效：关（点一下打开）', check: '检查', next: '继续', more: '嗯，然后呢？', gotIt: '明白了，继续',
     hint: '提示', explain: '看解析', right: ['答对了！', '漂亮！', '没错！', '很棒！'], wrong: '差一点——答案是：', why: '为什么？',
@@ -62,13 +63,14 @@ const TEXT = {
     printSheet: '打印练习卷（含答案）', reviewTitle: '复习错题', reviewButton: (due, all) => (due ? `复习错题 · ${due} 道到期` : `复习错题 · 共 ${all} 道`), reviewHint: (all, due) => `错题本里有 ${all} 道题，${due} 道今天该复习了。答对四次就会移出。`, reviewDone: '复习完成', reviewLeft: (n) => (n ? `错题本里还有 ${n} 道` : '错题本清空了！'),
     exportProgress: '导出进度', importProgress: '导入进度', imported: '进度已导入', importFailed: '这个文件不是乐理闯关的进度文件',
     celebrateChapterEx: 'EX 章节测试 · 通关', celebrateChapterExSub: (name) => `${name}的进阶内容，你都走过了一遍。`, celebrateFinal: '结业！', celebrateFinalSub: (n) => `${n} 个主关的知识，你都走过了一遍。`, celebrateClose: '继续',
-    exLines: ['EX 结业挑战 · 通关', '从五线谱、音程，到和声、对位、爵士、世界音乐和二十世纪……', '这张地图，你已经走完了。', '但是——'], exFinale: '乐理远不止于此', exClose: '继续探索',
+    exLines: ['EX 结业挑战 · 通关', '从五线谱、音程，到和声、对位、爵士、世界音乐和二十世纪……', '这张地图，你已经走完了。', '但是——'], exFinale: '乐理远不止于此', exSideB: 'Side-B 终点的 EX Final，现在向你打开了。', exClose: '继续探索',
     question: (a, b) => `第 ${a} / ${b} 题`, chapters: '章节', resumeLabel: (title, a, b) => `继续没做完的：${title}（第 ${a} / ${b} 题）`, toolNote: '看完工具后，点页面上方的「回到教程」就会回到这一题。',
   },
   ja: {
     title: '音楽理論チャレンジ', subtitle: '1 ステージ数分。各ステージには 4 つの発展ステージと総合テストがあります。ツールがわからないときは、ここで 1 つ遊べばすぐわかります。',
     streak: (n) => `${n} 日連続`, stars: (n) => `星 ${n}`, xp: (n) => `${n} XP`, done: (a, b) => `メイン ${a} / ${b} クリア`, branchDone: (a, b) => `発展 ${a} / ${b}`,
-    sideB: '裏返す · Side-B',
+    sideB: '裏返す · Side-B', sideBCount: (n) => `${n} ステージ遊べる`, sideBNews: (n) => `B 面に新しく ${n} ステージ`, sideBExt: '拡張ステージ', sideBNewsNote: '学んだばかりの内容を、B 面ではなぜ成り立つか・どう使うかまで掘り下げる。ステージを押すと、そのページへ。',
+    revealTitle: 'このレコードには B 面がある', revealLines: ['A 面は楽理の地図全体を描く。B 面は学んだことを開いて、なぜ成り立つのか、どう使うのか、実際の音楽にどう現れるのかを見る。', 'A 面で学んだところまで B 面が開いていく——第 1 章の B 面がもう開ける。続きは A 面の進み具合に合わせて一つずつ開く。', 'A 面の修了チャレンジと EX 修了チャレンジは、B 面の終点にある二つのファイナルの鍵。'], revealGo: '裏返してみる', revealLater: 'まず A 面に残る',
     continue: '続きから', start: 'スタート', replay: 'もう一度', locked: '前のステージをクリアすると解放', unlockAll: '経験者なのですべて解放', relock: '順番どおりに戻す',
     tool: (name) => `ツールへ：${name}`, openTool: (name) => `「${name}」を開いてみる`, close: '終了', sfxOn: '効果音：オン（クリックでオフ）', sfxOff: '効果音：オフ（クリックでオン）', check: 'チェック', next: '次へ', more: 'うん、それで？', gotIt: 'わかった、次へ',
     hint: 'ヒント', explain: '解説を見る', right: ['正解！', 'すばらしい！', 'その通り！', 'お見事！'], wrong: 'おしい——正解は：', why: 'どうして？',
@@ -84,13 +86,14 @@ const TEXT = {
     printSheet: '練習プリントを印刷（解答つき）', reviewTitle: 'まちがえた問題の復習', reviewButton: (due, all) => (due ? `復習 · 今日 ${due} 問` : `復習 · 全 ${all} 問`), reviewHint: (all, due) => `復習ノートに ${all} 問、今日の分は ${due} 問。4 回正解すると外れます。`, reviewDone: '復習おわり', reviewLeft: (n) => (n ? `復習ノートの残り ${n} 問` : '復習ノートが空になりました！'),
     exportProgress: '進み具合を書き出す', importProgress: '進み具合を読み込む', imported: '進み具合を読み込みました', importFailed: 'このファイルは音楽理論チャレンジの進み具合ではありません',
     celebrateChapterEx: 'EX 章末テスト・クリア', celebrateChapterExSub: (name) => `${name}の発展の内容を、すべて歩き切りました。`, celebrateFinal: '修了！', celebrateFinalSub: (n) => `${n} のメインステージをすべて歩き切りました。`, celebrateClose: '続ける',
-    exLines: ['EX 修了チャレンジ · クリア', '五線譜と音程から、和声・対位法・ジャズ・世界の音楽・20 世紀まで……', 'この地図は、もう最後まで歩きました。', 'でも——'], exFinale: '音楽理論は、これだけではない', exClose: 'さらに探検する',
+    exLines: ['EX 修了チャレンジ · クリア', '五線譜と音程から、和声・対位法・ジャズ・世界の音楽・20 世紀まで……', 'この地図は、もう最後まで歩きました。', 'でも——'], exFinale: '音楽理論は、これだけではない', exSideB: 'B 面の終点にある EX ファイナルが、いま開いた。', exClose: 'さらに探検する',
     question: (a, b) => `${a} / ${b} 問目`, chapters: '章', resumeLabel: (title, a, b) => `途中から再開：${title}（${a} / ${b} 問目）`, toolNote: 'ツールを見たら、ページ上部の「チュートリアルに戻る」でこの問題に戻れます。',
   },
   en: {
     title: 'Theory Quest', subtitle: 'Each level takes a few minutes, and each has 4 advanced levels plus a mixed test. Stuck on a tool? Play a level here and it will click.',
     streak: (n) => `${n}-day streak`, stars: (n) => `${n} stars`, xp: (n) => `${n} XP`, done: (a, b) => `${a} / ${b} main levels`, branchDone: (a, b) => `Advanced ${a} / ${b}`,
-    sideB: 'Flip to Side-B',
+    sideB: 'Flip to Side-B', sideBCount: (n) => `${n} playable`, sideBNews: (n) => `${n} new on Side B`, sideBExt: 'extension', sideBNewsNote: 'What you just learned, Side B opens up: why it works and how to use it. Pick a level to turn to its page.',
+    revealTitle: 'This record has a Side B', revealLines: ['Side A draws the whole map of music theory; Side B opens up what you have learned — why it works, how to use it, where it shows up in real music.', 'Side B opens as far as you have learned on Side A — chapter 1 of Side B is ready now, and the rest opens level by level as you go on Side A.', 'The Side-A final challenge and EX final challenge are the keys to the two Finals at the end of Side B.'], revealGo: 'Flip it over', revealLater: 'Stay on Side A for now',
     continue: 'Continue', start: 'Start', replay: 'Play again', locked: 'Finish the previous level to unlock', unlockAll: 'I know the basics — unlock all', relock: 'Back to step-by-step',
     tool: (name) => `Open tool: ${name}`, openTool: (name) => `Open “${name}” to see it`, close: 'Quit', sfxOn: 'Answer sounds: on (click to mute)', sfxOff: 'Answer sounds: off (click to turn on)', check: 'Check', next: 'Continue', more: 'And then?', gotIt: 'Got it, continue',
     hint: 'Hint', explain: 'Explanation', right: ['Correct!', 'Nice!', 'Exactly!', 'Great!'], wrong: 'Almost — the answer is:', why: 'Why?',
@@ -106,7 +109,7 @@ const TEXT = {
     printSheet: 'Print a worksheet (with answers)', reviewTitle: 'Review mistakes', reviewButton: (due, all) => (due ? `Review · ${due} due` : `Review · ${all} saved`), reviewHint: (all, due) => `${all} questions in your review box, ${due} due today. Answer one right four times and it leaves.`, reviewDone: 'Review finished', reviewLeft: (n) => (n ? `${n} left in the review box` : 'Review box is empty!'),
     exportProgress: 'Export progress', importProgress: 'Import progress', imported: 'Progress imported', importFailed: 'This is not a Theory Quest progress file',
     celebrateChapterEx: 'EX chapter test cleared', celebrateChapterExSub: (name) => `You have walked through all of ${name}’s advanced material.`, celebrateFinal: 'Graduated!', celebrateFinalSub: (n) => `You have walked through all ${n} main levels.`, celebrateClose: 'Continue',
-    exLines: ['EX final challenge · cleared', 'From the staff and intervals to harmony, counterpoint, jazz, world music and the twentieth century…', 'You have walked this whole map.', 'But —'], exFinale: 'Music theory goes far beyond this', exClose: 'Keep exploring',
+    exLines: ['EX final challenge · cleared', 'From the staff and intervals to harmony, counterpoint, jazz, world music and the twentieth century…', 'You have walked this whole map.', 'But —'], exFinale: 'Music theory goes far beyond this', exSideB: 'The EX Final at the end of Side B is now open to you.', exClose: 'Keep exploring',
     question: (a, b) => `Question ${a} / ${b}`, chapters: 'Chapters', resumeLabel: (title, a, b) => `Resume: ${title} (question ${a} / ${b})`, toolNote: 'After looking at the tool, press “Back to tutorial” at the top of the page to return to this question.',
   },
 };
@@ -237,8 +240,13 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
   const unlockView = () => (debugEnabled() ? { ...progress, unlockAll: true } : progress);
   const SIDE_KEY = 'jc-learn-side';
   let sideB = null;
-  /** Side-B 开放：只有 EX 结业挑战通关，或者调试模式（class_debug(true)）；A 面的"全部解锁"不开放 Side-B */
-  const sideBOpen = () => debugEnabled() || isDone(progress, FINAL_EX_KEY);
+  /**
+   * Side-B 开放：A 面第一章的章节测试通过（和 sideb_engine.SIDEB_OPEN_KEY 相同；旧存档 EX 结业挑战已通关的也算），或者调试模式。
+   * 之后 B 面按 A 面学过的内容逐步开放（sideb_engine.bLevelMissing）；A 面的"全部解锁"只管 A 面，不开放 Side-B。
+   */
+  const SIDEB_OPEN_KEY = chapterKey('basics');
+  const sideBOpenFor = (p) => isDone(p, SIDEB_OPEN_KEY) || isDone(p, FINAL_EX_KEY);
+  const sideBOpen = () => debugEnabled() || sideBOpenFor(progress);
   /** 给 Side-B 用的进度：只有调试模式才全部开放（A 面的"全部解锁"只管 A 面） */
   const sideBView = () => ({ ...progress, unlockAll: debugEnabled() });
   debugListeners.add(() => { if (!root.isConnected && root.parentNode !== target) return; if (sideB) { if (sideBOpen()) sideB.refresh(); else flipBack(); return; } if (session && !isFinished(session)) renderCard(); else renderMap(); });
@@ -342,8 +350,14 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
         : button('learn-btn primary', doneCount === UNITS.length ? t.replay : `${t.continue} · ${tx(UNITS[next].title)}`, () => startLevel(UNITS[next].id)),
       button('learn-link', progress.unlockAll ? t.relock : t.unlockAll, () => { progress = { ...progress, unlockAll: !progress.unlockAll }; saveProgress(progress); renderMap(); }),
     );
-    // 翻面 · Side-B：默认隐藏，EX 结业挑战通关后（或调试模式下）才出现
-    if (sideBOpen()) actions.appendChild(withIcon(button('learn-btn sideb-entry', '', () => showSideB()), 'sparkle', t.sideB));
+    // 翻面 · Side-B：默认隐藏，A 面第一章的章节测试通过后（或调试模式下）出现；按钮上写着 B 面现在有几关可玩
+    if (sideBOpen()) {
+      const entry = withIcon(button('learn-btn sideb-entry', '', () => showSideB()), 'sparkle', t.sideB);
+      actions.appendChild(entry);
+      sideBOpenLevels(sideBViewFor()).then((list) => { const n = list.filter((x) => !x.done).length; if (n && entry.isConnected) entry.appendChild(el('span', 'learn-sideb-count', t.sideBCount(n))); }).catch(() => {});
+    }
+    // 第一次满足条件：揭幕（旧存档已经玩过 B 面的不再弹）
+    if (sideBOpenFor(progress) && !sideBRevealed()) { if (isDone(progress, FINAL_EX_KEY) || Object.keys(progress.units).some((k) => /^bx?:/.test(k))) markSideBRevealed(); else revealSideB(); }
     const record = loadResume();
     if (record?.session) {
       const resume = withIcon(button('learn-btn resume wide', '', () => target.resume()), 'replay', t.resumeLabel(learnLevelTitle(record.key, lang, record.title), (record.position ?? 0) + 1, record.total ?? '?'));
@@ -1498,6 +1512,10 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
     });
     const finale = el('p', 'learn-ex-finale', t.exFinale);
     finale.style.animationDelay = `${0.4 + t.exLines.length * 1.3 + 0.4}s`;
+    // A 面的终局不再挡住 B 面，而是打开 B 面终点的 EX Final
+    const note = el('p', 'learn-ex-line learn-ex-sideb', t.exSideB);
+    note.style.animationDelay = `${0.4 + t.exLines.length * 1.3 + 1.1}s`;
+    stage.append(note);
     const close = button('learn-btn primary learn-ex-close', t.exClose, () => { overlay.classList.add('is-leaving'); setTimeout(() => overlay.remove(), 400); });
     close.style.animationDelay = `${0.4 + t.exLines.length * 1.3 + 1.6}s`;
     stage.append(finale, close);
@@ -1513,6 +1531,7 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
     if (key === REVIEW_KEY_LEVEL) { renderReviewFinish(); return; }
     if (level.boss) { renderBossFinish(); return; }
     const before = progress.units[key]?.done;
+    const progressBefore = progress;
     progress = completeUnit(progress, key, session);
     saveProgress(progress);
     forget();
@@ -1553,7 +1572,63 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
     if (key === FINAL_KEY) celebrateFinal(shell);
     if (key === FINAL_EX_KEY) { celebrateFinal(shell); celebrateEx(); }
     if (level.chapter?.ex) celebrateFinal(shell, t.celebrateChapterEx, t.celebrateChapterExSub(tx(SECTIONS.find((sec) => sec.id === level.chapter.sectionId)?.title)));
+    sideBNews(shell, progressBefore, progress);
     session = null;
+  }
+
+  // ---------------- 双轨：A 面学到哪里，B 面就开放到哪里 ----------------
+  const REVEAL_KEY = 'jc-sideb-revealed';
+  const sideBRevealed = () => { try { return globalThis.localStorage?.getItem(REVEAL_KEY) === '1'; } catch (_) { return true; } };
+  const markSideBRevealed = () => { try { globalThis.localStorage?.setItem(REVEAL_KEY, '1'); } catch (_) { /* 无痕模式等 */ } };
+  /** 只看真实进度（不算调试模式、不算 A 面的"全部解锁"） */
+  const sideBViewFor = (p = progress) => ({ ...p, unlockAll: false });
+  /** B 面的规则与关卡表按需加载（翻面前不加载整本 B 面内容） */
+  const sideBRules = () => Promise.all([import('./sideb_content.js?v=20261010-flip1'), import('./sideb_engine.js?v=20261011-dual1')]);
+  /** 某个进度下 B 面开放着的关卡（普通关与扩展关）：[{ key, id, code, title, ext, done }] */
+  async function sideBOpenLevels(p) {
+    if (!sideBOpenFor(p)) return [];
+    const [C, E] = await sideBRules();
+    const ctx = { units: UNITS, sides: SIDES };
+    return C.B_LEVELS.filter(C.isPlayable).flatMap((lv) => {
+      const list = C.chapterLevels(lv.chapter).filter(C.isPlayable);
+      const out = [];
+      if (E.bLevelOpen(lv, list, p, ctx)) out.push({ key: E.bKey(lv.id), id: lv.id, code: lv.code || lv.id, title: lv.title, ext: false, done: isDone(p, E.bKey(lv.id)) });
+      if (C.hasExtLevel(lv) && E.extOpen(lv, p, ctx)) out.push({ key: E.extKey(lv.id), id: `${lv.id}x`, code: lv.code || lv.id, title: lv.title, ext: true, done: isDone(p, E.extKey(lv.id)) });
+      return out;
+    });
+  }
+  /** A 面这一关打完后：Side-B 第一次出现时揭幕；之后 B 面新开放了哪些关，在结算页给一张小卡片 */
+  function sideBNews(shell, before, after) {
+    if (!sideBOpenFor(after)) return;
+    if (!sideBOpenFor(before)) { if (!sideBRevealed()) revealSideB(); return; }
+    Promise.all([sideBOpenLevels(sideBViewFor(before)), sideBOpenLevels(sideBViewFor(after))]).then(([was, now]) => {
+      const old = new Set(was.map((x) => x.key));
+      const fresh = now.filter((x) => !old.has(x.key) && !x.done);
+      if (!fresh.length || !shell.isConnected) return;
+      const card = el('div', 'learn-sideb-news');
+      card.append(withIcon(el('strong', 'learn-sideb-news-title'), 'sparkle', t.sideBNews(fresh.length)));
+      const list = el('div', 'learn-sideb-news-list');
+      fresh.forEach((x) => list.appendChild(button('sideb-chip learn-sideb-news-item', `${x.code} ${tx(x.title)}${x.ext ? ` · ${t.sideBExt}` : ''}`, () => showSideB((b) => b.showLevel?.(x.id)))));
+      card.append(list, el('p', 'learn-muted', t.sideBNewsNote));
+      shell.querySelector('.learn-feedback-actions')?.before(card);
+    }).catch(() => {});
+  }
+  /** 揭幕：第一次满足条件时弹一次（"这张唱片还有 B 面"），可以马上翻面，也可以先留在 A 面 */
+  function revealSideB() {
+    markSideBRevealed();
+    const overlay = el('div', 'learn-sideb-reveal');
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-label', t.revealTitle);
+    const card = el('div', 'learn-sideb-reveal-card');
+    card.append(el('span', 'learn-sideb-reveal-kicker', 'SIDE B · DEEP MODE'), el('h3', '', t.revealTitle), ...t.revealLines.map((line) => el('p', '', line)));
+    const close = () => { overlay.classList.add('is-leaving'); setTimeout(() => overlay.remove(), 300); globalThis.document?.removeEventListener('keydown', onKey); };
+    const onKey = (event) => { if (event.key === 'Escape') close(); };
+    const row = el('div', 'learn-feedback-actions');
+    row.append(button('learn-btn primary', t.revealGo, () => { close(); showSideB(); }), button('learn-btn ghost', t.revealLater, close));
+    card.appendChild(row);
+    overlay.appendChild(card);
+    globalThis.document?.addEventListener('keydown', onKey);
+    (globalThis.document?.body || root).appendChild(overlay);
   }
 
   /** Boss 战结算：星级结局立绘 + 结局台词（第一次通关、重打升星有特别台词），这一战的教育主题，下一步 */
@@ -1666,7 +1741,7 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
     if (!sideBOpen()) { renderMap(); return; }
     stop(); closeSheets();
     if (sideB) { then?.(sideB); return; }
-    const mount = () => import('./sideb_ui.js?v=20261011-snd2').then(({ mountSideB }) => {
+    const mount = () => import('./sideb_ui.js?v=20261011-dual1').then(({ mountSideB }) => {
       writeSide('b');
       root.classList.add('is-side-b');
       sideB = mountSideB(root, {

@@ -9,19 +9,21 @@ import {
   mergeMastery, overallMastery, loadMastery, saveMastery, loadBResume, saveBResume, clearBResume, bestLabResults, saveLabResult, LAB_LINES,
   breakthroughFor, loadBreakthroughs, saveBreakthrough, estimateMinutes, PASS_LINE, isAssessed,
   extKey, gradeOf, chapterAverageWithExt, chapterTestOpen, chapterExOpen, finalOpen, finalExOpen, CHAPTER_EX_OPEN,
-} from './sideb_engine.js?v=20261010-talk1';
+  bLevelMissing, extMissing, A_FINAL_KEY, A_FINAL_EX_KEY,
+} from './sideb_engine.js?v=20261011-dual1';
 import { SKILLS, SKILL_NAMES, recommend } from './sideb_errors.js?v=20261004-z9';
 import { LABS, labHref, labResultKey } from './sideb_labs.js?v=20261004-x1';
 import { loadProgress, saveProgress, isDone } from './learn_engine.js?v=20261010-boss1';
 import { createGuidePlayback } from './learn_guide_audio.js?v=20261008-beginner2';
 import { renderVisual } from './learn_visuals.js?v=20261008-beginner2';
-import { satbStaff, rhythmGrid, playAudio, satbToy, polyToy, tapPad, spellToy, meterToy, intervalToy, scaleToy, textureToy, chordToy, keyChordsToy, progressionToy, plrToy, keyRelToy, transposeToy, fretToy, nctToy, speciesToy, canonToy, swingToy, bluesToy, chordScaleToy, guideToy, negativeToy, xuangongToy, worldToy, harmonicsToy, temperToy, pcToy, collectionToy, setToy, matrixToy, jiToy } from './sideb_toys.js?v=20261010-talk1';
-import { modernHarmonyToy } from './sideb_modern_harmony_toys.js?v=20261010-flip1';
+import { satbStaff, rhythmGrid, playAudio, satbToy, polyToy, tapPad, spellToy, meterToy, intervalToy, scaleToy, textureToy, chordToy, keyChordsToy, progressionToy, plrToy, keyRelToy, transposeToy, fretToy, nctToy, speciesToy, canonToy, swingToy, bluesToy, chordScaleToy, guideToy, negativeToy, xuangongToy, worldToy, harmonicsToy, temperToy, pcToy, collectionToy, setToy, matrixToy, jiToy } from './sideb_toys.js?v=20261011-dual1';
+import { modernHarmonyToy } from './sideb_modern_harmony_toys.js?v=20261011-dual1';
 import { celebrate } from './sideb_fx.js?v=20261009-audio1';
 import { playFeedbackSound } from './learn_sfx.js?v=20261011-snd2';
-import { sidebWorksheet, openWorksheet } from './sideb_print.js?v=20261010-talk1';
+import { sidebWorksheet, openWorksheet } from './sideb_print.js?v=20261011-dual1';
 import { certificate, awardCert, loadCerts, graduationShow } from './sideb_cert.js?v=20261009-audio1';
 import { referenceById } from './references.js';
+import { UNITS, SIDES } from './learn_content.js?v=20261010-talk1';
 
 const TEXT = {
   zh: {
@@ -32,6 +34,7 @@ const TEXT = {
     ruleFIN: (d, n) => `所有章节测试都通过（≥ 60%）才开放（${d}/${n}）`, ruleFINX: (d, n) => `所有章节测试和 EX 章节测试都通过才开放（${d}/${n}）`,
     examPass: (p) => `过关线 ${p}%`, examBest: (p) => `最好 ${p}%`, examDone: '已通过', examGo: '开始考试', examMix: (m, labs) => `B 面普通关 ${m.main} 道 · B 面扩展关 ${m.ext} 道 · A 面 ${m.a} 道，打乱混在一起${labs ? ` · 最后 ${labs} 个实操` : ''}；每次开考重新抽题`, printSheet: '打印练习卷（含答案）', certView: (k) => (k === 'final-ex' ? '查看优秀毕业证书' : '查看毕业证书'), examLockedNote: '还没开放', examRetry: '换一套题再考', examNoContent: '这一章还没有可以出的题',
     ext: '扩展关', extDesc: (m) => `把对应 A 面关卡（含挂在上面的支线关卡）的进阶关和综合测验重新、更细地讲一遍：节奏和普通关一样（发现 → 讲解 → 实验 → 挑战），讲解更长 · 约 ${m} 分钟`, extLocked: '通过本关后解锁扩展关', extGo: '开始扩展关', extBest: (g) => `扩展关 ${g}`, grade: (g) => `评级 ${g}`,
+    aNeed: '先在 A 面通关', prevNeed: (c) => `先通关本章上一关 ${c}`, trackA: 'A 面前提', extNeedA: (n) => `还要通关对应 A 面关卡的进阶关与综合测验（还差 ${n} 关）`, aFinalNeed: (ok) => (ok ? 'A 面结业挑战：已通关' : '还要通关 A 面的结业挑战'), aFinalExNeed: (ok) => (ok ? 'A 面 EX 结业挑战：已通关' : '还要通关 A 面的 EX 结业挑战'), openRule: 'A 面学到哪里，B 面就开放到哪里：每关在 A 面对应的主关通关后开放，同一章里按顺序推进；扩展关还要 A 面对应的进阶关。', slot: (n) => (n === 5 ? '综合测验' : `进阶 ${n}`),
     title: 'Side-B', subtitle: 'Deep Mode · 原来好玩的东西还能这么深', back: '翻回 A 面', resume: (c, s) => `继续 ${c} · ${s}`,
     cleared: (n, m) => `已通关 ${n} / ${m}`, average: (p) => `平均 ${p}%`, mastery: '累计能力', noMastery: '还没有数据',
     chapterAvg: (p) => `本章平均 ${p}%`, soon: '制作中', locked: '先通关上一关', best: (p) => `最好 ${p}%`,
@@ -55,6 +58,7 @@ const TEXT = {
     ruleFIN: (d, n) => `すべての章末テストに合格（60% 以上）で開放（${d}/${n}）`, ruleFINX: (d, n) => `すべての章末テストと EX 章末テストに合格で開放（${d}/${n}）`,
     examPass: (p) => `合格ライン ${p}%`, examBest: (p) => `最高 ${p}%`, examDone: '合格済み', examGo: 'テストを始める', examMix: (m, labs) => `B 面通常 ${m.main} 問・B 面拡張 ${m.ext} 問・A 面 ${m.a} 問をシャッフル${labs ? `・最後に実習 ${labs} つ` : ''}。受けるたびに出題し直し`, printSheet: '練習プリントを印刷（解答つき）', certView: (k) => (k === 'final-ex' ? '優秀修了証書を見る' : '修了証書を見る'), examLockedNote: 'まだ開放されていない', examRetry: '別の問題で再挑戦', examNoContent: 'この章にはまだ出題できる問題がない',
     ext: '拡張ステージ', extDesc: (m) => `対応する A 面ステージ（ぶら下がる支線ステージも含む）の発展ステージと総合テストを、もう一度もっと詳しく：流れは通常ステージと同じ（発見 → 解説 → 実験 → チャレンジ）、解説が長め・約 ${m} 分`, extLocked: 'このステージをクリアすると拡張ステージが開放', extGo: '拡張ステージを始める', extBest: (g) => `拡張 ${g}`, grade: (g) => `評価 ${g}`,
+    aNeed: 'まず A 面でクリア', prevNeed: (c) => `この章の前のステージ ${c} を先にクリア`, trackA: 'A 面が先', extNeedA: (n) => `対応する A 面ステージの発展と総合テストもクリア（あと ${n}）`, aFinalNeed: (ok) => (ok ? 'A 面の修了チャレンジ：クリア済み' : 'A 面の修了チャレンジのクリアも必要'), aFinalExNeed: (ok) => (ok ? 'A 面の EX 修了チャレンジ：クリア済み' : 'A 面の EX 修了チャレンジのクリアも必要'), openRule: 'A 面で学んだところまで B 面が開いていく：各ステージは対応する A 面のメインをクリアすると開放、章の中は順番に。拡張ステージは対応する A 面の発展ステージも必要。', slot: (n) => (n === 5 ? '総合テスト' : `発展 ${n}`),
     title: 'Side-B', subtitle: 'Deep Mode · 楽しいものは、こんなに深い', back: 'A 面へ戻る', resume: (c, s) => `続き ${c} · ${s}`,
     cleared: (n, m) => `クリア ${n} / ${m}`, average: (p) => `平均 ${p}%`, mastery: '累計の力', noMastery: 'まだデータなし',
     chapterAvg: (p) => `章平均 ${p}%`, soon: '制作中', locked: '前のステージをクリアしよう', best: (p) => `ベスト ${p}%`,
@@ -78,6 +82,7 @@ const TEXT = {
     ruleFIN: (d, n) => `Opens when every chapter test is passed (≥ 60%) (${d}/${n})`, ruleFINX: (d, n) => `Opens when every chapter test and EX chapter test is passed (${d}/${n})`,
     examPass: (p) => `Pass line ${p}%`, examBest: (p) => `Best ${p}%`, examDone: 'Passed', examGo: 'Start the test', examMix: (m, labs) => `${m.main} Side-B regular + ${m.ext} Side-B extension + ${m.a} Side-A questions, shuffled${labs ? `; ${labs} lab${labs > 1 ? 's' : ''} at the end` : ''}; a fresh draw every time`, printSheet: 'Print a worksheet (with answers)', certView: (k) => (k === 'final-ex' ? 'View the certificate with distinction' : 'View the certificate'), examLockedNote: 'Not open yet', examRetry: 'Retake with new questions', examNoContent: 'No questions available for this chapter yet',
     ext: 'Extension level', extDesc: (m) => `The matching Side-A levels’ advanced levels and mixed tests (side quests included), taught again in more depth: same flow as a regular level (discover → explain → experiment → challenge), longer lessons · about ${m} min`, extLocked: 'Clear this level to unlock its extension level', extGo: 'Start the extension level', extBest: (g) => `Extension ${g}`, grade: (g) => `Grade ${g}`,
+    aNeed: 'First clear on Side A', prevNeed: (c) => `Clear ${c}, the previous level in this chapter, first`, trackA: 'Side A first', extNeedA: (n) => `Also clear the matching Side-A advanced levels and mixed tests (${n} to go)`, aFinalNeed: (ok) => (ok ? 'Side-A final challenge: cleared' : 'Also needs the Side-A final challenge'), aFinalExNeed: (ok) => (ok ? 'Side-A EX final challenge: cleared' : 'Also needs the Side-A EX final challenge'), openRule: 'Side B opens as far as you have learned on Side A: each level opens once its matching Side-A main levels are cleared, in order within a chapter; extension levels also need the matching Side-A advanced levels.', slot: (n) => (n === 5 ? 'mixed test' : `advanced ${n}`),
     title: 'Side-B', subtitle: 'Deep Mode · the fun stuff goes this deep', back: 'Back to side A', resume: (c, s) => `Continue ${c} · ${s}`,
     cleared: (n, m) => `Cleared ${n} / ${m}`, average: (p) => `Average ${p}%`, mastery: 'Mastery so far', noMastery: 'No data yet',
     chapterAvg: (p) => `Chapter average ${p}%`, soon: 'In the works', locked: 'Clear the previous level first', best: (p) => `Best ${p}%`,
@@ -142,12 +147,33 @@ export function mountSideB(root, { playChord, stopAudio = () => {}, onFlipBack, 
     const view = progressView();
     if (!sidebUnlocked(view) || !isPlayable(lv)) return false;
     if (lv.exam) return examOpenFor(lv);
-    if (lv.ext) return Boolean(view.unlockAll) || isDone(view, bKey(lv.base));
-    if (view.unlockAll) return true;
-    const list = playable();
-    const i = list.findIndex((x) => x.id === lv.id);
-    return i <= 0 || isDone(view, bKey(list[i - 1].id)) || isDone(view, bKey(lv.id));
+    if (lv.ext) { const m = extMissing(levelById(lv.base), view, A_CTX); return !m.base && !m.a.length; }
+    const m = missingOf(lv, view);
+    return !m.a.length && !m.prev;
   };
+  /** 知识前提（A 面已经学过的内容）：A 面主关 + 同一章的上一关；见 sideb_engine.bLevelMissing */
+  const A_CTX = { units: UNITS, sides: SIDES };
+  const missingOf = (lv, view = progressView()) => bLevelMissing(lv, chapterLevels(lv.chapter).filter(isPlayable), view, A_CTX);
+  /** 锁着的关卡：列出还差的 A 面关卡（点了直接去 A 面）和本章上一关 */
+  function lockReasons(m, { extA = [] } = {}) {
+    const box = el('div', 'sideb-lock');
+    if (m.a?.length) {
+      const row = el('p', 'sideb-alinks sideb-lock-a');
+      row.appendChild(el('span', '', `${t.aNeed}：`));
+      m.a.forEach((id) => row.appendChild(btn('sideb-chip', aTitle(id), () => openA?.(id))));
+      box.appendChild(row);
+    }
+    if (m.prev) box.appendChild(el('p', 'sideb-sheet-note is-locked', t.prevNeed(codeOf(levelById(m.prev)))));
+    if (extA.length) {
+      box.appendChild(el('p', 'sideb-sheet-note is-locked', t.extNeedA(extA.length)));
+      const row = el('p', 'sideb-alinks sideb-lock-a');
+      const byUnit = new Map();
+      extA.forEach((key) => { const [unit, slot] = key.split(':'); if (!byUnit.has(unit)) byUnit.set(unit, []); byUnit.get(unit).push(Number(slot)); });
+      byUnit.forEach((slots, unit) => row.appendChild(btn('sideb-chip', `${aTitle(unit)} · ${slots.map(t.slot).join(' / ')}`, () => openA?.(`${unit}:${slots[0]}`))));
+      box.appendChild(row);
+    }
+    return box;
+  }
   const chapterOf = (id) => B_CHAPTERS.find((c) => c.id === id);
   const toneOf = (chapterId) => `tone-${['mint', 'sky', 'peach', 'lilac', 'sand', 'rose'][B_CHAPTERS.findIndex((c) => c.id === chapterId)] || 'sand'}`;
   /** 这一关有没有扩展关（B 面写好了扩展关内容） */
@@ -316,7 +342,7 @@ export function mountSideB(root, { playChord, stopAudio = () => {}, onFlipBack, 
       li.appendChild(go);
       toc.appendChild(li);
     });
-    box.append(title, stats, el('p', 'sideb-toc-head', t.contents), toc, masteryBars(overallMastery(loadMastery()), t.mastery), actions);
+    box.append(title, stats, el('p', 'sideb-open-rule', t.openRule), el('p', 'sideb-toc-head', t.contents), toc, masteryBars(overallMastery(loadMastery()), t.mastery), actions);
     return box;
   }
   function chapterBlock(chapter, progress) {
@@ -352,6 +378,8 @@ export function mountSideB(root, { playChord, stopAudio = () => {}, onFlipBack, 
     card.appendChild(el('p', 'sideb-rule', t.examWeights));
     const certKind = id === 'FIN' ? 'final' : id === 'FINX' ? 'final-ex' : null;
     if (certKind && state?.done && loadCerts()[certKind]) card.appendChild(btn('learn-btn ghost', t.certView(certKind), () => renderCert(certKind)));
+    // 双轨的汇合点：Side-B Final / EX Final 还要 A 面的结业挑战 / EX 结业挑战
+    if (id === 'FIN' || id === 'FINX') { const ok = isDone(progress, id === 'FIN' ? A_FINAL_KEY : A_FINAL_EX_KEY); card.appendChild(el('p', `sideb-rule sideb-a-final${ok ? ' is-ok' : ''}`, (id === 'FIN' ? t.aFinalNeed : t.aFinalExNeed)(ok))); }
     if (open) card.append(btn('learn-btn primary', t.examGo, () => startLevel(id)), printLink(exam));
     else card.appendChild(el('span', 'sideb-exam-lock', t.examLockedNote));
     return card;
@@ -378,7 +406,7 @@ export function mountSideB(root, { playChord, stopAudio = () => {}, onFlipBack, 
     if (lv.core) meta.appendChild(el('span', 'sideb-tag is-core', t.coreTag));
     const extState = progress.units[extKey(lv.id)];
     if (hasExt(lv) && extState?.done) meta.appendChild(el('span', 'sideb-tag is-ext', t.extBest(gradeFor(extState))));
-    meta.appendChild(el('span', 'sideb-track-state', !ready ? t.soon : !open ? t.locked : state?.done ? `${t.grade(gradeFor(state))} · ${t.best(pct(state.best))}` : state?.best ? t.best(pct(state.best)) : ''));
+    meta.appendChild(el('span', 'sideb-track-state', !ready ? t.soon : !open ? (missingOf(lv, progress).a.length ? t.trackA : t.locked) : state?.done ? `${t.grade(gradeFor(state))} · ${t.best(pct(state.best))}` : state?.best ? t.best(pct(state.best)) : ''));
     text.appendChild(meta);
     main.append(disc, text);
     item.appendChild(main);
@@ -404,7 +432,7 @@ export function mountSideB(root, { playChord, stopAudio = () => {}, onFlipBack, 
       sheet.appendChild(links);
     }
     if (!isPlayable(lv)) { sheet.appendChild(el('p', 'sideb-sheet-note', t.soon)); }
-    else if (!levelOpen(lv)) { sheet.appendChild(el('p', 'sideb-sheet-note', t.locked)); }
+    else if (!levelOpen(lv)) { sheet.appendChild(lockReasons(missingOf(lv, progress))); }
     else {
       sheet.appendChild(el('p', 'sideb-sheet-note', `${t.minutes(Math.round(lv.minutes || estimateMinutes(lv)))} · ${levelSections(lv).map((s) => t.sections[s]).join(' → ')}`));
       if (lv.insight) sheet.appendChild(el('p', 'sideb-sheet-teaser', tx(lv.insight)));
@@ -425,8 +453,9 @@ export function mountSideB(root, { playChord, stopAudio = () => {}, onFlipBack, 
         const extState = progress.units[extKey(lv.id)];
         const x = extLevelById(`${lv.id}x`);
         ext.append(el('strong', '', t.ext), el('p', 'sideb-sheet-note', t.extDesc(estimateMinutes(x))));
-        if (progress.units[bKey(lv.id)]?.done || progress.unlockAll) ext.append(btn('learn-btn ghost', extState?.done ? `${t.extGo} · ${t.grade(gradeFor(extState))}` : t.extGo, () => { stopAll(); startLevel(x.id); }), printLink(x));
-        else ext.appendChild(el('p', 'sideb-sheet-note is-locked', t.extLocked));
+        const xm = extMissing(lv, progress, A_CTX);
+        if (!xm.base && !xm.a.length) ext.append(btn('learn-btn ghost', extState?.done ? `${t.extGo} · ${t.grade(gradeFor(extState))}` : t.extGo, () => { stopAll(); startLevel(x.id); }), printLink(x));
+        else { if (xm.base) ext.appendChild(el('p', 'sideb-sheet-note is-locked', t.extLocked)); if (xm.a.length) ext.appendChild(lockReasons({}, { extA: xm.a })); }
         sheet.appendChild(ext);
       }
     }
@@ -1150,10 +1179,14 @@ export function mountSideB(root, { playChord, stopAudio = () => {}, onFlipBack, 
     } else if (summary.passed || recovered) {
       const list = playable();
       const next = list[list.findIndex((x) => x.id === (level.base || level.id)) + 1];
-      // 普通关通过后：扩展关已开放就给入口；扩展关通过后：可以回到所属的关卡
-      if (next) actions.appendChild(btn('learn-btn primary', t.nextLevel(`${codeOf(next)} ${tx(next.title)}`), () => startLevel(next.id)));
+      // 普通关通过后：下一关开放就给入口；还要 A 面的知识时，列出要先去 A 面学的关卡。扩展关开放就给入口，没开放就说明还差哪些 A 面进阶关
+      const pending = [];
+      if (next && levelOpen(next)) actions.appendChild(btn('learn-btn primary', t.nextLevel(`${codeOf(next)} ${tx(next.title)}`), () => startLevel(next.id)));
+      else if (next) { const m = missingOf(next); if (m.a.length) pending.push(el('p', 'sideb-sheet-note', t.nextLevel(`${codeOf(next)} ${tx(next.title)}`)), lockReasons({ a: m.a })); }
       const x = !level.ext && extLevelById(`${level.id}x`);
-      if (x) actions.appendChild(btn('learn-btn ghost', `${t.ext} · ${codeOf(level)}`, () => startLevel(x.id)));
+      if (x && levelOpen(x)) actions.appendChild(btn('learn-btn ghost', `${t.ext} · ${codeOf(level)}`, () => startLevel(x.id)));
+      else if (x) { const xm = extMissing(levelById(level.id), progressView(), A_CTX); if (xm.a.length) pending.push(el('p', 'sideb-sheet-note', `${t.ext} · ${codeOf(level)}`), lockReasons({}, { extA: xm.a })); }
+      if (pending.length) { const box = el('div', 'sideb-next-pending'); box.append(...pending); shell.appendChild(box); }
       actions.appendChild(btn('learn-btn ghost', t.retryStars, () => { const prev = session; level = lookupLevel(level.id); lvl = levelForAttempt(level, (prev.attempt || 0) + 1); session = retrySession(lvl, prev); session.breakthroughs = []; persist(); renderNode(); }));
     } else if (summary.next === 'revise-lab') {
       shell.appendChild(el('p', 'sideb-weak', t.labLineFail(pct(LAB_LINES.level))));
@@ -1226,7 +1259,14 @@ export function mountSideB(root, { playChord, stopAudio = () => {}, onFlipBack, 
   }
 
   renderMap();
-  return { renderMap, refresh: () => redraw(), openLevel: (id) => {
+  /** 翻到某一关所在的那一页（不直接开始；A 面"B 面新开放"卡片用） */
+  const showLevel = (id) => {
+    const lv = lookupLevel(id);
+    const page = lv?.chapter ? PAGES.indexOf(lv.chapter) : -1;
+    if (page >= 0) { pageIndex = page; writePage(page); }
+    renderMap();
+  };
+  return { renderMap, showLevel, refresh: () => redraw(), openLevel: (id) => {
     if (loadBResume()?.levelId === id) return resume();
     return lookupLevel(id) && levelOpen(lookupLevel(id)) ? startLevel(id) : renderMap();
   }, resume, labReturn, stop: stopAll, get session() { return session; } };

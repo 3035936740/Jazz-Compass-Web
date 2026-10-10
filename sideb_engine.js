@@ -27,7 +27,13 @@ export const LAB_MODES = {
   ex: { checks: 0, advice: false, where: false, submissions: 1 },
 };
 
-export const sidebUnlocked = (progress) => Boolean(progress.unlockAll) || isDone(progress, 'final-ex');
+/**
+ * Side-B 什么时候出现：A 面第一章的章节测试通过（入门的基础都具备，也见过了第一位 Boss）。
+ * 之后 B 面不是"全部打开"，而是 A 面学到哪里、B 面就开放到哪里（见 bLevelMissing）。
+ * 旧存档：EX 结业挑战已经通关的，照旧算已开放（A 面全部内容都已通关，B 面的前提自然全部满足）。
+ */
+export const SIDEB_OPEN_KEY = 'chapter@basics';
+export const sidebUnlocked = (progress) => Boolean(progress.unlockAll) || isDone(progress, SIDEB_OPEN_KEY) || isDone(progress, 'final-ex');
 /** 进度键：普通关 / 考试 b:<id>；扩展关的 id 是 <关卡>x（如 B1-1x），存在 bx:<关卡> */
 /** 评级（Side-B 不用星级）：A+ ≥ 95%、A ≥ 85%、B ≥ 75%、C ≥ 60%（过关线）、D ≥ 50%、E < 50%；没通过（例如实操没到门槛）最多 D */
 export const GRADES = [['A+', 0.95], ['A', 0.85], ['B', 0.75], ['C', 0.6], ['D', 0.5], ['E', 0]];
@@ -37,12 +43,53 @@ export function gradeOf(score, passed = true) {
 }
 export const bKey = (id) => (/^B\d+-\d+x$/.test(id) ? `bx:${id.slice(0, -1)}` : `b:${id}`);
 
-/** Side-B 关卡按地图顺序一关一关开放（第一关在解锁后就开放） */
-export function sidebLevelUnlocked(levels, index, progress) {
-  if (!sidebUnlocked(progress)) return false;
-  if (progress.unlockAll || index === 0) return true;
-  return isDone(progress, bKey(levels[index - 1].id)) || isDone(progress, bKey(levels[index].id));
+// ---------------- 知识前提：B 面关卡按玩家在 A 面已经学过的内容开放 ----------------
+/**
+ * 一个 B 面关卡在 A 面的知识前提：level.a 里列出的主关；列的是支线时，用支线所挂的主关
+ * （支线是选修，不拿它挡 B 面；B 面关卡本身会把支线的内容讲到）。综合关（a 为空）没有 A 面前提。
+ */
+export function aPrereqs(level, units = [], sides = []) {
+  const mains = new Set(units.map((u) => u.id));
+  const out = [];
+  (level?.a || []).forEach((id) => {
+    if (mains.has(id)) out.push(id);
+    else { const parent = sides.find((side) => side.id === id)?.parent; if (mains.has(parent)) out.push(parent); }
+  });
+  return [...new Set(out)];
 }
+/** 扩展关重讲的是 A 面的进阶关：要求这些主关的进阶 1–4 和综合测验都已通关 */
+export const aAdvancedKeys = (ids) => ids.flatMap((id) => [1, 2, 3, 4, 5].map((slot) => `${id}:${slot}`));
+/**
+ * 一个 B 面普通关还差什么才开放（两项都空 = 开放）：
+ *   a    —— 还没通关的 A 面主关（知识前提）；
+ *   prev —— 同一章里上一关还没 Clear（章内保留原来的教学递进；不同的章可以并行）。
+ * 已经 Clear 的关、调试模式（unlockAll）永远开放。chapterList：这一章能玩的关卡（地图顺序）。
+ */
+export function bLevelMissing(level, chapterList, progress, { units = [], sides = [] } = {}) {
+  if (progress.unlockAll || isDone(progress, bKey(level.id))) return { a: [], prev: null };
+  const a = aPrereqs(level, units, sides).filter((id) => !isDone(progress, id));
+  const i = chapterList.findIndex((x) => x.id === level.id);
+  const prev = i > 0 && !isDone(progress, bKey(chapterList[i - 1].id)) ? chapterList[i - 1].id : null;
+  return { a, prev };
+}
+export const bLevelOpen = (level, chapterList, progress, ctx) => {
+  if (!sidebUnlocked(progress)) return false;
+  const { a, prev } = bLevelMissing(level, chapterList, progress, ctx);
+  return !a.length && !prev;
+};
+/**
+ * 扩展关还差什么：base —— 所属普通关还没 Clear；a —— 对应 A 面主关里还没通关的进阶关 / 综合测验（关卡键 'unit:slot'）。
+ * 已经 Clear 的扩展关、调试模式永远开放。
+ */
+export function extMissing(base, progress, { units = [], sides = [] } = {}) {
+  if (progress.unlockAll || isDone(progress, extKey(base.id))) return { base: false, a: [] };
+  return { base: !isDone(progress, bKey(base.id)), a: aAdvancedKeys(aPrereqs(base, units, sides)).filter((key) => !isDone(progress, key)) };
+}
+export const extOpen = (base, progress, ctx) => {
+  if (!sidebUnlocked(progress)) return false;
+  const m = extMissing(base, progress, ctx);
+  return !m.base && !m.a.length;
+};
 
 // ---------------- 判分 ----------------
 const NOTE_ALIASES = [[/♯/g, '#'], [/♭/g, 'b'], [/𝄪/g, '##'], [/𝄫/g, 'bb'], [/x/g, '##']];
@@ -477,8 +524,11 @@ export const chapterTestOpen = (levels, progress) => Boolean(progress.unlockAll)
 export const chapterExOpen = (levels, progress, hasExt = () => false) => Boolean(progress.unlockAll) || (chapterTestOpen(levels, progress)
   && levels.filter(hasExt).every((l) => isDone(progress, extKey(l.id)))
   && chapterAverageWithExt(levels, progress, hasExt) >= CHAPTER_EX_OPEN - 1e-9);
-export const finalOpen = (chapterIds, progress) => Boolean(progress.unlockAll) || (sidebUnlocked(progress) && chapterIds.every((c) => examDone(progress, `T-${c}`)));
-export const finalExOpen = (chapterIds, progress) => Boolean(progress.unlockAll) || (sidebUnlocked(progress) && chapterIds.every((c) => examDone(progress, `T-${c}`) && examDone(progress, `TX-${c}`)));
+/** 双轨的汇合点：Side-B Final 还要 A 面的结业挑战，Side-B EX Final 还要 A 面的 EX 结业挑战 */
+export const A_FINAL_KEY = 'final';
+export const A_FINAL_EX_KEY = 'final-ex';
+export const finalOpen = (chapterIds, progress) => Boolean(progress.unlockAll) || (sidebUnlocked(progress) && isDone(progress, A_FINAL_KEY) && chapterIds.every((c) => examDone(progress, `T-${c}`)));
+export const finalExOpen = (chapterIds, progress) => Boolean(progress.unlockAll) || (sidebUnlocked(progress) && isDone(progress, A_FINAL_EX_KEY) && chapterIds.every((c) => examDone(progress, `T-${c}`) && examDone(progress, `TX-${c}`)));
 /** 所有章节的平均：各章平均分再取平均 */
 export function overallAverage(chapters, progress) {
   const list = chapters.filter((levels) => levels.length);

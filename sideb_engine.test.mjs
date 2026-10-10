@@ -1,20 +1,49 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { completeBLevel, chapterAverage, overallAverage, CHAPTER_EX_LINE, FINAL_EX_LINE, sidebUnlocked, sidebLevelUnlocked, bKey, normalizeNote, gradeSpelling, normalizeRoman, gradeTaps, gradeNode, createBSession, recordAnswer, completeSection, summarizeB, retrySession, mergeMastery, overallMastery, PASS_LINE, LAB_LINES, LAB_MODES, levelSections, levelForAttempt, buildRecovery, startRecovery, recordRecovery, recoveryResult, summarizeExam, breakthroughFor, validateLevel, estimateMinutes, saveLabResult, bestLabResults, loadBreakthroughs, saveBreakthrough, gradeOf } from './sideb_engine.js';
+import { completeBLevel, chapterAverage, overallAverage, CHAPTER_EX_LINE, FINAL_EX_LINE, sidebUnlocked, bLevelMissing, bLevelOpen, extMissing, extOpen, aPrereqs, SIDEB_OPEN_KEY, finalOpen, finalExOpen, bKey, normalizeNote, gradeSpelling, normalizeRoman, gradeTaps, gradeNode, createBSession, recordAnswer, completeSection, summarizeB, retrySession, mergeMastery, overallMastery, PASS_LINE, LAB_LINES, LAB_MODES, levelSections, levelForAttempt, buildRecovery, startRecovery, recordRecovery, recoveryResult, summarizeExam, breakthroughFor, validateLevel, estimateMinutes, saveLabResult, bestLabResults, loadBreakthroughs, saveBreakthrough, gradeOf } from './sideb_engine.js';
 import { emptyProgress, setLevelStars } from './learn_engine.js';
 import { ERRORS, SKILLS, recommend } from './sideb_errors.js';
 
-test('Side-B unlocks after the EX final; levels open one by one', () => {
-  const levels = [{ id: 'B1-1' }, { id: 'B1-2' }];
+test('Side-B opens after the Side-A chapter-1 test (old saves with the EX final stay open); levels open by Side-A knowledge, in order within a chapter', () => {
+  const units = [{ id: 'keys' }, { id: 'staff' }, { id: 'triads' }];
+  const sides = [{ id: 'meter2', parent: 'keys' }];
+  const ctx = { units, sides };
+  const ch1 = [{ id: 'B1-1', a: ['keys', 'staff'] }, { id: 'B1-2', a: ['meter2'] }];
+  const ch2 = [{ id: 'B2-1', a: ['triads'] }, { id: 'B2-2', a: [] }];
   let p = emptyProgress();
+  assert.equal(SIDEB_OPEN_KEY, 'chapter@basics');
   assert.equal(sidebUnlocked(p), false);
-  assert.equal(sidebLevelUnlocked(levels, 0, p), false);
-  p = setLevelStars(p, ['final-ex'], 1);
+  assert.equal(bLevelOpen(ch1[0], ch1, p, ctx), false, 'hidden before the chapter-1 test');
+  p = setLevelStars(p, [SIDEB_OPEN_KEY], 1);
   assert.equal(sidebUnlocked(p), true);
-  assert.equal(sidebLevelUnlocked(levels, 0, p), true);
-  assert.equal(sidebLevelUnlocked(levels, 1, p), false);
+  assert.deepEqual(bLevelMissing(ch1[0], ch1, p, ctx), { a: ['keys', 'staff'], prev: null }, 'needs the matching Side-A main levels');
+  p = setLevelStars(p, ['keys', 'staff'], 2);
+  assert.equal(bLevelOpen(ch1[0], ch1, p, ctx), true);
+  assert.deepEqual(aPrereqs(ch1[1], units, sides), ['keys'], 'a side quest counts as its parent main level');
+  assert.deepEqual(bLevelMissing(ch1[1], ch1, p, ctx), { a: [], prev: 'B1-1' }, 'in order within a chapter');
+  assert.equal(bLevelOpen(ch2[0], ch2, p, ctx), false, 'chapter 2 waits for triads on Side A');
+  p = setLevelStars(p, ['triads'], 1);
+  assert.equal(bLevelOpen(ch2[0], ch2, p, ctx), true, 'chapters run in parallel: B2 does not wait for B1');
   p = setLevelStars(p, [bKey('B1-1')], 2);
-  assert.equal(sidebLevelUnlocked(levels, 1, p), true);
+  assert.equal(bLevelOpen(ch1[1], ch1, p, ctx), true);
+  // 扩展关：本关 Clear + A 面对应主关的进阶 1–4 与综合测验
+  assert.deepEqual(extMissing(ch1[0], p, ctx), { base: false, a: ['keys:1', 'keys:2', 'keys:3', 'keys:4', 'keys:5', 'staff:1', 'staff:2', 'staff:3', 'staff:4', 'staff:5'] });
+  p = setLevelStars(p, ['keys:1', 'keys:2', 'keys:3', 'keys:4', 'keys:5', 'staff:1', 'staff:2', 'staff:3', 'staff:4', 'staff:5'], 1);
+  assert.equal(extOpen(ch1[0], p, ctx), true);
+  assert.equal(extOpen(ch2[0], p, ctx), false, 'its own B level is not cleared yet');
+  // 旧存档：EX 结业挑战通关就算开放；已经 Clear 的关永远开放
+  let old = setLevelStars(emptyProgress(), ['final-ex'], 1);
+  assert.equal(sidebUnlocked(old), true);
+  old = setLevelStars(old, [bKey('B2-2')], 1);
+  assert.equal(bLevelOpen(ch2[1], ch2, old, ctx), true, 'a cleared level never relocks');
+  // 双轨汇合：Side-B Final 要 A 面结业挑战，EX Final 要 A 面 EX 结业挑战
+  let f = setLevelStars(emptyProgress(), [SIDEB_OPEN_KEY, bKey('T-basics'), bKey('TX-basics')], 1);
+  assert.equal(finalOpen(['basics'], f), false);
+  f = setLevelStars(f, ['final'], 1);
+  assert.equal(finalOpen(['basics'], f), true);
+  assert.equal(finalExOpen(['basics'], f), false);
+  f = setLevelStars(f, ['final-ex'], 1);
+  assert.equal(finalExOpen(['basics'], f), true);
 });
 
 test('spelling is strict: enharmonic and octave mistakes are named', () => {

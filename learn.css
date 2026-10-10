@@ -1219,3 +1219,28 @@ line.lv-ruler { stroke: var(--theme-line-strong); stroke-width: 2; }
 .learn-boss-pace-btn.is-on { background: var(--tone-deep); border-color: var(--tone-deep); color: #fff; }
 .learn-debug-range { flex: 1; min-width: 140px; }
 @media (prefers-reduced-motion: reduce) { .learn-cameo { animation: none; } }
+
+/* ---------- 双轨：Side-B 渐进开放（翻面按钮上的可玩关数、A 面结算页的"B 面新开放"、第一次揭幕、B 面锁住的原因） ---------- */
+.learn-sideb-count { margin-left: 6px; padding: 0 8px; border-radius: 999px; background: var(--theme-accent); color: var(--theme-accent-ink, #fff); font-size: 11px; font-weight: 800; line-height: 18px; }
+.learn-sideb-news { display: grid; gap: 8px; margin: 10px auto 4px; padding: 12px 14px; max-width: 560px; border: 1px dashed var(--theme-line-strong); border-radius: 14px; background: var(--theme-wash); text-align: left; }
+.learn-sideb-news-title { display: inline-flex; align-items: center; gap: 6px; color: var(--theme-text); font-size: 14px; }
+.learn-sideb-news-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.learn-sideb-news .learn-muted { margin: 0; font-size: 12px; }
+.learn-sideb-reveal { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 16px; background: color-mix(in srgb, var(--theme-bg) 70%, transparent); backdrop-filter: blur(3px); animation: learn-sideb-reveal-in .35s ease-out both; }
+.learn-sideb-reveal.is-leaving { opacity: 0; transition: opacity .3s; }
+.learn-sideb-reveal-card { display: grid; gap: 10px; width: min(480px, 100%); padding: 22px 22px 16px; border: 1px solid var(--theme-line-strong); border-radius: 18px; background: var(--theme-panel-raised, var(--theme-panel)); box-shadow: 0 18px 50px rgba(0, 0, 0, .25); color: var(--theme-text); transform-origin: 50% 50%; animation: learn-sideb-reveal-flip .6s cubic-bezier(.2, .9, .2, 1) both; }
+.learn-sideb-reveal-card h3 { margin: 0; font: 900 22px/1.3 var(--font-display); }
+.learn-sideb-reveal-card p { margin: 0; color: var(--theme-muted); font-size: 14px; line-height: 1.6; }
+.learn-sideb-reveal-kicker { color: var(--theme-accent); font-size: 11px; font-weight: 800; letter-spacing: .14em; }
+.learn-sideb-reveal-card .learn-feedback-actions { justify-content: flex-end; margin-top: 4px; }
+@keyframes learn-sideb-reveal-in { from { opacity: 0; } }
+@keyframes learn-sideb-reveal-flip { from { transform: perspective(900px) rotateY(-90deg); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .learn-sideb-reveal, .learn-sideb-reveal-card { animation: none; } }
+.learn-ex-sideb { color: #f5d27a; font-weight: 700; }
+.sideb-open-rule { margin: 0; padding: 8px 12px; border-left: 3px solid var(--theme-accent); border-radius: 0 8px 8px 0; background: var(--theme-wash); color: var(--theme-muted); font-size: 12.5px; line-height: 1.55; }
+.sideb-lock { display: grid; gap: 4px; }
+.sideb-lock .sideb-alinks { margin: 0; }
+.sideb-a-final { font-weight: 700; }
+.sideb-a-final.is-ok { color: var(--theme-accent); }
+.learn-btn.sideb-entry .learn-sideb-count { background: #9c650d; color: #fff; }
+.sideb-next-pending { display: grid; gap: 6px; margin: 8px 0; padding: 10px 12px; border: 1px dashed var(--theme-line-strong); border-radius: 12px; }

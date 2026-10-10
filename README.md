@@ -99,7 +99,7 @@ Sixteen boss fights with six characters sit on the Side-A map: **Mimi** (chapter
 
 ### Side-B (Deep Mode)
 
-Side-B is complete: **6 chapters, 48 playable regular levels and 47 extension levels**, with Chinese, Japanese and English content. It opens after clearing Theory Quest's Side-A EX final: choose **Flip to Side-B** on the map. Deep Mode develops the reasoning and practical use behind familiar concepts through listening, calculation, analysis and writing. The score-book interface has a contents page, chapter bookmarks and animated page turns; it remembers the last page and lets you return to Side-A.
+Side-B is complete: **6 chapters, 48 playable regular levels and 47 extension levels**, with Chinese, Japanese and English content. It runs alongside Side-A instead of after it. **Flip to Side-B** appears once you pass the Side-A chapter-1 test (a one-time “this record has a Side B” reveal introduces it). From then on Side-B opens as far as you have learned: each B level opens when its matching Side-A main levels are cleared (side quests count through their parent level), and levels inside one B chapter keep their teaching order, while different B chapters can run in parallel. Extension levels also need the matching Side-A advanced levels and mixed tests. Locked B levels list exactly which Side-A levels are missing, with links straight to them; finishing a Side-A level shows which Side-B levels it just opened, and the flip button shows how many are playable. The Side-A final challenge and EX final challenge no longer gate Side-B — they are the keys to Side-B's Final and EX Final. Saves that had already cleared the old EX final keep everything they had open. Deep Mode develops the reasoning and practical use behind familiar concepts through listening, calculation, analysis and writing. The score-book interface has a contents page, chapter bookmarks and animated page turns; it remembers the last page and lets you return to Side-A.
 
 | Chapter | Focus | Regular levels |
 |---|---|---:|
@@ -124,8 +124,8 @@ Side-B is complete: **6 chapters, 48 playable regular levels and 47 extension le
 |---|---|---|---|
 | Chapter test | Clear every regular level in the chapter | 12 / 2 / 2 | Up to 2 from that chapter |
 | EX chapter test | Clear every regular and available extension level in the chapter, with chapter average ≥ 60% | 2 / 12 / 2 | Up to 2 from that chapter |
-| Final | Pass all six chapter tests | 12 / 2 / 2 | 3 from different chapters |
-| EX Final | Pass all six chapter tests and all six EX chapter tests | 2 / 12 / 2 | 3 from different chapters |
+| Final | Pass all six chapter tests and the Side-A final challenge | 12 / 2 / 2 | 3 from different chapters |
+| EX Final | Pass all six chapter tests, all six EX chapter tests and the Side-A EX final challenge | 2 / 12 / 2 | 3 from different chapters |
 
 Chapter averages use each regular and available extension level's best score; unplayed levels count as zero. The EX chapter test does not require passing the ordinary chapter test first. In ordinary chapter tests and the Final, the two extension questions target higher grades: core mastery retains a passing challenge score even if those extension answers are wrong, while the required labs must still pass. Chapters with fewer labs use what is available (B1 has one; B5 has none).
 
@@ -188,7 +188,7 @@ Theory Quest has a debug mode for testing: open the browser console and run `cla
 ├── staff_diagram.js      # Shared SVG staff drawing (path-drawn clefs, noteheads, ledger lines, brace)
 ├── neo_views.js          # Harmonic connections: Tonnetz lattice (PLR / S·N·H), octatonic tower, chords on a staff
 ├── SIDE_B_DESIGN.md      # Side-B (Deep Mode / University Lab) design: principles, 48-level map, level structure, scoring, labs, exams
-├── sideb_engine.js       # Side-B rules: sections and checkpoints, partial credit, tapping, level score (challenge + lab line), recovery challenge, reseeded retries, breakthrough moments, level-design guardrails
+├── sideb_engine.js       # Side-B rules: progressive unlocking by Side-A knowledge (bLevelMissing / extMissing), sections and checkpoints, partial credit, tapping, level score (challenge + lab line), recovery challenge, reseeded retries, breakthrough moments, level-design guardrails
 ├── sideb_errors.js       # Side-B error types → skill, advice and where to practise
 ├── lab_checks.js         # Practical-lab scoring: 100-point rubrics with partial credit and a few fatal conditions (four-part, jazz voicing, rhythm, polyrhythm grid, metric modulation, set class)
 ├── sideb_labs.js, lab_banner.js # Lab registry and the in-tool lab bar (score sheet, practice / chapter / B-EX modes, breakthrough moment)
