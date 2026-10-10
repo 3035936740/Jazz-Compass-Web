@@ -11,7 +11,7 @@ import { buildChineseMode, rotateGong, luName, MODES as CN_MODES, SCALE_TYPES as
 import { THAATS, thaatSemitones, thaatAltered, buildMaqam, maqamSteps, stepLabel, noteLabel } from './world_modes.js';
 import { TEMPERAMENTS, buildTemperament, majorThirds, frequencyOf } from './temperaments.js';
 import { normalOrder, primeForm, intervalVector, setClassInfo, twelveToneMatrix, rowForm, COLLECTIONS, collectionPcs, distinctTranspositions } from './post_tonal.js';
-import { gradeTaps } from './sideb_engine.js?v=20261009-audio1';
+import { gradeTaps } from './sideb_engine.js?v=20261010-talk1';
 
 const lang = () => { const l = globalThis.window?.__lang || 'zh'; return ['zh', 'ja', 'en'].includes(l) ? l : 'en'; };
 const tx = (v) => (v == null ? '' : typeof v === 'string' ? v : v[lang()] ?? v.en ?? '');

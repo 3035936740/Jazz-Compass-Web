@@ -7,10 +7,10 @@ import { LEVEL_B2_1, LEVEL_B2_2, LEVEL_B2_3, LEVEL_B2_5, LEVEL_B2_6, LEVEL_B2_7,
 import { LEVEL_B3_1, LEVEL_B3_2, LEVEL_B3_3, LEVEL_B3_4, LEVEL_B3_5 } from './sideb_units_melody.js?v=20261004-w1';
 import { LEVEL_B4_1, LEVEL_B4_2, LEVEL_B4_3, LEVEL_B4_4, LEVEL_B4_5, LEVEL_B4_6, LEVEL_B4_7, LEVEL_B4_8, LEVEL_B4_9 } from './sideb_units_jazz.js?v=20261004-w6';
 import { LEVEL_B5_1, LEVEL_B5_2, LEVEL_B5_3, LEVEL_B5_4 } from './sideb_units_world.js?v=20261006-clarity1';
-import { TOPICS, B_MODERN_ORDER } from './modern_harmony_course.js?v=20261008-spectrum-side1';
-import { MODERN_B_LEVELS, MODERN_B_EXTENSIONS } from './sideb_units_modernharmony.js?v=20261009-audio1';
+import { TOPICS, B_MODERN_ORDER } from './modern_harmony_course.js?v=20261010-talk1';
+import { MODERN_B_LEVELS, MODERN_B_EXTENSIONS } from './sideb_units_modernharmony.js?v=20261010-flip1';
 import { LEVEL_B6_1, LEVEL_B6_2, LEVEL_B6_3, LEVEL_B6_4, LEVEL_B6_5 } from './sideb_units_modern.js?v=20261004-x1';
-import { UNITS, SIDES } from './learn_content.js?v=20261008-spectrum-side1';
+import { UNITS, SIDES } from './learn_content.js?v=20261010-talk1';
 import { EXT_BASICS } from './sideb_ext_basics.js?v=20261004-y3';
 import { EXT_HARMONY } from './sideb_ext_harmony.js?v=20261006-clarity1';
 import { EXT_MELODY } from './sideb_ext_melody.js?v=20261004-m4';
@@ -18,8 +18,8 @@ import { EXT_JAZZ } from './sideb_ext_jazz.js?v=20261005-p2';
 import { EXT_WORLD } from './sideb_ext_world.js?v=20261006-clarity1';
 import { EXT_MODERN } from './sideb_ext_modern.js?v=20261006-clarity1';
 import { LEVEL_B1_1, LEVEL_B1_2, LEVEL_B1_3, LEVEL_B1_4, LEVEL_B1_5, LEVEL_B1_6, LEVEL_B1_7 } from './sideb_units_basics.js?v=20261004-w6';
-import { EXAM_TASKS } from './sideb_exam_tasks.js?v=20261006-clarity1';
-import { clarifyLevel } from './learn_question_clarity.js?v=20261006-clarity1';
+import { EXAM_TASKS } from './sideb_exam_tasks.js?v=20261010-boss1';
+import { clarifyLevel } from './learn_question_clarity.js?v=20261010-boss1';
 
 const t = (zh, ja, en) => ({ zh, ja, en });
 

@@ -1,7 +1,7 @@
 // ref:koozin-planing
 // Original questions checked against the definitions and calculations in these sources.
 // ref:rubin-nonfunctional ref:arndt-tonality ref:ircam-spectral ref:ircam-spectrum ref:gann-ji ref:gann-ji-reasons
-import { t, cents, TOPICS } from './modern_harmony_course.js?v=20261008-spectrum-side1';
+import { t, cents, TOPICS } from './modern_harmony_course.js?v=20261010-talk1';
 const pick = (rng, xs) => xs[Math.floor(rng() * xs.length)];
 const names = ['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
 export const note = (n) => names[((n % 12) + 12) % 12];

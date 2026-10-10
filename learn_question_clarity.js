@@ -97,7 +97,7 @@ export function clarifyQuestion(card, topic = '') {
   if (/增六/.test(p) && /全音/.test(p)) add('french');
   if (/全音音阶/.test(p) && /搭三和弦|三和弦.*得到/.test(p)) add('tertian');
   if (/休止/.test(p) && card.type === 'match' && card.pairs?.some(pair => /全休止/.test(zh(pair[0])))) add('rest');
-  if (/分音|第.*谐音/.test(p) && !/不算基|不计基/.test(p)) add('partial');
+  if (/(?<![八四二六全])分音|第.*谐音/.test(p) && !/不算基|不计基/.test(p)) add('partial');
   if (/从.*开始|起点/.test(p) && /调式|Dorian|Mixolydian|Phrygian|Locrian/.test(JSON.stringify(card)) && /^(?:modes|B1-5)/.test(topic) && !/主音/.test(p)) add('tonic');
   if (/E.?F.?E|C.?D.?E|E.*C.*D/.test(p) && /经过音|邻音|装饰|和弦外音/.test(JSON.stringify(card)) && /nct|motif|B3-1/.test(topic) && !/和弦/.test(p)) add('chordHeld');
   if (/近关系调|近亲调/.test(p) && !/本课/.test(p)) add('related');

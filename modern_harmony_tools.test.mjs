@@ -192,3 +192,38 @@ test('spectral arpeggiation includes added fractions and sorts actual morphed Hz
  assert.deepEqual(spectralModel({...input,partials:'1:0:0 2:0:0'}).approximation,[]);
  const restored=addSpectralComponent(empty,{ratio:'3/2'});assert.equal(restored.partials,'3/2:0.5:0');assert.equal(spectralModel(restored).events[0].frequencies[0],150);
 });
+
+test('connection labels: exact vs diatonic planing, chromatic and doubly chromatic mediants, common tones', async () => {
+  const { connectionOf, triadOf } = await import('./modern_harmony_tools.js');
+  assert.deepEqual(connectionOf([60, 64, 67], [62, 66, 69]), { planing: 'real', mediant: null, common: 0 });
+  assert.equal(connectionOf([60, 64, 67], [62, 65, 69]).planing, 'diatonic'); // C → Dm：同方向、都在 C 自然音集里
+  assert.deepEqual(connectionOf([60, 64, 67], [64, 68, 71]), { planing: 'real', mediant: 'chromatic', common: 1 }); // C → E
+  assert.equal(connectionOf([60, 64, 67], [63, 66, 70]).mediant, 'doubly'); // C → E♭m：性质相反、无共同音
+  assert.equal(connectionOf([60, 64, 67], [57, 60, 64]).mediant, null); // C → Am 是两个共同音的关系，不算半音中音
+  assert.deepEqual(triadOf([64, 67, 71]), { root: 4, quality: 'minor' });
+});
+
+test('polychord analysis finds the Petrushka chord inside one octatonic collection; motif relations and Kostka–Payne checks', async () => {
+  const { polychordOf, setRelations, atonalChecks, nearestGrid, differenceTones, chordIntervals } = await import('./modern_harmony_tools.js');
+  const petrushka = MODEL_OF.polytonality(PRESETS.polytonality.at(-1)).poly;
+  assert.equal(petrushka.petrushka, true);
+  assert.equal(petrushka.octatonic, 0);
+  assert.equal(petrushka.info.forte, '6-30');
+  assert.equal(MODEL_OF.polytonality(DEFAULTS.polytonality).poly.petrushka, false);
+  assert.deepEqual(setRelations([0, 1, 4], [2, 3, 6]), { T: [2], I: [] });
+  assert.deepEqual(setRelations([0, 1, 4], [6, 9, 10]).T, []);
+  assert.ok(setRelations([0, 1, 4], [6, 9, 10]).I.length === 1);
+  const c = atonalChecks([60, 64, 67, 72]);
+  assert.deepEqual(c.octaves, [[0, 3]]);
+  assert.deepEqual(c.triads, [0, 1]);
+  assert.deepEqual(c.diatonic, [0]);
+  assert.equal(atonalChecks([60, 61, 67, 64]).disjunct, true);
+  // 第 7 分音（约 −31¢）近似到四分之一音：F♯5 +50¢（= G5 −50¢，正好半音中间时记成低音 +50¢），误差约 +19¢
+  assert.match(nearestGrid(770, 2).note, /^F[#♯]5$/);
+  assert.equal(nearestGrid(770, 2).offset, 50);
+  assert.ok(Math.abs(nearestGrid(770, 2).deviation - 18.8) < .2);
+  assert.equal(nearestGrid(770, 3).offset, -33); // 六分之一音：G5 −33¢
+  assert.equal(nearestGrid(440 * 2 ** (0.5 / 12), 2).offset, 50);
+  assert.deepEqual(differenceTones([{ frequency: 440, amplitude: 1 }, { frequency: 550, amplitude: .5 }, { frequency: 660, amplitude: 0 }]).map((d) => d.frequency), [110]);
+  assert.deepEqual(chordIntervals('1/1 11/9 3/2').map((x) => [x.ratio, x.limit]), [['11/9', 11], ['27/22', 11]]);
+});

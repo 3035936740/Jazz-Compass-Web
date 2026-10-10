@@ -1106,3 +1106,116 @@ line.lv-ruler { stroke: var(--theme-line-strong); stroke-width: 2; }
 .sideb-label-option:hover, .sideb-label-option:focus-visible, .sideb-label-option[aria-selected="true"] { background: var(--tone-wash); }
 .sideb-label-option:focus-visible { outline: 2px solid var(--tone); outline-offset: -2px; }
 .sideb-label-option[aria-selected="true"]::after { content: '✓'; flex: none; color: var(--tone-deep); font-weight: 700; }
+
+/* ---------- Boss 战（learn_bosses.js / learn_boss_ui.js / boss_sprite.js） ---------- */
+/* 地图上的 Boss 节点：圆钮里放角色头像（同一张立绘放大取头部），右上角 BOSS / EX 小牌 */
+.learn-boss-node .learn-bubble.learn-boss-bubble-btn { width: 86px; height: 86px; padding: 0; background: radial-gradient(circle at 50% 35%, var(--theme-panel-raised), var(--tone-wash)); outline: 3px solid var(--tone-deep); outline-offset: 4px; }
+.learn-boss-node.is-ex .learn-bubble.learn-boss-bubble-btn { width: 78px; height: 78px; outline-style: double; outline-width: 5px; }
+.learn-boss-avatar { width: 100%; height: 100%; object-fit: cover; object-position: 50% 26%; transform: scale(1.75); transform-origin: 50% 24%; pointer-events: none; }
+.learn-boss-node.is-locked .learn-bubble.learn-boss-bubble-btn { background: var(--theme-line-strong); color: var(--theme-muted); box-shadow: 0 6px 0 var(--theme-line); outline-color: var(--theme-line-strong); }
+.learn-boss-mark { background: var(--theme-text); letter-spacing: .1em; }
+.learn-boss-node.is-locked .learn-boss-mark { background: var(--theme-line-strong); color: var(--theme-muted); }
+.learn-boss-node.is-next .learn-bubble { animation: learn-pulse 1.8s ease-in-out infinite; }
+.learn-boss-sheet-head { display: flex; gap: 14px; align-items: center; text-align: left; }
+.learn-boss-face { width: 96px; height: 96px; flex: none; border-radius: 18px; background: var(--tone-wash); object-fit: cover; object-position: 50% 30%; }
+.learn-boss-theme { font: 800 18px/1.4 var(--font-display); color: var(--tone-deep); }
+.learn-boss-tag { display: inline-block; margin-bottom: 2px; padding: 1px 8px; border-radius: 7px; background: var(--tone-deep); color: #fff; font: 900 11px/1.4 var(--font-display); letter-spacing: .08em; }
+
+/* 战斗舞台：左边立绘（完整画布、锚点在底部 95% 处），右边名牌、体力条、气泡 */
+.learn-boss-stage { display: grid; grid-template-columns: minmax(140px, 220px) 1fr; gap: 14px; align-items: end; margin: 6px 0 10px; padding: 10px 14px 12px; border-radius: 22px; background: linear-gradient(180deg, var(--tone-wash), transparent 85%); border: 2px solid var(--theme-line); }
+.learn-boss-stage.is-ex { border-color: var(--tone-deep); }
+.learn-boss-stage.is-phase2 { background: linear-gradient(180deg, color-mix(in srgb, var(--tone) 28%, var(--theme-panel)), transparent 90%); }
+.learn-boss-stage.is-turn { animation: learn-boss-turn .9s ease; }
+@keyframes learn-boss-turn { 0%, 100% { box-shadow: none; } 30% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--tone) 45%, transparent); } }
+.learn-boss-side { display: grid; gap: 8px; align-content: end; min-width: 0; }
+.learn-boss-plate { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; }
+.learn-boss-name { font: 900 17px/1.2 var(--font-display); color: var(--theme-text); }
+.learn-boss-title { color: var(--theme-muted); font-size: 13px; }
+/* 认可条：答对一题亮一格（从空到满，不是扣血） */
+.learn-boss-meter { display: grid; grid-template-columns: repeat(15, 1fr); gap: 3px; }
+.learn-boss-cell { height: 10px; border-radius: 3px; background: var(--theme-line); transition: background .3s ease; }
+.learn-boss-cell.is-on { background: var(--tone-deep); }
+.learn-boss-meter-text { color: var(--theme-muted); font: 700 12px/1 var(--font-mono); }
+.learn-boss-chips, .learn-boss-badges { display: flex; flex-wrap: wrap; gap: 6px; justify-content: inherit; }
+.learn-boss-chip { padding: 2px 9px; border-radius: 999px; border: 1.5px solid var(--theme-line-strong); color: var(--theme-text); font: 700 12px/1.5 var(--font-ui); background: var(--theme-panel); }
+.learn-boss-chip.is-phase { border-color: var(--tone-deep); background: var(--tone-deep); color: #fff; }
+.learn-boss-chip.is-last { border-color: var(--tone-deep); color: var(--tone-deep); }
+.learn-boss-chip.is-leak { border-style: dashed; color: var(--theme-muted); }
+.learn-boss-bubble { position: relative; margin: 0; padding: 10px 14px; border-radius: 16px 16px 16px 4px; background: var(--theme-panel-raised); border: 2px solid var(--theme-line-strong); color: var(--theme-text); font: 600 15px/1.55 var(--font-ui); min-height: 2.6em; }
+.learn-boss-bubble.is-pop { animation: learn-boss-pop .28s cubic-bezier(.2, 1.5, .4, 1); }
+@keyframes learn-boss-pop { from { transform: scale(.94); opacity: .4; } to { transform: none; opacity: 1; } }
+.cast-zero .learn-boss-bubble { font-style: normal; letter-spacing: .02em; }
+
+/* 立绘：800 × 800 完整画布按同一比例缩放，不裁切；起伏与弹跳以锚点 (50%, 95%) 为中心 */
+.boss-sprite { position: relative; width: 100%; aspect-ratio: 1; perspective: 900px; }
+.boss-hit, .boss-idle, .boss-click { position: absolute; inset: 0; }
+.boss-hit { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; border-radius: 14px; }
+.boss-hit:focus-visible { outline: 3px solid var(--tone-deep); outline-offset: 2px; }
+.boss-idle, .boss-click { transform-origin: 50% 95%; will-change: transform; }
+.boss-idle { animation: boss-idle 2.4s cubic-bezier(.37, 0, .63, 1) infinite; }
+.boss-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; transform-origin: 50% 50%; backface-visibility: visible; will-change: transform; user-select: none; -webkit-user-drag: none; }
+@keyframes boss-idle { 0%, 100% { transform: translateY(.5%) scale(1.01, .965); } 50% { transform: translateY(-.75%) scale(.993, 1.002); } }
+/* 动画语言：米米弹簧、塞维尔几乎不动、诺亚慢慢晃、爵幅度最大、阿拉娅缓慢、零几乎静止 */
+.boss-sprite.motion-spring .boss-idle { animation-duration: 2s; }
+.boss-sprite.motion-still .boss-idle { animation-name: boss-idle-still; animation-duration: 3.2s; }
+.boss-sprite.motion-drift .boss-idle { animation-name: boss-idle-drift; animation-duration: 3.6s; }
+.boss-sprite.motion-wild .boss-idle { animation-name: boss-idle-wild; animation-duration: 1.8s; }
+.boss-sprite.motion-calm .boss-idle { animation-duration: 3.4s; }
+.boss-sprite.motion-zero .boss-idle { animation-name: boss-idle-still; animation-duration: 4.8s; }
+.boss-sprite.is-still .boss-idle { animation: none; }
+@keyframes boss-idle-still { 0%, 100% { transform: translateY(.15%); } 50% { transform: translateY(-.2%); } }
+@keyframes boss-idle-drift { 0%, 100% { transform: translateY(.3%) rotate(-.8deg); } 50% { transform: translateY(-.5%) rotate(.8deg); } }
+@keyframes boss-idle-wild { 0%, 100% { transform: translateY(.8%) scale(1.02, .95) rotate(-1deg); } 50% { transform: translateY(-1.2%) scale(.99, 1.02) rotate(1deg); } }
+
+/* 开场与结局 */
+.learn-boss-intro { display: grid; gap: 10px; max-width: 760px; margin: 0 auto; }
+.learn-boss-intro-head { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: center; }
+.learn-boss-intro-title { font: 900 18px/1.3 var(--font-display); color: var(--theme-text); }
+.learn-boss-intro-theme { grid-column: 2; color: var(--theme-muted); font-size: 14px; }
+.learn-boss-intro-claim { grid-column: 1 / -1; margin: 4px 0 0; padding: 8px 12px; border-left: 3px solid var(--theme-accent); border-radius: 0 8px 8px 0; background: var(--theme-wash); color: var(--theme-text); font: 600 14px/1.55 var(--font-ui); }
+.learn-boss-intro-claim-label { display: block; color: var(--theme-muted); font-size: 12px; font-weight: 700; }
+.learn-boss-intro .learn-boss-stage { grid-template-columns: minmax(170px, 300px) 1fr; }
+.learn-boss-intro-foot { display: flex; gap: 10px; justify-content: flex-end; align-items: center; }
+.learn-boss-finish { max-width: 640px; }
+.learn-boss-finish .learn-boss-stage { width: 100%; text-align: left; }
+.learn-boss-script { display: grid; gap: 4px; color: var(--theme-text); font: 600 15px/1.6 var(--font-ui); }
+.learn-boss-script p { margin: 0; }
+.learn-boss-lesson { padding: 12px 16px; border-radius: 16px; background: var(--tone-wash); color: var(--theme-text); text-align: left; }
+.learn-boss-lesson p { margin: 4px 0 0; }
+
+@media (max-width: 560px) {
+  .learn-boss-stage, .learn-boss-intro .learn-boss-stage { grid-template-columns: 112px 1fr; gap: 10px; padding: 8px 10px 10px; }
+  .learn-boss-bubble { font-size: 14px; }
+  .learn-boss-meter { gap: 2px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .boss-idle { animation: none !important; }
+  .learn-boss-bubble.is-pop, .learn-boss-stage.is-turn { animation: none; }
+}
+/* Boss 头像圆钮有外圈（outline + offset 约 9–10px，画在盒子外面）：徽章按内容自适应大小并留出这圈空间，名字和星星落在圆圈下方 */
+.learn-boss-node .learn-exam-badge, .learn-boss-side-node .learn-exam-badge { width: auto; height: auto; padding: 10px; }
+.learn-boss-node.learn-node { gap: 6px; }
+/* EX 分支：圆心与主 Boss 圆心对齐（主：10 + 86/2 = 53px；EX：10 + 78/2 = 49px → top 4px），连线穿过两个圆心 */
+.learn-side.learn-boss-side-node { top: 4px; gap: 6px; width: 130px; }
+.learn-boss-side-node .learn-side-link { top: 47px; width: 62px; }
+@media (max-width: 560px) {
+  .learn-side.learn-boss-side-node { top: 11px; width: 96px; }
+  .learn-boss-side-node .learn-bubble.learn-boss-bubble-btn { width: 64px; height: 64px; }
+  .learn-boss-side-node .learn-side-link { top: 40px; width: 30px; }
+}
+/* EX 形态：舞台底色更深、边框加粗，一眼看出"认真起来了" */
+.learn-boss-stage.is-ex { background: linear-gradient(180deg, color-mix(in srgb, var(--tone-deep) 22%, var(--theme-panel)), transparent 90%); border-width: 3px; border-color: var(--tone-deep); }
+.learn-boss-stage.is-ex .learn-boss-name { color: var(--tone-deep); }
+/* 跨章节客串卡片 */
+.learn-cameo { display: flex; gap: 10px; align-items: center; margin: 10px 0 0; padding: 8px 12px; border-radius: 14px; border: 1.5px dashed var(--theme-line-strong); background: var(--theme-panel); text-align: left; animation: learn-boss-pop .3s ease; }
+.learn-cameo-face { width: 52px; height: 52px; flex: none; border-radius: 50%; object-fit: cover; object-position: 50% 26%; background: var(--tone-wash); }
+.learn-cameo-words { display: grid; gap: 2px; min-width: 0; }
+.learn-cameo-words strong { font: 800 12px/1.3 var(--font-display); color: var(--theme-muted); letter-spacing: .04em; }
+.learn-cameo-words p { margin: 0; color: var(--theme-text); font: 600 14px/1.5 var(--font-ui); }
+/* 重玩跳过开场 / 结局台词速度 */
+.learn-boss-pref { display: flex; align-items: center; gap: 6px; justify-content: flex-end; color: var(--theme-muted); font-size: 13px; }
+.learn-boss-pace { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: center; font-size: 13px; }
+.learn-boss-pace-btn { padding: 3px 10px; border-radius: 999px; border: 1.5px solid var(--theme-line-strong); background: var(--theme-panel); color: var(--theme-text); font: 700 12px/1.5 var(--font-ui); cursor: pointer; }
+.learn-boss-pace-btn.is-on { background: var(--tone-deep); border-color: var(--tone-deep); color: #fff; }
+.learn-debug-range { flex: 1; min-width: 140px; }
+@media (prefers-reduced-motion: reduce) { .learn-cameo { animation: none; } }

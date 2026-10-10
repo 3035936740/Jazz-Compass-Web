@@ -4,7 +4,7 @@
 // ref:omt2e-rhythm ref:omt2e-major-scales ref:omt2e-cadences ref:omt2e-sevenths
 // ref:omt2e-substitutions ref:wiki-cent ref:omt2e-pitch-class
 const t = (zh, ja, en) => ({ zh, ja, en });
-import { clarifyQuestion } from './learn_question_clarity.js?v=20261006-clarity1';
+import { clarifyQuestion } from './learn_question_clarity.js?v=20261010-boss1';
 const step = (label, kind, answer) => ({ label, kind, answer });
 const task = (chapter, i, ref, prompt, steps, skills) => clarifyQuestion({
   id: `task-${chapter}-${i}`, type: 'derive', ref, prompt, steps, skills, error: 'calc',

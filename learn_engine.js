@@ -71,7 +71,8 @@ export function answer(session, response) {
     if (correct && !item.retry) session.firstTry += 1;
     if (!correct && !item.retry) {
       session.mistakes.push(item.index);
-      session.queue.push({ ...item, retry: true });
+      // Boss 战（noRetry）题数固定 15 题：答错只看解析，不在队尾重来
+      if (!session.noRetry) session.queue.push({ ...item, retry: true });
     }
   }
   return { correct };
@@ -121,10 +122,13 @@ export function completeUnit(progress, unitId, session, now = new Date()) {
   };
 }
 
-/** 解锁：第一关总是开放；完成上一关后开放下一关；也可以全部解锁 */
+/** 解锁：第一关总是开放；完成上一关后开放下一关；也可以全部解锁。
+ *  gate：章节中场的道中 Boss 挡在这一关前面（learn_boss_gates.js），要先打败它（已经通关过的关卡不受影响） */
 export function isUnlocked(units, index, progress) {
   if (progress.unlockAll || index === 0) return true;
-  return Boolean(progress.units[units[index - 1].id]?.done) || Boolean(progress.units[units[index].id]?.done);
+  if (progress.units[units[index].id]?.done) return true;
+  const gate = units[index].gate;
+  return Boolean(progress.units[units[index - 1].id]?.done) && (!gate || Boolean(progress.units[gate]?.done));
 }
 
 /** 下一关：第一个未完成且已解锁的关卡 */

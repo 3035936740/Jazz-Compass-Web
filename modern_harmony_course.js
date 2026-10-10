@@ -1,6 +1,7 @@
 // ref:koozin-planing
 // Original teaching examples; definitions checked against the sources below.
 // ref:rubin-nonfunctional ref:arndt-tonality ref:ircam-spectral ref:ircam-spectrum ref:gann-ji ref:gann-ji-reasons
+// 背景与概念（modern_harmony_concepts.js）：ref:koozin-planing ref:wiki-parallel-harmony ref:wiki-chromatic-mediant ref:wiki-polytonality ref:wiki-petrushka-chord ref:wiki-octatonic ref:wiki-atonality ref:omt2e-normal-order ref:wiki-spectral-music ref:wiki-limit ref:wiki-neutral-third
 export const t = (zh, ja, en) => ({ zh, ja, en });
 export const cents = (ratio) => 1200 * Math.log2(ratio);
 export const midiForHz = (hz) => 69 + 12 * Math.log2(hz / 440);
@@ -9,6 +10,7 @@ export const chain = (...groups) => ({ bpm: 90, events: groups.map((notes, i) =>
 export const frequencies = (...hz) => chord(...hz.map(midiForHz));
 export const layers = (low, high) => ({ bpm: 100, events: [...low.map((n, i) => ({ at: i * 2, notes: [n], beats: 1.8, layer: 'low' })), ...high.map((n, i) => ({ at: i, notes: [n], beats: .85, layer: 'high' }))].sort((a, b) => a.at - b.at) });
 import { makeModernStages } from './modern_harmony_guides.js?v=20261008-beginner2';
+import { MODERN_CONCEPTS, conceptVisual, conceptTour } from './modern_harmony_concepts.js?v=20261010-talk1';
 const stages = makeModernStages({ t, chord, chain, frequencies, layers, midiForHz });
 for (const id of ['spectralharmony','microtonalharmony']) stages[id].forEach(stage => { stage.frequencyDiagram = true; });
 export const TOPICS = [
@@ -128,10 +130,16 @@ export function stageGuide(topic, index) {
     tour: stage.steps.map((_, i) => [{ at: [...new Set(stage.sounds[i].events.flatMap(e => e.targets))], label: stage.labels[i] }]),
     demo: stage.sounds[0], stepDemos: stage.steps.map((_, i) => stage.sounds[Math.min(i, stage.sounds.length - 1)]), tool: { feature: topic.feature } };
 }
+/** 背景与概念讲解卡：关键词图（每步一行），讲到哪一步圈出哪一行 */
+function conceptGuide(topic) {
+  const card = MODERN_CONCEPTS[topic.id].guide;
+  return { ...card, visual: conceptVisual(topic.id), tour: conceptTour(topic.id), tool: { feature: topic.feature } };
+}
 const G = (topic, stage, count) => ({ type: 'gen', gen: generatorOf(topic), params: { stage }, count, ref: topic.ref });
 const ALL_MODERN_UNITS = TOPICS.map((topic) => ({ id: topic.id, section: 'modern', feature: topic.feature, icon: topic.icon, title: topic.title, blurb: topic.blurb,
-  cards: [stageGuide(topic, 0), ...[0,1,2,3].map(() => G(topic, 0, 1))] }));
-export const MODERN_BRANCHES = Object.fromEntries(TOPICS.map((topic) => [topic.id, topic.stages.slice(1).map((stage, i) => ({ title: stage.title, cards: [stageGuide(topic, i + 1), G(topic, i + 1, 4)] }))]));
+  // 追加在原有题卡之后（保持原题号，Boss 战与续玩记录按题号引用）：背景与概念讲解卡 + 概念题（modern_harmony_concepts.js）
+  cards: [stageGuide(topic, 0), ...[0,1,2,3].map(() => G(topic, 0, 1)), conceptGuide(topic), ...MODERN_CONCEPTS[topic.id].main] }));
+export const MODERN_BRANCHES = Object.fromEntries(TOPICS.map((topic) => [topic.id, topic.stages.slice(1).map((stage, i) => ({ title: stage.title, cards: [stageGuide(topic, i + 1), G(topic, i + 1, 4), ...MODERN_CONCEPTS[topic.id].branches[i]] }))]));
 
 export const MODERN_UNITS = ALL_MODERN_UNITS.filter(unit => !MODERN_SIDE_PARENTS[unit.id]);
 export const MODERN_SIDES = ALL_MODERN_UNITS.filter(unit => MODERN_SIDE_PARENTS[unit.id]).map(unit => ({

@@ -50,6 +50,7 @@ export function showAbout() {
     <p class="about-ack">${window.__("about_acknowledgement")}</p>
     <p class="about-credit">${window.__("about_sposobin")}</p>
     <p class="about-credit">${window.__("about_piano_samples")}</p>
+    <p class="about-credit">${window.__("about_boss_art")}</p>
 
     <h4>${window.__("about_links_title")}</h4>
     <div class="about-links">

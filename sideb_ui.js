@@ -1,7 +1,7 @@
 // Side-B（翻面课程）界面：翻面地图、关卡卡片、关卡播放器（发现 / 解释 / 实验 / 挑战 / 实操）、结算页、补弱挑战。
 // 规则在 sideb_engine.js，评分在 lab_checks.js，内容在 sideb_content.js / sideb_units_*.js；设计见 SIDE_B_DESIGN.md。
 // 原则：音乐优先于分数，发现优先于背诵，成就感优先于惩罚感——失败只补弱项，每关有一个"发现"（insight）和胜利瞬间。
-import { B_CHAPTERS, B_LEVELS, levelById, lookupLevel, chapterLevels, isPlayable, extLevelById, hasExtLevel } from './sideb_content.js?v=20261009-audio1';
+import { B_CHAPTERS, B_LEVELS, levelById, lookupLevel, chapterLevels, isPlayable, extLevelById, hasExtLevel } from './sideb_content.js?v=20261010-flip1';
 import { relatedLearnTools } from './learn_feature_unit.js?v=20261006-circle1';
 import {
   bKey, levelSections, levelForAttempt, createBSession, completeSection, recordAnswer, gradeNode, summarizeB, retrySession,
@@ -9,16 +9,17 @@ import {
   mergeMastery, overallMastery, loadMastery, saveMastery, loadBResume, saveBResume, clearBResume, bestLabResults, saveLabResult, LAB_LINES,
   breakthroughFor, loadBreakthroughs, saveBreakthrough, estimateMinutes, PASS_LINE, isAssessed,
   extKey, gradeOf, chapterAverageWithExt, chapterTestOpen, chapterExOpen, finalOpen, finalExOpen, CHAPTER_EX_OPEN,
-} from './sideb_engine.js?v=20261009-audio1';
+} from './sideb_engine.js?v=20261010-talk1';
 import { SKILLS, SKILL_NAMES, recommend } from './sideb_errors.js?v=20261004-z9';
 import { LABS, labHref, labResultKey } from './sideb_labs.js?v=20261004-x1';
-import { loadProgress, saveProgress, isDone } from './learn_engine.js?v=20261006-circle1';
+import { loadProgress, saveProgress, isDone } from './learn_engine.js?v=20261010-boss1';
 import { createGuidePlayback } from './learn_guide_audio.js?v=20261008-beginner2';
 import { renderVisual } from './learn_visuals.js?v=20261008-beginner2';
-import { satbStaff, rhythmGrid, playAudio, satbToy, polyToy, tapPad, spellToy, meterToy, intervalToy, scaleToy, textureToy, chordToy, keyChordsToy, progressionToy, plrToy, keyRelToy, transposeToy, fretToy, nctToy, speciesToy, canonToy, swingToy, bluesToy, chordScaleToy, guideToy, negativeToy, xuangongToy, worldToy, harmonicsToy, temperToy, pcToy, collectionToy, setToy, matrixToy, jiToy } from './sideb_toys.js?v=20261009-audio1';
-import { modernHarmonyToy } from './sideb_modern_harmony_toys.js?v=20261009-audio1';
+import { satbStaff, rhythmGrid, playAudio, satbToy, polyToy, tapPad, spellToy, meterToy, intervalToy, scaleToy, textureToy, chordToy, keyChordsToy, progressionToy, plrToy, keyRelToy, transposeToy, fretToy, nctToy, speciesToy, canonToy, swingToy, bluesToy, chordScaleToy, guideToy, negativeToy, xuangongToy, worldToy, harmonicsToy, temperToy, pcToy, collectionToy, setToy, matrixToy, jiToy } from './sideb_toys.js?v=20261010-talk1';
+import { modernHarmonyToy } from './sideb_modern_harmony_toys.js?v=20261010-flip1';
 import { celebrate } from './sideb_fx.js?v=20261009-audio1';
-import { sidebWorksheet, openWorksheet } from './sideb_print.js?v=20261009-audio1';
+import { playFeedbackSound } from './learn_sfx.js?v=20261011-snd2';
+import { sidebWorksheet, openWorksheet } from './sideb_print.js?v=20261010-talk1';
 import { certificate, awardCert, loadCerts, graduationShow } from './sideb_cert.js?v=20261009-audio1';
 import { referenceById } from './references.js';
 
@@ -644,7 +645,7 @@ export function mountSideB(root, { playChord, stopAudio = () => {}, onFlipBack, 
     renderBody(node, body, footer, shell, {
       done,
       state,
-      record: (result) => { if (answered) return; answered = true; state.result = result; session = recordAnswer(session, node, result); persist(); },
+      record: (result) => { if (answered) return; answered = true; state.result = result; session = recordAnswer(session, node, result); persist(); answerSound(result); },
       retry: () => { delete session.nodeState; renderNode(); },
       registerDebug: (fn) => { answerNow = fn; },
     });
@@ -773,13 +774,14 @@ export function mountSideB(root, { playChord, stopAudio = () => {}, onFlipBack, 
     show();
   }
   /** 揭晓发现：卡片 + 一个柔和的大三和弦。卡片上的小标题从 9 个词里随机取一个（按节点与第几次尝试取种子，重试时会换），避免每页都是同一句感叹 */
-  function revealInsight(body, insight, seed = '') {
+  /** 揭示"发现"卡片；没有选项可答时响一个和弦当作提示（答题后已经有答对 / 答错的声音，就不再响） */
+  function revealInsight(body, insight, seed = '', { chime = true } = {}) {
     if (!insight) return;
     const card = el('div', 'sideb-insight');
     const kicker = t.insight[hashOf(`${seed}:${session.attempt || 0}`) % t.insight.length];
     card.append(el('span', 'sideb-insight-kicker', kicker), el('strong', '', tx(insight.title)), el('p', '', tx(insight.text)));
     body.appendChild(card);
-    playChord?.([523.25, 659.25, 783.99], 1.2, { interrupt: false });
+    if (chime) playChord?.([523.25, 659.25, 783.99], 1.2, { interrupt: false });
   }
   function optionButtons(node, body, onPick) {
     const options = node.options || [];
@@ -815,12 +817,14 @@ export function mountSideB(root, { playChord, stopAudio = () => {}, onFlipBack, 
       state.response = k;
       markOptions(list, k, node.answer);
       record(gradeNode(node, k));
-      revealInsight(body, node.insight, node.id);
+      revealInsight(body, node.insight, node.id, { chime: false });
       refLine(body, node.ref);
       done();
     });
     if (state.result) list.querySelector(`[data-k="${state.response}"]`)?.click();
   }
+  /** 答对 / 答错的声音（和 A 面同一套、同一个开关）；只在第一次作答时响，续玩恢复画面不响 */
+  const answerSound = (result) => { if (result && typeof result.ok === 'boolean') playFeedbackSound(result.ok); };
   function feedback(node, body, footer, shell, result, { retry, done, answerText }) {
     const box = el('div', `sideb-feedback ${result.ok ? 'is-ok' : 'is-no'}`);
     box.append(el('strong', '', result.ok ? t.correct : t.wrong));
@@ -1189,7 +1193,7 @@ export function mountSideB(root, { playChord, stopAudio = () => {}, onFlipBack, 
       state,
       retry: () => { delete state.result; renderRecovery(); },
       done: () => footer.replaceChildren(nextBtn),
-      record: (result) => { if (answered) return; answered = true; state.result = result; session = recordRecovery(session, node, result); persist(); },
+      record: (result) => { if (answered) return; answered = true; state.result = result; session = recordRecovery(session, node, result); persist(); answerSound(result); },
       registerDebug: (fn) => { answerNow = fn; },
     });
     toolHelp(node, body);

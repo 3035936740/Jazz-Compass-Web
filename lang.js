@@ -613,6 +613,11 @@ const i18n = {
       ja: "ピアノ音源は Alexander Holm 録音の <a href=\"https://archive.org/details/SalamanderGrandPianoV3\" target=\"_blank\" rel=\"noopener noreferrer\">Salamander Grand Piano</a>（<a href=\"https://creativecommons.org/licenses/by/3.0/\" target=\"_blank\" rel=\"noopener noreferrer\">CC BY 3.0</a>）を使用しています。",
       en: "Piano sound: <a href=\"https://archive.org/details/SalamanderGrandPianoV3\" target=\"_blank\" rel=\"noopener noreferrer\">Salamander Grand Piano</a> by Alexander Holm, licensed under <a href=\"https://creativecommons.org/licenses/by/3.0/\" target=\"_blank\" rel=\"noopener noreferrer\">CC BY 3.0</a>."
     },
+    about_boss_art: {
+      zh: "乐理闯关 Boss 角色（米米、塞维尔、诺亚、爵、阿拉娅、零）的设定图片与立绘由 image2.5 生成；本项目的编程由 Claude / GPT 辅助完成。",
+      ja: "楽理チャレンジのボスキャラクター（ミミ・セヴェール・ノア・ジャズ・アラヤ・ゼロ）の設定画と立ち絵は image2.5 で生成しました。本プロジェクトのプログラミングは Claude / GPT の支援を受けています。",
+      en: "The Theory Quest boss characters (Mimi, Sever, Noa, Jaz, Araya and Zero) — design sheets and sprites — were generated with image2.5; programming was assisted by Claude and GPT.",
+    },
     about_sposobin: {
       zh: "特别感谢 <a href=\"https://github.com/Huaishu61/Sposobin\" target=\"_blank\" rel=\"noopener noreferrer\">Huaishu61/Sposobin</a> 项目 本项目参考其内容 并将相关资料转换为 JavaScript 版本 Sposobin 以 MIT 协议发布",
       ja: "<a href=\"https://github.com/Huaishu61/Sposobin\" target=\"_blank\" rel=\"noopener noreferrer\">Huaishu61/Sposobin</a> プロジェクトに感謝します。本プロジェクトでは関連資料を JavaScript 版へ変換して利用しています。Sposobin は MIT ライセンスで公開されています。",

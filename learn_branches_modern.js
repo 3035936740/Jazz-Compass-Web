@@ -1,11 +1,13 @@
 // 乐理闯关 · 二十世纪与微分音的进阶关：每个主关后面 4 关（第 5 关"综合测验"在开局时抽题）。
 // 题卡只用 references.js 中已登记、已核实的资料；{ type: 'gen' } 的题由 learn_generators.js 按同样的资料计算生成。
 // 依据汇总（由 scripts/annotate-learn.mjs 生成）：
-//   ref:rubin-nonfunctional ref:arndt-tonality ref:koozin-planing ref:ircam-spectral ref:ircam-spectrum ref:gann-ji
-//   ref:gann-ji-reasons ref:omt2e-pitch-class ref:omt2e-integer-intervals ref:omt2e-normal-order ref:omt2e-prime-form
-//   ref:omt2e-ic-vector ref:wiki-set-classes ref:omt2e-collections ref:wiki-messiaen-modes ref:omt2e-neo-riemannian
-//   ref:omt2e-twelve-tone ref:omt2e-row-naming ref:wiki-arabic-maqam ref:wiki-pythagorean ref:wiki-harmonic-series
-//   ref:hf-intervals ref:wiki-limit ref:wiki-neutral-third ref:wiki-turkish-makam
+//   ref:rubin-nonfunctional ref:arndt-tonality ref:koozin-planing ref:wiki-parallel-harmony
+//   ref:wiki-chromatic-mediant ref:wiki-polytonality ref:wiki-petrushka-chord ref:wiki-octatonic ref:wiki-atonality
+//   ref:omt2e-normal-order ref:ircam-spectral ref:ircam-spectrum ref:gann-ji ref:wiki-spectral-music
+//   ref:gann-ji-reasons ref:wiki-limit ref:wiki-neutral-third ref:omt2e-pitch-class ref:omt2e-integer-intervals
+//   ref:omt2e-prime-form ref:omt2e-ic-vector ref:wiki-set-classes ref:omt2e-collections ref:wiki-messiaen-modes
+//   ref:omt2e-neo-riemannian ref:omt2e-twelve-tone ref:omt2e-row-naming ref:wiki-arabic-maqam ref:wiki-pythagorean
+//   ref:wiki-harmonic-series ref:hf-intervals ref:wiki-turkish-makam
 // @refs-end
 
 const t = (zh, ja, en) => ({ zh, ja, en });
@@ -13,7 +15,7 @@ const opt = (id, label) => ({ id, label });
 const G = (gen, count = 2, params) => ({ type: 'gen', gen, count, ...(params ? { params } : {}) });
 const L = (title, cards) => ({ title, cards });
 
-import { MODERN_BRANCHES } from './modern_harmony_course.js?v=20261008-spectrum-side1';
+import { MODERN_BRANCHES } from './modern_harmony_course.js?v=20261010-talk1';
 export const BRANCHES = { ...MODERN_BRANCHES,
   pitchclass: [
     L(t('音名换成数字', '音名を数字に', 'Notes to numbers'), [

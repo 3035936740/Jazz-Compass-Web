@@ -1,7 +1,7 @@
 ﻿// Original listening puzzles checked against the registered sources; no borrowed scores or recordings.
 // ref:rubin-nonfunctional ref:koozin-planing ref:arndt-tonality ref:ircam-spectrum ref:ircam-spectral ref:gann-ji ref:gann-ji-reasons
-import { t, chord, chain, frequencies, layers } from './modern_harmony_course.js?v=20261008-spectrum-side1';
-import { pitch } from './modern_harmony_generators.js?v=20261009-audio1';
+import { t, chord, chain, frequencies, layers } from './modern_harmony_course.js?v=20261010-talk1';
+import { pitch } from './modern_harmony_generators.js?v=20261010-talk1';
 export const MODERN_MISSIONS = {
  nonfunctional:t('和弦连接工坊','和音連結の工房','Chord connection workshop'),
  polytonality:t('双声部侦探','二つの声部の探偵','Two-layer detective'),
@@ -47,7 +47,7 @@ export function modernBScene(topic,stage,variant=0){
   else if(stage===3)node=trace(t('原和弦里有275 Hz。换成200 Hz基准后：方案 A用11/8，仍为275；方案 B照抄5/4，变成250。哪些真的保住原音？','元の和音に275 Hz。基準を200 Hzへ：Aは11/8で275、Bは5/4の使い回しで250。元の音を保つのは？','The old chord contains 275 Hz. At a new 200 Hz reference, A uses 11/8 and retains 275; B reuses 5/4 and gives 250. Tag the outcomes.'),[['kept',t('原频率保住了','元の周波数を保持','Original frequency retained')],['moved',t('原频率移动了','元の周波数が動いた','Original frequency moved')]],[['A','kept'],['B','moved']],t('共同音看实际Hz：275÷200=11/8。照抄比例不能保证同一高度。','共通音は実際のHz。275÷200=11/8。比の使い回しは同じ高さを保証しない。','Common tones use actual Hz: 275/200=11/8. Reusing a ratio does not guarantee a retained pitch.'));
   else node=ask(t(`你要把本工具 ${ref} Hz基准的19 EDO音响发给伙伴复现。哪份便条能明确频率与进入时间？`,`このツールで基準 ${ref} Hzの19 EDOの響きを再現してもらう。周波数と開始時刻が明確なメモは？`,`A partner must recreate this tool’s 19-EDO sound at ${ref} Hz. Which note specifies frequencies and entry times?`),[t(`基准${ref} Hz；19等分；步数0、6、11；同时进入`,`基準${ref} Hz、19等分、段0・6・11、同時開始`,`Reference ${ref} Hz; 19-EDO; steps 0,6,11; start together`),t('只写“大三和弦”','長三和音とだけ書く','Only “major chord”'),t('只写19 EDO，不写基准和步数','19 EDOだけで基準も段もなし','Only “19-EDO”, without reference or steps'),t('只写“更柔和一些”','柔らかめとだけ書く','Only “a softer sound”')],t('写清基准、律制、位置和时间，才能核对本工具的音高与进入过程；这不复原真实配器的全部音色。','基準・音律・位置・時間を明記してツールの音高と進入を確認。実際の楽器の全音色は復元しない。','Specify reference, tuning, positions and timing to check this tool’s pitches and entries; it does not reproduce an instrument’s complete timbre.'));
  }
- return {...node,ref:topic.ref,error:'concept',skills:node.type==='listen'?['hearing','apply']:node.type==='derive'?['calc','apply']:node.type==='spell'?['spell']:['apply'],sceneStage:stage};
+ return {...node,ref: topic.ref,error:'concept',skills:node.type==='listen'?['hearing','apply']:node.type==='derive'?['calc','apply']:node.type==='spell'?['spell']:['apply'],sceneStage:stage};
 }
 export function modernSceneTask(topic,stage,suffix){
  return {...modernBScene(topic,stage),id:`${topic.b}-${suffix}`,variants:[0,1,2,3].map(v=>modernBScene(topic,stage,v))};

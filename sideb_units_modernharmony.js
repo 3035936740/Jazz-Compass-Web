@@ -1,9 +1,10 @@
 // ref:koozin-planing
 // Side-B additions: each extension revisits all four A-side branches before deeper tasks.
 // ref:rubin-nonfunctional ref:arndt-tonality ref:ircam-spectral ref:ircam-spectrum ref:gann-ji ref:gann-ji-reasons
-import { TOPICS, t, cents, stageVisual, generatorOf } from './modern_harmony_course.js?v=20261008-spectrum-side1';
-import { MODERN_GENERATORS, pitch } from './modern_harmony_generators.js?v=20261009-audio1';
-import {MODERN_MISSIONS,modernSceneTask,modernSceneDiscovery} from './sideb_modern_harmony_scenes.js?v=20261009-audio1';
+import { TOPICS, t, cents, stageVisual, generatorOf } from './modern_harmony_course.js?v=20261010-talk1';
+import { MODERN_GENERATORS, pitch } from './modern_harmony_generators.js?v=20261010-talk1';
+import {MODERN_MISSIONS,modernSceneTask,modernSceneDiscovery} from './sideb_modern_harmony_scenes.js?v=20261010-flip1';
+import { conceptPage, conceptQuestions } from './modern_harmony_concepts.js?v=20261010-talk1';
 const step = (label, answer, tol = 1e-9) => ({ kind: 'number', label, answer, tol });
 const numericalHint = t('数值题，按给定单位计算；小数保留两位，容差 ±0.02。', '指定単位の数値を計算。小数 2 桁、許容誤差 ±0.02。', 'Calculate in the stated units. Round decimals to two places; tolerance ±0.02.');
 export function integratedTask(topic, stage, variant = 0) {
@@ -57,10 +58,12 @@ function content(topic,extension=false) {
   const mainGeneratorStage = applicationStage === 1 ? 0 : applicationStage;
   const challenge=extension?[1,2,3,4].map(s=>modernSceneTask(topic,s,`x-task${s}`)):[modernSceneTask(topic,1,'c-listen'),modernSceneTask(topic,2,'c-repair'),modernSceneTask(topic,3,'c-trace'),task(topic,applicationStage,'task1'),modernSceneTask(topic,4,'c-report')];
   challenge.push(...(extension?[1,2,3,4]:[mainGeneratorStage]).map((s,i)=>G(topic,s,`${extension?'x-':''}c${i+1}`)));
+  // 背景与概念（定义、名称、历史、作品与争议）：普通关考主关概念，扩展关考进阶概念
+  challenge.push(...conceptQuestions(topic.id, extension?'branch':'main', `${topic.b}-${extension?'x-':''}cq`));
   challenge[0].breakthrough={id:`${topic.id}-design${extension?'-x':''}`,text:t('你用明确的规则解释并推导了这个音响方案。','明示された規則で響きの設計を説明・導出した。','You explained and derived the sound design using explicit rules.')};
   return { minutes:extension?19:12,insight:topic.stages[0].steps[0],coveredBranches:extension?topic.stages.slice(1).map((s)=>s.title):[],
     sections:{ discover:[modernSceneDiscovery(topic)],
-      explain:extension?topic.stages.slice(1).flatMap((_,i)=>[guide(topic,i+1,`xg${i+1}`),discovery(topic,i+1,`xp${i+1}`)]):[guide(topic,applicationStage,'g1'),{...modernSceneTask(topic,3,'practice'),practice:true}],
+      explain:extension?[conceptPage(topic.id,`${topic.b}-xconcept`),...topic.stages.slice(1).flatMap((_,i)=>[guide(topic,i+1,`xg${i+1}`),discovery(topic,i+1,`xp${i+1}`)])]:[conceptPage(topic.id,`${topic.b}-concept`),guide(topic,applicationStage,'g1'),{...modernSceneTask(topic,3,'practice'),practice:true}],
       experiment:[{id:`${topic.b}-${extension?'x':''}toy`,type:'experiment',toy:'modernHarmony',params:{topic:topic.id,extension},ref: topic.ref,prompt:MODERN_MISSIONS[topic.id],breakthrough:{id:`${topic.id}-studio${extension?'-x':''}`,text:t('你完成了自己的音响实验，并用规则验证了改变。','自分の音の実験を完成し、変更を規則で確認した。','You completed a sound experiment and verified the change with explicit rules.')}}],challenge },
     pool:[1,2,3,4].map((s)=>G(topic,extension?s:mainGeneratorStage,`${extension?'x-':''}pool${s}`)) };
 }

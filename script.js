@@ -8,9 +8,9 @@ import { NESTED_TOOL_ROUTES, toolboxNavigationFeature } from './micro_tool_route
 import { FEATURE_UNIT } from "./learn_feature_unit.js?v=20261008-modern-tools1";
 import { mountSiteSearch } from "./site_search.js?v=20261003-s4";
 import { satbToVoices, sendToStaff } from "./staff_handoff.js?v=20261003-h1";
-import { loadResume, clearResume } from "./learn_engine.js?v=20261006-circle1";
+import { loadResume, clearResume } from "./learn_engine.js?v=20261010-boss1";
 import { EnhancedChordConverter, JazzBrain, ClassicalHarmonyConnector } from "./jazz_compass.js?v=20261004-w7";
-import * as lang from "./lang.js?v=20261008-beginner2";
+import * as lang from "./lang.js?v=20261010-boss1";
 import { drawClassicalStaff } from "./classical_staff.js?v=20261004-m5";
 import { renderChordConversion } from "./chord_convert_panel.js?v=20261009-audio1";
 
@@ -63,7 +63,7 @@ const mountJazzMore = lazy(load_jazz_more_ui, 'mountJazzMore');
 const load_post_tonal_ui = () => import("./post_tonal_ui.js?v=20261007-row-toggle1");
 const mountPostTonal = lazy(load_post_tonal_ui, 'mountPostTonal');
 const MODERN_HARMONY_FEATURES = ['nonfunctional', 'polytonality', 'atonality', 'spectralharmony', 'microtonalharmony'];
-const load_modern_harmony_ui = () => import('./modern_harmony_tools_ui.js?v=20261008-b-workshop1');
+const load_modern_harmony_ui = () => import('./modern_harmony_tools_ui.js?v=20261010-mh2');
 const mountModernHarmony = lazy(load_modern_harmony_ui, 'mountModernHarmony');
 const load_temperaments_ui = () => import("./temperaments_ui.js?v=20261002-quest");
 const mountTemperaments = lazy(load_temperaments_ui, 'mountTemperaments');
@@ -77,7 +77,7 @@ const load_progression_ui = () => import("./progression_ui.js?v=20261004-m5");
 const mountProgression = lazy(load_progression_ui, 'mountProgression');
 const load_motif_phrase_ui = () => import("./motif_phrase_ui.js?v=20261004-w9");
 const mountMotifPhrase = lazy(load_motif_phrase_ui, 'mountMotifPhrase');
-const load_poly_meter_ui = () => import("./poly_meter_ui.js?v=20261009-audio1");
+const load_poly_meter_ui = () => import("./poly_meter_ui.js?v=20261010-talk1");
 const mountPolyMeter = lazy(load_poly_meter_ui, 'mountPolyMeter');
 const load_canon_ui = () => import("./canon_ui.js?v=20261003-t3");
 const mountCanon = lazy(load_canon_ui, 'mountCanon');
@@ -91,9 +91,9 @@ const load_ear_training_ui = () => import("./ear_training_ui.js?v=20261002-quest
 const mountEarTraining = lazy(load_ear_training_ui, 'mountEarTraining');
 const load_chord_symbols_ui = () => import("./chord_symbols_ui.js?v=20261003-r32");
 const mountChordSymbols = lazy(load_chord_symbols_ui, 'mountChordSymbols');
-const load_staff_reading_ui = () => import("./staff_reading_ui.js?v=20261009-audio1");
+const load_staff_reading_ui = () => import("./staff_reading_ui.js?v=20261011-snd2");
 const mountStaffReading = lazy(load_staff_reading_ui, 'mountStaffReading');
-const load_learn_ui = () => import("./learn_ui.js?v=20261009-audio1");
+const load_learn_ui = () => import("./learn_ui.js?v=20261011-snd2");
 const mountLearn = lazy(load_learn_ui, 'mountLearn');
 const load_lcc_ui = () => import("./lcc_ui.js?v=20261002-i18n");
 const mountLccExplorer = lazy(load_lcc_ui, 'mountLccExplorer');
@@ -101,7 +101,7 @@ const load_jazz_toolbox_ui = () => import("./jazz_toolbox_ui.js?v=20261002-i18n"
 const mountJazzToolbox = lazy(load_jazz_toolbox_ui, 'mountJazzToolbox');
 const load_blues_ui = () => import("./blues_ui.js?v=20261004-w7");
 const mountBluesToolbox = lazy(load_blues_ui, 'mountBluesToolbox');
-const load_about_page = () => import("./about_page.js?v=20261004-x1");
+const load_about_page = () => import("./about_page.js?v=20261010-boss1");
 const showAbout = lazy(load_about_page, 'showAbout', { hostOf: () => document.getElementById('panel-about-body') });
 const load_neo_panel = () => import("./neo_panel.js?v=20261004-m5");
 const initNeoPanel = lazy(load_neo_panel, 'initNeoPanel');
@@ -479,7 +479,7 @@ document.addEventListener("DOMContentLoaded", () => {
       id, name: window.__(`nav_${id}`) || id, intro: window.__(`intro_${id}`) || '',
       allNames: Object.values(window.__all?.(`nav_${id}`) || {}).join(' '),
     })),
-    units: () => import("./learn_content.js?v=20261008-spectrum-side1").then((m) => [...m.UNITS, ...m.SIDES]), lang: window.__lang, anchor: document.getElementById('share-link'),
+    units: () => import("./learn_content.js?v=20261010-talk1").then((m) => [...m.UNITS, ...m.SIDES]), lang: window.__lang, anchor: document.getElementById('share-link'),
   });
 
   const conv = new EnhancedChordConverter();

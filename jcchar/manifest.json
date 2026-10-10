@@ -1,0 +1,764 @@
+{
+  "schemaVersion": 1,
+  "canvas": [
+    800,
+    800
+  ],
+  "pivot": {
+    "x": 400,
+    "y": 760,
+    "normalized": [
+      0.5,
+      0.95
+    ]
+  },
+  "trim": false,
+  "scalePerState": false,
+  "format": "PNG RGBA",
+  "characters": [
+    {
+      "id": "01_mimi",
+      "name": "米米",
+      "assets": [
+        {
+          "category": "expressions",
+          "state": "default",
+          "label": "默认",
+          "file": "01_mimi/expressions/default.png"
+        },
+        {
+          "category": "expressions",
+          "state": "proud",
+          "label": "得意",
+          "file": "01_mimi/expressions/proud.png"
+        },
+        {
+          "category": "expressions",
+          "state": "mocking",
+          "label": "嘲讽",
+          "file": "01_mimi/expressions/mocking.png"
+        },
+        {
+          "category": "expressions",
+          "state": "confused",
+          "label": "疑惑",
+          "file": "01_mimi/expressions/confused.png"
+        },
+        {
+          "category": "expressions",
+          "state": "shocked",
+          "label": "震惊",
+          "file": "01_mimi/expressions/shocked.png"
+        },
+        {
+          "category": "expressions",
+          "state": "angry",
+          "label": "生气",
+          "file": "01_mimi/expressions/angry.png"
+        },
+        {
+          "category": "expressions",
+          "state": "serious",
+          "label": "认真",
+          "file": "01_mimi/expressions/serious.png"
+        },
+        {
+          "category": "expressions",
+          "state": "hurt",
+          "label": "受击",
+          "file": "01_mimi/expressions/hurt.png"
+        },
+        {
+          "category": "expressions",
+          "state": "defiant",
+          "label": "嘴硬",
+          "file": "01_mimi/expressions/defiant.png"
+        },
+        {
+          "category": "expressions",
+          "state": "concede",
+          "label": "认输",
+          "file": "01_mimi/expressions/concede.png"
+        },
+        {
+          "category": "poses",
+          "state": "idle",
+          "label": "待机",
+          "file": "01_mimi/poses/idle.png"
+        },
+        {
+          "category": "poses",
+          "state": "speaking",
+          "label": "讲话",
+          "file": "01_mimi/poses/speaking.png"
+        },
+        {
+          "category": "poses",
+          "state": "correct",
+          "label": "答对反应",
+          "file": "01_mimi/poses/correct.png"
+        },
+        {
+          "category": "poses",
+          "state": "incorrect",
+          "label": "答错反应",
+          "file": "01_mimi/poses/incorrect.png"
+        },
+        {
+          "category": "poses",
+          "state": "streak",
+          "label": "连续答对反应",
+          "file": "01_mimi/poses/streak.png"
+        },
+        {
+          "category": "endings",
+          "state": "one_star",
+          "label": "1星结局",
+          "file": "01_mimi/endings/one_star.png"
+        },
+        {
+          "category": "endings",
+          "state": "two_star",
+          "label": "2星结局",
+          "file": "01_mimi/endings/two_star.png"
+        },
+        {
+          "category": "endings",
+          "state": "three_star",
+          "label": "3星投降",
+          "file": "01_mimi/endings/three_star.png"
+        },
+        {
+          "category": "boss",
+          "state": "phase2",
+          "label": "第二阶段",
+          "file": "01_mimi/boss/phase2.png"
+        }
+      ]
+    },
+    {
+      "id": "02_sever",
+      "name": "塞维尔",
+      "assets": [
+        {
+          "category": "expressions",
+          "state": "default",
+          "label": "默认",
+          "file": "02_sever/expressions/default.png"
+        },
+        {
+          "category": "expressions",
+          "state": "proud",
+          "label": "得意",
+          "file": "02_sever/expressions/proud.png"
+        },
+        {
+          "category": "expressions",
+          "state": "mocking",
+          "label": "嘲讽",
+          "file": "02_sever/expressions/mocking.png"
+        },
+        {
+          "category": "expressions",
+          "state": "confused",
+          "label": "疑惑",
+          "file": "02_sever/expressions/confused.png"
+        },
+        {
+          "category": "expressions",
+          "state": "shocked",
+          "label": "震惊",
+          "file": "02_sever/expressions/shocked.png"
+        },
+        {
+          "category": "expressions",
+          "state": "angry",
+          "label": "生气",
+          "file": "02_sever/expressions/angry.png"
+        },
+        {
+          "category": "expressions",
+          "state": "serious",
+          "label": "认真",
+          "file": "02_sever/expressions/serious.png"
+        },
+        {
+          "category": "expressions",
+          "state": "hurt",
+          "label": "受击",
+          "file": "02_sever/expressions/hurt.png"
+        },
+        {
+          "category": "expressions",
+          "state": "defiant",
+          "label": "嘴硬",
+          "file": "02_sever/expressions/defiant.png"
+        },
+        {
+          "category": "expressions",
+          "state": "concede",
+          "label": "认输",
+          "file": "02_sever/expressions/concede.png"
+        },
+        {
+          "category": "poses",
+          "state": "idle",
+          "label": "待机",
+          "file": "02_sever/poses/idle.png"
+        },
+        {
+          "category": "poses",
+          "state": "speaking",
+          "label": "讲话",
+          "file": "02_sever/poses/speaking.png"
+        },
+        {
+          "category": "poses",
+          "state": "correct",
+          "label": "答对反应",
+          "file": "02_sever/poses/correct.png"
+        },
+        {
+          "category": "poses",
+          "state": "incorrect",
+          "label": "答错反应",
+          "file": "02_sever/poses/incorrect.png"
+        },
+        {
+          "category": "poses",
+          "state": "streak",
+          "label": "连续答对反应",
+          "file": "02_sever/poses/streak.png"
+        },
+        {
+          "category": "endings",
+          "state": "one_star",
+          "label": "1星结局",
+          "file": "02_sever/endings/one_star.png"
+        },
+        {
+          "category": "endings",
+          "state": "two_star",
+          "label": "2星结局",
+          "file": "02_sever/endings/two_star.png"
+        },
+        {
+          "category": "endings",
+          "state": "three_star",
+          "label": "3星投降",
+          "file": "02_sever/endings/three_star.png"
+        },
+        {
+          "category": "boss",
+          "state": "phase2",
+          "label": "第二阶段",
+          "file": "02_sever/boss/phase2.png"
+        },
+        {
+          "category": "boss",
+          "state": "first_meeting",
+          "label": "初次见面",
+          "file": "02_sever/boss/first_meeting.png"
+        },
+        {
+          "category": "boss",
+          "state": "return_meeting",
+          "label": "再次见面",
+          "file": "02_sever/boss/return_meeting.png"
+        }
+      ]
+    },
+    {
+      "id": "03_noa",
+      "name": "诺亚",
+      "assets": [
+        {
+          "category": "expressions",
+          "state": "default",
+          "label": "默认",
+          "file": "03_noa/expressions/default.png"
+        },
+        {
+          "category": "expressions",
+          "state": "proud",
+          "label": "得意",
+          "file": "03_noa/expressions/proud.png"
+        },
+        {
+          "category": "expressions",
+          "state": "mocking",
+          "label": "嘲讽",
+          "file": "03_noa/expressions/mocking.png"
+        },
+        {
+          "category": "expressions",
+          "state": "confused",
+          "label": "疑惑",
+          "file": "03_noa/expressions/confused.png"
+        },
+        {
+          "category": "expressions",
+          "state": "shocked",
+          "label": "震惊",
+          "file": "03_noa/expressions/shocked.png"
+        },
+        {
+          "category": "expressions",
+          "state": "angry",
+          "label": "生气",
+          "file": "03_noa/expressions/angry.png"
+        },
+        {
+          "category": "expressions",
+          "state": "serious",
+          "label": "认真",
+          "file": "03_noa/expressions/serious.png"
+        },
+        {
+          "category": "expressions",
+          "state": "hurt",
+          "label": "受击",
+          "file": "03_noa/expressions/hurt.png"
+        },
+        {
+          "category": "expressions",
+          "state": "defiant",
+          "label": "嘴硬",
+          "file": "03_noa/expressions/defiant.png"
+        },
+        {
+          "category": "expressions",
+          "state": "concede",
+          "label": "认输",
+          "file": "03_noa/expressions/concede.png"
+        },
+        {
+          "category": "poses",
+          "state": "idle",
+          "label": "待机",
+          "file": "03_noa/poses/idle.png"
+        },
+        {
+          "category": "poses",
+          "state": "speaking",
+          "label": "讲话",
+          "file": "03_noa/poses/speaking.png"
+        },
+        {
+          "category": "poses",
+          "state": "correct",
+          "label": "答对反应",
+          "file": "03_noa/poses/correct.png"
+        },
+        {
+          "category": "poses",
+          "state": "incorrect",
+          "label": "答错反应",
+          "file": "03_noa/poses/incorrect.png"
+        },
+        {
+          "category": "poses",
+          "state": "streak",
+          "label": "连续答对反应",
+          "file": "03_noa/poses/streak.png"
+        },
+        {
+          "category": "endings",
+          "state": "one_star",
+          "label": "1星结局",
+          "file": "03_noa/endings/one_star.png"
+        },
+        {
+          "category": "endings",
+          "state": "two_star",
+          "label": "2星结局",
+          "file": "03_noa/endings/two_star.png"
+        },
+        {
+          "category": "endings",
+          "state": "three_star",
+          "label": "3星投降",
+          "file": "03_noa/endings/three_star.png"
+        },
+        {
+          "category": "boss",
+          "state": "phase2",
+          "label": "第二阶段",
+          "file": "03_noa/boss/phase2.png"
+        }
+      ]
+    },
+    {
+      "id": "04_jaz",
+      "name": "爵",
+      "assets": [
+        {
+          "category": "expressions",
+          "state": "default",
+          "label": "默认",
+          "file": "04_jaz/expressions/default.png"
+        },
+        {
+          "category": "expressions",
+          "state": "proud",
+          "label": "得意",
+          "file": "04_jaz/expressions/proud.png"
+        },
+        {
+          "category": "expressions",
+          "state": "mocking",
+          "label": "嘲讽",
+          "file": "04_jaz/expressions/mocking.png"
+        },
+        {
+          "category": "expressions",
+          "state": "confused",
+          "label": "疑惑",
+          "file": "04_jaz/expressions/confused.png"
+        },
+        {
+          "category": "expressions",
+          "state": "shocked",
+          "label": "震惊",
+          "file": "04_jaz/expressions/shocked.png"
+        },
+        {
+          "category": "expressions",
+          "state": "angry",
+          "label": "生气",
+          "file": "04_jaz/expressions/angry.png"
+        },
+        {
+          "category": "expressions",
+          "state": "serious",
+          "label": "认真",
+          "file": "04_jaz/expressions/serious.png"
+        },
+        {
+          "category": "expressions",
+          "state": "hurt",
+          "label": "受击",
+          "file": "04_jaz/expressions/hurt.png"
+        },
+        {
+          "category": "expressions",
+          "state": "defiant",
+          "label": "嘴硬",
+          "file": "04_jaz/expressions/defiant.png"
+        },
+        {
+          "category": "expressions",
+          "state": "concede",
+          "label": "认输",
+          "file": "04_jaz/expressions/concede.png"
+        },
+        {
+          "category": "poses",
+          "state": "idle",
+          "label": "待机",
+          "file": "04_jaz/poses/idle.png"
+        },
+        {
+          "category": "poses",
+          "state": "speaking",
+          "label": "讲话",
+          "file": "04_jaz/poses/speaking.png"
+        },
+        {
+          "category": "poses",
+          "state": "correct",
+          "label": "答对反应",
+          "file": "04_jaz/poses/correct.png"
+        },
+        {
+          "category": "poses",
+          "state": "incorrect",
+          "label": "答错反应",
+          "file": "04_jaz/poses/incorrect.png"
+        },
+        {
+          "category": "poses",
+          "state": "streak",
+          "label": "连续答对反应",
+          "file": "04_jaz/poses/streak.png"
+        },
+        {
+          "category": "endings",
+          "state": "one_star",
+          "label": "1星结局",
+          "file": "04_jaz/endings/one_star.png"
+        },
+        {
+          "category": "endings",
+          "state": "two_star",
+          "label": "2星结局",
+          "file": "04_jaz/endings/two_star.png"
+        },
+        {
+          "category": "endings",
+          "state": "three_star",
+          "label": "3星投降",
+          "file": "04_jaz/endings/three_star.png"
+        },
+        {
+          "category": "boss",
+          "state": "phase2",
+          "label": "第二阶段",
+          "file": "04_jaz/boss/phase2.png"
+        },
+        {
+          "category": "boss",
+          "state": "first_meeting",
+          "label": "初次见面",
+          "file": "04_jaz/boss/first_meeting.png"
+        },
+        {
+          "category": "boss",
+          "state": "return_meeting",
+          "label": "再次见面",
+          "file": "04_jaz/boss/return_meeting.png"
+        }
+      ]
+    },
+    {
+      "id": "05_araya",
+      "name": "阿拉娅",
+      "assets": [
+        {
+          "category": "expressions",
+          "state": "default",
+          "label": "默认",
+          "file": "05_araya/expressions/default.png"
+        },
+        {
+          "category": "expressions",
+          "state": "proud",
+          "label": "得意",
+          "file": "05_araya/expressions/proud.png"
+        },
+        {
+          "category": "expressions",
+          "state": "mocking",
+          "label": "嘲讽",
+          "file": "05_araya/expressions/mocking.png"
+        },
+        {
+          "category": "expressions",
+          "state": "confused",
+          "label": "疑惑",
+          "file": "05_araya/expressions/confused.png"
+        },
+        {
+          "category": "expressions",
+          "state": "shocked",
+          "label": "震惊",
+          "file": "05_araya/expressions/shocked.png"
+        },
+        {
+          "category": "expressions",
+          "state": "angry",
+          "label": "生气",
+          "file": "05_araya/expressions/angry.png"
+        },
+        {
+          "category": "expressions",
+          "state": "serious",
+          "label": "认真",
+          "file": "05_araya/expressions/serious.png"
+        },
+        {
+          "category": "expressions",
+          "state": "hurt",
+          "label": "受击",
+          "file": "05_araya/expressions/hurt.png"
+        },
+        {
+          "category": "expressions",
+          "state": "defiant",
+          "label": "嘴硬",
+          "file": "05_araya/expressions/defiant.png"
+        },
+        {
+          "category": "expressions",
+          "state": "concede",
+          "label": "认输",
+          "file": "05_araya/expressions/concede.png"
+        },
+        {
+          "category": "poses",
+          "state": "idle",
+          "label": "待机",
+          "file": "05_araya/poses/idle.png"
+        },
+        {
+          "category": "poses",
+          "state": "speaking",
+          "label": "讲话",
+          "file": "05_araya/poses/speaking.png"
+        },
+        {
+          "category": "poses",
+          "state": "correct",
+          "label": "答对反应",
+          "file": "05_araya/poses/correct.png"
+        },
+        {
+          "category": "poses",
+          "state": "incorrect",
+          "label": "答错反应",
+          "file": "05_araya/poses/incorrect.png"
+        },
+        {
+          "category": "poses",
+          "state": "streak",
+          "label": "连续答对反应",
+          "file": "05_araya/poses/streak.png"
+        },
+        {
+          "category": "endings",
+          "state": "one_star",
+          "label": "1星结局",
+          "file": "05_araya/endings/one_star.png"
+        },
+        {
+          "category": "endings",
+          "state": "two_star",
+          "label": "2星结局",
+          "file": "05_araya/endings/two_star.png"
+        },
+        {
+          "category": "endings",
+          "state": "three_star",
+          "label": "3星投降",
+          "file": "05_araya/endings/three_star.png"
+        },
+        {
+          "category": "boss",
+          "state": "phase2",
+          "label": "第二阶段",
+          "file": "05_araya/boss/phase2.png"
+        }
+      ]
+    },
+    {
+      "id": "06_zero",
+      "name": "零",
+      "assets": [
+        {
+          "category": "expressions",
+          "state": "default",
+          "label": "默认",
+          "file": "06_zero/expressions/default.png"
+        },
+        {
+          "category": "expressions",
+          "state": "proud",
+          "label": "得意",
+          "file": "06_zero/expressions/proud.png"
+        },
+        {
+          "category": "expressions",
+          "state": "mocking",
+          "label": "嘲讽",
+          "file": "06_zero/expressions/mocking.png"
+        },
+        {
+          "category": "expressions",
+          "state": "confused",
+          "label": "疑惑",
+          "file": "06_zero/expressions/confused.png"
+        },
+        {
+          "category": "expressions",
+          "state": "shocked",
+          "label": "震惊",
+          "file": "06_zero/expressions/shocked.png"
+        },
+        {
+          "category": "expressions",
+          "state": "angry",
+          "label": "生气",
+          "file": "06_zero/expressions/angry.png"
+        },
+        {
+          "category": "expressions",
+          "state": "serious",
+          "label": "认真",
+          "file": "06_zero/expressions/serious.png"
+        },
+        {
+          "category": "expressions",
+          "state": "hurt",
+          "label": "受击",
+          "file": "06_zero/expressions/hurt.png"
+        },
+        {
+          "category": "expressions",
+          "state": "defiant",
+          "label": "嘴硬",
+          "file": "06_zero/expressions/defiant.png"
+        },
+        {
+          "category": "expressions",
+          "state": "concede",
+          "label": "认输",
+          "file": "06_zero/expressions/concede.png"
+        },
+        {
+          "category": "poses",
+          "state": "idle",
+          "label": "待机",
+          "file": "06_zero/poses/idle.png"
+        },
+        {
+          "category": "poses",
+          "state": "speaking",
+          "label": "讲话",
+          "file": "06_zero/poses/speaking.png"
+        },
+        {
+          "category": "poses",
+          "state": "correct",
+          "label": "答对反应",
+          "file": "06_zero/poses/correct.png"
+        },
+        {
+          "category": "poses",
+          "state": "incorrect",
+          "label": "答错反应",
+          "file": "06_zero/poses/incorrect.png"
+        },
+        {
+          "category": "poses",
+          "state": "streak",
+          "label": "连续答对反应",
+          "file": "06_zero/poses/streak.png"
+        },
+        {
+          "category": "endings",
+          "state": "one_star",
+          "label": "1星结局",
+          "file": "06_zero/endings/one_star.png"
+        },
+        {
+          "category": "endings",
+          "state": "two_star",
+          "label": "2星结局",
+          "file": "06_zero/endings/two_star.png"
+        },
+        {
+          "category": "endings",
+          "state": "three_star",
+          "label": "3星投降",
+          "file": "06_zero/endings/three_star.png"
+        },
+        {
+          "category": "boss",
+          "state": "phase2",
+          "label": "第二阶段",
+          "file": "06_zero/boss/phase2.png"
+        }
+      ]
+    }
+  ]
+}

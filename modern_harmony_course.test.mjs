@@ -29,7 +29,8 @@ test('each new A topic has four branches and B extensions teach and assess all f
   for(const topic of TOPICS) {
     const a=[...UNITS,...SIDES].find(u=>u.id===topic.id),b=levelById(topic.b),x=extLevelById(`${topic.b}x`);
     assert.equal(a.branch.length,4);
-    a.branch.forEach(branch=>assert.equal(expandCards(branch.cards,rng(17)).filter(c=>c.type!=='guide').length,4));
+    // 每个进阶关：生成题 4 道 + 背景与概念题（modern_harmony_concepts.js）
+    a.branch.forEach(branch=>{const qs=expandCards(branch.cards,rng(17)).filter(c=>c.type!=='guide');assert.ok(qs.length>=6,`${topic.id}: ${qs.length}`);assert.ok(branch.cards.filter(c=>c.type==='choice').length>=2);});
     assert.deepEqual(x.coveredBranches,a.branch.map(branch=>branch.title));
     assert.deepEqual(x.sections.explain.filter(n=>n.type==='guide').map(n=>n.title),x.coveredBranches);
     assert.deepEqual(x.sections.challenge.filter(n=>n.type==='gen').map(n=>n.params.stage),[1,2,3,4]);

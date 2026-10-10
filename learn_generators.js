@@ -20,8 +20,8 @@ import { primeForm, intervalVector, transpose, invert, mod12, formatSet } from '
 import { THAATS, thaatSemitones } from './world_modes.js';
 import { writtenToConcert } from './instruments.js';
 import { midiAt } from './fretboard.js';
-import { clarifyQuestion } from './learn_question_clarity.js?v=20261006-clarity1';
-import { shuffle } from './learn_engine.js?v=20261006-clarity1';
+import { clarifyQuestion } from './learn_question_clarity.js?v=20261010-boss1';
+import { shuffle } from './learn_engine.js?v=20261010-boss1';
 
 const t = (zh, ja, en) => ({ zh, ja, en });
 const fmt = (template, values) => Object.fromEntries(Object.entries(template).map(([lang, text]) => [lang, text.replace(/\{(\w+)\}/g, (_, key) => {
@@ -177,7 +177,7 @@ const JI_INTERVALS = [
 ];
 
 // ---------- 生成器 ----------
-import { MODERN_GENERATORS } from './modern_harmony_generators.js?v=20261009-audio1';
+import { MODERN_GENERATORS } from './modern_harmony_generators.js?v=20261010-talk1';
 export const GENERATORS = { ...MODERN_GENERATORS,
   // 入门：键盘、谱号、节奏 -------------------------------------------------
   keyName: { ref: 'omt2e-keyboard', make(rng) {

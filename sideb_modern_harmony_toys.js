@@ -1,9 +1,9 @@
 // ref:koozin-planing
 // Interactive original examples; ref:rubin-nonfunctional ref:arndt-tonality ref:ircam-spectral ref:ircam-spectrum ref:gann-ji ref:gann-ji-reasons
-import { mountModernHarmony } from './modern_harmony_tools_ui.js?v=20261008-b-workshop1';
-import { TOPICS, t, cents, midiForHz, chord, chain, frequencies, layers } from './modern_harmony_course.js?v=20261008-spectrum-side1';
-import { pitch } from './modern_harmony_generators.js?v=20261009-audio1';
-import { playAudio } from './sideb_toys.js?v=20261009-audio1';
+import { mountModernHarmony } from './modern_harmony_tools_ui.js?v=20261010-mh2';
+import { TOPICS, t, cents, midiForHz, chord, chain, frequencies, layers } from './modern_harmony_course.js?v=20261010-talk1';
+import { pitch } from './modern_harmony_generators.js?v=20261010-talk1';
+import { playAudio } from './sideb_toys.js?v=20261010-talk1';
 const tx = (value) => typeof value === 'string' ? value : value[globalThis.window?.__lang || 'zh'] || value.en;
 const el = (tag, cls, text) => {const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=tx(text);return n;};
 export function toyModel(topic, mode, value) {
@@ -28,8 +28,8 @@ export function toyModel(topic, mode, value) {
   const errors=ratios.map((r,i)=>cents(r)-cents(just[i]));
   return {audio:frequencies(...hz),text:`1/1=${value} Hz / ${hz.map(f=>f.toFixed(2)).join(', ')} Hz${steps?` / k=${steps.join(', ')} / ${tx(t('误差（音分）','誤差（セント）','Error (cents)'))}=${errors.map(x=>x.toFixed(2)).join(', ')}`:' / 1:5/4:3/2'}`};
 }
-import {DEFAULTS,MODERN_GOALS,modernGoalMet} from './sideb_modern_harmony_goals.js?v=20261008-b-workshop1';
-import {MODERN_MISSIONS} from './sideb_modern_harmony_scenes.js?v=20261009-audio1';
+import {DEFAULTS,MODERN_GOALS,modernGoalMet} from './sideb_modern_harmony_goals.js?v=20261010-talk1';
+import {MODERN_MISSIONS} from './sideb_modern_harmony_scenes.js?v=20261010-flip1';
 export function modernHarmonyToy(host,params={}, {playChord, stopAudio = () => {}, onSolved}={}) {
   const topic=TOPICS.find(x=>x.id===params.topic);if(!topic)return {};
   const wrap=el('div','sideb-toy sideb-modern-toy'), target=el('div'), board=el('section','mh-mission-board');

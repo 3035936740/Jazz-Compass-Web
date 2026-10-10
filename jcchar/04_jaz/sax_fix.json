@@ -1,0 +1,1062 @@
+﻿{
+    "tool":  "built-in image_gen",
+    "prompt":  "Use case: precise-object-edit. Edit target: image 1 is the existing 800x800 transparent game sprite, images 2 and 3 are the user\u0027s correct saxophone references (image 3\u0027s red rectangle is only an annotation). Repair ONLY the saxophone tone holes. The correct design has exactly FOUR dark oval holes, a single column on the narrow straight upper tube, ending just ABOVE the bell. Keep the existing top four holes in image 1 unchanged. Remove the FIVE-TH hole at about x640 y526 and the THREE extra dark holes on the lower body at about (627,565), (659,568), (645,599); replace those four lower dark spots with smooth uninterrupted golden yellow saxophone body matching its surrounding gradient. Keep the dark inner bell untouched. Preserve sax outline, highlight, hand, mouthpiece, everything else. Pixel identity outside those four small lower hole regions is crucial. Keep the sprite\u0027s original position, scale, silhouette, hat, shoes, facial expression and all colors unchanged. Do not crop, recenter, zoom, move, rotate or redraw the character. Same square transparent canvas and framing as image 1, intended final 800x800 PNG RGBA. No annotations, red boxes, text or background.",
+    "summary":  "按用户四孔参考，仅去除萨克斯下部四个多余孔；保留上部四孔和喇叭口。21 张图保持 800x800 RGBA，修补区域之外的全部像素及整张 alpha 通道不变。",
+    "generatedSource":  "C:/Users/Bing/.codex/generated_images/01a11639-b71e-7b22-beec-558c5ce12269/exec-ef66cac7-3c79-4f02-b408-f196cefea75f.png",
+    "backupDirectory":  "C:/Users/Bing/.codex/visualizations/2026/10/07/01a11639-b71e-7b22-beec-558c5ce12269/originals/04_jaz",
+    "validation":  {
+                       "value":  [
+                                     {
+                                         "file":  "04_jaz\\boss\\first_meeting.png",
+                                         "validation":  {
+                                                            "holesRemoved":  [
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    629,
+                                                                                                    510,
+                                                                                                    650,
+                                                                                                    540
+                                                                                                ],
+                                                                                     "pixels":  517
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    617,
+                                                                                                    549,
+                                                                                                    636,
+                                                                                                    579
+                                                                                                ],
+                                                                                     "pixels":  501
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    649,
+                                                                                                    554,
+                                                                                                    668,
+                                                                                                    581
+                                                                                                ],
+                                                                                     "pixels":  426
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    633,
+                                                                                                    582,
+                                                                                                    656,
+                                                                                                    616
+                                                                                                ],
+                                                                                     "pixels":  649
+                                                                                 }
+                                                                             ],
+                                                            "changedPixels":  3113,
+                                                            "outsideMaskChanged":  0,
+                                                            "alphaChanged":  0,
+                                                            "canvas":  [
+                                                                           800,
+                                                                           800
+                                                                       ]
+                                                        }
+                                     },
+                                     {
+                                         "file":  "04_jaz\\boss\\phase2.png",
+                                         "validation":  {
+                                                            "holesRemoved":  [
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    653,
+                                                                                                    417,
+                                                                                                    673,
+                                                                                                    448
+                                                                                                ],
+                                                                                     "pixels":  522
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    648,
+                                                                                                    454,
+                                                                                                    668,
+                                                                                                    485
+                                                                                                ],
+                                                                                     "pixels":  506
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    682,
+                                                                                                    453,
+                                                                                                    701,
+                                                                                                    482
+                                                                                                ],
+                                                                                     "pixels":  458
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    669,
+                                                                                                    484,
+                                                                                                    691,
+                                                                                                    516
+                                                                                                ],
+                                                                                     "pixels":  588
+                                                                                 }
+                                                                             ],
+                                                            "changedPixels":  3098,
+                                                            "outsideMaskChanged":  0,
+                                                            "alphaChanged":  0,
+                                                            "canvas":  [
+                                                                           800,
+                                                                           800
+                                                                       ]
+                                                        }
+                                     },
+                                     {
+                                         "file":  "04_jaz\\boss\\return_meeting.png",
+                                         "validation":  {
+                                                            "holesRemoved":  [
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    629,
+                                                                                                    510,
+                                                                                                    649,
+                                                                                                    540
+                                                                                                ],
+                                                                                     "pixels":  514
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    617,
+                                                                                                    549,
+                                                                                                    636,
+                                                                                                    579
+                                                                                                ],
+                                                                                     "pixels":  497
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    649,
+                                                                                                    554,
+                                                                                                    668,
+                                                                                                    581
+                                                                                                ],
+                                                                                     "pixels":  428
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    632,
+                                                                                                    583,
+                                                                                                    656,
+                                                                                                    617
+                                                                                                ],
+                                                                                     "pixels":  658
+                                                                                 }
+                                                                             ],
+                                                            "changedPixels":  3110,
+                                                            "outsideMaskChanged":  0,
+                                                            "alphaChanged":  0,
+                                                            "canvas":  [
+                                                                           800,
+                                                                           800
+                                                                       ]
+                                                        }
+                                     },
+                                     {
+                                         "file":  "04_jaz\\endings\\one_star.png",
+                                         "validation":  {
+                                                            "holesRemoved":  [
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    636,
+                                                                                                    551,
+                                                                                                    656,
+                                                                                                    580
+                                                                                                ],
+                                                                                     "pixels":  481
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    621,
+                                                                                                    588,
+                                                                                                    641,
+                                                                                                    617
+                                                                                                ],
+                                                                                     "pixels":  469
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    653,
+                                                                                                    595,
+                                                                                                    671,
+                                                                                                    621
+                                                                                                ],
+                                                                                     "pixels":  386
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    635,
+                                                                                                    622,
+                                                                                                    657,
+                                                                                                    654
+                                                                                                ],
+                                                                                     "pixels":  592
+                                                                                 }
+                                                                             ],
+                                                            "changedPixels":  2912,
+                                                            "outsideMaskChanged":  0,
+                                                            "alphaChanged":  0,
+                                                            "canvas":  [
+                                                                           800,
+                                                                           800
+                                                                       ]
+                                                        }
+                                     },
+                                     {
+                                         "file":  "04_jaz\\endings\\three_star.png",
+                                         "validation":  {
+                                                            "holesRemoved":  [
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    606,
+                                                                                                    591,
+                                                                                                    627,
+                                                                                                    619
+                                                                                                ],
+                                                                                     "pixels":  505
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    591,
+                                                                                                    627,
+                                                                                                    613,
+                                                                                                    655
+                                                                                                ],
+                                                                                     "pixels":  497
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    622,
+                                                                                                    630,
+                                                                                                    643,
+                                                                                                    658
+                                                                                                ],
+                                                                                     "pixels":  473
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    606,
+                                                                                                    659,
+                                                                                                    631,
+                                                                                                    691
+                                                                                                ],
+                                                                                     "pixels":  649
+                                                                                 }
+                                                                             ],
+                                                            "changedPixels":  3140,
+                                                            "outsideMaskChanged":  0,
+                                                            "alphaChanged":  0,
+                                                            "canvas":  [
+                                                                           800,
+                                                                           800
+                                                                       ]
+                                                        }
+                                     },
+                                     {
+                                         "file":  "04_jaz\\endings\\two_star.png",
+                                         "validation":  {
+                                                            "holesRemoved":  [
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    629,
+                                                                                                    510,
+                                                                                                    650,
+                                                                                                    540
+                                                                                                ],
+                                                                                     "pixels":  523
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    617,
+                                                                                                    549,
+                                                                                                    636,
+                                                                                                    579
+                                                                                                ],
+                                                                                     "pixels":  501
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    649,
+                                                                                                    554,
+                                                                                                    668,
+                                                                                                    581
+                                                                                                ],
+                                                                                     "pixels":  420
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    633,
+                                                                                                    582,
+                                                                                                    656,
+                                                                                                    616
+                                                                                                ],
+                                                                                     "pixels":  650
+                                                                                 }
+                                                                             ],
+                                                            "changedPixels":  3111,
+                                                            "outsideMaskChanged":  0,
+                                                            "alphaChanged":  0,
+                                                            "canvas":  [
+                                                                           800,
+                                                                           800
+                                                                       ]
+                                                        }
+                                     },
+                                     {
+                                         "file":  "04_jaz\\expressions\\angry.png",
+                                         "validation":  {
+                                                            "holesRemoved":  [
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    630,
+                                                                                                    510,
+                                                                                                    650,
+                                                                                                    540
+                                                                                                ],
+                                                                                     "pixels":  513
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    617,
+                                                                                                    549,
+                                                                                                    637,
+                                                                                                    579
+                                                                                                ],
+                                                                                     "pixels":  505
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    650,
+                                                                                                    554,
+                                                                                                    669,
+                                                                                                    581
+                                                                                                ],
+                                                                                     "pixels":  428
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    634,
+                                                                                                    582,
+                                                                                                    657,
+                                                                                                    616
+                                                                                                ],
+                                                                                     "pixels":  655
+                                                                                 }
+                                                                             ],
+                                                            "changedPixels":  3128,
+                                                            "outsideMaskChanged":  0,
+                                                            "alphaChanged":  0,
+                                                            "canvas":  [
+                                                                           800,
+                                                                           800
+                                                                       ]
+                                                        }
+                                     },
+                                     {
+                                         "file":  "04_jaz\\expressions\\concede.png",
+                                         "validation":  {
+                                                            "holesRemoved":  [
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    630,
+                                                                                                    510,
+                                                                                                    650,
+                                                                                                    540
+                                                                                                ],
+                                                                                     "pixels":  515
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    617,
+                                                                                                    549,
+                                                                                                    637,
+                                                                                                    579
+                                                                                                ],
+                                                                                     "pixels":  506
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    649,
+                                                                                                    554,
+                                                                                                    668,
+                                                                                                    581
+                                                                                                ],
+                                                                                     "pixels":  419
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    633,
+                                                                                                    582,
+                                                                                                    656,
+                                                                                                    616
+                                                                                                ],
+                                                                                     "pixels":  647
+                                                                                 }
+                                                                             ],
+                                                            "changedPixels":  3106,
+                                                            "outsideMaskChanged":  0,
+                                                            "alphaChanged":  0,
+                                                            "canvas":  [
+                                                                           800,
+                                                                           800
+                                                                       ]
+                                                        }
+                                     },
+                                     {
+                                         "file":  "04_jaz\\expressions\\confused.png",
+                                         "validation":  {
+                                                            "holesRemoved":  [
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    629,
+                                                                                                    510,
+                                                                                                    649,
+                                                                                                    540
+                                                                                                ],
+                                                                                     "pixels":  517
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    617,
+                                                                                                    549,
+                                                                                                    636,
+                                                                                                    579
+                                                                                                ],
+                                                                                     "pixels":  502
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    649,
+                                                                                                    554,
+                                                                                                    668,
+                                                                                                    581
+                                                                                                ],
+                                                                                     "pixels":  415
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    633,
+                                                                                                    583,
+                                                                                                    656,
+                                                                                                    617
+                                                                                                ],
+                                                                                     "pixels":  645
+                                                                                 }
+                                                                             ],
+                                                            "changedPixels":  3096,
+                                                            "outsideMaskChanged":  0,
+                                                            "alphaChanged":  0,
+                                                            "canvas":  [
+                                                                           800,
+                                                                           800
+                                                                       ]
+                                                        }
+                                     },
+                                     {
+                                         "file":  "04_jaz\\expressions\\default.png",
+                                         "validation":  {
+                                                            "holesRemoved":  [
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    629,
+                                                                                                    510,
+                                                                                                    650,
+                                                                                                    540
+                                                                                                ],
+                                                                                     "pixels":  517
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    617,
+                                                                                                    549,
+                                                                                                    636,
+                                                                                                    579
+                                                                                                ],
+                                                                                     "pixels":  501
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    649,
+                                                                                                    554,
+                                                                                                    668,
+                                                                                                    581
+                                                                                                ],
+                                                                                     "pixels":  426
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    633,
+                                                                                                    582,
+                                                                                                    656,
+                                                                                                    616
+                                                                                                ],
+                                                                                     "pixels":  649
+                                                                                 }
+                                                                             ],
+                                                            "changedPixels":  3113,
+                                                            "outsideMaskChanged":  0,
+                                                            "alphaChanged":  0,
+                                                            "canvas":  [
+                                                                           800,
+                                                                           800
+                                                                       ]
+                                                        }
+                                     },
+                                     {
+                                         "file":  "04_jaz\\expressions\\defiant.png",
+                                         "validation":  {
+                                                            "holesRemoved":  [
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    630,
+                                                                                                    510,
+                                                                                                    650,
+                                                                                                    540
+                                                                                                ],
+                                                                                     "pixels":  524
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    617,
+                                                                                                    549,
+                                                                                                    637,
+                                                                                                    579
+                                                                                                ],
+                                                                                     "pixels":  508
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    649,
+                                                                                                    554,
+                                                                                                    669,
+                                                                                                    581
+                                                                                                ],
+                                                                                     "pixels":  419
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    633,
+                                                                                                    582,
+                                                                                                    656,
+                                                                                                    616
+                                                                                                ],
+                                                                                     "pixels":  647
+                                                                                 }
+                                                                             ],
+                                                            "changedPixels":  3126,
+                                                            "outsideMaskChanged":  0,
+                                                            "alphaChanged":  0,
+                                                            "canvas":  [
+                                                                           800,
+                                                                           800
+                                                                       ]
+                                                        }
+                                     },
+                                     {
+                                         "file":  "04_jaz\\expressions\\hurt.png",
+                                         "validation":  {
+                                                            "holesRemoved":  [
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    630,
+                                                                                                    510,
+                                                                                                    650,
+                                                                                                    540
+                                                                                                ],
+                                                                                     "pixels":  522
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    617,
+                                                                                                    549,
+                                                                                                    637,
+                                                                                                    579
+                                                                                                ],
+                                                                                     "pixels":  505
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    650,
+                                                                                                    554,
+                                                                                                    669,
+                                                                                                    581
+                                                                                                ],
+                                                                                     "pixels":  427
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    633,
+                                                                                                    582,
+                                                                                                    656,
+                                                                                                    616
+                                                                                                ],
+                                                                                     "pixels":  642
+                                                                                 }
+                                                                             ],
+                                                            "changedPixels":  3112,
+                                                            "outsideMaskChanged":  0,
+                                                            "alphaChanged":  0,
+                                                            "canvas":  [
+                                                                           800,
+                                                                           800
+                                                                       ]
+                                                        }
+                                     },
+                                     {
+                                         "file":  "04_jaz\\expressions\\mocking.png",
+                                         "validation":  {
+                                                            "holesRemoved":  [
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    630,
+                                                                                                    510,
+                                                                                                    650,
+                                                                                                    540
+                                                                                                ],
+                                                                                     "pixels":  515
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    617,
+                                                                                                    549,
+                                                                                                    636,
+                                                                                                    579
+                                                                                                ],
+                                                                                     "pixels":  502
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    649,
+                                                                                                    554,
+                                                                                                    668,
+                                                                                                    581
+                                                                                                ],
+                                                                                     "pixels":  421
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    633,
+                                                                                                    583,
+                                                                                                    656,
+                                                                                                    616
+                                                                                                ],
+                                                                                     "pixels":  638
+                                                                                 }
+                                                                             ],
+                                                            "changedPixels":  3090,
+                                                            "outsideMaskChanged":  0,
+                                                            "alphaChanged":  0,
+                                                            "canvas":  [
+                                                                           800,
+                                                                           800
+                                                                       ]
+                                                        }
+                                     },
+                                     {
+                                         "file":  "04_jaz\\expressions\\proud.png",
+                                         "validation":  {
+                                                            "holesRemoved":  [
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    630,
+                                                                                                    510,
+                                                                                                    650,
+                                                                                                    540
+                                                                                                ],
+                                                                                     "pixels":  521
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    617,
+                                                                                                    549,
+                                                                                                    637,
+                                                                                                    579
+                                                                                                ],
+                                                                                     "pixels":  505
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    650,
+                                                                                                    554,
+                                                                                                    669,
+                                                                                                    581
+                                                                                                ],
+                                                                                     "pixels":  420
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    633,
+                                                                                                    582,
+                                                                                                    656,
+                                                                                                    616
+                                                                                                ],
+                                                                                     "pixels":  636
+                                                                                 }
+                                                                             ],
+                                                            "changedPixels":  3103,
+                                                            "outsideMaskChanged":  0,
+                                                            "alphaChanged":  0,
+                                                            "canvas":  [
+                                                                           800,
+                                                                           800
+                                                                       ]
+                                                        }
+                                     },
+                                     {
+                                         "file":  "04_jaz\\expressions\\serious.png",
+                                         "validation":  {
+                                                            "holesRemoved":  [
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    630,
+                                                                                                    510,
+                                                                                                    650,
+                                                                                                    540
+                                                                                                ],
+                                                                                     "pixels":  521
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    617,
+                                                                                                    549,
+                                                                                                    637,
+                                                                                                    579
+                                                                                                ],
+                                                                                     "pixels":  509
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    650,
+                                                                                                    554,
+                                                                                                    669,
+                                                                                                    580
+                                                                                                ],
+                                                                                     "pixels":  419
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    633,
+                                                                                                    582,
+                                                                                                    657,
+                                                                                                    616
+                                                                                                ],
+                                                                                     "pixels":  669
+                                                                                 }
+                                                                             ],
+                                                            "changedPixels":  3145,
+                                                            "outsideMaskChanged":  0,
+                                                            "alphaChanged":  0,
+                                                            "canvas":  [
+                                                                           800,
+                                                                           800
+                                                                       ]
+                                                        }
+                                     },
+                                     {
+                                         "file":  "04_jaz\\expressions\\shocked.png",
+                                         "validation":  {
+                                                            "holesRemoved":  [
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    629,
+                                                                                                    510,
+                                                                                                    649,
+                                                                                                    540
+                                                                                                ],
+                                                                                     "pixels":  518
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    617,
+                                                                                                    549,
+                                                                                                    636,
+                                                                                                    579
+                                                                                                ],
+                                                                                     "pixels":  500
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    649,
+                                                                                                    554,
+                                                                                                    668,
+                                                                                                    581
+                                                                                                ],
+                                                                                     "pixels":  422
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    633,
+                                                                                                    583,
+                                                                                                    656,
+                                                                                                    616
+                                                                                                ],
+                                                                                     "pixels":  645
+                                                                                 }
+                                                                             ],
+                                                            "changedPixels":  3105,
+                                                            "outsideMaskChanged":  0,
+                                                            "alphaChanged":  0,
+                                                            "canvas":  [
+                                                                           800,
+                                                                           800
+                                                                       ]
+                                                        }
+                                     },
+                                     {
+                                         "file":  "04_jaz\\poses\\correct.png",
+                                         "validation":  {
+                                                            "holesRemoved":  [
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    630,
+                                                                                                    510,
+                                                                                                    650,
+                                                                                                    540
+                                                                                                ],
+                                                                                     "pixels":  518
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    617,
+                                                                                                    549,
+                                                                                                    637,
+                                                                                                    579
+                                                                                                ],
+                                                                                     "pixels":  508
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    650,
+                                                                                                    554,
+                                                                                                    669,
+                                                                                                    581
+                                                                                                ],
+                                                                                     "pixels":  418
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    633,
+                                                                                                    582,
+                                                                                                    656,
+                                                                                                    616
+                                                                                                ],
+                                                                                     "pixels":  639
+                                                                                 }
+                                                                             ],
+                                                            "changedPixels":  3092,
+                                                            "outsideMaskChanged":  0,
+                                                            "alphaChanged":  0,
+                                                            "canvas":  [
+                                                                           800,
+                                                                           800
+                                                                       ]
+                                                        }
+                                     },
+                                     {
+                                         "file":  "04_jaz\\poses\\idle.png",
+                                         "validation":  {
+                                                            "holesRemoved":  [
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    629,
+                                                                                                    510,
+                                                                                                    650,
+                                                                                                    540
+                                                                                                ],
+                                                                                     "pixels":  517
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    617,
+                                                                                                    549,
+                                                                                                    636,
+                                                                                                    579
+                                                                                                ],
+                                                                                     "pixels":  501
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    649,
+                                                                                                    554,
+                                                                                                    668,
+                                                                                                    581
+                                                                                                ],
+                                                                                     "pixels":  426
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    633,
+                                                                                                    582,
+                                                                                                    656,
+                                                                                                    616
+                                                                                                ],
+                                                                                     "pixels":  649
+                                                                                 }
+                                                                             ],
+                                                            "changedPixels":  3113,
+                                                            "outsideMaskChanged":  0,
+                                                            "alphaChanged":  0,
+                                                            "canvas":  [
+                                                                           800,
+                                                                           800
+                                                                       ]
+                                                        }
+                                     },
+                                     {
+                                         "file":  "04_jaz\\poses\\incorrect.png",
+                                         "validation":  {
+                                                            "holesRemoved":  [
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    629,
+                                                                                                    510,
+                                                                                                    649,
+                                                                                                    540
+                                                                                                ],
+                                                                                     "pixels":  524
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    616,
+                                                                                                    549,
+                                                                                                    636,
+                                                                                                    579
+                                                                                                ],
+                                                                                     "pixels":  511
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    649,
+                                                                                                    554,
+                                                                                                    668,
+                                                                                                    581
+                                                                                                ],
+                                                                                     "pixels":  426
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    633,
+                                                                                                    582,
+                                                                                                    656,
+                                                                                                    617
+                                                                                                ],
+                                                                                     "pixels":  651
+                                                                                 }
+                                                                             ],
+                                                            "changedPixels":  3141,
+                                                            "outsideMaskChanged":  0,
+                                                            "alphaChanged":  0,
+                                                            "canvas":  [
+                                                                           800,
+                                                                           800
+                                                                       ]
+                                                        }
+                                     },
+                                     {
+                                         "file":  "04_jaz\\poses\\speaking.png",
+                                         "validation":  {
+                                                            "holesRemoved":  [
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    629,
+                                                                                                    510,
+                                                                                                    650,
+                                                                                                    540
+                                                                                                ],
+                                                                                     "pixels":  517
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    617,
+                                                                                                    549,
+                                                                                                    636,
+                                                                                                    579
+                                                                                                ],
+                                                                                     "pixels":  502
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    649,
+                                                                                                    554,
+                                                                                                    668,
+                                                                                                    581
+                                                                                                ],
+                                                                                     "pixels":  422
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    633,
+                                                                                                    582,
+                                                                                                    656,
+                                                                                                    616
+                                                                                                ],
+                                                                                     "pixels":  647
+                                                                                 }
+                                                                             ],
+                                                            "changedPixels":  3107,
+                                                            "outsideMaskChanged":  0,
+                                                            "alphaChanged":  0,
+                                                            "canvas":  [
+                                                                           800,
+                                                                           800
+                                                                       ]
+                                                        }
+                                     },
+                                     {
+                                         "file":  "04_jaz\\poses\\streak.png",
+                                         "validation":  {
+                                                            "holesRemoved":  [
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    631,
+                                                                                                    510,
+                                                                                                    651,
+                                                                                                    540
+                                                                                                ],
+                                                                                     "pixels":  517
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    617,
+                                                                                                    549,
+                                                                                                    638,
+                                                                                                    579
+                                                                                                ],
+                                                                                     "pixels":  517
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    650,
+                                                                                                    554,
+                                                                                                    669,
+                                                                                                    581
+                                                                                                ],
+                                                                                     "pixels":  422
+                                                                                 },
+                                                                                 {
+                                                                                     "bounds":  [
+                                                                                                    634,
+                                                                                                    583,
+                                                                                                    657,
+                                                                                                    617
+                                                                                                ],
+                                                                                     "pixels":  649
+                                                                                 }
+                                                                             ],
+                                                            "changedPixels":  3125,
+                                                            "outsideMaskChanged":  0,
+                                                            "alphaChanged":  0,
+                                                            "canvas":  [
+                                                                           800,
+                                                                           800
+                                                                       ]
+                                                        }
+                                     }
+                                 ],
+                       "Count":  21
+                   }
+}

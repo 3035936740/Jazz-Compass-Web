@@ -29,7 +29,8 @@ test('inversion buttons move the actual bass by rotating notes through octaves',
   assert.deepEqual(chord(-2).tones.map(t => t.midi), [52, 55, 60]);
   const upper = circleDegreeChord(major, 7, 'I');
   assert.equal(upper.name, 'C');
-  upper.frequencies.forEach((f, i) => assert.equal(f, chord(0).frequencies[i] * 2));
+  // 高八度 = 频率乘 2（浮点运算可能差最后一位，按相对误差比较）
+  upper.frequencies.forEach((f, i) => assert.ok(Math.abs(f / (chord(0).frequencies[i] * 2) - 1) < 1e-12, `${f} vs ${chord(0).frequencies[i] * 2}`));
 });
 
 test('sevenths use scale spelling and correct qualities, figures and slash basses', () => {

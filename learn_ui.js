@@ -2,7 +2,7 @@ import { createLessonPlayback } from './lesson_audio.js?v=20261009-audio1';
 // 乐理闯关界面：关卡地图（主关 + 进阶分支 + 综合测验 + 结业挑战）、关卡播放器（引导卡 / 选择 / 填空 / 连线）、
 // 图示、提示与解析、去工具里看看（带学习记录，回来时还是同一题）、结算
 // 题目与依据见 learn_content.js / learn_units_*.js / learn_branches_*.js；生成题见 learn_generators.js；规则见 learn_engine.js
-import { UNITS, SECTIONS, SIDES } from './learn_content.js?v=20261008-spectrum-side1';
+import { UNITS, SECTIONS, SIDES } from './learn_content.js?v=20261010-talk1';
 import { createGuidePlayback, guideDemoEvents, guideDemoPreviewNotes } from './learn_guide_audio.js?v=20261008-beginner2';
 import { guideDemoForStep, withStepDemos, STEP_DEMOS, SHARED_DEMO_CARDS } from './learn_guide_demos.js?v=20261007-piano-sync1';
 import {
@@ -11,14 +11,17 @@ import {
   buildChapterCards, chapterKey, parseChapterKey, chapterUnlocked, chapterExUnlocked, chapterRevisitPrerequisites,
   saveResume, loadResume, clearResume, unitLevelKeys, setLevelStars, emptyProgress,
   loadReview, saveReview, recordMistake, recordReviewAnswer, dueReview, exportProgress, importProgress, starsFor, isSideLevelUnlocked, unitFullyDone,
-} from './learn_engine.js?v=20261006-circle1';
-import { expandCards } from './learn_generators.js?v=20261009-audio1';
+} from './learn_engine.js?v=20261010-boss1';
+import { expandCards } from './learn_generators.js?v=20261010-talk1';
 import { worksheetHTML, openWorksheet, printable } from './worksheet.js?v=20261004-y1';
 import { renderVisual } from './learn_visuals.js?v=20261008-beginner2';
 import { el, button, language, midiToFrequency, cite } from './module_kit.js';
 import { icon, withIcon } from './ui_icons.js?v=20261007-listen-icon4';
 import { relatedLearnTools } from './learn_feature_unit.js?v=20261006-circle1';
-import { playFeedbackSound, sfxEnabled, setSfxEnabled } from './learn_sfx.js?v=20261009-audio1';
+import { playFeedbackSound, sfxEnabled, setSfxEnabled } from './learn_sfx.js?v=20261011-snd2';
+import { BOSSES, CAST, relationLevel, pickCameo, CAMEO_CHANCE, bossKey, parseBossKey, bossById, bossesOf, exOf, baseOf, bossOpen, bossMissing, bossCards, gateBossFor } from './learn_bosses.js?v=20261011-jz1';
+import { createBossBattle, bossIntro, bossEnding } from './learn_boss_ui.js?v=20261011-snd2';
+import { thumbFile } from './boss_sprite.js?v=20261010-cameo1';
 
 // ---------- 调试模式：在浏览器控制台输入 class_debug(true) 打开，class_debug(false) 关闭（记在 localStorage） ----------
 const DEBUG_KEY = 'jc-learn-debug';
@@ -58,7 +61,7 @@ const TEXT = {
     side: '支线', sideDone: (a, b) => `支线 ${a} / ${b}`, sideLocked: (parent) => `把「${parent}」的主关、进阶 1–4 和综合测验全部通关后开放`, sideNote: '支线大关卡：不影响主线和普通结业挑战，EX 结业挑战需要全部支线通关。',
     printSheet: '打印练习卷（含答案）', reviewTitle: '复习错题', reviewButton: (due, all) => (due ? `复习错题 · ${due} 道到期` : `复习错题 · 共 ${all} 道`), reviewHint: (all, due) => `错题本里有 ${all} 道题，${due} 道今天该复习了。答对四次就会移出。`, reviewDone: '复习完成', reviewLeft: (n) => (n ? `错题本里还有 ${n} 道` : '错题本清空了！'),
     exportProgress: '导出进度', importProgress: '导入进度', imported: '进度已导入', importFailed: '这个文件不是乐理闯关的进度文件',
-    celebrateFinal: '结业！', celebrateFinalSub: (n) => `${n} 个主关的知识，你都走过了一遍。`, celebrateClose: '继续',
+    celebrateChapterEx: 'EX 章节测试 · 通关', celebrateChapterExSub: (name) => `${name}的进阶内容，你都走过了一遍。`, celebrateFinal: '结业！', celebrateFinalSub: (n) => `${n} 个主关的知识，你都走过了一遍。`, celebrateClose: '继续',
     exLines: ['EX 结业挑战 · 通关', '从五线谱、音程，到和声、对位、爵士、世界音乐和二十世纪……', '这张地图，你已经走完了。', '但是——'], exFinale: '乐理远不止于此', exClose: '继续探索',
     question: (a, b) => `第 ${a} / ${b} 题`, chapters: '章节', resumeLabel: (title, a, b) => `继续没做完的：${title}（第 ${a} / ${b} 题）`, toolNote: '看完工具后，点页面上方的「回到教程」就会回到这一题。',
   },
@@ -80,7 +83,7 @@ const TEXT = {
     side: '支線', sideDone: (a, b) => `支線 ${a} / ${b}`, sideLocked: (parent) => `「${parent}」のメイン・発展 1–4・総合テストを全クリアすると解放`, sideNote: '支線ステージ：メインルートと通常の修了チャレンジには影響しません。EX 修了チャレンジにはすべての支線のクリアが必要です。',
     printSheet: '練習プリントを印刷（解答つき）', reviewTitle: 'まちがえた問題の復習', reviewButton: (due, all) => (due ? `復習 · 今日 ${due} 問` : `復習 · 全 ${all} 問`), reviewHint: (all, due) => `復習ノートに ${all} 問、今日の分は ${due} 問。4 回正解すると外れます。`, reviewDone: '復習おわり', reviewLeft: (n) => (n ? `復習ノートの残り ${n} 問` : '復習ノートが空になりました！'),
     exportProgress: '進み具合を書き出す', importProgress: '進み具合を読み込む', imported: '進み具合を読み込みました', importFailed: 'このファイルは音楽理論チャレンジの進み具合ではありません',
-    celebrateFinal: '修了！', celebrateFinalSub: (n) => `${n} のメインステージをすべて歩き切りました。`, celebrateClose: '続ける',
+    celebrateChapterEx: 'EX 章末テスト・クリア', celebrateChapterExSub: (name) => `${name}の発展の内容を、すべて歩き切りました。`, celebrateFinal: '修了！', celebrateFinalSub: (n) => `${n} のメインステージをすべて歩き切りました。`, celebrateClose: '続ける',
     exLines: ['EX 修了チャレンジ · クリア', '五線譜と音程から、和声・対位法・ジャズ・世界の音楽・20 世紀まで……', 'この地図は、もう最後まで歩きました。', 'でも——'], exFinale: '音楽理論は、これだけではない', exClose: 'さらに探検する',
     question: (a, b) => `${a} / ${b} 問目`, chapters: '章', resumeLabel: (title, a, b) => `途中から再開：${title}（${a} / ${b} 問目）`, toolNote: 'ツールを見たら、ページ上部の「チュートリアルに戻る」でこの問題に戻れます。',
   },
@@ -102,7 +105,7 @@ const TEXT = {
     side: 'Side quest', sideDone: (a, b) => `Side quests ${a} / ${b}`, sideLocked: (parent) => `Opens after clearing all of “${parent}”: main level, advanced 1–4 and the mixed test`, sideNote: 'Side quest: it does not affect the main route or the normal final; the EX final needs every side quest.',
     printSheet: 'Print a worksheet (with answers)', reviewTitle: 'Review mistakes', reviewButton: (due, all) => (due ? `Review · ${due} due` : `Review · ${all} saved`), reviewHint: (all, due) => `${all} questions in your review box, ${due} due today. Answer one right four times and it leaves.`, reviewDone: 'Review finished', reviewLeft: (n) => (n ? `${n} left in the review box` : 'Review box is empty!'),
     exportProgress: 'Export progress', importProgress: 'Import progress', imported: 'Progress imported', importFailed: 'This is not a Theory Quest progress file',
-    celebrateFinal: 'Graduated!', celebrateFinalSub: (n) => `You have walked through all ${n} main levels.`, celebrateClose: 'Continue',
+    celebrateChapterEx: 'EX chapter test cleared', celebrateChapterExSub: (name) => `You have walked through all of ${name}’s advanced material.`, celebrateFinal: 'Graduated!', celebrateFinalSub: (n) => `You have walked through all ${n} main levels.`, celebrateClose: 'Continue',
     exLines: ['EX final challenge · cleared', 'From the staff and intervals to harmony, counterpoint, jazz, world music and the twentieth century…', 'You have walked this whole map.', 'But —'], exFinale: 'Music theory goes far beyond this', exClose: 'Keep exploring',
     question: (a, b) => `Question ${a} / ${b}`, chapters: 'Chapters', resumeLabel: (title, a, b) => `Resume: ${title} (question ${a} / ${b})`, toolNote: 'After looking at the tool, press “Back to tutorial” at the top of the page to return to this question.',
   },
@@ -115,6 +118,8 @@ export function learnLevelTitle(key, lang = 'zh', fallback = '') {
   if (key === 'review') return text.reviewTitle;
   if (key === FINAL_KEY) return text.final;
   if (key === FINAL_EX_KEY) return text.finalEx;
+  const bossId = parseBossKey(key);
+  if (bossId) return bossTitle(bossById(bossId), lang);
   const chapter = parseChapterKey(key);
   if (chapter) {
     const section = SECTIONS.find((s) => s.id === chapter.sectionId);
@@ -128,6 +133,18 @@ export function learnLevelTitle(key, lang = 'zh', fallback = '') {
   const branch = unit.branch?.[slot - 1];
   return branch ? `${pick(unit.title)} · ${text.adv(slot)}${lang === 'en' ? ': ' : '：'}${pick(branch.title)}` : pick(fallback);
 }
+
+/** Boss 战的标题：「MIMI EX · 你是真的会，还是只是见过？」 */
+export function bossTitle(boss, lang = 'zh') {
+  const pick = (value) => typeof value === 'string' ? value : value?.[lang] ?? value?.en ?? '';
+  return `${CAST[boss.cast].code}${boss.ex ? ' EX' : ''}${boss.after ? ` · ${pick(BOSS_TEXT[lang]?.mid ?? BOSS_TEXT.en.mid)}` : ''} · ${pick(boss.theme)}`;
+}
+/** Boss 节点与 Boss 战的界面文字 */
+const BOSS_TEXT = {
+  zh: { perfect: '三星通关', perfectSub: (name) => `${name}认可了你。`, exClaim: '上一战之后，你可能会把结论想得太简单——这一战要打破的想法', claim: '这一战要打破的观点', playerClaim: '这一战要打破的，是你自己的默认想法', skipIntro: '重玩时跳过开场', pace: '台词速度', paces: ['慢', '标准', '快', '全部显示'], cameoDebug: (p) => `Boss 客串概率 ${p}%`, mid: '道中', boss: 'Boss', locked: (m) => `通关本段的 ${m} 个主关后开放`, exLocked: (n) => `打败普通 Boss，并通关本段全部进阶关（进阶 1–4、综合测验）和支线后开放（还差 ${n} 项）`, gate: (name) => `先打败道中 Boss「${name}」`, chapterGate: (name) => `通关本章全部主关并打败「${name}」后开放`, blurb: (n) => `${n} 题 · 围绕一个错误观点：一题一题把它拆掉。答错只看解析，不扣分重来。打完至少一星。`, exBlurb: (n) => `${n} 题 · 打败普通 Boss 以后，你可能把结论推到另一个极端：这一战要打破的是你自己的想法。`, lesson: '这一战要明白的事', first: '第一次通关', upgrade: '升星', again: '再战一次', ex: '挑战 EX', next: '继续前进', stars: (n) => `${n} 星` },
+  ja: { perfect: '星 3 つでクリア', perfectSub: (name) => `${name}があなたを認めた。`, exClaim: '前の戦いのあと、結論を単純化しすぎていないか——この戦いで崩す考え', claim: 'この戦いで崩す見方', playerClaim: 'この戦いで崩すのは、あなた自身の思い込み', skipIntro: '再戦時はオープニングを飛ばす', pace: 'セリフの速さ', paces: ['遅い', '標準', '速い', '全部表示'], cameoDebug: (p) => `ボスの客演確率 ${p}%`, mid: '道中', boss: 'ボス', locked: (m) => `この区間のメイン ${m} ステージをクリアすると解放`, exLocked: (n) => `通常ボスを倒し、この区間の発展（1–4・総合テスト）と支線をすべてクリアすると解放（あと ${n} 件）`, gate: (name) => `先に道中ボス「${name}」を倒そう`, chapterGate: (name) => `この章のメインを全クリアし「${name}」を倒すと解放`, blurb: (n) => `${n} 問・一つの誤った見方をめぐって、一問ずつそれを崩していく。間違えても解説を読むだけで、減点のやり直しはなし。最後まで行けば星 1 以上。`, exBlurb: (n) => `${n} 問・通常ボスに勝ったあと、結論を反対の極端まで押し進めていないか。この戦いで崩すのはあなた自身の考え。`, lesson: 'この戦いで分かること', first: '初クリア', upgrade: '星アップ', again: 'もう一度戦う', ex: 'EX に挑む', next: '先へ進む', stars: (n) => `星 ${n}` },
+  en: { perfect: 'Three-star clear', perfectSub: (name) => `${name} acknowledges you.`, exClaim: 'After the last fight you may oversimplify its lesson — the idea this fight takes apart', claim: 'The belief this fight takes apart', playerClaim: 'What this fight takes apart is your own assumption', skipIntro: 'Skip the intro on rematches', pace: 'Dialogue speed', paces: ['Slow', 'Normal', 'Fast', 'Show all'], cameoDebug: (p) => `Boss cameo chance ${p}%`, mid: 'Midpoint', boss: 'Boss', locked: (m) => `Opens after this stretch's ${m} main levels`, exLocked: (n) => `Opens after beating the regular boss and clearing every advanced level (1–4 and mixed test) and side quest in this stretch (${n} to go)`, gate: (name) => `Beat the midpoint boss “${name}” first`, chapterGate: (name) => `Opens after every main level in this chapter and beating “${name}”`, blurb: (n) => `${n} questions built around one mistaken belief, taking it apart step by step; a miss just shows the explanation — no retry penalty. Finish for at least one star.`, exBlurb: (n) => `${n} questions: after beating the regular boss you may push its lesson to the opposite extreme — this fight takes apart your own idea.`, lesson: 'What this fight is about', first: 'First clear', upgrade: 'Star up', again: 'Fight again', ex: 'Challenge the EX', next: 'Keep going', stars: (n) => `${n} star${n > 1 ? 's' : ''}` },
+};
 
 /** 本模块引用的全部资料（用于脚注编号；生成题的资料在第一次出现时追加） */
 const SOURCES = [...new Set(UNITS.flatMap((u) => [u.cards, ...(u.branch || []).map((l) => l.cards)].flat().flatMap((c) => [].concat(c.ref ?? []))))];
@@ -237,6 +254,8 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
     if (key === REVIEW_KEY_LEVEL) return { key, title: t.reviewTitle, tone: 'peach', feature: null };
     if (key === FINAL_KEY) return { key, title: t.final, tone: 'rose', feature: null };
     if (key === FINAL_EX_KEY) return { key, title: t.finalEx, tone: 'rose', feature: null };
+    const bossId = parseBossKey(key);
+    if (bossId) { const boss = bossById(bossId); return { key, boss, title: bossTitle(boss, lang), tone: SECTIONS.find((s) => s.id === boss.section)?.color || 'mint', feature: null }; }
     const chapter = parseChapterKey(key);
     if (chapter) { const section = SECTIONS.find((s) => s.id === chapter.sectionId); return { key, chapter, title: `${tx(section?.title)} · ${chapter.ex ? t.chapterTestEx : t.chapterTest}`, tone: section?.color || 'mint', feature: null }; }
     const { unitId, slot } = parseLevelKey(key);
@@ -252,6 +271,9 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
     }
     if (key === FINAL_KEY) return expandCards(buildFinalCards(UNITS));
     if (key === FINAL_EX_KEY) return expandCards(buildFinalCards(UNITS, { ex: true, sides: SIDES }));
+    // Boss 战：固定 15 题、固定顺序；生成题展开后带回剧情信息
+    const bossId = parseBossKey(key);
+    if (bossId) return bossCards(bossById(bossId), UNITS, SIDES).map((card) => (card.type === 'gen' ? { ...expandCards([card])[0], boss: card.boss } : card));
     const chapter = parseChapterKey(key);
     if (chapter) return expandCards(buildChapterCards(chapterUnits(chapter.sectionId), { ex: chapter.ex, sides: chapterSides(chapter.sectionId) }));
     const { unit, slot } = levelInfo(key);
@@ -262,8 +284,36 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
   const branchCount = (unit) => Array.from({ length: MIX_SLOT }, (_, i) => i + 1).filter((s) => isDone(progress, levelKey(unit.id, s))).length;
   const starText = (state) => (state?.done ? `${'★'.repeat(state.stars)}${'☆'.repeat(3 - state.stars)}` : '');
 
+  // ---------------- Boss 的小设置（只是个人偏好，存在本机） ----------------
+  const pref = (key, fallback) => { try { const v = globalThis.localStorage?.getItem(key); return v === null || v === undefined ? fallback : JSON.parse(v); } catch (_) { return fallback; } };
+  const setPref = (key, value) => { try { globalThis.localStorage?.setItem(key, JSON.stringify(value)); } catch (_) { /* 无痕模式等 */ } };
+  const PACE_MS = [2600, 1700, 900, 0];
+  /** 客串概率：平时 5%；调试模式下用调试面板设定的值（0–100%） */
+  const cameoChance = () => (debugEnabled() ? Math.max(0, Math.min(100, Number(pref('jc-boss-cameo', CAMEO_CHANCE * 100)))) / 100 : CAMEO_CHANCE);
+  /** 跨章节客串卡片：打败过的 Boss 偶尔冒出来说一句（概率触发，没触发返回 null） */
+  let lastCameoCast = null;
+  function cameoCard(context, section = null, levelKey = null) {
+    const hit = pickCameo(progress, { context, chance: cameoChance(), levelKey, avoid: lastCameoCast });
+    if (!hit) return null;
+    lastCameoCast = hit.castId;
+    const cast = CAST[hit.castId];
+    const card = el('div', `learn-cameo cast-${hit.castId}`);
+    const face = el('img', 'learn-cameo-face');
+    face.src = thumbFile(cast.dir, 'default'); face.alt = ''; face.width = 192; face.height = 192; face.decoding = 'async';
+    const words = el('div', 'learn-cameo-words');
+    // 卡片上已经有名字：台词开头只写名字的括号（如"（米米）"）去掉，带动作的（如"（米米探出头）"）保留
+    const name = tx(cast.name);
+    const text = tx(hit.line).replace(new RegExp(`^[（(]${name}[）)]\\s*`), '');
+    words.append(el('strong', '', `${cast.code} · ${name}`), el('p', '', text));
+    card.append(face, words);
+    card.setAttribute('role', 'note');
+    return card;
+  }
+
   // ---------------- 地图 ----------------
+  let pendingBoss = null;
   function renderMap() {
+    endingRun?.stop?.(); endingRun = null;
     stop();
     root.replaceChildren();
     const totalStars = Object.values(progress.units).reduce((n, u) => n + (u.stars || 0), 0);
@@ -282,10 +332,14 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
     const fill = el('span');
     fill.style.width = `${(doneCount / UNITS.length) * 100}%`;
     bar.appendChild(fill);
-    const next = nextUnitIndex(UNITS, progress);
+    // 有 Boss 挡路（或章末 Boss 刚开放）时，"继续"先指向 Boss
+    pendingBoss = pendingGateBoss();
+    const next = pendingBoss ? -1 : nextUnitIndex(UNITS, progress);
     const actions = el('div', 'learn-hero-actions');
     actions.append(
-      button('learn-btn primary', doneCount === UNITS.length ? t.replay : `${t.continue} · ${tx(UNITS[next].title)}`, () => startLevel(UNITS[next].id)),
+      pendingBoss
+        ? button('learn-btn primary', `${t.continue} · ${CAST[pendingBoss.cast].code} · ${tx(CAST[pendingBoss.cast].name)}`, () => startLevel(bossKey(pendingBoss.id)))
+        : button('learn-btn primary', doneCount === UNITS.length ? t.replay : `${t.continue} · ${tx(UNITS[next].title)}`, () => startLevel(UNITS[next].id)),
       button('learn-link', progress.unlockAll ? t.relock : t.unlockAll, () => { progress = { ...progress, unlockAll: !progress.unlockAll }; saveProgress(progress); renderMap(); }),
     );
     // 翻面 · Side-B：默认隐藏，EX 结业挑战通关后（或调试模式下）才出现
@@ -348,7 +402,8 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
         const state = progress.units[u.id];
         const node = el('div', `learn-node offset-${k % 4}${unlocked ? '' : ' is-locked'}${state?.done ? ' is-done' : ''}${i === next ? ' is-next' : ''}`);
         node.style.setProperty('--i', String(k));
-        const bubble = button('learn-bubble', unlocked ? u.icon : '', () => toggleSheet(node, () => unitSheet(u, i, unlocked)));
+        const gateText = !unlocked && u.gate && !isDone(progress, u.gate) ? BOSS_TEXT[lang].gate(tx(CAST[bossById(gateBossFor(u.id)).cast].name)) : t.locked;
+        const bubble = button('learn-bubble', unlocked ? u.icon : '', () => toggleSheet(node, () => unitSheet(u, i, unlocked, undefined, gateText)));
         if (unlocked && u.iconName) bubble.appendChild(icon(u.iconName));
         if (!unlocked) bubble.appendChild(icon('lock'));
         // 图标文字较长（如 Dm13、(037)）时缩小字号，避免撑出圆形按钮
@@ -362,15 +417,22 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
         if (i === next) node.appendChild(el('span', 'learn-node-flag', t.start));
         SIDES.filter((side) => side.parent === u.id).forEach((side) => { node.classList.add('has-side'); node.appendChild(sideNode(side, u, k)); });
         path.appendChild(node);
+        // 道中 Boss：接在这一关后面（第二章第 8 节、第四章第 8 节之后），挡住下一关
+        bossesOf(section.id).filter((b) => !b.ex && b.after === u.id).forEach((b) => path.appendChild(bossNode(b, k + 1)));
       });
+      // 章末 Boss：章节测试前面
+      const chapterBoss = bossesOf(section.id).find((b) => !b.ex && !b.after);
+      if (chapterBoss) path.appendChild(bossNode(chapterBoss, units.length));
       // 章末：章节测试与 EX 章节测试（接在这一章的小路后面）
       const ids = units.map(({ u }) => u);
       const sides = chapterSides(section.id);
       // EX 章节测试是章节测试的分支：挂在章节测试旁边（像支线一样），不在主路上；主路从章节测试接到下一章的第一关
-      const chapterNode = examNode({ key: chapterKey(section.id), kind: 'chapter', title: t.chapterTest, blurb: t.chapterBlurb(tx(section.title)), lockText: t.chapterLocked, open: chapterUnlocked(ids, unlockView()), index: units.length });
+      const bossDone = !chapterBoss || unlockView().unlockAll || isDone(progress, bossKey(chapterBoss.id));
+      const chapterNode = examNode({ key: chapterKey(section.id), kind: 'chapter', title: t.chapterTest, blurb: t.chapterBlurb(tx(section.title)), lockText: chapterBoss ? BOSS_TEXT[lang].chapterGate(tx(CAST[chapterBoss.cast].name)) : t.chapterLocked, open: chapterUnlocked(ids, unlockView()) && bossDone, index: units.length + 1 });
       chapterNode.classList.add('has-side');
       const revisit = chapterRevisitText(section.id);
-      chapterNode.appendChild(examNode({ key: chapterKey(section.id, true), kind: 'chapter-ex', title: t.chapterTestEx, blurb: [t.chapterExBlurb(tx(section.title)), revisit].filter(Boolean).join(' '), lockText: t.chapterExLocked, open: chapterExUnlocked(section.id, ids, unlockView(), sides), index: units.length, branch: true }));
+      chapterNode.appendChild(examNode({ key: chapterKey(section.id, true), kind: 'chapter-ex', title: t.chapterTestEx, blurb: [t.chapterExBlurb(tx(section.title)), revisit].filter(Boolean).join(' '), lockText: t.chapterExLocked, open: chapterExUnlocked(section.id, ids, unlockView(), sides), index: units.length + 1, branch: true }));
+      // 分支的左右跟着它挂的那个节点走（index 必须和章节测试相同）：章节测试偏右时 EX 放左边，偏左或居中时放右边，不会跑出屏幕
       path.appendChild(chapterNode);
       block.appendChild(path);
       root.appendChild(block);
@@ -390,6 +452,65 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
     watchChapters(chapterButtons);
     revealSections();
     drawTrails();
+  }
+
+  /**
+   * Boss 节点：圆钮里是角色立绘的头像（同一张 800 × 800 贴图缩小，锚点不变），下面写角色名与这一战的主题；
+   * EX 作为分支挂在旁边（和 EX 章节测试一样）。开放条件见 learn_bosses.bossOpen
+   */
+  function bossNode(boss, index, branch = false) {
+    const key = bossKey(boss.id);
+    const state = progress.units[key];
+    const open = bossOpen(boss, UNITS, SIDES, unlockView());
+    const cast = CAST[boss.cast];
+    const bt = BOSS_TEXT[lang];
+    const isNext = !branch && pendingBoss?.id === boss.id;
+    const node = branch
+      ? el('div', `learn-side learn-boss-side-node learn-boss-node is-ex${index % 4 === 1 ? ' is-left' : ''}${open ? '' : ' is-locked'}${state?.done ? ' is-done' : ''}`)
+      : el('div', `learn-node learn-boss-node offset-${index % 4}${open ? '' : ' is-locked'}${state?.done ? ' is-done' : ''}${isNext ? ' is-next' : ''}`);
+    if (!branch) node.style.setProperty('--i', String(index));
+    if (branch) node.appendChild(el('span', 'learn-side-link'));
+    const missing = bossMissing(boss, UNITS, SIDES, progress);
+    const lockText = boss.ex ? bt.exLocked(missing.branch + missing.sides + missing.base) : bt.locked(missing.main);
+    const bubble = button('learn-bubble learn-boss-bubble-btn', '', (event) => { event?.stopPropagation?.(); toggleSheet(node, () => {
+      const sheet = el('div', `learn-sheet learn-boss-sheet cast-${boss.cast}`);
+      const head = el('div', 'learn-boss-sheet-head');
+      const face = el('img', 'learn-boss-face');
+      face.src = thumbFile(cast.dir, boss.sprite || 'default'); face.alt = ''; face.width = 192; face.height = 192; face.loading = 'lazy';
+      const words = el('div', '');
+      words.append(el('span', 'learn-boss-tag', boss.ex ? 'EX' : boss.after ? bt.mid : bt.boss), el('strong', '', `${cast.code} · ${tx(cast.name)}`), el('p', 'learn-muted', tx(cast.title)));
+      head.append(face, words);
+      sheet.append(head, el('p', 'learn-boss-theme', `“${tx(boss.theme)}”`), el('p', '', boss.ex ? bt.exBlurb(boss.questions.length) : bt.blurb(boss.questions.length)));
+      if (state?.done) sheet.appendChild(el('div', 'learn-node-stars', starText(state)));
+      if (open) sheet.append(button('learn-btn primary', state?.done ? t.replay : t.start, () => startLevel(key)));
+      else sheet.appendChild(el('p', 'learn-muted', lockText));
+      return sheet;
+    }); });
+    if (open) {
+      const face = el('img', 'learn-boss-avatar');
+      face.src = thumbFile(cast.dir, 'default'); face.alt = ''; face.width = 192; face.height = 192; face.loading = 'lazy'; face.decoding = 'async';
+      bubble.appendChild(face);
+    } else bubble.appendChild(icon('lock'));
+    bubble.setAttribute('aria-label', `${bossTitle(boss, lang)}${open ? '' : ` · ${lockText}`}`);
+    bubble.title = open ? bossTitle(boss, lang) : lockText;
+    const badge = el('div', 'learn-exam-badge learn-boss-badge');
+    badge.appendChild(bubble);
+    badge.appendChild(el('span', 'learn-exam-tag learn-boss-mark', boss.ex ? 'EX' : 'BOSS'));
+    node.append(badge, el('div', branch ? 'learn-side-title' : 'learn-node-title', `${cast.code}${boss.ex ? ' EX' : ''}`), el('div', 'learn-node-stars', starText(state)));
+    if (isNext) node.appendChild(el('span', 'learn-node-flag', t.start));
+    const ex = !boss.ex && exOf(boss);
+    if (ex) { node.classList.add('has-side'); node.appendChild(bossNode(ex, index, true)); }
+    return node;
+  }
+  /** 正在挡路的道中 / 章末 Boss：上一段的主关都通关了、Boss 还没打（地图上的"开始"小旗与"继续"按钮指向它） */
+  function pendingGateBoss() {
+    const view = unlockView();
+    if (view.unlockAll) return null;
+    const gated = UNITS.find((u, i) => i > 0 && u.gate && !isDone(progress, u.id) && !isDone(progress, u.gate) && isDone(progress, UNITS[i - 1].id));
+    if (gated) return bossById(gateBossFor(gated.id));
+    // 章末 Boss：下一章第一关也还没开始、这一章主关全部通关时
+    return BOSSES.find((b) => !b.ex && !b.after && !isDone(progress, bossKey(b.id)) && bossOpen(b, UNITS, SIDES, view)
+      && (() => { const last = UNITS.filter((u) => u.section === b.section).at(-1); const next = UNITS[UNITS.indexOf(last) + 1]; return !next || !isDone(progress, next.id); })()) || null;
   }
 
   /**
@@ -767,6 +888,7 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
 
   function startLevel(key) {
     const info = levelInfo(key);
+    if (info.boss && !bossOpen(info.boss, UNITS, SIDES, unlockView())) { renderMap(); return; }
     if (info.unit) {
       const index = unitIndex(info.unit.id);
       const open = index < 0 ? isSideLevelUnlocked(info.unit, info.slot, unlockView())
@@ -778,9 +900,78 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
     if (record && record.key !== key) { clearResume(); notifyResume(); }
     level = levelInfo(key);
     const long = key === FINAL_KEY || key === FINAL_EX_KEY || Boolean(parseChapterKey(key));
-    session = createSession({ id: key, cards: cardsFor(key) }, { shuffleQuestions: !long });
+    session = createSession({ id: key, cards: cardsFor(key) }, { shuffleQuestions: !long && !level.boss });
+    if (level.boss) { session.noRetry = true; session.boss = { hits: 0, streak: 0, wrongStreak: 0, wrongs: 0, answered: 0, rematch: isDone(progress, key) }; startBoss(); return; }
     renderCard();
   }
+
+  // ---------------- Boss 战 ----------------
+  // 舞台（立绘、体力条、气泡）在整场里是同一个节点，每道题重新挂到题卡上方，立绘才会从上一个状态翻转过来。
+  let battle = null;
+  let endingRun = null; // 正在播放的结局台词（离开结算页时停止）
+  function bossBattle() {
+    if (!battle || battle.bossId !== level.boss.id) {
+      battle = createBossBattle({ boss: level.boss, lang, playChord, midiToFrequency, sfxOn: sfxEnabled });
+      battle.bossId = level.boss.id;
+    }
+    return battle;
+  }
+  /** 开场白：重战时先说一句重战台词；章末的塞维尔 / 爵按上一次道中战的星级接一句 */
+  function startBoss() {
+    endingRun?.stop?.(); endingRun = null;
+    stop();
+    battle = null;
+    const boss = level.boss;
+    const cast = CAST[boss.cast];
+    const b = bossBattle();
+    const memoStars = boss.previous ? progress.units[bossKey(boss.previous)]?.stars : 0;
+    const one = (pool) => (Array.isArray(pool) ? pool[Math.floor(Math.random() * pool.length)] : pool);
+    // 和这个角色的关系（打败过别的节点 / EX / 三星）决定称呼和态度；重战同一个节点时用重战台词
+    const relation = relationLevel(boss.cast, progress, { exclude: boss.id });
+    const greet = !session.boss.rematch && !boss.previous && relation ? one(cast.lines.greet[relation]) : null;
+    if (session.boss.rematch && pref('jc-boss-skip-intro', false)) { persist(); renderCard(); return; }
+    const lines = [
+      ...(session.boss.rematch ? [one(cast.lines.rematch)] : []),
+      ...(greet ? [greet] : []),
+      ...one(boss.intros || [boss.intro]),
+      ...(memoStars && boss.memo?.[memoStars] ? [one(boss.memo[memoStars])] : []),
+    ];
+    persist();
+    bossIntro(b, root, {
+      lines, title: level.title, theme: boss.theme, exitLabel: t.close,
+      claim: boss.claim, claimLabel: boss.ex ? BOSS_TEXT[lang].exClaim : boss.playerBelief ? BOSS_TEXT[lang].playerClaim : BOSS_TEXT[lang].claim,
+      onExit: () => { forget(); session = null; level = null; battle = null; renderMap(); },
+      onFight: () => renderCard(),
+    });
+    // 重玩时跳过开场（个人偏好）
+    const skip = el('label', 'learn-boss-pref');
+    const box = el('input'); box.type = 'checkbox'; box.checked = Boolean(pref('jc-boss-skip-intro', false));
+    box.addEventListener('change', () => setPref('jc-boss-skip-intro', box.checked));
+    skip.append(box, document.createTextNode(` ${BOSS_TEXT[lang].skipIntro}`));
+    root.querySelector('.learn-boss-intro')?.appendChild(skip);
+  }
+  /** 这一题的答案文字（点 Boss 太多次时会被说漏） */
+  function bossAnswerText(card) {
+    if (card.type === 'choice') return tx(card.options[card.answer]);
+    if (card.type === 'fill') return card.answer.map((id) => tx(card.bank.find((b) => b.id === id)?.label)).join(' ');
+    if (card.type === 'match') return card.pairs.slice(0, 2).map(([a, b]) => `${tx(a)} → ${tx(b)}`).join('；');
+    return '';
+  }
+  /** 作答以后：更新连对 / 连错，让 Boss 反应（只在第一次提交时算，续玩恢复画面不重复计分） */
+  function bossAnswered(card, correct) {
+    const st = session.boss;
+    const b = bossBattle();
+    st.answered += 1;
+    if (b.wasLeaked()) {
+      // 答案是 Boss 说漏的：答对也不计入星级（engine 已经算进一次答对，这里扣回来），不亮认可、不延长连对
+      st.leaked = [...new Set([...(st.leaked || []), card.boss.index])];
+      if (correct) session.firstTry = Math.max(0, session.firstTry - 1);
+      else { st.wrongs += 1; st.wrongStreak += 1; st.streak = 0; }
+    } else if (correct) { st.hits += 1; st.streak += 1; st.wrongStreak = 0; } else { st.wrongs += 1; st.wrongStreak += 1; st.streak = 0; }
+    b.react(correct, card, st);
+    persist();
+  }
+
 
   function renderCard() {
     stop();
@@ -817,10 +1008,17 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
       sfx.setAttribute('aria-pressed', String(on));
     };
     paintSfx();
-    top.append(button('learn-close', '✕', () => { forget(); session = null; level = null; renderMap(); }), bar, sfx);
+    top.append(button('learn-close', '✕', () => { forget(); session = null; level = null; battle = null; renderMap(); }), bar, sfx);
     bar.setAttribute('aria-label', 'progress');
     top.firstChild.setAttribute('aria-label', t.close);
     shell.appendChild(top);
+    if (level.boss && card.boss) {
+      const b = bossBattle();
+      b.restore({ hits: session.boss.hits });
+      shell.appendChild(b.el);
+      if (!state.submitted) b.ask(card);
+      b.setAnswer(bossAnswerText(card), Boolean(state.submitted));
+    }
     shell.appendChild(el('div', 'learn-level-title', `${level.title} · ${t.question(session.position + 1, session.queue.length)}`));
     if (item.retry) shell.appendChild(el('div', 'learn-retry', t.retryTitle));
     const body = el('div', 'learn-card');
@@ -972,6 +1170,9 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
     footer.replaceChildren();
     footer.classList.add(correct ? 'is-right' : 'is-wrong');
     if (sound) playFeedbackSound(correct);
+    if (sound && level?.boss && card.boss) bossAnswered(card, correct);
+    // 答错时（非 Boss 关）偶尔有打败过的 Boss 冒出来提醒一句
+    if (sound && !correct && !level?.boss) { const cameo = cameoCard('mistake', level?.unit?.section || level?.chapter?.sectionId || null, level?.key); if (cameo) footer.appendChild(cameo); }
     const head = el('div', 'learn-feedback-head', correct ? t.right[Math.floor(Math.random() * t.right.length)] : t.wrong);
     footer.appendChild(head);
     if (!correct) footer.appendChild(el('div', 'learn-solution', showSolution()));
@@ -1131,6 +1332,8 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
     const starRow = el('div', 'learn-finish-stars');
     [0, 1, 2].forEach((i) => { const s = el('span', i < stars ? 'is-on' : '', '★'); s.style.animationDelay = `${i * 0.18}s`; starRow.appendChild(s); });
     shell.append(starRow, el('h3', '', t.reviewDone), el('p', 'learn-earned', t.earned(stars, xp)), el('p', 'learn-finish-unit', t.reviewLeft(review.length)));
+    const cameo = cameoCard('review');
+    if (cameo) shell.appendChild(cameo);
     const row = el('div', 'learn-feedback-actions');
     if (review.length) row.appendChild(button('learn-btn primary', t.reviewButton(dueReview(review).length, review.length), () => startLevel(REVIEW_KEY_LEVEL)));
     row.appendChild(button('learn-btn ghost', t.backToMap, () => renderMap()));
@@ -1196,7 +1399,7 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
     panel.appendChild(head);
     const apply = (keys, stars) => { progress = setLevelStars(progress, keys, stars); saveProgress(progress); renderMap(); };
     SECTIONS.forEach((section) => {
-      const keys = [...[...UNITS, ...SIDES].filter((u) => u.section === section.id).flatMap((u) => unitLevelKeys(u.id)), chapterKey(section.id), chapterKey(section.id, true)];
+      const keys = [...[...UNITS, ...SIDES].filter((u) => u.section === section.id).flatMap((u) => unitLevelKeys(u.id)), ...bossesOf(section.id).map((b) => bossKey(b.id)), chapterKey(section.id), chapterKey(section.id, true)];
       if (!keys.length) return;
       const row = el('div', `learn-debug-row tone-${section.color}`);
       row.appendChild(el('span', 'learn-debug-label', tx(section.short || section.title)));
@@ -1204,9 +1407,17 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
       row.lastChild.title = dt.chapter(tx(section.title), 3);
       panel.appendChild(row);
     });
+    // Boss 客串概率（0–100%，只在调试模式下生效，平时固定 5%）
+    const cameoRow = el('div', 'learn-debug-row');
+    const cameoLabel = el('span', 'learn-debug-label', BOSS_TEXT[lang].cameoDebug(Math.round(cameoChance() * 100)));
+    const slider = el('input'); slider.type = 'range'; slider.min = '0'; slider.max = '100'; slider.step = '1'; slider.value = String(Math.round(cameoChance() * 100));
+    slider.className = 'learn-debug-range'; slider.setAttribute('aria-label', BOSS_TEXT[lang].cameoDebug(slider.value));
+    slider.addEventListener('input', () => { setPref('jc-boss-cameo', Number(slider.value)); cameoLabel.textContent = BOSS_TEXT[lang].cameoDebug(slider.value); });
+    cameoRow.append(cameoLabel, slider);
+    panel.appendChild(cameoRow);
     const actions = el('div', 'learn-debug-row');
     actions.append(
-      button('learn-debug-btn strong', dt.all3, () => apply([...[...UNITS, ...SIDES].flatMap((u) => unitLevelKeys(u.id)), ...SECTIONS.flatMap((section) => [chapterKey(section.id), chapterKey(section.id, true)]), FINAL_KEY, FINAL_EX_KEY], 3)),
+      button('learn-debug-btn strong', dt.all3, () => apply([...[...UNITS, ...SIDES].flatMap((u) => unitLevelKeys(u.id)), ...BOSSES.map((b) => bossKey(b.id)), ...SECTIONS.flatMap((section) => [chapterKey(section.id), chapterKey(section.id, true)]), FINAL_KEY, FINAL_EX_KEY], 3)),
       button('learn-debug-btn danger', dt.clear, () => {
         if (typeof globalThis.confirm === 'function' && !globalThis.confirm(dt.confirmClear)) return;
         progress = emptyProgress(); saveProgress(progress); review = []; saveReview(review); forget(); renderMap();
@@ -1255,11 +1466,12 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
     const steps = ex ? [[60], [64], [67], [71], [74], [78], [79], [60, 64, 67, 71, 74, 78]] : [[60], [64], [67], [72], [60, 64, 67, 72]];
     steps.forEach((notes, i) => timers.push(setTimeout(() => playChord(notes.map(midiToFrequency), i === steps.length - 1 ? 2.4 : 0.5, { interrupt: i === 0 }), i * (ex ? 260 : 200))));
   }
-  function celebrateFinal(shell) {
+  /** 彩带 + 号角 + 一张小卡片：默认是结业挑战的"结业！"，Boss 三星、EX 章节测试传入自己的文字 */
+  function celebrateFinal(shell, title = t.celebrateFinal, sub = t.celebrateFinalSub(UNITS.length)) {
     const layer = el('div', 'learn-celebrate');
     confetti(layer, 70);
     const card = el('div', 'learn-celebrate-card');
-    card.append(el('div', 'learn-celebrate-title', t.celebrateFinal), el('p', '', t.celebrateFinalSub(UNITS.length)));
+    card.append(el('div', 'learn-celebrate-title', title), el('p', '', sub));
     layer.appendChild(card);
     shell.prepend(layer);
     fanfare(false);
@@ -1299,6 +1511,7 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
   function renderFinish() {
     const key = level.key;
     if (key === REVIEW_KEY_LEVEL) { renderReviewFinish(); return; }
+    if (level.boss) { renderBossFinish(); return; }
     const before = progress.units[key]?.done;
     progress = completeUnit(progress, key, session);
     saveProgress(progress);
@@ -1309,6 +1522,9 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
     const starRow = el('div', 'learn-finish-stars');
     [0, 1, 2].forEach((i) => { const s = el('span', i < stars ? 'is-on' : '', '★'); s.style.animationDelay = `${i * 0.18}s`; starRow.appendChild(s); });
     shell.append(starRow, el('h3', '', t.finishTitle), el('p', 'learn-finish-unit', level.title), el('p', 'learn-earned', t.earned(stars, xp)), withIcon(el('p', 'learn-stat is-streak'), 'flame', t.streak(progress.streak)));
+    // 跨章节客串（概率触发）：章节测试 / 结业挑战 / 普通关卡各有自己的台词
+    const cameo = cameoCard(key === FINAL_KEY || key === FINAL_EX_KEY ? 'final' : level.chapter ? 'test' : 'done', level.chapter?.sectionId || level.unit?.section || null, key);
+    if (cameo) shell.appendChild(cameo);
     const row = el('div', 'learn-feedback-actions');
     // 普通章节测试通关后，如果 EX 章节测试已经开放，直接给入口
     if (level.chapter && !level.chapter.ex && chapterExUnlocked(level.chapter.sectionId, chapterUnits(level.chapter.sectionId), unlockView(), chapterSides(level.chapter.sectionId))) {
@@ -1336,7 +1552,65 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
     root.appendChild(shell);
     if (key === FINAL_KEY) celebrateFinal(shell);
     if (key === FINAL_EX_KEY) { celebrateFinal(shell); celebrateEx(); }
-    if (level.chapter?.ex) celebrateFinal(shell);
+    if (level.chapter?.ex) celebrateFinal(shell, t.celebrateChapterEx, t.celebrateChapterExSub(tx(SECTIONS.find((sec) => sec.id === level.chapter.sectionId)?.title)));
+    session = null;
+  }
+
+  /** Boss 战结算：星级结局立绘 + 结局台词（第一次通关、重打升星有特别台词），这一战的教育主题，下一步 */
+  function renderBossFinish() {
+    const key = level.key;
+    const boss = level.boss;
+    const before = progress.units[key];
+    progress = completeUnit(progress, key, session);
+    saveProgress(progress);
+    forget();
+    const { stars, xp } = progress.earned;
+    const bt = BOSS_TEXT[lang];
+    const b = bossBattle();
+    root.replaceChildren();
+    const shell = el('div', `learn-finish learn-boss-finish tone-${level.tone}`);
+    const starRow = el('div', 'learn-finish-stars');
+    [0, 1, 2].forEach((i) => { const s = el('span', i < stars ? 'is-on' : '', '★'); s.style.animationDelay = `${i * 0.18}s`; starRow.appendChild(s); });
+    starRow.setAttribute('aria-label', bt.stars(stars));
+    const upgrade = boss.upgrades ? boss.upgrades[Math.floor(Math.random() * boss.upgrades.length)] : boss.upgrade;
+    const leakedN = session.boss?.leaked?.length || 0;
+    const leakNote = leakedN ? (() => { const l = CAST[boss.cast].lines.leakNote[Math.floor(Math.random() * CAST[boss.cast].lines.leakNote.length)]; return Object.fromEntries(Object.entries(l).map(([k, v]) => [k, v.replace('{n}', leakedN)])); })() : null;
+    const extra = [...(!before?.done ? [boss.firstClear] : stars > (before.stars || 0) ? [upgrade] : []), ...(leakNote ? [['defiant', leakNote]] : [])];
+    // 结局台词一句一句说，每句换一次表情；下面的文字跟着一句句出现
+    const script = el('div', 'learn-boss-script');
+    script.setAttribute('aria-live', 'polite');
+    const ending = bossEnding(b, { boss, stars, extra, onLine: (line) => script.appendChild(el('p', '', tx(line))) });
+    endingRun = ending;
+    const badges = el('p', 'learn-boss-badges');
+    if (!before?.done) badges.appendChild(el('span', 'learn-boss-chip is-phase', bt.first));
+    else if (stars > (before.stars || 0)) badges.appendChild(el('span', 'learn-boss-chip is-phase', bt.upgrade));
+    const lesson = el('div', 'learn-boss-lesson');
+    lesson.append(el('strong', '', bt.lesson), el('p', '', tx(boss.lesson)));
+    const pace = el('div', 'learn-boss-pace');
+    pace.appendChild(el('span', 'learn-muted', `${bt.pace}：`));
+    const paceIndex = Math.max(0, Math.min(3, Number(pref('jc-boss-pace', 1))));
+    ending.setGap(PACE_MS[paceIndex]);
+    bt.paces.forEach((label, i) => {
+      const chip = button(`learn-boss-pace-btn${i === paceIndex ? ' is-on' : ''}`, label, () => {
+        setPref('jc-boss-pace', i); ending.setGap(PACE_MS[i]);
+        pace.querySelectorAll('.learn-boss-pace-btn').forEach((c, k) => c.classList.toggle('is-on', k === i));
+      });
+      pace.appendChild(chip);
+    });
+    shell.append(starRow, b.el, pace, badges, script, el('p', 'learn-earned', t.earned(stars, xp)), lesson);
+    ending.play();
+    const row = el('div', 'learn-feedback-actions');
+    const ex = !boss.ex && exOf(boss);
+    if (ex && bossOpen(ex, UNITS, SIDES, unlockView())) row.appendChild(button('learn-btn primary', `${bt.ex} · ${bossTitle(ex, lang)}`, () => startLevel(bossKey(ex.id))));
+    // 道中 Boss 之后：下一关（它挡住的那一关）；章末 Boss 之后：章节测试
+    const gated = UNITS.find((u) => u.gate === key);
+    if (gated) row.appendChild(button('learn-btn primary', `${bt.next} · ${tx(gated.title)}`, () => startLevel(gated.id)));
+    if (!boss.after && !boss.ex) row.appendChild(button('learn-btn primary', t.chapterTest, () => startLevel(chapterKey(boss.section))));
+    row.append(button('learn-btn ghost', bt.again, () => startLevel(key)), button('learn-btn ghost', t.backToMap, () => { battle = null; renderMap(); }));
+    shell.appendChild(row);
+    if (!before?.done) shell.classList.add('is-first');
+    root.appendChild(shell);
+    if (stars === 3) celebrateFinal(shell, bt.perfect, bt.perfectSub(tx(CAST[boss.cast].name)));
     session = null;
   }
 
@@ -1350,7 +1624,7 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
     if (sideB) flipBack(false);
     const record = loadResume();
     if (record?.key === id && record.session) { target.resume(); return; }
-    if (id === FINAL_KEY || id === FINAL_EX_KEY || parseChapterKey(id)) { startLevel(id); return; }
+    if (id === FINAL_KEY || id === FINAL_EX_KEY || parseChapterKey(id) || parseBossKey(id)) { startLevel(id); return; }
     const { unitId } = parseLevelKey(id);
     if (unitIndex(unitId) < 0 && !SIDES.some((side) => side.id === unitId)) { renderMap(); return; }
     startLevel(id);
@@ -1366,6 +1640,7 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
     if (!record?.session) { renderMap(); return false; }
     level = levelInfo(record.key);
     session = record.session;
+    battle = null;
     renderCard();
     return true;
   };
@@ -1391,7 +1666,7 @@ export function mountLearn(target, { playChord, stopAudio = () => {} }) {
     if (!sideBOpen()) { renderMap(); return; }
     stop(); closeSheets();
     if (sideB) { then?.(sideB); return; }
-    const mount = () => import('./sideb_ui.js?v=20261009-audio1').then(({ mountSideB }) => {
+    const mount = () => import('./sideb_ui.js?v=20261011-snd2').then(({ mountSideB }) => {
       writeSide('b');
       root.classList.add('is-side-b');
       sideB = mountSideB(root, {

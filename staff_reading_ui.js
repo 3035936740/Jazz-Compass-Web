@@ -16,7 +16,7 @@ import {
   GAP, svgNode, positionY, drawLines, drawClef, drawBrace, drawChordEvent, drawRest, drawBeams, drawTie, drawKeySignature, drawTimeSignature,
 } from './staff_diagram.js?v=20261002-r19';
 import { renderVisual } from './learn_visuals.js?v=20261008-beginner2';
-import { playFeedbackSound } from './learn_sfx.js?v=20261009-audio1';
+import { playFeedbackSound } from './learn_sfx.js?v=20261011-snd2';
 import { el, button, language, midiToFrequency, sourcesFooter, cite, relatedLinks, midiExportButton } from './module_kit.js';
 import { scoreToMusicXML } from './staff_musicxml.js?v=20261003-x1';
 import { musicXMLToScore, unzipMusicXML, transposeScore, copyMeasures, pasteMeasures, deleteMeasures, measureCount, INTERVALS } from './staff_edit.js?v=20261004-w6';
@@ -1199,7 +1199,7 @@ export function mountStaffReading(target, { playChord }) {
     // 挂上任务条（检查 / 提交时把当前的谱交给评分器）
     if (String(q).startsWith('@lab:')) {
       const ref = String(q).slice(5);
-      import('./lab_banner.js?v=20261009-audio1').then(({ mountLabBanner, isFirstVisit }) => import('./sideb_labs.js?v=20261004-x1').then(({ LABS, parseLabRef }) => {
+      import('./lab_banner.js?v=20261010-talk1').then(({ mountLabBanner, isFirstVisit }) => import('./sideb_labs.js?v=20261004-x1').then(({ LABS, parseLabRef }) => {
         const setup = LABS[parseLabRef(ref).id]?.setup;
         if (setup) {
           snapshot();

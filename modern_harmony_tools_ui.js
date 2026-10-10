@@ -1,46 +1,52 @@
 import { el, field, option, button, language, sourcesFooter, relatedLinks } from './module_kit.js';
-import { removeSpectralComponent, addSpectralComponent, chordSymbolNotes, DEFAULTS, PRESETS, MODEL_OF, MODERN_TOOL_IDS, SCALES, createToolPlayer, noteLabel, hz, numberIn, ToolInputError } from './modern_harmony_tools.js?v=20261008-spectrum-delete1';
+import { removeSpectralComponent, addSpectralComponent, chordSymbolNotes, DEFAULTS, PRESETS, MODEL_OF, MODERN_TOOL_IDS, SCALES, createToolPlayer, noteLabel, hz, numberIn, ToolInputError } from './modern_harmony_tools.js?v=20261010-mh2';
 import { playSinePartials } from './modern_harmony_audio.js';
 
 // ref:omt2e-chord-symbols
+// ref:wiki-parallel-harmony ref:wiki-chromatic-mediant ref:wiki-polytonality ref:wiki-petrushka-chord ref:wiki-octatonic ref:wiki-atonality ref:wiki-spectral-music ref:wiki-limit
 // ref:rubin-nonfunctional ref:koozin-planing ref:arndt-tonality
 // ref:omt2e-normal-order ref:omt2e-prime-form ref:omt2e-ic-vector
 // ref:ircam-spectrum ref:ircam-spectral ref:gann-ji ref:gann-ji-reasons
 export const TOOL_COPY = {
   nonfunctional: {
+    extra: ['“连接”一栏逐个标出：等距平行（每个声部移动同样的半音数）、音阶内平行（同方向移动、两个和弦都在同一个自然音集里）、半音中音（根音相距三度、同为大三或小三、一个共同音）、双重半音中音（性质相反、没有共同音），以及共同音个数。平行移动削弱和声进行感；半音中音在浪漫派以后和印象派音乐里更常见。', '「連結」欄に、実平行（各声部が同じ半音数だけ動く）、音階内の平行（同方向に動き、両方の和音が同じ全音階に入る）、半音的中音（根音が 3 度離れ、同じ長・短、共通音一つ）、二重半音的中音（長短が逆で共通音なし）と共通音の数を示します。平行移動は和声進行感を弱め、半音的中音はロマン派以降と印象派で多く使われます。', 'The Connection column marks exact planing (every voice moves by the same number of semitones), diatonic planing (same direction, both chords within one diatonic collection), chromatic mediants (roots a third apart, same quality, one common tone), doubly chromatic mediants (opposite quality, no common tone) and the number of common tones. Planing weakens the sense of progression; chromatic mediants became more common from the Romantic period and in impressionism.'],
     title: ['非功能和声', '非機能和声', 'Nonfunctional harmony'],
     intro: ['把一个音响平行移动，或用共同音与持续低音连接不同和弦。观察每条声部的变化，再听整个过程。', '響きを平行移動したり、共通音と持続低音で和音を結んだりします。各声部の動きを見て全体を聴きます。', 'Move a sonority in parallel, or connect chords with common tones and a pedal. Follow each voice and hear the whole sequence.'],
     hint: ['等距平移按半音保留音程；音阶内平移按级数移动，音程可能改变。共同音只按音级比较；声部位移按输入顺序逐条比较，不自动重新配音。是否有功能或中心仍要结合上下文判断。', '実平行は半音で移動して音程を保ちます。音階内の平行では音程が変わり得ます。共通音は音級、声部の移動は入力順で比較し、自動配置はしません。機能や中心は文脈で判断します。', 'Exact planing preserves semitone intervals; diatonic planing moves by scale steps and may change them. Common tones compare pitch classes; voice movement follows input order without revoicing. Function and centricity require context.'],
-    presets: [['等距平行', '実平行', 'Exact planing'], ['音阶内平行', '音階内の平行', 'Diatonic planing'], ['共同音与持续低音', '共通音と持続低音', 'Common tones & pedal']],
-    refs: ['rubin-nonfunctional', 'koozin-planing', 'arndt-tonality', 'omt2e-chord-symbols'], links: ['progression', 'classical'],
+    presets: [['等距平行', '実平行', 'Exact planing'], ['音阶内平行', '音階内の平行', 'Diatonic planing'], ['共同音与持续低音', '共通音と持続低音', 'Common tones & pedal'], ['半音中音与双重半音中音', '半音的中音と二重半音的中音', 'Chromatic & doubly chromatic mediants']],
+    refs: ['rubin-nonfunctional', 'koozin-planing', 'arndt-tonality', 'wiki-parallel-harmony', 'wiki-chromatic-mediant', 'omt2e-chord-symbols'], links: ['progression', 'classical'],
   },
   polytonality: {
+    extra: ['“纵向”一栏把两层的音合起来看：各层是否是三和弦、合起来的集合类、是否是相距三全音的两个大三和弦（彼得鲁什卡和弦），以及是否全部落在一个八声音集里——van den Toorn 用八声音集解释斯特拉文斯基的这种“对立”。两个和弦叠在一起只是复合和弦；双调性还需要重音、重复和各层的旋律来支持各自的中心。', '「縦の分析」で二層の音を合わせて見ます：各層が三和音か、合わせた集合のセット・クラス、三全音離れた二つの長三和音（ペトルーシュカ和音）か、すべて一つの八音音階に入るか。ファン・デン・トールンはストラヴィンスキーのこの「対立」を八音音階で説明しました。二つの和音を重ねただけではポリコードで、複調にはアクセント・反復・各層の旋律による中心の支えが要ります。', 'The Vertical analysis combines both layers: whether each layer is a triad, the set class of the union, whether it is two major triads a tritone apart (the Petrushka chord) and whether it lies in one octatonic collection — van den Toorn’s account of such Stravinskian “opposition”. Two stacked chords are only a polychord; bitonality also needs accents, repetition and melodic expression supporting each centre.'],
     title: ['多调性', '多調性', 'Polytonality'],
     intro: ['给两条旋律各自的中心、音阶、音区和节奏。分别试听，再让它们同时进行。', '二つの旋律に別々の中心、音階、音域、リズムを設定します。単独で聴いてから重ねます。', 'Give two melodies their own centers, scales, registers and rhythms. Hear each independently, then combine them.'],
     hint: ['旋律用音阶级数表示：1 是所填中心音，七声音阶的 8 是高八度，全音音阶用 7；1:2 表示第一级持续 2 拍，r:1 表示休止 1 拍。两层分别重复，不等待另一层结束。两个和弦的叠置本身不足以证明多调性；相同中心的不同音阶也不等于双调性。', '旋律は音階の度数です。1 は指定した中心音、7音音階の8（全音音階の7）は上のオクターブ。1:2 は第1音を2拍、r:1 は1拍の休符です。各層は独立して反復します。和音を重ねるだけで多調性とは断定できず、同じ中心の異なる音階も複調とは限りません。', 'Use scale degrees: 1 is the entered center, 8 the upper octave in seven-note scales (7 in whole-tone); 1:2 holds degree 1 for two beats, r:1 rests for one beat. Layers repeat independently. A polychord alone does not establish polytonality, and different scales with one center do not establish bitonality.'],
-    presets: [['C 与 D', 'C と D', 'C and D'], ['C 与 F♯', 'C と F♯', 'C and F♯'], ['同中心对照', '同じ中心で比較', 'Same-center comparison']],
-    refs: ['arndt-tonality'], links: ['circle', 'counterpoint'],
+    presets: [['C 与 D', 'C と D', 'C and D'], ['C 与 F♯', 'C と F♯', 'C and F♯'], ['同中心对照', '同じ中心で比較', 'Same-center comparison'], ['彼得鲁什卡和弦（C 大三 + F♯ 大三）', 'ペトルーシュカ和音（C + F♯）', 'Petrushka chord (C + F♯ major)']],
+    refs: ['arndt-tonality', 'wiki-polytonality', 'wiki-petrushka-chord', 'wiki-octatonic', 'omt2e-prime-form'], links: ['circle', 'counterpoint'],
   },
   atonality: {
+    extra: ['填入第二个动机，可以看它和原动机是不是同一个音级集合的移位（Tn）或倒影（TnI）——自由无调性作品常用一个小“细胞”的各种变形来组织音乐。下方还逐条对照 Kostka 与 Payne 归纳的勋伯格四个做法：避免八度、避免大小三和弦、避免连续超过三个音来自同一个自然音阶、多用跳进。它只描述这条旋律，不判断整首曲子。', '二つ目の動機を入れると、元の動機の音級集合の移高（Tn）か反転（TnI）かが分かります。自由無調の作品は小さな「細胞」の変形で音楽を組み立てることが多いです。下ではコストカとペインがまとめたシェーンベルクの四つの手法（オクターヴを避ける、長短三和音を避ける、同じ全音階から 4 音以上続けない、跳躍を多く）と照合します。この旋律の記述であり、曲全体の判定ではありません。', 'Enter a second motif to see whether it is a transposition (Tn) or inversion (TnI) of the original pitch-class set — free atonal music often builds on transformations of a small cell. Below, the melody is compared with the four procedures in Schoenberg listed by Kostka and Payne: avoid octaves, avoid major and minor triads, avoid more than three successive notes from one diatonic scale, prefer leaps. It describes this melody, not the whole piece.'],
     title: ['无调性', '無調性', 'Atonality'],
     intro: ['用自选动机比较移调、倒影、逆行与逆行倒影，保留实际音区并查看音级集合。', '選んだ動機を移調・反転・逆行・逆行反転して比較します。実際の音域と音級集合を確認できます。', 'Compare transposition, inversion, retrograde and retrograde inversion of your motif, retaining register and inspecting its pitch-class set.'],
     hint: ['倒影围绕指定轴音：新音高 = 2 × 轴音 − 原音高；之后再加半音移调。移调也作用于逆行。音高、音级与音程方向分开显示。这些变形可用于多种音乐，工具不凭一个动机判定整曲无调性。', '反転は指定した軸音を中心に行います。新しい音高 = 2 × 軸音 − 元の音高、その後に半音移調を加えます。移調は逆行にも適用します。これらの操作だけで曲全体が無調性だとは判断できません。', 'Inversion uses the entered axis: new pitch = 2 × axis − original pitch, followed by the semitone transposition. Transposition also applies to retrograde. These operations work in many kinds of music; one motif cannot establish atonality for an entire piece.'],
     presets: [['移调动机', '動機の移調', 'Transpose motif'], ['围绕 E4 倒影', 'E4 を軸に反転', 'Invert about E4'], ['逆行倒影', '逆行反転', 'Retrograde inversion']],
-    refs: ['arndt-tonality', 'omt2e-normal-order', 'omt2e-prime-form', 'omt2e-ic-vector'], links: ['posttonal', 'counterpoint'],
+    refs: ['arndt-tonality', 'wiki-atonality', 'omt2e-normal-order', 'omt2e-prime-form', 'omt2e-ic-vector'], links: ['posttonal', 'counterpoint'],
   },
   spectralharmony: {
+    extra: ['“近似”一栏把每个成分放到最近的半音、四分之一音或六分之一音上——格里塞把频谱里的非平均律音高近似到最近的四分之一音或六分之一音，再交给乐器演奏（器乐加法合成：每件乐器演奏一个分音）。“差音”列出相邻成分之间的一阶差音，这是频谱音乐使用的心理声学现象之一。', '「近似」欄は各成分を最も近い半音・四分音・六分音に置きます。グリゼーはスペクトルの非平均律音高を四分音や六分音に近似して楽器に割り当てました（器楽的加算合成：各楽器が一つの部分音を担当）。「差音」は隣り合う成分の一次差音で、スペクトル音楽が用いる心理音響現象の一つです。', 'The Approximation column places each component on the nearest semitone, quarter-tone or sixth-tone — Grisey approximated non-tempered spectral pitches to the nearest quarter- or sixth-tone for instruments (additive instrumental synthesis: each instrument plays one partial). Difference tones lists the first-order difference between adjacent components, one of the psychoacoustic phenomena spectral music uses.'],
     title: ['频谱和声', 'スペクトル和声', 'Spectral harmony'],
     intro: ['从基频和分音构造音响，编辑振幅与音分偏移，比较精确频率和十二平均律的近似。', '基音と部分音から響きを作り、振幅とセント偏差を編集します。正確な周波数と12平均律の近似を比べます。', 'Construct a sonority from a fundamental and partials. Edit amplitudes and cent offsets, comparing exact frequencies with 12-EDO approximations.'],
     hint: ['格式：倍数或比例:振幅:目标音分偏移，如 5:0.8:25 或 3/2:0.5:0。省略振幅时为 min(1, 1/√倍数)，省略偏移时为 0。频率 = 基频 ×（倍数或比例）× 2^(偏移×形变比例/1200)。用纯正弦合成试听；图是自建分音模型，不是录音的频谱分析。', '形式：倍率・比率:振幅:目標セント偏差（例 5:0.8:25、3/2:0.5:0）。振幅の省略値はmin(1, 1/√倍率)、偏差は0。周波数 = 基音 ×（倍率・比率）× 2^(偏差×変形率/1200)。正弦波で再生します。図は設定したモデルであり、録音の分析ではありません。', 'Syntax: multiplier or ratio:amplitude:target-cent-offset, e.g. 5:0.8:25 or 3/2:0.5:0. Defaults are min(1, 1/√multiplier) and zero offset. Frequency = fundamental × (multiplier or ratio) × 2^(offset×morph/1200). Playback synthesizes sine waves; this is a constructed partial model, not a recording analysis.'],
     presets: [['谐波和声', '倍音の和声', 'Harmonic sonority'], ['非谐分音形变', '非整数倍の変形', 'Inharmonic morph'], ['高次分音', '高次部分音', 'Upper partials']],
-    refs: ['ircam-spectrum', 'ircam-spectral', 'gann-ji'], links: ['micro', 'microtonalharmony'],
+    refs: ['ircam-spectrum', 'ircam-spectral', 'wiki-spectral-music', 'gann-ji'], links: ['micro', 'microtonalharmony'],
   },
   microtonalharmony: {
+    extra: ['每个和弦下面列出相邻两音之间的音程比例、音分和质数极限（分子、分母里最大的质因数）。例如中立三和弦 1/1–11/9–3/2 里两个三度都是 11 限的中立三度附近：11/9 约 347 音分，27/22 约 355 音分。', '各和音の下に、隣り合う二音の音程比・セント・素数リミット（分子と分母の最大の素因数）を示します。例えば中立三和音 1/1–11/9–3/2 では二つの 3 度がどちらも 11 リミットの中立 3 度付近：11/9 は約 347 セント、27/22 は約 355 セント。', 'Under each chord, the interval between adjacent notes is listed with its ratio, cents and prime limit (the largest prime factor of numerator or denominator). In the neutral triad 1/1–11/9–3/2, both thirds are 11-limit neutral thirds: 11/9 ≈ 347 cents, 27/22 ≈ 355 cents.'],
     title: ['微分音和声', '微分音和声', 'Microtonal harmony'],
     intro: ['设计两个比例和弦，改变第二个根音，用同一参考频率比较纯律与 N 平均律。', '二つの比率和音を設計し、二つ目の根音を変えます。同じ基準周波数で純正律とN平均律を比較します。', 'Design two ratio chords and change the second root, comparing just intonation with N-EDO against one reference frequency.'],
     hint: ['比例是实际频率倍数，不自动折回八度。B 的比例相对于 B 根音；两和弦量化到以 A 根音为起点的同一 N-EDO 网格，B 根音也参与量化。误差 = 平均律音分 − 目标音分；共同音要求实际音高相同。正弦试听便于比较拍频，没有“最佳律制”评分。', '比率は実周波数の倍率で、オクターブ内に折り返しません。Bの比率はBの根音に対します。Bの根音も含め、両和音をAの根音に基づく同じN平均律へ量子化します。誤差 = 平均律のセント − 目標セント。共通音は実音高で判定し、優劣は採点しません。', 'Ratios are actual frequency multipliers, without octave folding. B ratios refer to B’s root. Both chords, including B’s root, are rounded to one N-EDO grid anchored at A’s root. Error = tempered cents − target cents; common tones require identical actual pitch. Sine playback exposes beating without ranking tuning systems.'],
-    presets: [['三和弦连接', '三和音の連結', 'Triad connection'], ['七限和声', '7リミット和声', '7-limit harmony'], ['81/80 音差对照', '81/80コンマの比較', '81/80 comma comparison']],
-    refs: ['gann-ji', 'gann-ji-reasons'], links: ['micro', 'spectralharmony', 'temperaments'],
+    presets: [['三和弦连接', '三和音の連結', 'Triad connection'], ['七限和声', '7リミット和声', '7-limit harmony'], ['81/80 音差对照', '81/80コンマの比較', '81/80 comma comparison'], ['中立三和弦（11:9）', '中立三和音（11:9）', 'Neutral triads (11:9)']],
+    refs: ['gann-ji', 'gann-ji-reasons', 'wiki-limit', 'wiki-neutral-third'], links: ['micro', 'spectralharmony', 'temperaments'],
   },
 };
 const SPECTRUM_EDIT = {
@@ -54,6 +60,20 @@ const SPECTRUM_EDIT = {
   limit: ['已达到 16 项上限；可长按音柱删除，或在上方输入框修改。', '16項の上限です。柱を長押しで削除、または上の欄で編集できます。', '16-entry limit reached. Hold a stem to remove it, or edit the input above.'],
 };
 const WORDS = {
+  connection: ['连接', '連結', 'Connection'], realPlaning: ['等距平行', '実平行', 'exact planing'], diatonicPlaning: ['音阶内平行', '音階内の平行', 'diatonic planing'],
+  chromaticMediant: ['半音中音', '半音的中音', 'chromatic mediant'], doublyMediant: ['双重半音中音', '二重半音的中音', 'doubly chromatic mediant'], commonTones: ['共同音', '共通音', 'common tones'],
+  vertical: ['纵向分析', '縦の分析', 'Vertical analysis'], layerTriad: ['层的三和弦', '層の三和音', 'triad'], noTriad: ['不是单一三和弦', '単一の三和音ではない', 'not a single triad'],
+  setClass: ['集合类', 'セット・クラス', 'Set class'], petrushka: ['相距三全音的两个大三和弦：彼得鲁什卡和弦（斯特拉文斯基《彼得鲁什卡》，1911）', '三全音離れた二つの長三和音：ペトルーシュカ和音（ストラヴィンスキー《ペトルーシュカ》1911）', 'Two major triads a tritone apart: the Petrushka chord (Stravinsky, Petrushka, 1911)'],
+  octatonicYes: ['全部落在一个八声音集里', 'すべて一つの八音音階に入る', 'All notes lie in one octatonic collection'], octatonicNo: ['不在任何一个八声音集里', 'どの八音音階にも収まらない', 'Not within any one octatonic collection'],
+  polyNote: ['复合和弦 ≠ 多调性：还要看重音、重复和各层旋律是否支持两个中心。', 'ポリコード ≠ 多調：アクセント・反復・各層の旋律が二つの中心を支えるかを見ます。', 'Polychord ≠ polytonality: check whether accents, repetition and each layer’s melody support two centres.'],
+  compare: ['第二个动机（可留空）', '二つ目の動機（空欄可）', 'Second motif (optional)'], relation: ['与第二个动机的关系', '二つ目の動機との関係', 'Relation to the second motif'],
+  sameSet: ['同一集合类', '同じセット・クラス', 'same set class'], differentSet: ['不同集合类', '別のセット・クラス', 'different set class'], noRelation: ['不是 Tn 或 TnI', 'Tn でも TnI でもない', 'neither Tn nor TnI'],
+  checks: ['对照 Kostka 与 Payne 归纳的四个做法（原动机）', 'コストカとペインの四つの手法との照合（元の動機）', 'Against the four procedures listed by Kostka and Payne (original motif)'],
+  chkOctaves: ['避免八度 / 同音重复', 'オクターヴ・同音反復を避ける', 'Avoid octaves / repeated pitch classes'], chkTriads: ['避免相邻三个音构成大小三和弦', '隣接三音の長短三和音を避ける', 'Avoid major/minor triads in three adjacent notes'], chkDiatonic: ['避免连续超过三个音来自同一个自然音阶', '同じ全音階から 4 音以上続けない', 'Avoid more than three successive notes from one diatonic scale'], chkDisjunct: ['多用跳进', '跳躍を多く', 'Prefer leaps'],
+  chkOk: ['做到了', '守られている', 'met'], chkAt: ['出现在', '位置', 'at'], stepsLeaps: ['级进 {s} · 跳进 {l}', '順次 {s}・跳躍 {l}', 'steps {s} · leaps {l}'],
+  grid: ['近似网格', '近似の格子', 'Approximation grid'], semi: ['半音', '半音', 'Semitone'], quarter: ['四分之一音', '四分音', 'Quarter-tone'], sixth: ['六分之一音', '六分音', 'Sixth-tone'],
+  approx: ['近似', '近似', 'Approximation'], approxDev: ['近似误差（¢）', '近似誤差（¢）', 'Approx. error (¢)'], diffTones: ['相邻成分的差音（Hz）', '隣接成分の差音（Hz）', 'Difference tones of adjacent components (Hz)'],
+  intervalsOf: ['相邻音程', '隣接音程', 'Adjacent intervals'], limitCol: ['质数极限', '素数リミット', 'Prime limit'], interval: ['音程', '音程', 'Interval'],
   chordName: ['和弦名', 'コード名', 'Chord name'], otherNames: ['其他读法', '別の読み方', 'Other readings'], customSonority: ['自定义音响', '指定した響き', 'Custom sonority'],
   preset: ['示例', '例', 'Example'], reset: ['恢复默认', '初期値に戻す', 'Reset'], share: ['复制参数链接', '設定リンクをコピー', 'Copy settings link'], copied: ['链接已复制', 'リンクをコピーしました', 'Link copied'], copyError: ['复制失败，请重试', 'コピーできませんでした', 'Copy failed; try again'],
   bpm: ['速度（BPM）', 'テンポ（BPM）', 'Tempo (BPM)'], play: ['播放序列', '進行を再生', 'Play sequence'], stop: ['停止', '停止', 'Stop'], ready: ['准备试听', '再生できます', 'Ready to listen'], playing: ['正在播放', '再生中', 'Playing'],
@@ -103,6 +123,7 @@ export function mountModernHarmony(target, { topic, playChord, stopAudio, onExpe
   const root = el('div', 'mk mh-tool'), head = el('div', 'mk-head');
   head.append(el('div', 'mk-kicker', tr(['创作实验', '作曲実験', 'Composition lab'])), el('h3', '', tr(copy.title)), el('p', '', tr(copy.intro)));
   const hint = el('p', 'mk-callout mh-hint', tr(copy.hint));
+  const extra = copy.extra ? el('p', 'mk-callout mh-hint mh-extra', tr(copy.extra)) : null;
   const toolbar = el('div', 'mh-toolbar'), preset = el('select', 'mh-preset');
   preset.setAttribute('aria-label', w('preset'));
   preset.append(option('', tr(['自定义', 'カスタム', 'Custom'])));
@@ -191,17 +212,17 @@ export function mountModernHarmony(target, { topic, playChord, stopAudio, onExpe
     input('repeats', { type: 'number', min: 1, max: 4 });
   } else if (topic === 'atonality') {
     input('motif', { wide: true }); input('transform', { choices: ['T', 'I', 'R', 'RI'] });
-    input('transpose', { type: 'number', min: -24, max: 24 }); input('pivot');
+    input('transpose', { type: 'number', min: -24, max: 24 }); input('pivot'); input('compare', { wide: true });
   } else if (topic === 'spectralharmony') {
     input('fundamental', { type: 'number', min: 20, max: 1000, step: .1 });
-    input('morph', { type: 'number', min: 0, max: 100 }); input('partials', { wide: true });
+    input('morph', { type: 'number', min: 0, max: 100 }); input('grid', { choices: ['semi', 'quarter', 'sixth'] }); input('partials', { wide: true });
   } else {
     input('fundamental', { type: 'number', min: 20, max: 1000, step: .1 }); input('edo', { type: 'number', min: 5, max: 120 });
     input('ratiosA'); input('ratiosB'); input('rootRatio');
   }
   input('bpm', { type: 'number', min: 30, max: 240 });
   const editor = ['nonfunctional','polytonality','atonality'].includes(topic) ? el('section','mh-editor') : null;
-  root.append(head, toolbar, hint, controls, ...(editor ? [editor] : []), playback, output, relatedLinks(copy.links), sourcesFooter(copy.refs));
+  root.append(head, toolbar, hint, ...(extra ? [extra] : []), controls, ...(editor ? [editor] : []), playback, output, relatedLinks(copy.links), sourcesFooter(copy.refs));
   target.append(root);
   function playAction(label, getEvents, action) {
     const node = button('btn btn-secondary btn-sm', label, () => {
@@ -282,7 +303,8 @@ export function mountModernHarmony(target, { topic, playChord, stopAudio, onExpe
         strip.append(card);
       });
       output.append(el('p', 'mh-chart-caption', tr(['点击和弦卡片可单独试听；键盘可用 Enter 或空格。', '和音カードをクリックして単独で試聴。キーボードでは Enter またはスペース。', 'Click a chord card to audition it; use Enter or Space on the keyboard.'])), strip);
-      table([w('index'), w('chordName'), w('intervals'), w('common'), w('movement')], model.rows.map((row) => [row.index + 1, row.chordNames.join(' · ') || w('customSonority'), row.intervals.join(', '), row.index ? (row.common.map((n) => noteLabel(n + 60).replace(/4$/, '')).join(', ') || w('none')) : w('first'), row.index ? (row.movement?.map((n) => signed(n)).join(', ') || w('differentVoices')) : '—']));
+      const connectionText = (c) => !c ? w('first') : [c.planing === 'real' ? w('realPlaning') : c.planing === 'diatonic' ? w('diatonicPlaning') : '', c.mediant === 'chromatic' ? w('chromaticMediant') : c.mediant === 'doubly' ? w('doublyMediant') : '', `${w('commonTones')} ${c.common}`].filter(Boolean).join(' · ');
+      table([w('index'), w('chordName'), w('connection'), w('intervals'), w('common'), w('movement')], model.rows.map((row) => [row.index + 1, row.chordNames.join(' · ') || w('customSonority'), connectionText(row.connection), row.intervals.join(', '), row.index ? (row.common.map((n) => noteLabel(n + 60).replace(/4$/, '')).join(', ') || w('none')) : w('first'), row.index ? (row.movement?.map((n) => signed(n)).join(', ') || w('differentVoices')) : '—']));
     } else if (topic === 'polytonality') {
       const timeline = el('div', 'mh-timeline');
       const length = Math.max(model.a.length, model.b.length);
@@ -302,20 +324,44 @@ export function mountModernHarmony(target, { topic, playChord, stopAudio, onExpe
       summary(w('union'), model.union.join(', '));
       summary('A · ' + w('pcs'), model.a.pcs.join(', ')); summary('B · ' + w('pcs'), model.b.pcs.join(', '));
       if (model.sameCenter) output.append(el('p', 'mk-callout', w('sameCenter')));
+      const poly = model.poly, name = (t) => t ? noteLabel(t.root + 60).replace(/\d+$/, '') + (t.quality === 'minor' ? 'm' : '') : w('noTriad');
+      output.append(el('h4', 'mh-result-title', w('vertical')));
+      table(['', w('layerTriad')], [['A', name(poly.triadA)], ['B', name(poly.triadB)]], { indices: false });
+      summary(w('setClass'), `${poly.info.forte || ''} (${poly.info.prime.join('')}) · [${poly.info.normal.join(', ')}]`);
+      if (poly.petrushka) output.append(el('p', 'mk-callout', w('petrushka')));
+      summary(tr(['八声音集', '八音音階', 'Octatonic'], ), poly.octatonic >= 0 ? `${w('octatonicYes')} · OCT${[ '0,1', '1,2', '2,3' ][poly.octatonic]}` : w('octatonicNo'));
+      output.append(el('p', 'mh-chart-caption', w('polyNote')));
     } else if (topic === 'atonality') {
       summary(w('original'), model.source.map(noteLabel).join(' → ')); noteStrip(model.source, 'original');
       summary(w('transformed'), model.notes.map(noteLabel).join(' → ')); noteStrip(model.notes, 'transformed');
       table([w('index'), w('original'), w('transformed'), w('gaps')], model.notes.map((midi, i) => [i + 1, noteLabel(model.source[i]), noteLabel(midi), i ? signed(model.gaps[i - 1]) : '—']), { layer: 'transformed' });
       table(['', w('original'), w('transformed')], [['pcs', `[${model.sourceInfo.pcs}]`, `[${model.info.pcs}]`], [w('normal'), `[${model.sourceInfo.normal}]`, `[${model.info.normal}]`], [w('prime'), `[${model.sourceInfo.prime}]`, `[${model.info.prime}]`], [w('vector'), `<${model.sourceInfo.vector}>`, `<${model.info.vector}>`]], { indices: false });
+      if (model.compare) {
+        output.append(el('h4', 'mh-result-title', w('relation')));
+        const same = model.compareInfo.prime.join() === model.sourceInfo.prime.join();
+        const rel = [...model.relation.T.map((n) => `T${n}`), ...model.relation.I.map((n) => `T${n}I`)];
+        summary(model.compare.map(noteLabel).join(' → '), `${same ? w('sameSet') : w('differentSet')} · ${rel.join(', ') || w('noRelation')} · (${model.compareInfo.prime.join('')})`);
+      }
+      const ck = model.checks, at = (list, fmtItem) => list.length ? `${w('chkAt')} ${list.map(fmtItem).join(', ')}` : w('chkOk');
+      output.append(el('h4', 'mh-result-title', w('checks')));
+      table(['', ''], [
+        [w('chkOctaves'), at(ck.octaves, ([a, b]) => `${a + 1}–${b + 1}`)],
+        [w('chkTriads'), at(ck.triads, (i) => `${i + 1}–${i + 3}`)],
+        [w('chkDiatonic'), at(ck.diatonic, (i) => `${i + 1}–${i + 4}`)],
+        [w('chkDisjunct'), (ck.disjunct ? w('chkOk') + ' · ' : '') + w('stepsLeaps').replace('{s}', ck.steps).replace('{l}', ck.leaps)],
+      ], { indices: false });
     } else if (topic === 'spectralharmony') {
       spectrum();
-      table([w('partial'), w('amplitude'), w('frequency'), w('cents'), w('nearest'), w('deviation')], model.rows.map((row) => [row.label, fmt(row.amplitude), fmt(row.frequency, 3), fmt(row.cents), row.nearest.note, signed(row.nearest.deviation, 2)]));
+      table([w('partial'), w('amplitude'), w('frequency'), w('cents'), w('nearest'), w('deviation'), `${w('approx')} · ${w(state.grid)}`, w('approxDev')], model.rows.map((row) => [row.label, fmt(row.amplitude), fmt(row.frequency, 3), fmt(row.cents), row.nearest.note, signed(row.nearest.deviation, 2), row.grid.note + (row.grid.offset ? ` ${signed(row.grid.offset)}¢` : ''), signed(row.grid.deviation, 1)]));
+      if (model.differences.length) summary(w('diffTones'), model.differences.map((d) => `${fmt(d.high.frequency, 1)} − ${fmt(d.low.frequency, 1)} = ${fmt(d.frequency, 1)}`).join(' · '));
     } else {
       summary(w('commonHz'), model.commonHz.map((n) => fmt(n, 3)).join(', ') || w('none'));
       summary(w('commonSteps'), model.commonSteps.join(', ') || w('none'));
       for (const [layer, rows] of [['A', model.a], ['B', model.b]]) {
         output.append(mark(el('h4', 'mh-result-title', w(layer === 'A' ? 'chordA' : 'chordB')), layer === 'A' ? 0 : 1));
         table([w('ratio'), w('frequency'), w('cents'), w('step'), w('temperedHz'), w('error')], rows.map((row) => [row.ratio, fmt(row.frequency, 3), fmt(row.cents), row.step, fmt(row.temperedHz, 3), signed(row.error, 2)]), { indices: false });
+        const intervals = layer === 'A' ? model.intervalsA : model.intervalsB;
+        if (intervals.length) table([w('intervalsOf'), w('interval'), w('cents'), w('limitCol')], intervals.map((x) => [`${x.from} → ${x.to}`, x.ratio, fmt(x.cents), `${x.limit}-limit`]), { indices: false });
       }
     }
   }

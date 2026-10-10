@@ -1,7 +1,7 @@
 // ref:rubin-nonfunctional ref:koozin-planing ref:arndt-tonality ref:ircam-spectrum ref:ircam-spectral ref:gann-ji ref:gann-ji-reasons
 ﻿// Original two-step studio briefs, validated from the same live models used by the tools.
-import {DEFAULTS,MODEL_OF} from './modern_harmony_tools.js?v=20261008-spectrum-delete1';
-import {t} from './modern_harmony_course.js?v=20261008-spectrum-side1';
+import {DEFAULTS,MODEL_OF} from './modern_harmony_tools.js?v=20261010-mh2';
+import {t} from './modern_harmony_course.js?v=20261010-talk1';
 export {DEFAULTS};
 export const MODERN_GOALS={
  nonfunctional:[t('试听一段同形平移：至少三个和弦，每个内部距离相同。可用默认起点，也可自己选音。','3和音以上の実平行を試聴。内部の距離を保とう。初期値でも自分の音でも可。','Audition exact planing across at least three chords, preserving their internal gaps. Use the starting draft or choose your own notes.'),t('加一个持续低音（例如C3），让上方和弦继续移动，再试听对比。','C3などの持続低音を加え、上の和音は動かして再び試聴。','Add a pedal, such as C3, while the upper chords move; audition the contrast.')],
