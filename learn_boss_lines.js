@@ -12,7 +12,7 @@ export const CAST_LINES = {
   mimi: {
     right: [L('嗯，对。', 'うん、正解。', 'Yep, right.'), L('就是这样，看清楚了。', 'そう、ちゃんと見えてる。', 'That’s it — you looked properly.'), L('对。下一题。', '正解。次。', 'Right. Next.'), L('数得清清楚楚。', 'ちゃんと数えられてる。', 'Counted cleanly.'), L('嗯，这才是认真看的样子。', 'うん、それがちゃんと見るってこと。', 'Mm, that’s what looking carefully looks like.'), L('好，这个记牢了。', 'よし、これは覚えておいて。', 'Good. Keep that one.')],
     wrong: [L('你数了没啊？', 'ちゃんと数えた？', 'Did you even count?'), L('别瞎蒙啊！', '当てずっぽうはやめて！', 'Stop guessing!'), L('这都能错？', 'これを間違える？', 'You missed THAT?'), L('看一眼？你那是瞄了一下吧。', '一目見た？チラ見でしょ。', 'A glance? That was a squint.'), L('先看解析，别急着往下点。', 'まず解説読んで。先に進まない。', 'Read the explanation first. Don’t rush.'), L('啧……再仔细点。', 'ちっ……もっとよく見て。', 'Tch… look closer.')],
-    streak: [L('连着几题都稳稳的。', '何問も続けて安定してる。', 'Several in a row, nice and steady.'), L('嗯，你是一个一个数过来的。', 'うん、一つずつ数えてきたのね。', 'Mm, you’ve been counting each one.'), L('照这个节奏来。', 'その調子でいって。', 'Keep this pace.'), L('……行，我出难一点的。', '……いいよ、ちょっと難しくするね。', '…Okay, I’ll make it harder.')],
+    streak: [L('诶？……等等，我记一下。', 'え？……ちょっと待って、メモする。', 'Huh? …Hang on, let me write this down.'), L('咦，又数对了？我本子上可没写到这一步。', 'あれ、また数え合ってる？ノートにここまで書いてないよ。', 'Huh, counted right again? My notes don’t go this far.'), L('等一下，我得改改本子上对你的评价……', 'ちょっと待って、ノートのあなたの評価、書き直さなきゃ……', 'Wait — I need to revise what my notebook says about you…'), L('哇，你是真的一个一个数过来的。', 'わ、本当に一つずつ数えてきたんだ。', 'Whoa, you really did count every one.'), L('……行，我出难一点的。', '……いいよ、ちょっと難しくするね。', '…Okay, I’ll make it harder.')],
     wrong2: [L('停停停，慢一点，一个一个数。', 'ストップ。ゆっくり、一つずつ数えて。', 'Stop. Slow down. Count one by one.'), L('想错了不要紧，瞎蒙才不行。', '考えて間違えるのはいいの。当てずっぽうがダメ。', 'Getting it wrong is fine. Guessing isn’t.'), L('解析里那一步你漏了，回去看。', '解説のその一歩を飛ばしてる。戻って見て。', 'You skipped a step in the explanation. Go back.'), L('……我刚学的时候也会错啦。好吧，其实不会。但你可以练嘛。', '……私だって最初は間違え……いや、間違えなかったけど。あなたは練習すればいいの。', '…I used to get these wrong too. Okay, I didn’t. But you can practise.')],
     comeback: [L('嗯，后面稳下来了。', 'うん、後半は落ち着いてきた。', 'Mm, you’ve steadied.'), L('慢下来以后，就都对了吧？', 'ゆっくりやったら、全部合ってるでしょ？', 'Slow down and it all comes right, see?'), L('这样才对嘛。', 'そうそう、それでいいの。', 'That’s more like it.')],
     rematch: [L('又来啦？这回给我好好看。', 'また来たの？今度はちゃんと見て。', 'Back again? Look properly this time.'), L('题还是那些题。这回别靠记答案，一个一个数。', '問題は同じ。今度は答えを覚えてるからじゃなく、一つずつ数えて。', 'Same questions. This time don’t go from memory — count each one.'), L('行，再来就再来。', 'いいよ、もう一回ね。', 'Fine. Again.')],
@@ -162,9 +162,9 @@ export const CAST_LINES = {
 export const BOSS_LINES = {
   mimi: {
     intro: [
-      [L('嗯？', 'ん？', 'Hm?'), L('你找 Boss？这儿没有啊。', 'ボスを探してる？ここにはいないよ。', 'Looking for a boss? Nobody here.'), L('……非要打的话，陪我走一段？', '……どうしてもって言うなら、ちょっと一緒に歩く？', '…If you insist, walk with me a while?'), L('先说好，好听就行。我不讲道理。', '先に言っとくけど、いい音ならそれでいい。理屈は言わないよ。', 'Just so you know: if it sounds good, that’s enough. I don’t do theory.')],
-      [L('哦，你来啦。', 'あ、来たんだ。', 'Oh, you came.'), L('我刚在想一条旋律。为什么好听？……不知道，也不用知道。', '今、旋律を考えてた。なんでいいのか？……知らないし、知る必要もない。', 'I was just thinking of a tune. Why is it nice? …Don’t know. Don’t need to.'), L('一起走走？感觉就是感觉，讲不出道理的。', '一緒に歩く？感覚は感覚、理屈じゃないよ。', 'Walk with me? A feeling is a feeling — no reasoning behind it.')],
-      [L('别那么紧张嘛。', 'そんなに緊張しないで。', 'Don’t be so tense.'), L('理论什么的，我不太感兴趣。好听不就够了？', '理論とか、あんまり興味ない。いい音ならそれで十分でしょ？', 'Theory doesn’t interest me much. Isn’t sounding good enough?'), L('……好吧，我会问几个问题。就当随便聊聊。', '……まあ、いくつか聞くよ。雑談だと思って。', '…Fine, I’ll ask a few things. Think of it as chatting.')],
+      [L('终于来了？', 'やっと来た？', 'Finally here?'), L('先说好，别以为你是新来的我就会放水。', '先に言っとくけど、新人だからって手加減しないから。', 'Just so you know, being new won’t get you any slack.'), L('……虽然这些本来就简单得要命。', '……まあ、どれも簡単すぎるんだけどね。', '…Not that any of this is hard.')],
+      [L('哦，你就是那个新来的？', 'あ、あなたが新人？', 'Oh, so you’re the new one?'), L('键盘、谱号、拍子、音程——这些看一眼就会的东西，', '鍵盤、音部記号、拍子、音程——一目でわかるものばっかり。', 'Keyboard, clefs, meter, intervals — stuff you get at a glance.'), L('我倒要看看你会不会栽在上面。', 'それでつまずくかどうか、見てあげる。', 'Let’s see if you trip over them anyway.')],
+      [L('又一个说“基础我都会”的人。', 'また「基礎はできてる」って言う人ね。', 'Another one who says “I know the basics”.'), L('行啊，那就证明给我看。', 'いいよ、証明してみせて。', 'Fine. Prove it.'), L('答错一道我就笑你。', '一問でも間違えたら笑うから。', 'Miss one and I’m laughing.')],
     ],
     end: {
       1: [
@@ -251,8 +251,8 @@ export const BOSS_LINES = {
   },
   sever: {
     intro: [
-      [L('又见面了。', 'また会ったな。', 'We meet again.'), L('上一次，我要你证明规则。', '前回は、規則を証明せよと言った。', 'Last time, I asked you to prove the rules.'), L('这一次——', '今回は——', 'This time —'), L('证明你知道什么时候不能只看规则。', '規則だけを見てはならない時を、知っていると証明せよ。', 'prove you know when the rules alone aren’t enough.')],
-      [L('后半章的和声，不再那么听话了。', '後半の和声は、もう従順ではない。', 'The harmony of the later chapter is no longer obedient.'), L('四六和弦、离调、半音化、和弦变换。', '四六の和音、一時的転調、半音階、和音の変換。', 'Six-fours, tonicization, chromaticism, chord transformations.'), L('同一个和弦，换了位置，意思就不同。……开始吧。', '同じ和音でも、場所が変われば意味が変わる。……始めよう。', 'The same chord means something else in another place. …Let us begin.')],
+      [L('又见面了。', 'また会ったな。', 'We meet again.'), L('上一次，你让我承认：标签需要条件。', '前回、君は私に認めさせた——ラベルには条件が要ると。', 'Last time you made me admit that labels need conditions.'), L('但秩序本身不会动摇。主必须稳定，属必须解决，分析只有一个。', 'だが秩序そのものは揺るがない。主は安定し、属は解決し、分析は一つだ。', 'But order itself does not waver. The tonic must be stable, the dominant must resolve, analysis has one answer.'), L('证明它不是。', 'そうでないと証明してみよ。', 'Prove otherwise.')],
+      [L('后半章的和声：四六和弦、离调、半音化、和弦变换。', '後半の和声：四六の和音、一時的転調、半音階的和声、和音の変換。', 'The second half of harmony: six-fours, tonicization, chromaticism, transformations.'), L('它们看起来复杂。', '複雑に見えるだろう。', 'They look complex.'), L('但每一个和弦，仍然只有一种正确的分析。……开始。', 'だがどの和音にも、正しい分析は依然として一つだけだ。……始めよ。', 'Yet each chord still has exactly one correct analysis. …Begin.')],
     ],
     memo: {
       1: [L('上一次，一颗星。我没有忘记。', '前回は星一つ。忘れてはいない。', 'Last time, one star. I haven’t forgotten.'), L('上次你只是勉强通过。这次看你的了。', '前回はぎりぎりの通過だった。今回はどうだ。', 'Last time you barely passed. Show me now.')],
@@ -300,9 +300,9 @@ export const BOSS_LINES = {
   },
   noa: {
     intro: [
-      [L('嗯？', 'ん？', 'Hm?'), L('你找 Boss？', 'ボスを探してるの？', 'Looking for a boss?'), L('这儿没有啊。', 'ここにはいないよ。', 'There isn’t one here.'), L('……', '……', '…'), L('非要打的话，陪我走一段？', 'どうしてもって言うなら、少し一緒に歩く？', 'If you insist, walk with me a while?')],
-      [L('哦，你来啦。', 'あ、来たんだ。', 'Oh, you’re here.'), L('我刚在想一条旋律，走到一半卡住了。', 'ちょうど旋律を考えてて、途中で詰まってたんだ。', 'I was working on a melody and got stuck halfway.'), L('一起走走？顺便帮我听听。', '一緒に歩く？ついでに聴いてみて。', 'Walk with me? Have a listen while we’re at it.')],
-      [L('别那么紧张嘛。', 'そんなに緊張しないで。', 'Don’t be so tense.'), L('这儿没人考你。', 'ここで試験する人はいないよ。', 'Nobody’s testing you here.'), L('……好吧，我会问几个问题。就当随便聊聊。', '……まあ、いくつか聞くけど。雑談だと思って。', '…Okay, I’ll ask a few things. Just think of it as chatting.')],
+      [L('嗯？', 'ん？', 'Hm?'), L('你找 Boss？这儿没有啊。', 'ボスを探してる？ここにはいないよ。', 'Looking for a boss? Nobody here.'), L('……非要打的话，陪我走一段？', '……どうしてもって言うなら、ちょっと一緒に歩く？', '…If you insist, walk with me a while?'), L('先说好，好听就行。我不讲道理。', '先に言っとくけど、いい音ならそれでいい。理屈は言わないよ。', 'Just so you know: if it sounds good, that’s enough. I don’t do theory.')],
+      [L('哦，你来啦。', 'あ、来たんだ。', 'Oh, you came.'), L('我刚在想一条旋律。为什么好听？……不知道，也不用知道。', '今、旋律を考えてた。なんでいいのか？……知らないし、知る必要もない。', 'I was just thinking of a tune. Why is it nice? …Don’t know. Don’t need to.'), L('一起走走？感觉就是感觉，讲不出道理的。', '一緒に歩く？感覚は感覚、理屈じゃないよ。', 'Walk with me? A feeling is a feeling — no reasoning behind it.')],
+      [L('别那么紧张嘛。', 'そんなに緊張しないで。', 'Don’t be so tense.'), L('理论什么的，我不太感兴趣。好听不就够了？', '理論とか、あんまり興味ない。いい音ならそれで十分でしょ？', 'Theory doesn’t interest me much. Isn’t sounding good enough?'), L('……好吧，我会问几个问题。就当随便聊聊。', '……まあ、いくつか聞くよ。雑談だと思って。', '…Fine, I’ll ask a few things. Think of it as chatting.')],
     ],
     end: {
       1: [

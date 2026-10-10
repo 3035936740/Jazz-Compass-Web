@@ -93,7 +93,7 @@ const load_chord_symbols_ui = () => import("./chord_symbols_ui.js?v=20261003-r32
 const mountChordSymbols = lazy(load_chord_symbols_ui, 'mountChordSymbols');
 const load_staff_reading_ui = () => import("./staff_reading_ui.js?v=20261011-snd2");
 const mountStaffReading = lazy(load_staff_reading_ui, 'mountStaffReading');
-const load_learn_ui = () => import("./learn_ui.js?v=20261011-snd2");
+const load_learn_ui = () => import("./learn_ui.js?v=20261011-fix3");
 const mountLearn = lazy(load_learn_ui, 'mountLearn');
 const load_lcc_ui = () => import("./lcc_ui.js?v=20261002-i18n");
 const mountLccExplorer = lazy(load_lcc_ui, 'mountLccExplorer');

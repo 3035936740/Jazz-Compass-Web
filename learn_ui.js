@@ -19,8 +19,8 @@ import { el, button, language, midiToFrequency, cite } from './module_kit.js';
 import { icon, withIcon } from './ui_icons.js?v=20261007-listen-icon4';
 import { relatedLearnTools } from './learn_feature_unit.js?v=20261006-circle1';
 import { playFeedbackSound, sfxEnabled, setSfxEnabled } from './learn_sfx.js?v=20261011-snd2';
-import { BOSSES, CAST, relationLevel, pickCameo, CAMEO_CHANCE, bossKey, parseBossKey, bossById, bossesOf, exOf, baseOf, bossOpen, bossMissing, bossCards, gateBossFor } from './learn_bosses.js?v=20261011-jz1';
-import { createBossBattle, bossIntro, bossEnding } from './learn_boss_ui.js?v=20261011-snd2';
+import { BOSSES, CAST, relationLevel, pickCameo, CAMEO_CHANCE, bossKey, parseBossKey, bossById, bossesOf, exOf, baseOf, bossOpen, bossMissing, bossCards, gateBossFor } from './learn_bosses.js?v=20261011-fix3';
+import { createBossBattle, bossIntro, bossEnding } from './learn_boss_ui.js?v=20261011-fix3';
 import { thumbFile } from './boss_sprite.js?v=20261010-cameo1';
 
 // ---------- 调试模式：在浏览器控制台输入 class_debug(true) 打开，class_debug(false) 关闭（记在 localStorage） ----------

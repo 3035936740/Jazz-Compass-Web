@@ -9,7 +9,7 @@
 // mode：probe 试探 / alter 角色主动修改音乐 / listen 听辨角色演奏 / fix 修复角色故意制造的问题。
 // 普通 Boss 纠正一个错误音乐观；EX 防止玩家把正确结论过度简化成另一个错误音乐观（关卡设计.txt）。
 import { BOSS_GATES } from './learn_boss_gates.js?v=20261010-boss1';
-import { CAST_LINES, BOSS_LINES } from './learn_boss_lines.js?v=20261011-jz1';
+import { CAST_LINES, BOSS_LINES } from './learn_boss_lines.js?v=20261011-fix3';
 import { levelCameoLines } from './learn_boss_cameo_gen.js?v=20261010-bq1';
 import { BOSS_QUESTIONS } from './learn_boss_questions.js?v=20261010-bq2';
 

@@ -3,7 +3,7 @@
 // 不强调打斗：答对时不用受击表情、不闪光，认可条一格一格亮起来；Boss 只是点头、评论或嘴硬。
 // 点 Boss 会说话；同一道题点太多次（LEAK_AFTER），Boss 会不小心说漏答案，之后再点只会装傻。
 // 无障碍：气泡文字用 aria-live 播报，认可条有文字"认可 n / 15"，题目绑定方式写成文字标签。
-import { CAST, MODE_LABEL, askState, reactState, pickLine, statesUsed, endingSet, leakLine, LEAK_AFTER } from './learn_bosses.js?v=20261011-jz1';
+import { CAST, MODE_LABEL, askState, reactState, pickLine, statesUsed, endingSet, leakLine, LEAK_AFTER } from './learn_bosses.js?v=20261011-fix3';
 import { createBossSprite, preloadStates } from './boss_sprite.js?v=20261010-cameo1';
 import { randomRegister, hzToMidi } from './learn_sfx.js?v=20261011-snd2';
 /** 答对时的音效名（随机高度） */
